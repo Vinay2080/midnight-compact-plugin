@@ -1,4 +1,5 @@
 package dev.verloren.midnight
 
-object MidnightLanguage {
-}
+import com.intellij.lang.Language
+
+object MidnightLanguage : Language("Compact")
