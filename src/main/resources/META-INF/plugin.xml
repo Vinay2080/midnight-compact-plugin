@@ -1,21 +1,22 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
-    <id></id>
+    <id>dev.verloren.midnight</id>
 
     <!-- Public plugin name should be written in Title Case.
      Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
     <name>Midnight Language</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor url="https://w">Verloren</vendor>
+    <vendor url="https://github.com/Vinay2080">Verloren</vendor>
 
-    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+    <!-- A description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
     <description>Midnight IntelliJ Plugin is an open-source IntelliJ IDEA plugin that brings first-class development
         support for the Compact programming language used by the Midnight blockchain. The plugin aims to provide syntax
         highlighting, code completion, inspections, formatting, navigation, compiler integration, and other IDE features
-        to improve the developer experience for building Midnight smart contracts.</description>
+        to improve the developer experience for building Midnight smart contracts.
+    </description>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -28,8 +29,16 @@
         <fileType
                 name="Compact"
                 language="Compact"
-                implementationClass="dev.verloren.midnight.MidnightFileType"
+                implementationClass="dev.verloren.midnight.CompactFileType"
         />
+                <lang.parserDefinition
+                        language="Compact"
+                        implementationClass="dev.verloren.midnight.parser.CompactParserDefinition"/>
+
+        <lang.syntaxHighlighterFactory
+                language="Compact"
+                implementationClass="dev.verloren.midnight.highlighter.CompactSyntaxHighlighterFactory"/>
+
     </extensions>
 
 </idea-plugin>

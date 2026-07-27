@@ -1,7 +1,7 @@
 package dev.verloren.midnight.lexer
 
 import com.intellij.psi.tree.IElementType
-import dev.verloren.midnight.MidnightLanguage
+import dev.verloren.midnight.CompactLanguage
 
 
-class CompactTokenType(debugName: String) : IElementType(debugName, MidnightLanguage)
+class CompactTokenType(debugName: String) : IElementType(debugName, CompactLanguage)

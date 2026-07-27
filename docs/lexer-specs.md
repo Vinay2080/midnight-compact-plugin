@@ -66,7 +66,7 @@
 - Set
 
 > Note: These are language-provided ADTs. The grammar does not explicitly state whether they are dedicated lexer tokens
-or ordinary identifiers resolved by the compiler.
+> or ordinary identifiers resolved by the compiler.
 
 ## Literals
 
@@ -141,7 +141,9 @@ or ordinary identifiers resolved by the compiler.
 ### Arithmetic
 
 -
-  '+'
+
+'+'
+
 - '-'
 - '*'
 - /
@@ -155,11 +157,13 @@ or ordinary identifiers resolved by the compiler.
 - <=
 - '>'
 - '>='
+
 ---
 
 ### Arrow
 
 - =>
+
 ---
 
 ### Logical

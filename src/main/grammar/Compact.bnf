@@ -1,0 +1,47 @@
+{
+  parserClass="dev.verloren.midnight.parser.CompactParser"
+  psiPackage="dev.verloren.midnight.psi"
+  psiImplPackage="dev.verloren.midnight.psi.impl"
+
+  psiClassPrefix="Compact"
+  psiImplClassSuffix="Impl"
+
+  elementTypeHolderClass="dev.verloren.midnight.psi.CompactTypes"
+  elementTypeClass="com.intellij.psi.tree.IElementType"
+  tokenTypeClass="dev.verloren.midnight.lexer.CompactTokenType"
+}
+
+root ::= compilation_unit
+
+private compilation_unit ::=item*
+
+
+private item ::= pragma_statement
+               | import_statement
+               | declaration
+
+private declaration ::= circuit_declaration
+
+pragma_statement ::= PRAGMA IDENTIFIER VERSION NUMBER SEMICOLON
+
+import_statement ::= IMPORT STRING_LITERAL SEMICOLON
+
+circuit_declaration ::= CIRCUIT IDENTIFIER parameter_list return_type? block
+
+parameter_list ::= LPAREN parameter (COMMA parameter)* RPAREN
+
+parameter ::= IDENTIFIER COLON type
+
+return_type ::= COLON type
+
+type ::= IDENTIFIER
+
+block ::= LBRACE statement* RBRACE
+
+private statement ::= return_statement
+
+return_statement ::= RETURN expression SEMICOLON
+
+private expression ::= IDENTIFIER
+                     | NUMBER
+                     | STRING_LITERAL

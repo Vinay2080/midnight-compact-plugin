@@ -36,8 +36,7 @@ and the manifest for our plugin – [plugin.xml][file:plugin.xml].
 ## Plugin configuration file
 
 The plugin configuration file is a [plugin.xml][file:plugin.xml] file located in the `src/main/resources/META-INF`
-directory.
-It provides general information about the plugin, its dependencies, extensions, and listeners.
+directory. It provides general information about the plugin, its dependencies, extensions, and listeners.
 
 You can read more about this file in the [Plugin Configuration File][docs:plugin.xml] section of our documentation.
 
