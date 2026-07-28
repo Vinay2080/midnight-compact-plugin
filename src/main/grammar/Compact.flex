@@ -1,6 +1,8 @@
 package dev.verloren.midnight.lexer;
 
+import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
+import dev.verloren.midnight.psi.CompactTypes;
 
 %%
 
@@ -57,57 +59,61 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 /* Keywords                                                   */
 /* ========================================================= */
 
-"export"       { return CompactTokenTypes.EXPORT; }
-"from"         { return CompactTokenTypes.FROM; }
-"import"       { return CompactTokenTypes.IMPORT; }
-"module"       { return CompactTokenTypes.MODULE; }
-"prefix"       { return CompactTokenTypes.PREFIX; }
+"export"       { return CompactTypes.EXPORT; }
+"from"         { return CompactTypes.FROM; }
+"import"       { return CompactTypes.IMPORT; }
+"module"       { return CompactTypes.MODULE; }
+"prefix"       { return CompactTypes.PREFIX; }
 
-"assert"       { return CompactTokenTypes.ASSERT; }
-"as"           { return CompactTokenTypes.AS; }
-"circuit"      { return CompactTokenTypes.CIRCUIT; }
-"const"        { return CompactTokenTypes.CONST; }
-"constructor"  { return CompactTokenTypes.CONSTRUCTOR; }
-"contract"     { return CompactTokenTypes.CONTRACT; }
-"default"      { return CompactTokenTypes.DEFAULT; }
-"disclose"     { return CompactTokenTypes.DISCLOSE; }
-"else"         { return CompactTokenTypes.ELSE; }
-"enum"         { return CompactTokenTypes.ENUM; }
-"fold"         { return CompactTokenTypes.FOLD; }
-"for"          { return CompactTokenTypes.FOR; }
-"if"           { return CompactTokenTypes.IF; }
-"include"      { return CompactTokenTypes.INCLUDE; }
-"ledger"       { return CompactTokenTypes.LEDGER; }
-"map"          { return CompactTokenTypes.MAP; }
-"new"          { return CompactTokenTypes.NEW; }
-"of"           { return CompactTokenTypes.OF; }
-"pad"          { return CompactTokenTypes.PAD; }
-"pragma"       { return CompactTokenTypes.PRAGMA; }
-"pure"         { return CompactTokenTypes.PURE; }
-"return"       { return CompactTokenTypes.RETURN; }
-"sealed"       { return CompactTokenTypes.SEALED; }
-"slice"        { return CompactTokenTypes.SLICE; }
-"struct"       { return CompactTokenTypes.STRUCT; }
-"type"         { return CompactTokenTypes.TYPE; }
-"witness"      { return CompactTokenTypes.WITNESS; }
+"assert"       { return CompactTypes.ASSERT; }
+"as"           { return CompactTypes.AS; }
+"circuit"      { return CompactTypes.CIRCUIT; }
+"const"        { return CompactTypes.CONST; }
+"constructor"  { return CompactTypes.CONSTRUCTOR; }
+"contract"     { return CompactTypes.CONTRACT; }
+"default"      { return CompactTypes.DEFAULT; }
+"disclose"     { return CompactTypes.DISCLOSE; }
+"else"         { return CompactTypes.ELSE; }
+"enum"         { return CompactTypes.ENUM; }
+"fold"         { return CompactTypes.FOLD; }
+"for"          { return CompactTypes.FOR; }
+"if"           { return CompactTypes.IF; }
+"include"      { return CompactTypes.INCLUDE; }
+"ledger"       { return CompactTypes.LEDGER; }
+"map"          { return CompactTypes.MAP; }
+"new"          { return CompactTypes.NEW; }
+"of"           { return CompactTypes.OF; }
+"pad"          { return CompactTypes.PAD; }
+"pragma"       { return CompactTypes.PRAGMA; }
+"pure"         { return CompactTypes.PURE; }
+"return"       { return CompactTypes.RETURN; }
+"sealed"       { return CompactTypes.SEALED; }
+"slice"        { return CompactTypes.SLICE; }
+"struct"       { return CompactTypes.STRUCT; }
+"type"         { return CompactTypes.TYPE; }
+"witness"      { return CompactTypes.WITNESS; }
+"emit"         { return CompactTypes.EMIT; }
 
 /* ========================================================= */
 /* Built-in Types                                             */
 /* ========================================================= */
 
-"Boolean" { return CompactTokenTypes.BOOLEAN_TYPE; }
-"Bytes"   { return CompactTokenTypes.BYTES_TYPE; }
-"Field"   { return CompactTokenTypes.FIELD_TYPE; }
-"Opaque"  { return CompactTokenTypes.OPAQUE_TYPE; }
-"Uint"    { return CompactTokenTypes.UINT_TYPE; }
-"Vector"  { return CompactTokenTypes.VECTOR_TYPE; }
+"Boolean"         { return CompactTypes.BOOLEAN_TYPE; }
+"Bytes"           { return CompactTypes.BYTES_TYPE; }
+"Field"           { return CompactTypes.FIELD_TYPE; }
+"Opaque"          { return CompactTypes.OPAQUE_TYPE; }
+"Uint"            { return CompactTypes.UINT_TYPE; }
+"Vector"          { return CompactTypes.VECTOR_TYPE; }
+"JubjubScalar"    { return CompactTypes.JUBJUB_SCALAR_TYPE; }
+"Secp256k1Base"   { return CompactTypes.SECP256K1_BASE_TYPE; }
+"Secp256k1Scalar" { return CompactTypes.SECP256K1_SCALAR_TYPE; }
 
 /* ========================================================= */
 /* Boolean Literals                                           */
 /* ========================================================= */
 
-"true"  { return CompactTokenTypes.TRUE; }
-"false" { return CompactTokenTypes.FALSE; }
+"true"  { return CompactTypes.TRUE; }
+"false" { return CompactTypes.FALSE; }
 
 /* ========================================================= */
 /* Reserved Keywords                                          */
@@ -122,80 +128,81 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 "public"|"static"|"super"|
 "switch"|"this"|"throw"|
 "try"|"typeof"|"var"|
-"void"|"while"|"with"|"yield"
+"void"|"while"|"with"|"yield"|
+"argument"|"eval"|"event"
 {
-    return CompactTokenTypes.RESERVED_KEYWORD;
+    return CompactTypes.RESERVED_KEYWORD;
 }
 
 /* ========================================================= */
 /* Literals                                                   */
 /* ========================================================= */
 
-{STRING_DOUBLE} { return CompactTokenTypes.STRING_LITERAL; }
-{STRING_SINGLE} { return CompactTokenTypes.STRING_LITERAL; }
+{STRING_DOUBLE} { return CompactTypes.STRING_LITERAL; }
+{STRING_SINGLE} { return CompactTypes.STRING_LITERAL; }
 
-{VERSION}  { return CompactTokenTypes.VERSION_LITERAL; }
+{VERSION}  { return CompactTypes.VERSION_LITERAL; }
 
-{HEX}      { return CompactTokenTypes.HEX_LITERAL; }
-{BINARY}   { return CompactTokenTypes.BINARY_LITERAL; }
-{OCTAL}    { return CompactTokenTypes.OCTAL_LITERAL; }
-{DECIMAL}  { return CompactTokenTypes.DECIMAL_LITERAL; }
+{HEX}      { return CompactTypes.HEX_LITERAL; }
+{BINARY}   { return CompactTypes.BINARY_LITERAL; }
+{OCTAL}    { return CompactTypes.OCTAL_LITERAL; }
+{DECIMAL}  { return CompactTypes.DECIMAL_LITERAL; }
 
 
 /* ========================================================= */
 /* Identifier                                                 */
 /* ========================================================= */
 
-{IDENTIFIER} { return CompactTokenTypes.IDENTIFIER; }
+{IDENTIFIER} { return CompactTypes.IDENTIFIER; }
 
 /* ========================================================= */
 /* Operators (longest first)                                 */
 /* ========================================================= */
 
 "..."
-    { return CompactTokenTypes.SPREAD; }
+    { return CompactTypes.SPREAD; }
 
 ".."
-    { return CompactTokenTypes.RANGE; }
+    { return CompactTypes.RANGE; }
 
 "=>"
-    { return CompactTokenTypes.ARROW; }
+    { return CompactTypes.ARROW; }
 
 "+="
-    { return CompactTokenTypes.PLUS_ASSIGN; }
+    { return CompactTypes.PLUS_ASSIGN; }
 
 "-="
-    { return CompactTokenTypes.MINUS_ASSIGN; }
+    { return CompactTypes.MINUS_ASSIGN; }
 
 "=="
-    { return CompactTokenTypes.EQEQ; }
+    { return CompactTypes.EQEQ; }
 
 "!="
-    { return CompactTokenTypes.NEQ; }
+    { return CompactTypes.NOTEQ; }
 
 "<="
-    { return CompactTokenTypes.LTE; }
+    { return CompactTypes.LTE; }
 
 ">="
-    { return CompactTokenTypes.GTE; }
+    { return CompactTypes.GTE; }
 
 "&&"
-    { return CompactTokenTypes.ANDAND; }
+    { return CompactTypes.ANDAND; }
 
 "||"
-    { return CompactTokenTypes.OROR; }
+    { return CompactTypes.OROR; }
 
 "="
-    { return CompactTokenTypes.ASSIGN; }
+    { return CompactTypes.ASSIGN; }
 
 "+"
-    { return CompactTokenTypes.PLUS; }
+    { return CompactTypes.PLUS; }
 
 "-"
-    { return CompactTokenTypes.MINUS; }
+    { return CompactTypes.MINUS; }
 
 "*"
-    { return CompactTokenTypes.STAR; }
+    { return CompactTypes.STAR; }
 
 "/"
     { return CompactTokenTypes.SLASH; }
@@ -204,37 +211,37 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
     { return CompactTokenTypes.PERCENT; }
 
 "<"
-    { return CompactTokenTypes.LT; }
+    { return CompactTypes.LT; }
 
 ">"
-    { return CompactTokenTypes.GT; }
+    { return CompactTypes.GT; }
 
 "!"
-    { return CompactTokenTypes.NOT; }
+    { return CompactTypes.NOT; }
 
 "."
-    { return CompactTokenTypes.DOT; }
+    { return CompactTypes.DOT; }
 
 "?"
-    { return CompactTokenTypes.QUESTION; }
+    { return CompactTypes.QUESTION; }
 
 ":"
-    { return CompactTokenTypes.COLON; }
+    { return CompactTypes.COLON; }
 
 /* ========================================================= */
 /* Delimiters                                                 */
 /* ========================================================= */
 
-"(" { return CompactTokenTypes.LPAREN; }
-")" { return CompactTokenTypes.RPAREN; }
-"{" { return CompactTokenTypes.LBRACE; }
-"}" { return CompactTokenTypes.RBRACE; }
-"[" { return CompactTokenTypes.LBRACKET; }
-"]" { return CompactTokenTypes.RBRACKET; }
+"(" { return CompactTypes.LPAREN; }
+")" { return CompactTypes.RPAREN; }
+"{" { return CompactTypes.LBRACE; }
+"}" { return CompactTypes.RBRACE; }
+"[" { return CompactTypes.LBRACKET; }
+"]" { return CompactTypes.RBRACKET; }
 
-"," { return CompactTokenTypes.COMMA; }
-";" { return CompactTokenTypes.SEMICOLON; }
-"#" { return CompactTokenTypes.HASH; }
+"," { return CompactTypes.COMMA; }
+";" { return CompactTypes.SEMICOLON; }
+"#" { return CompactTypes.HASH; }
 
 /* ========================================================= */
 /* Unknown                                                    */

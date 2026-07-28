@@ -29,8 +29,8 @@ public class CompactReturnTypeImpl extends ASTWrapperPsiElement implements Compa
 
   @Override
   @NotNull
-  public CompactType getType() {
-    return findNotNullChildByClass(CompactType.class);
+  public CompactTypeExpression getTypeExpression() {
+    return findNotNullChildByClass(CompactTypeExpression.class);
   }
 
 }

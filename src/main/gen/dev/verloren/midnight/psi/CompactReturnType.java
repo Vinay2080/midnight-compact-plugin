@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface CompactReturnType extends PsiElement {
 
   @NotNull
-  CompactType getType();
+  CompactTypeExpression getTypeExpression();
 
 }

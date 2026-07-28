@@ -13,34 +13,29 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import dev.verloren.midnight.CompactLanguage
 import dev.verloren.midnight.lexer.CompactLexerAdapter
+import dev.verloren.midnight.lexer.CompactTokenTypes
 import dev.verloren.midnight.psi.CompactFile
 import dev.verloren.midnight.psi.CompactTypes
 
 class CompactParserDefinition : ParserDefinition {
 
-    companion object {
-        @JvmField
-        val FILE = IFileElementType(CompactLanguage)
-
-        @JvmField
-        val WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE)
-
-        @JvmField
-        val COMMENTS = TokenSet.EMPTY
-
-        @JvmField
-        val STRINGS = TokenSet.EMPTY
-    }
-
     override fun createLexer(project: Project?): Lexer = CompactLexerAdapter()
 
-    override fun createParser(project: Project?): PsiParser = CompactParser()
+    override fun createParser(project: Project?): PsiParser {
+        return CompactParser()
+    }
+
 
     override fun getFileNodeType(): IFileElementType = FILE
 
-    override fun getCommentTokens(): TokenSet = COMMENTS
+    override fun getCommentTokens(): TokenSet =
+        TokenSet.create(
+            CompactTokenTypes.LINE_COMMENT,
+            CompactTokenTypes.BLOCK_COMMENT
+        )
 
-    override fun getStringLiteralElements(): TokenSet = STRINGS
+    override fun getStringLiteralElements(): TokenSet =
+        TokenSet.create(CompactTypes.STRING_LITERAL)
 
     override fun getWhitespaceTokens(): TokenSet = WHITE_SPACES
 
@@ -49,3 +44,9 @@ class CompactParserDefinition : ParserDefinition {
     override fun createFile(viewProvider: FileViewProvider): PsiFile =
         CompactFile(viewProvider)
 }
+
+@JvmField
+val FILE = IFileElementType(CompactLanguage)
+
+@JvmField
+val WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE)

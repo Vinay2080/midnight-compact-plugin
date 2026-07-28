@@ -8,6 +8,6 @@ import com.intellij.psi.PsiElement;
 public interface CompactBlock extends PsiElement {
 
   @NotNull
-  List<CompactReturnStatement> getReturnStatementList();
+  List<CompactStmt> getStmtList();
 
 }

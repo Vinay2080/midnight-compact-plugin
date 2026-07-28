@@ -29,8 +29,8 @@ public class CompactBlockImpl extends ASTWrapperPsiElement implements CompactBlo
 
   @Override
   @NotNull
-  public List<CompactReturnStatement> getReturnStatementList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, CompactReturnStatement.class);
+  public List<CompactStmt> getStmtList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, CompactStmt.class);
   }
 
 }

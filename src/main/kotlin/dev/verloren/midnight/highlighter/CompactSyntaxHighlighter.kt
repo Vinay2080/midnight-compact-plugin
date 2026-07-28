@@ -17,39 +17,81 @@ class CompactSyntaxHighlighter : SyntaxHighlighterBase() {
     override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
         return pack(
             when (tokenType) {
-                // Keywords
+
+                /* ===================================================== */
+                /* Keywords */
+                /* ===================================================== */
+
                 CompactTokenTypes.EXPORT,
                 CompactTokenTypes.IMPORT,
                 CompactTokenTypes.FROM,
                 CompactTokenTypes.MODULE,
                 CompactTokenTypes.PREFIX,
-                CompactTokenTypes.CONTRACT,
+                CompactTokenTypes.ASSERT,
+                CompactTokenTypes.AS,
                 CompactTokenTypes.CIRCUIT,
                 CompactTokenTypes.CONST,
-                CompactTokenTypes.RETURN,
-                CompactTokenTypes.IF,
+                CompactTokenTypes.CONSTRUCTOR,
+                CompactTokenTypes.CONTRACT,
+                CompactTokenTypes.DEFAULT,
+                CompactTokenTypes.DISCLOSE,
                 CompactTokenTypes.ELSE,
-                CompactTokenTypes.FOR,
-                CompactTokenTypes.STRUCT,
                 CompactTokenTypes.ENUM,
-                CompactTokenTypes.TYPE,
+                CompactTokenTypes.FOLD,
+                CompactTokenTypes.FOR,
+                CompactTokenTypes.IF,
+                CompactTokenTypes.INCLUDE,
+                CompactTokenTypes.LEDGER,
+                CompactTokenTypes.MAP,
                 CompactTokenTypes.NEW,
+                CompactTokenTypes.OF,
+                CompactTokenTypes.PAD,
+                CompactTokenTypes.PRAGMA,
                 CompactTokenTypes.PURE,
-                CompactTokenTypes.SEALED ->
+                CompactTokenTypes.RETURN,
+                CompactTokenTypes.SEALED,
+                CompactTokenTypes.SLICE,
+                CompactTokenTypes.STRUCT,
+                CompactTokenTypes.TYPE,
+                CompactTokenTypes.WITNESS,
+                CompactTokenTypes.EMIT ->
                     KEYWORD
 
-                // Types
+                CompactTokenTypes.RESERVED_KEYWORD ->
+                    RESERVED_KEYWORD
+
+                /* ===================================================== */
+                /* Types */
+                /* ===================================================== */
+
                 CompactTokenTypes.BOOLEAN_TYPE,
                 CompactTokenTypes.BYTES_TYPE,
                 CompactTokenTypes.FIELD_TYPE,
                 CompactTokenTypes.OPAQUE_TYPE,
                 CompactTokenTypes.UINT_TYPE,
-                CompactTokenTypes.VECTOR_TYPE ->
+                CompactTokenTypes.VECTOR_TYPE,
+                CompactTokenTypes.JUBJUB_SCALAR_TYPE,
+                CompactTokenTypes.SECP256K1_BASE_TYPE,
+                CompactTokenTypes.SECP256K1_SCALAR_TYPE ->
                     TYPE
 
-                // Literals
+                /* ===================================================== */
+                /* Constants */
+                /* ===================================================== */
+
+                CompactTokenTypes.TRUE,
+                CompactTokenTypes.FALSE ->
+                    CONSTANT
+
+                /* ===================================================== */
+                /* Literals */
+                /* ===================================================== */
+
                 CompactTokenTypes.STRING_LITERAL ->
                     STRING
+
+                CompactTokenTypes.VERSION_LITERAL ->
+                    VERSION
 
                 CompactTokenTypes.DECIMAL_LITERAL,
                 CompactTokenTypes.BINARY_LITERAL,
@@ -57,12 +99,71 @@ class CompactSyntaxHighlighter : SyntaxHighlighterBase() {
                 CompactTokenTypes.HEX_LITERAL ->
                     NUMBER
 
-                // Comments
+                /* ===================================================== */
+                /* Comments */
+                /* ===================================================== */
+
                 CompactTokenTypes.LINE_COMMENT,
                 CompactTokenTypes.BLOCK_COMMENT ->
                     COMMENT
 
-                // Bad character
+                /* ===================================================== */
+                /* Operators */
+                /* ===================================================== */
+
+                CompactTokenTypes.PLUS,
+                CompactTokenTypes.MINUS,
+                CompactTokenTypes.STAR,
+                CompactTokenTypes.SLASH,
+                CompactTokenTypes.PERCENT,
+                CompactTokenTypes.ASSIGN,
+                CompactTokenTypes.EQEQ,
+                CompactTokenTypes.NEQ,
+                CompactTokenTypes.LTE,
+                CompactTokenTypes.GTE,
+                CompactTokenTypes.LT,
+                CompactTokenTypes.GT,
+                CompactTokenTypes.NOT,
+                CompactTokenTypes.ANDAND,
+                CompactTokenTypes.OROR,
+                CompactTokenTypes.ARROW,
+                CompactTokenTypes.SPREAD,
+                CompactTokenTypes.RANGE,
+                CompactTokenTypes.PLUS_ASSIGN,
+                CompactTokenTypes.MINUS_ASSIGN ->
+                    OPERATOR
+
+                /* ===================================================== */
+                /* Delimiters */
+                /* ===================================================== */
+
+                CompactTokenTypes.LPAREN,
+                CompactTokenTypes.RPAREN ->
+                    PARENTHESES
+
+                CompactTokenTypes.LBRACE,
+                CompactTokenTypes.RBRACE ->
+                    BRACES
+
+                CompactTokenTypes.LBRACKET,
+                CompactTokenTypes.RBRACKET ->
+                    BRACKETS
+
+                CompactTokenTypes.COMMA ->
+                    COMMA
+
+                CompactTokenTypes.SEMICOLON ->
+                    SEMICOLON
+
+                CompactTokenTypes.DOT ->
+                    DOT
+
+                /* ===================================================== */
+                /* Errors */
+                /* ===================================================== */
+
+                CompactTokenTypes.UNTERMINATED_STRING,
+                CompactTokenTypes.UNTERMINATED_BLOCK_COMMENT,
                 TokenType.BAD_CHARACTER ->
                     BAD_CHARACTER
 
@@ -106,6 +207,66 @@ class CompactSyntaxHighlighter : SyntaxHighlighterBase() {
             TextAttributesKey.createTextAttributesKey(
                 "COMPACT_BAD_CHARACTER",
                 HighlighterColors.BAD_CHARACTER
+            )
+
+        val RESERVED_KEYWORD =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_RESERVED_KEYWORD",
+                DefaultLanguageHighlighterColors.KEYWORD
+            )
+
+        val CONSTANT =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_CONSTANT",
+                DefaultLanguageHighlighterColors.CONSTANT
+            )
+
+        val VERSION =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_VERSION",
+                DefaultLanguageHighlighterColors.NUMBER
+            )
+
+        val OPERATOR =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_OPERATOR",
+                DefaultLanguageHighlighterColors.OPERATION_SIGN
+            )
+
+        val PARENTHESES =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_PARENTHESES",
+                DefaultLanguageHighlighterColors.PARENTHESES
+            )
+
+        val BRACES =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_BRACES",
+                DefaultLanguageHighlighterColors.BRACES
+            )
+
+        val BRACKETS =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_BRACKETS",
+                DefaultLanguageHighlighterColors.BRACKETS
+            )
+
+        val COMMA =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_COMMA",
+                DefaultLanguageHighlighterColors.COMMA
+            )
+
+        val SEMICOLON =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_SEMICOLON",
+                DefaultLanguageHighlighterColors.SEMICOLON
+            )
+
+        val DOT =
+            TextAttributesKey.createTextAttributesKey(
+                "COMPACT_DOT",
+                DefaultLanguageHighlighterColors.DOT
             )
     }
 }
