@@ -75,9 +75,11 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 "disclose"     { return CompactTypes.DISCLOSE; }
 "else"         { return CompactTypes.ELSE; }
 "enum"         { return CompactTypes.ENUM; }
+"external"     { return CompactTypes.EXTERNAL; }
 "fold"         { return CompactTypes.FOLD; }
 "for"          { return CompactTypes.FOR; }
 "if"           { return CompactTypes.IF; }
+"implements"   { return CompactTypes.IMPLEMENTS; }
 "include"      { return CompactTypes.INCLUDE; }
 "ledger"       { return CompactTypes.LEDGER; }
 "map"          { return CompactTypes.MAP; }
@@ -122,7 +124,7 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 "await"|"break"|"case"|"catch"|"class"|
 "continue"|"debugger"|"delete"|"do"|
 "extends"|"finally"|"function"|
-"implements"|"in"|"instanceof"|
+"in"|"instanceof"|
 "interface"|"let"|"null"|
 "package"|"private"|"protected"|
 "public"|"static"|"super"|

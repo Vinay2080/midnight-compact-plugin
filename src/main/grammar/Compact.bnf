@@ -34,9 +34,11 @@
     DISCLOSE         = "disclose"
     ELSE             = "else"
     ENUM             = "enum"
+    EXTERNAL         = "external"
     FOLD             = "fold"
     FOR              = "for"
     IF               = "if"
+    IMPLEMENTS       = "implements"
     INCLUDE          = "include"
     LEDGER           = "ledger"
     MAP              = "map"
@@ -110,6 +112,7 @@ program_element ::=
   | implements_declaration
   | type_alias_declaration
   | ledger_declaration
+  | external_declaration
   | witness_declaration
   | constructor_definition
   | circuit_definition
@@ -296,11 +299,8 @@ external_contract_circuit ::= PURE? CIRCUIT IDENTIFIER simple_parameter_list COL
 // Translated from: (Contract-Implements-declaration (implements-declaration)
 //   [contract-implements-declaration :: src (KEYWORD contract)
 //                                        (KEYWORD implements) type #\; => ...])
-// NOTE: 'implements' currently returns RESERVED_KEYWORD in Compact.flex, not its own
-// token. The lexer will need an IMPLEMENTS token for this rule to work correctly.
-// TODO: add IMPLEMENTS token to Compact.flex and CompactTokenTypes.
 
-implements_declaration ::= CONTRACT RESERVED_KEYWORD type_expression SEMICOLON   // RESERVED_KEYWORD stands in for IMPLEMENTS
+implements_declaration ::= CONTRACT IMPLEMENTS type_expression SEMICOLON
 
 // ─── Type alias declaration ──────────────────────────────────────────────────────────
 // Translated from: (Type-declaration (type-alias-declaration)
@@ -321,6 +321,14 @@ type_alias_declaration ::= EXPORT? NEW? TYPE IDENTIFIER gparams? ASSIGN type_exp
 //                                 (KEYWORD ledger) id #\: type #\; => ...])
 
 ledger_declaration ::= EXPORT? SEALED? LEDGER IDENTIFIER COLON type_expression SEMICOLON
+
+// ─── External declaration ─────────────────────────────────────────────────────
+// Translated from Lsrc.json: (External-Declaration (edecl)
+//   [external :: src exported? function-name (type-param* ...) (arg* ...) type])
+// The source grammar represents this as `external` with optional export,
+// generic parameters, a simple argument list, and a required return type.
+
+external_declaration ::= EXPORT? EXTERNAL IDENTIFIER gparams? simple_parameter_list COLON type_expression SEMICOLON
 
 // ─── Witness declaration ────────────────────────────────────────────────────────
 // Translated from: (Witness-declaration (witness-declaration)
