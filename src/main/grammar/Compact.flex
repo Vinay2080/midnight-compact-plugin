@@ -121,21 +121,42 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 /* Reserved Keywords                                          */
 /* ========================================================= */
 
-"await"|"break"|"case"|"catch"|"class"|
-"continue"|"debugger"|"delete"|"do"|
-"extends"|"finally"|"function"|
-"in"|"instanceof"|
-"interface"|"let"|"null"|
-"package"|"private"|"protected"|
-"public"|"static"|"super"|
-"switch"|"this"|"throw"|
-"try"|"typeof"|"var"|
-"void"|"while"|"with"|"yield"|
-"argument"|"eval"|"event"
-{
-    return CompactTypes.RESERVED_KEYWORD;
-}
-
+"await"        { return CompactTypes.AWAIT; }
+"break"        { return CompactTypes.BREAK; }
+"case"         { return CompactTypes.CASE; }
+"catch"        { return CompactTypes.CATCH; }
+"class"        { return CompactTypes.CLASS; }
+"continue"     { return CompactTypes.CONTINUE; }
+"debugger"     { return CompactTypes.DEBUGGER; }
+"delete"       { return CompactTypes.DELETE; }
+"do"           { return CompactTypes.DO; }
+"extends"      { return CompactTypes.EXTENDS; }
+"finally"      { return CompactTypes.FINALLY; }
+"function"     { return CompactTypes.FUNCTION; }
+"interface"    { return CompactTypes.INTERFACE; }
+"let"          { return CompactTypes.LET; }
+"null"         { return CompactTypes.NULL; }
+"package"      { return CompactTypes.PACKAGE; }
+"private"      { return CompactTypes.PRIVATE; }
+"protected"    { return CompactTypes.PROTECTED; }
+"public"       { return CompactTypes.PUBLIC; }
+"static"       { return CompactTypes.STATIC; }
+"super"        { return CompactTypes.SUPER; }
+"switch"       { return CompactTypes.SWITCH; }
+"this"         { return CompactTypes.THIS; }
+"throw"        { return CompactTypes.THROW; }
+"try"          { return CompactTypes.TRY; }
+"typeof"       { return CompactTypes.TYPEOF; }
+"var"          { return CompactTypes.VAR; }
+"void"         { return CompactTypes.VOID; }
+"while"        { return CompactTypes.WHILE; }
+"with"         { return CompactTypes.WITH; }
+"yield"        { return CompactTypes.YIELD; }
+"argument"     { return CompactTypes.ARGUMENT; }
+"eval"         { return CompactTypes.EVAL; }
+"event"        { return CompactTypes.EVENT; }
+"in"           { return CompactTypes.IN; }
+"instanceof"   { return CompactTypes.INSTANCEOF; }
 /* ========================================================= */
 /* Literals                                                   */
 /* ========================================================= */

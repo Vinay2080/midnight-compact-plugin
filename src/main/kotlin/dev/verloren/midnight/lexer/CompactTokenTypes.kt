@@ -188,14 +188,7 @@ object CompactTokenTypes {
 
 //    @JvmField
 //    val IDENTIFIER = CompactTypes.IDENTIFIER
-
-    // =========================================================
-    // Reserved Keywords
-    // =========================================================
-
-    @JvmField
-    val RESERVED_KEYWORD: IElementType? = CompactTypes.RESERVED_KEYWORD
-
+//
     // =========================================================
     // Operators
     // =========================================================

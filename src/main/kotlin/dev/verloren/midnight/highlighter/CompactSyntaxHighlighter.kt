@@ -57,9 +57,6 @@ class CompactSyntaxHighlighter : SyntaxHighlighterBase() {
                 CompactTokenTypes.EMIT ->
                     KEYWORD
 
-                CompactTokenTypes.RESERVED_KEYWORD ->
-                    RESERVED_KEYWORD
-
                 /* ===================================================== */
                 /* Types */
                 /* ===================================================== */

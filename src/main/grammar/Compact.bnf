@@ -85,17 +85,58 @@
     COMMA            = ","
     SEMICOLON        = ";"
     HASH             = "#"
+    AWAIT          = "await"
+    BREAK          = "break"
+    CASE           = "case"
+    CATCH          = "catch"
+    CLASS          = "class"
+    CONTINUE       = "continue"
+    DEBUGGER       = "debugger"
+    DELETE         = "delete"
+    DO             = "do"
+    EXTENDS        = "extends"
+    FINALLY        = "finally"
+    FUNCTION       = "function"
+    INTERFACE      = "interface"
+    LET            = "let"
+    NULL           = "null"
+    PACKAGE        = "package"
+    PRIVATE        = "private"
+    PROTECTED      = "protected"
+    PUBLIC         = "public"
+    STATIC         = "static"
+    SUPER          = "super"
+    SWITCH         = "switch"
+    THIS           = "this"
+    THROW          = "throw"
+    TRY            = "try"
+    TYPEOF         = "typeof"
+    VAR            = "var"
+    VOID           = "void"
+    WHILE          = "while"
+    WITH           = "with"
+    YIELD          = "yield"
+    ARGUMENT       = "argument"
+    EVAL           = "eval"
+    EVENT          = "event"
+    IN             = "in"
+    INSTANCEOF     = "instanceof"
   ]
 }
 
 // ─── Top-level ───────────────────────────────────────────────────────────────
 // Translated from: (Compact (program) [program :: src (K* program-element) eof => ...])
 // `src` and `=> lambda` are semantic/AST artifacts — omitted.
-// K* = zero-or-more; eof = EOF token.
+// K* = zero-or-more; eof = Grammar-Kit's built-in <<eof>> parser predicate.
 
 root ::= program
 
-program ::= program_element* EOF
+program ::= program_element* <<eof>> {recoverWhile=program_recover}
+
+private program_recover ::= !<<eof>> !(
+    PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
+  | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT
+)
 
 // ─── Program elements ────────────────────────────────────────────────────────
 // Translated from: (Program-element (program-element) [...])
@@ -126,7 +167,7 @@ program_element ::=
 //   [pragma :: src (KEYWORD pragma) id version-expr #\; => ...])
 // `src`, token-value checks, and lambda body are semantic artifacts — omitted.
 
-pragma_form ::= PRAGMA IDENTIFIER version_expr SEMICOLON
+pragma_form ::= PRAGMA IDENTIFIER version_expr SEMICOLON {pin=1}
 
 // ─── Version expressions (operator-precedence chain) ─────────────────────────
 // Translated from: (Version-expression (version-expr) ...)
@@ -148,17 +189,15 @@ version_term ::= version_atom                        // version-term-atom
                | GT      version_atom                // version-term-gt   (#\>)
                | LPAREN  version_expr  RPAREN        // version-term-parens
 
-// TODO: translate version_atom (Version-Atom production not yet provided)
-// version_atom handles bare nat and version literals.
 version_atom ::= VERSION_LITERAL
-               | DECIMAL_LITERAL
+               | nat_literal
 
 // ─── Include ─────────────────────────────────────────────────────────────────
 // Translated from: (Include (include-form)
 //   [include :: src (KEYWORD include) file #\; => ...])
 // `file` is the `file` terminal → STRING_LITERAL in the lexer.
 
-include_form ::= INCLUDE STRING_LITERAL SEMICOLON
+include_form ::= INCLUDE STRING_LITERAL SEMICOLON {pin=1}
 
 // ─── Module definition ───────────────────────────────────────────────────────
 // Translated from: (Module-definition (module-definition)
@@ -168,7 +207,10 @@ include_form ::= INCLUDE STRING_LITERAL SEMICOLON
 // K*        → *     (zero-or-more)
 // module-name is the `module-name` terminal → IDENTIFIER in the lexer.
 
-module_definition ::= EXPORT? MODULE IDENTIFIER gparams? LBRACE program_element* RBRACE
+module_definition ::= EXPORT? MODULE IDENTIFIER gparams? LBRACE program_element* RBRACE {pin=2 recoverWhile=module_recover}
+
+private module_recover ::= !<<eof>> !(RBRACE | PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
+  | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT)
 
 // ─── Generic parameter list ───────────────────────────────────────────────────
 // Translated from: (Generic-parameter-list (gparams)
@@ -176,7 +218,9 @@ module_definition ::= EXPORT? MODULE IDENTIFIER gparams? LBRACE program_element*
 // SEP* x #\, #t → (x (COMMA x)* COMMA?)?  — zero-or-more comma-separated,
 //                  trailing comma allowed (#t), whole list may be empty.
 
-gparams ::= LT (generic_param (COMMA generic_param)* COMMA?)? GT
+gparams ::= LT generic_param_list? GT {pin=1}
+
+private generic_param_list ::= generic_param (COMMA generic_param)* COMMA?
 
 // ─── Generic parameter ────────────────────────────────────────────────────────
 // Translated from: (Generic-parameter (generic-param)
@@ -197,14 +241,16 @@ generic_param ::= HASH IDENTIFIER   // generic-param-nat  (#-prefixed, nat-value
 //                          #\; => ...])
 // OPT x #f → x?   import-selection comes BEFORE import-name per source order.
 
-import_form ::= IMPORT import_selection? import_name gargs? import_prefix? SEMICOLON
+import_form ::= IMPORT import_selection? import_name gargs? import_prefix? SEMICOLON {pin=1}
 
 // Translated from: (Import-selection (import-selection)
 //   [import-selection :: #\{ (SEP* import-element #\, #t) #\} (KEYWORD from) => ...])
 // SEP* with trailing (#t) → (import_element (COMMA import_element)* COMMA?)?
 // Note: KEYWORD from follows the closing brace — it is part of this rule.
 
-import_selection ::= LBRACE (import_element (COMMA import_element)* COMMA?)? RBRACE FROM
+import_selection ::= LBRACE import_element_list? RBRACE FROM {pin=1}
+
+private import_element_list ::= import_element (COMMA import_element)* COMMA?
 
 // Translated from: (Import-element (import-element)
 //   [import-element-name   :: src id => ...]           → bare identifier
@@ -231,12 +277,14 @@ import_prefix ::= PREFIX IDENTIFIER
 //   [generic-args :: #\< (SEP* garg #\, #t) #\> => ...])
 // SEP* with trailing (#t) → (garg (COMMA garg)* COMMA?)?
 
-gargs ::= LT (garg (COMMA garg)* COMMA?)? GT
+gargs ::= LT generic_arg_list? GT
+
+private generic_arg_list ::= garg (COMMA garg)* COMMA?
 
 // Translated from: (Generic-argument (garg)
 //   [generic-argument-size :: src nat  => ...]  → nat_literal
 //   [generic-argument-type :: src type => ...]  → type
-// nat_literal alternative first: a bare decimal could match either,
+// nat_literal alternative first: a bare field literal could match either,
 // but nat_literal is more specific so it wins under first-match.
 
 garg ::= nat_literal   // generic-argument-size
@@ -249,7 +297,9 @@ garg ::= nat_literal   // generic-argument-size
 // SEP* id #\, #t → (IDENTIFIER (COMMA IDENTIFIER)* COMMA?)? — ids directly, no wrapper node.
 // OPT #\; #f     → SEMICOLON?  (trailing semicolon is optional).
 
-export_form ::= EXPORT LBRACE (IDENTIFIER (COMMA IDENTIFIER)* COMMA?)? RBRACE SEMICOLON?
+export_form ::= EXPORT LBRACE export_name_list? RBRACE SEMICOLON? {pin=2}
+
+private export_name_list ::= IDENTIFIER (COMMA IDENTIFIER)* COMMA?
 
 
 // ─── Structure declaration ─────────────────────────────────────────────────────────
@@ -261,9 +311,11 @@ export_form ::= EXPORT LBRACE (IDENTIFIER (COMMA IDENTIFIER)* COMMA?)? RBRACE SE
 // struct-name → IDENTIFIER;  OPT x #f → x?
 // typed-id is not yet translated — see stub at bottom of file.
 
-struct_declaration ::=
-    EXPORT? STRUCT IDENTIFIER gparams? LBRACE (typed_id (SEMICOLON typed_id)* SEMICOLON?)? RBRACE SEMICOLON?   // structure-declaration/semicolons
-  | EXPORT? STRUCT IDENTIFIER gparams? LBRACE (typed_id (COMMA    typed_id)* COMMA?   )? RBRACE SEMICOLON?   // structure-declaration/commas
+struct_declaration ::= EXPORT? STRUCT IDENTIFIER gparams? LBRACE struct_body? RBRACE SEMICOLON? {pin=2 recoverWhile=declaration_recover}
+
+private struct_body ::=
+    typed_id (SEMICOLON typed_id)* SEMICOLON?   // structure-declaration/semicolons
+  | typed_id (COMMA typed_id)* COMMA?           // structure-declaration/commas
 
 // ─── Enum declaration ──────────────────────────────────────────────────────────────
 // Translated from: (Enum-declaration (enum-declaration)
@@ -272,7 +324,9 @@ struct_declaration ::=
 // SEP+ → one-or-more: IDENTIFIER (COMMA IDENTIFIER)* COMMA?
 // enum-name → IDENTIFIER
 
-enum_declaration ::= EXPORT? ENUM IDENTIFIER LBRACE IDENTIFIER (COMMA IDENTIFIER)* COMMA? RBRACE SEMICOLON?
+enum_declaration ::= EXPORT? ENUM IDENTIFIER LBRACE enum_member_list RBRACE SEMICOLON? {pin=2 recoverWhile=declaration_recover}
+
+private enum_member_list ::= IDENTIFIER (COMMA IDENTIFIER)* COMMA?
 
 // ─── External contract declaration ──────────────────────────────────────────────
 // Translated from: (External-contract-declaration (contract-declaration))
@@ -283,9 +337,11 @@ enum_declaration ::= EXPORT? ENUM IDENTIFIER LBRACE IDENTIFIER (COMMA IDENTIFIER
 // i.e. external_contract_circuit, NOT the top-level circuit_definition.
 // contract-name → IDENTIFIER;  OPT x #f → x?
 
-contract_declaration ::=
-    EXPORT? CONTRACT IDENTIFIER LBRACE (external_contract_circuit (SEMICOLON external_contract_circuit)* SEMICOLON?)? RBRACE SEMICOLON?   // contract-declaration/semicolons
-  | EXPORT? CONTRACT IDENTIFIER LBRACE (external_contract_circuit (COMMA    external_contract_circuit)* COMMA?   )? RBRACE SEMICOLON?   // contract-declaration/commas
+contract_declaration ::= EXPORT? CONTRACT IDENTIFIER LBRACE contract_body? RBRACE SEMICOLON? {pin=2 recoverWhile=declaration_recover}
+
+private contract_body ::=
+    external_contract_circuit (SEMICOLON external_contract_circuit)* SEMICOLON?   // contract-declaration/semicolons
+  | external_contract_circuit (COMMA external_contract_circuit)* COMMA?           // contract-declaration/commas
 
 // ─── External contract circuit ────────────────────────────────────────────────
 // Translated from: (External-contract-circuit (circuit-declaration)
@@ -293,14 +349,14 @@ contract_declaration ::=
 //                                     id simple-parameter-list #\: type => ...])
 // No semicolon — separator is handled by the enclosing contract_declaration rule.
 
-external_contract_circuit ::= PURE? CIRCUIT IDENTIFIER simple_parameter_list COLON type_expression
+external_contract_circuit ::= PURE? CIRCUIT IDENTIFIER simple_parameter_list COLON type_expression {pin=2}
 
 // ─── Contract-implements declaration ──────────────────────────────────────────────
 // Translated from: (Contract-Implements-declaration (implements-declaration)
 //   [contract-implements-declaration :: src (KEYWORD contract)
 //                                        (KEYWORD implements) type #\; => ...])
 
-implements_declaration ::= CONTRACT IMPLEMENTS type_expression SEMICOLON
+implements_declaration ::= CONTRACT IMPLEMENTS type_expression SEMICOLON {pin=2}
 
 // ─── Type alias declaration ──────────────────────────────────────────────────────────
 // Translated from: (Type-declaration (type-alias-declaration)
@@ -311,7 +367,7 @@ implements_declaration ::= CONTRACT IMPLEMENTS type_expression SEMICOLON
 //                        (OPT gparams #f) #\= type #\; => ...])
 // type-name → IDENTIFIER;  #\= → ASSIGN;  OPT (KEYWORD new) #f → NEW?
 
-type_alias_declaration ::= EXPORT? NEW? TYPE IDENTIFIER gparams? ASSIGN type_expression SEMICOLON
+type_alias_declaration ::= EXPORT? NEW? TYPE IDENTIFIER gparams? ASSIGN type_expression SEMICOLON {pin=3}
 
 // ─── Ledger declaration ────────────────────────────────────────────────────────
 // Translated from: (Ledger-declaration (ledger-declaration)
@@ -320,7 +376,7 @@ type_alias_declaration ::= EXPORT? NEW? TYPE IDENTIFIER gparams? ASSIGN type_exp
 //                                 (OPT (KEYWORD sealed) #f)
 //                                 (KEYWORD ledger) id #\: type #\; => ...])
 
-ledger_declaration ::= EXPORT? SEALED? LEDGER IDENTIFIER COLON type_expression SEMICOLON
+ledger_declaration ::= EXPORT? SEALED? LEDGER IDENTIFIER COLON type_expression SEMICOLON {pin=3}
 
 // ─── External declaration ─────────────────────────────────────────────────────
 // Translated from Lsrc.json: (External-Declaration (edecl)
@@ -328,7 +384,7 @@ ledger_declaration ::= EXPORT? SEALED? LEDGER IDENTIFIER COLON type_expression S
 // The source grammar represents this as `external` with optional export,
 // generic parameters, a simple argument list, and a required return type.
 
-external_declaration ::= EXPORT? EXTERNAL IDENTIFIER gparams? simple_parameter_list COLON type_expression SEMICOLON
+external_declaration ::= EXPORT? EXTERNAL IDENTIFIER gparams? simple_parameter_list COLON type_expression SEMICOLON {pin=2}
 
 // ─── Witness declaration ────────────────────────────────────────────────────────
 // Translated from: (Witness-declaration (witness-declaration)
@@ -339,14 +395,14 @@ external_declaration ::= EXPORT? EXTERNAL IDENTIFIER gparams? simple_parameter_l
 //                           simple-parameter-list #\: type #\; => ...])
 // simple-parameter-list → simple_parameter_list (not yet translated — see stub below).
 
-witness_declaration ::= EXPORT? WITNESS IDENTIFIER gparams? simple_parameter_list COLON type_expression SEMICOLON
+witness_declaration ::= EXPORT? WITNESS IDENTIFIER gparams? simple_parameter_list COLON type_expression SEMICOLON {pin=2}
 
 // ─── Constructor definition ───────────────────────────────────────────────────────
 // Translated from: (Constructor (constructor-definition)
 //   [ledger-constructor :: src (KEYWORD constructor) pattern-parameter-list block => ...])
 // pattern-parameter-list → pattern_parameter_list (not yet translated — see stub below).
 
-constructor_definition ::= CONSTRUCTOR pattern_parameter_list block
+constructor_definition ::= CONSTRUCTOR pattern_parameter_list block {pin=1}
 
 // ─── Circuit definition ──────────────────────────────────────────────────────────
 // Translated from: (Circuit-definition (circuit-definition)
@@ -359,7 +415,10 @@ constructor_definition ::= CONSTRUCTOR pattern_parameter_list block
 // function-name terminal → IDENTIFIER in the lexer.
 // Return type is `#\: type` (not optional — no OPT wrapper in source).
 
-circuit_definition ::= EXPORT? PURE? CIRCUIT IDENTIFIER gparams? pattern_parameter_list COLON type_expression block
+circuit_definition ::= EXPORT? PURE? CIRCUIT IDENTIFIER gparams? pattern_parameter_list COLON type_expression block {pin=3}
+
+private declaration_recover ::= !<<eof>> !(RBRACE | SEMICOLON | PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT
+  | ENUM | CONTRACT | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT)
 
 // ─── Typed identifier ──────────────────────────────────────────────────────────────
 // Translated from: (Typed-identifier (typed-id)
@@ -372,7 +431,9 @@ typed_id ::= IDENTIFIER COLON type_expression
 //   [parameter-list :: #\( (SEP* typed-id #\, #t) #\) => ...])
 // SEP* typed-id #\, #t → (typed_id (COMMA typed_id)* COMMA?)?
 
-simple_parameter_list ::= LPAREN (typed_id (COMMA typed_id)* COMMA?)? RPAREN
+simple_parameter_list ::= LPAREN typed_id_list? RPAREN {pin=1}
+
+private typed_id_list ::= typed_id (COMMA typed_id)* COMMA?
 
 // ─── Typed pattern ───────────────────────────────────────────────────────────────
 // Translated from: (Typed-pattern (typed-pattern)
@@ -395,7 +456,9 @@ typed_pattern ::= pattern COLON type_expression
 pattern ::=
     IDENTIFIER                                                    // pattern-id
   | LBRACKET (pattern? (COMMA pattern?)* COMMA?)? RBRACKET        // pattern-tuple  (OPT per slot)
-  | LBRACE (pattern_struct_elt (COMMA pattern_struct_elt)* COMMA?)? RBRACE   // pattern-struct
+  | LBRACE pattern_struct_elt_list? RBRACE                        // pattern-struct
+
+private pattern_struct_elt_list ::= pattern_struct_elt (COMMA pattern_struct_elt)* COMMA?
 
 // ─── Pattern struct element ─────────────────────────────────────────────────────
 // Translated from: (Pattern-struct-element (pattern-struct-elt)
@@ -412,7 +475,9 @@ pattern_struct_elt ::=
 //   [pattern-parameter-list :: #\( (SEP* typed-pattern #\, #t) #\) => ...])
 // SEP* typed-pattern #\, #t → (typed_pattern (COMMA typed_pattern)* COMMA?)?
 
-pattern_parameter_list ::= LPAREN (typed_pattern (COMMA typed_pattern)* COMMA?)? RPAREN
+pattern_parameter_list ::= LPAREN typed_pattern_list? RPAREN {pin=1}
+
+private typed_pattern_list ::= typed_pattern (COMMA typed_pattern)* COMMA?
 
 // ─── Shared sub-rules ────────────────────────────────────────────────────────
 
@@ -450,34 +515,37 @@ tref ::= IDENTIFIER gargs?
 
 // ─── Type size ────────────────────────────────────────────────────────────────────────
 // Translated from: (Type-size (tsize start end)
-//   [type-size-field    :: src nat => ...]  → DECIMAL_LITERAL  (nat terminal)
+//   [type-size-field    :: src nat => ...]  → nat_literal (field terminal)
 //   [type-size-type-ref :: src id  => ...]  → IDENTIFIER       (id terminal)
 // Used inside Uint<...>, Bytes<...>, Vector<...> to express size constraints.
 
-tsize ::= DECIMAL_LITERAL   // type-size-field    (a literal field count / bit width)
+tsize ::= nat_literal       // type-size-field    (a literal field count / bit width)
         | IDENTIFIER        // type-size-type-ref (a type-variable size)
 
 // ─── Literals (nat_literal kept for any remaining internal uses) ─────────────────
 
-private nat_literal ::= DECIMAL_LITERAL
+private nat_literal ::= DECIMAL_LITERAL | HEX_LITERAL | BINARY_LITERAL | OCTAL_LITERAL
 
 // ─── Block ───────────────────────────────────────────────────────────────────
 // Translated from: (Block (block)
 //   [block :: src #\{ (K* stmt) #\} => ...])
 // K* stmt → stmt*
 
-block ::= LBRACE stmt* RBRACE
+block ::= LBRACE stmt* RBRACE {pin=1 recoverWhile=block_recover}
+
+private block_recover ::= !<<eof>> !(RBRACE | CONST | IF | FOR | RETURN | LBRACE)
 
 // ─── Statement ───────────────────────────────────────────────────────────────
 // Translated from: (Statement (stmt)
 //   [statement-one-armed-if :: src (KEYWORD if) #\( expr-seq #\) stmt => ...]
 //   [#f :: stmt0 => values])
-// One-armed if is tried first; stmt0 is the fallthrough alternative.
+// stmt0 is tried first so the two-armed if alternative can claim a following `else`;
+// one-armed if remains the fallback.
 // NOTE: the consequent of one-armed-if is `stmt` (can nest), while two-armed
 // if (in stmt0) uses `stmt0` for its consequent — this resolves dangling-else.
 
-stmt ::= IF LPAREN expr_seq RPAREN stmt   // statement-one-armed-if
-       | stmt0                            // fallthrough
+stmt ::= stmt0                            // fallthrough, including two-armed if
+       | IF LPAREN expr_seq RPAREN stmt   // statement-one-armed-if
 
 // ─── Statement0 ──────────────────────────────────────────────────────────────
 // Translated from: (Statement0 (stmt0) [...])
@@ -516,12 +584,13 @@ expr_seq ::= expr (COMMA expr)+   // expr-seq-many  (≥ 2 expressions)
 // NOTE: conditional (ternary) placed before assignment to avoid ambiguity
 // when the middle branch itself is an assignment expression.
 
-expr ::=
-    expr0 QUESTION expr COLON expr   // conditional expression  (ternary)
-  | expr0 ASSIGN      expr           // assignment expression   (=)
-  | expr0 PLUS_ASSIGN expr           // increment expression    (+=)
-  | expr0 MINUS_ASSIGN expr          // decrement expression    (-=)
-  | expr0                            // fallthrough
+expr ::= expr0 expr_tail?
+
+private expr_tail ::=
+    QUESTION expr COLON expr   // conditional expression  (ternary)
+  | ASSIGN      expr           // assignment expression   (=)
+  | PLUS_ASSIGN expr           // increment expression    (+=)
+  | MINUS_ASSIGN expr          // decrement expression    (-=)
 
 // ─── Expression0: || ─────────────────────────────────────────────────────────
 // Translated from: (Expression0 (expr0) [...])
@@ -543,11 +612,13 @@ private expr2 ::= expr3 ((EQEQ | NOTEQ) expr3)*
 // NOTE: both sides are `expr4` (NOT `expr3`) — comparisons are intentionally
 // non-associative in Compact (chaining `a < b < c` does not parse).
 
-expr3 ::= expr4 LT  expr4   // <  expression  (non-associative)
-        | expr4 LTE expr4   // <= expression  (non-associative)
-        | expr4 GTE expr4   // >= expression  (non-associative)
-        | expr4 GT  expr4   // >  expression  (non-associative)
-        | expr4              // fallthrough
+expr3 ::= expr4 comparison_tail?
+
+private comparison_tail ::=
+    LT  expr4   // <  expression  (non-associative)
+  | LTE expr4   // <= expression  (non-associative)
+  | GTE expr4   // >= expression  (non-associative)
+  | GT  expr4   // >  expression  (non-associative)
 
 // ─── Expression4: cast ───────────────────────────────────────────────────────
 // Translated from: (Expression4 (expr4) [...])
@@ -573,10 +644,12 @@ expr7 ::= NOT expr7           // not expression (!)
 // ─── Expression8: Member and index ───────────────────────────────────────────
 // Translated from: (Expression8 (expr8) [...])
 
-expr8 ::= expr8 LBRACKET expr RBRACKET                                // tuple/vector reference  (expr[expr])
-        | expr8 DOT IDENTIFIER                                        // element reference       (expr.id)
-        | expr8 DOT IDENTIFIER LPAREN (expr (COMMA expr)* COMMA?)? RPAREN   // element call            (expr.id(expr, ...))
-        | expr9                                                       // fallthrough
+expr8 ::= expr9 expr8_suffix*
+
+private expr8_suffix ::=
+      LBRACKET expr RBRACKET
+    | DOT IDENTIFIER LPAREN (expr (COMMA expr)* COMMA?)? RPAREN
+    | DOT IDENTIFIER                                                 // fallthrough
 
 // ─── Expression9: Call ───────────────────────────────────────────────────────
 // Translated from: (Expression9 (expr9) [...])
@@ -591,31 +664,34 @@ expr9 ::= fun LPAREN (expr (COMMA expr)* COMMA?)? RPAREN              // term-ca
 // `term-struct` uses `tref`, not `expr`.
 // `term-bytes` uses `tuple_arg` (in source `bytes-arg` which maps to the same helper).
 
-expr10 ::= MAP LPAREN fun COMMA expr (COMMA expr)* COMMA? RPAREN                        // term-map
-         | FOLD LPAREN fun COMMA expr COMMA expr (COMMA expr)* COMMA? RPAREN            // term-fold
+expr10 ::= MAP LPAREN fun COMMA expr_list RPAREN                                        // term-map
+         | FOLD LPAREN fun COMMA expr COMMA expr_list RPAREN                            // term-fold
          | SLICE LT tsize GT LPAREN expr COMMA expr RPAREN                              // term-slice
-         | LBRACKET (tuple_arg (COMMA tuple_arg)* COMMA?)? RBRACKET                     // term-tuple
-         | BYTES_TYPE LBRACKET (tuple_arg (COMMA tuple_arg)* COMMA?)? RBRACKET          // term-bytes
-         | tref LBRACE (struct_arg (COMMA struct_arg)* COMMA?)? RBRACE                  // term-struct
+         | LBRACKET tuple_arg_list? RBRACKET                                            // term-tuple
+         | BYTES_TYPE LBRACKET tuple_arg_list? RBRACKET                                 // term-bytes
+         | tref LBRACE struct_arg_list? RBRACE                                          // term-struct
          | ASSERT LPAREN expr COMMA STRING_LITERAL RPAREN                               // term-assert
          | EMIT LPAREN expr RPAREN                                                      // term-emit
          | DISCLOSE LPAREN expr RPAREN                                                  // term-disclose
          | term                                                                         // fallthrough
 
+private expr_list ::= expr (COMMA expr)* COMMA?
+
+private tuple_arg_list ::= tuple_arg (COMMA tuple_arg)* COMMA?
+
+private struct_arg_list ::= struct_arg (COMMA struct_arg)* COMMA?
+
 // ─── Term ────────────────────────────────────────────────────────────────────
 // Translated from: (Term (term) [...])
 // All base cases: variables, literals, parenthesis.
-// term-element-field is nat -> DECIMAL_LITERAL. Hex/Binary/Octal kept from old stub for safety.
+// term-element-field is nat -> nat_literal.
 
 term ::= IDENTIFIER                                                    // term-ref
        | TRUE                                                          // term-true
        | FALSE                                                         // term-false
-       | DECIMAL_LITERAL                                               // term-element-field
-       | HEX_LITERAL
-       | BINARY_LITERAL
-       | OCTAL_LITERAL
+       | nat_literal                                                   // term-element-field
        | STRING_LITERAL                                                // term-element-string
-       | PAD LPAREN DECIMAL_LITERAL COMMA STRING_LITERAL RPAREN        // term-element-padded-string
+       | PAD LPAREN nat_literal COMMA STRING_LITERAL RPAREN            // term-element-padded-string
        | DEFAULT LT type_expression GT                                            // term-element-default
        | LPAREN expr_seq RPAREN                                        // term-parenthesized
 
@@ -638,9 +714,10 @@ struct_arg ::= IDENTIFIER COLON expr                                   // struct
 // block and expr alternatives map to arrow-block and arrow-expr.
 
 fun ::= IDENTIFIER gargs?                                                       // function-ref
-      | arrow_parameter_list return_type? ARROW block                           // function-arrow-block
-      | arrow_parameter_list return_type? ARROW expr                            // function-arrow-expr
+      | arrow_function                                                         // function-arrow-block/function-arrow-expr
       | LPAREN fun RPAREN                                                       // parenthesized-function
+
+private arrow_function ::= arrow_parameter_list return_type? ARROW (block | expr)
 
 // ─── Optionally typed pattern ────────────────────────────────────────────────
 // Translated from: (Optionally-typed-pattern (optionally-typed-pattern) [...])
@@ -657,4 +734,6 @@ cbinding ::= optionally_typed_pattern ASSIGN expr
 // ─── Arrow parameter list ────────────────────────────────────────────────────
 // Translated from: (Arrow-parameter-list (arrow-parameter-list) [...])
 
-arrow_parameter_list ::= LPAREN (optionally_typed_pattern (COMMA optionally_typed_pattern)* COMMA?)? RPAREN
+arrow_parameter_list ::= LPAREN optionally_typed_pattern_list? RPAREN {pin=1}
+
+private optionally_typed_pattern_list ::= optionally_typed_pattern (COMMA optionally_typed_pattern)* COMMA?

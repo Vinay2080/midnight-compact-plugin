@@ -31,9 +31,9 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.CompactFileType"
         />
-                <lang.parserDefinition
-                        language="Compact"
-                        implementationClass="dev.verloren.midnight.parser.CompactParserDefinition"/>
+        <lang.parserDefinition
+                language="Compact"
+                implementationClass="dev.verloren.midnight.parser.CompactParserDefinition"/>
 
         <lang.syntaxHighlighterFactory
                 language="Compact"

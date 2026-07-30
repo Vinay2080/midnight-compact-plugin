@@ -1,0 +1,80 @@
+// Missing identifier
+pragma 0.23;
+
+// Missing version expression
+pragma version;
+
+// Missing semicolon
+pragma version 0.23
+
+// Missing atom
+pragma version !;
+
+// Missing atom
+pragma version >;
+
+// Missing atom
+pragma version >=;
+
+// Missing atom
+pragma version <;
+
+// Missing atom
+pragma version <=;
+
+// Missing rhs
+pragma version 0.23 &&;
+
+// Missing lhs
+pragma version && 0.23;
+
+// Missing rhs
+pragma version 0.23 ||;
+
+// Missing lhs
+pragma version || 0.23;
+
+// Empty parens
+pragma version ();
+
+// Missing closing paren
+pragma version (0.23;
+
+// Missing opening paren
+pragma version );
+
+// Nested missing paren
+pragma version ((0.23);
+
+// Invalid operator
+pragma version ==0.23;
+
+// Invalid operator
+pragma version >>>0.23;
+
+// Invalid identifier as atom
+pragma version abc;
+
+// Invalid string
+pragma version "0.23";
+
+// Invalid boolean
+pragma version true;
+
+// Garbage
+pragma version ???;
+
+// Multiple operators
+pragma version >=&&0.23;
+
+// Only operator
+pragma version &&;
+
+// Only NOT
+pragma version !;
+
+// Empty pragma
+pragma;
+
+// Missing everything
+pragma

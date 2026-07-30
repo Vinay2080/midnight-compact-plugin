@@ -1,0 +1,45 @@
+// ===== Basic =====
+pragma version 0.23;
+pragma language_version 0.23;
+
+// ===== Numeric literals =====
+pragma version 42;
+pragma version 0xff;
+pragma version 0b1010;
+pragma version 077;
+
+// ===== Unary operators =====
+pragma version !0.23;
+pragma version <0.23;
+pragma version <=0.23;
+pragma version >0.23;
+pragma version >=0.23;
+
+// ===== Parentheses =====
+pragma version (0.23);
+pragma version (!0.23);
+pragma version (>=0.23);
+
+// ===== AND =====
+pragma version >=0.23 && <0.30;
+pragma version >1 && <10;
+pragma version !0.23 && >=1;
+
+// ===== OR =====
+pragma version >=0.23 || <0.10;
+pragma version 0.23 || 0.24;
+
+// ===== Mixed =====
+pragma version (>=0.23 && <0.30);
+pragma version (>=0.23 || <0.10);
+pragma version (>=0.23 && <0.30) || !0.40;
+
+// ===== Nested =====
+pragma version (((0.23)));
+pragma version ((((>=0.23))));
+pragma version (((>=0.23 && <0.30)));
+
+// ===== Stress =====
+pragma version >=1 && >=2 && >=3 && >=4 && >=5 && >=6 && >=7;
+pragma version >=1 || >=2 || >=3 || >=4 || >=5 || >=6 || >=7;
+pragma version (((((((((((0.23)))))))))));
