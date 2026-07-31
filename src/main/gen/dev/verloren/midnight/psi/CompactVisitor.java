@@ -1,18 +1,14 @@
 // This is a generated file. Not intended for manual editing.
 package dev.verloren.midnight.psi;
 
-import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.PsiElement;
 
 public class CompactVisitor extends PsiElementVisitor {
 
   public void visitArrowParameterList(@NotNull CompactArrowParameterList o) {
     visitPsiElement(o);
-  }
-
-  public void visitPsiElement(@NotNull PsiElement o) {
-    visitElement(o);
   }
 
   public void visitBlock(@NotNull CompactBlock o) {
@@ -229,6 +225,10 @@ public class CompactVisitor extends PsiElementVisitor {
 
   public void visitWitnessDeclaration(@NotNull CompactWitnessDeclaration o) {
     visitPsiElement(o);
+  }
+
+  public void visitPsiElement(@NotNull PsiElement o) {
+    visitElement(o);
   }
 
 }

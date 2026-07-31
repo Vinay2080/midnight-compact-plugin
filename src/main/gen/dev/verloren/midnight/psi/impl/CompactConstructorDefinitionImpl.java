@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package dev.verloren.midnight.psi.impl;
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import java.util.List;
+import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import dev.verloren.midnight.psi.CompactBlock;
-import dev.verloren.midnight.psi.CompactConstructorDefinition;
-import dev.verloren.midnight.psi.CompactPatternParameterList;
-import dev.verloren.midnight.psi.CompactVisitor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.util.PsiTreeUtil;
+import static dev.verloren.midnight.psi.CompactTypes.*;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import dev.verloren.midnight.psi.*;
 
 public class CompactConstructorDefinitionImpl extends ASTWrapperPsiElement implements CompactConstructorDefinition {
 
@@ -17,14 +17,14 @@ public class CompactConstructorDefinitionImpl extends ASTWrapperPsiElement imple
     super(node);
   }
 
-  @Override
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof CompactVisitor) accept((CompactVisitor) visitor);
-    else super.accept(visitor);
-  }
-
   public void accept(@NotNull CompactVisitor visitor) {
     visitor.visitConstructorDefinition(this);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof CompactVisitor) accept((CompactVisitor)visitor);
+    else super.accept(visitor);
   }
 
   @Override

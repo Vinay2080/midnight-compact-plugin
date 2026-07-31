@@ -1,9 +1,9 @@
 // This is a generated file. Not intended for manual editing.
 package dev.verloren.midnight.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
 import dev.verloren.midnight.lexer.CompactTokenType;
 import dev.verloren.midnight.psi.impl.*;
 
@@ -190,113 +190,167 @@ public interface CompactTypes {
       IElementType type = node.getElementType();
       if (type == ARROW_PARAMETER_LIST) {
         return new CompactArrowParameterListImpl(node);
-      } else if (type == BLOCK) {
+      }
+      else if (type == BLOCK) {
         return new CompactBlockImpl(node);
-      } else if (type == CBINDING) {
+      }
+      else if (type == CBINDING) {
         return new CompactCbindingImpl(node);
-      } else if (type == CIRCUIT_DEFINITION) {
+      }
+      else if (type == CIRCUIT_DEFINITION) {
         return new CompactCircuitDefinitionImpl(node);
-      } else if (type == CONSTRUCTOR_DEFINITION) {
+      }
+      else if (type == CONSTRUCTOR_DEFINITION) {
         return new CompactConstructorDefinitionImpl(node);
-      } else if (type == CONTRACT_DECLARATION) {
+      }
+      else if (type == CONTRACT_DECLARATION) {
         return new CompactContractDeclarationImpl(node);
-      } else if (type == ENUM_DECLARATION) {
+      }
+      else if (type == ENUM_DECLARATION) {
         return new CompactEnumDeclarationImpl(node);
-      } else if (type == EXPORT_FORM) {
+      }
+      else if (type == EXPORT_FORM) {
         return new CompactExportFormImpl(node);
-      } else if (type == EXPR) {
+      }
+      else if (type == EXPR) {
         return new CompactExprImpl(node);
-      } else if (type == EXPR_10) {
+      }
+      else if (type == EXPR_10) {
         return new CompactExpr10Impl(node);
-      } else if (type == EXPR_3) {
+      }
+      else if (type == EXPR_3) {
         return new CompactExpr3Impl(node);
-      } else if (type == EXPR_7) {
+      }
+      else if (type == EXPR_7) {
         return new CompactExpr7Impl(node);
-      } else if (type == EXPR_8) {
+      }
+      else if (type == EXPR_8) {
         return new CompactExpr8Impl(node);
-      } else if (type == EXPR_9) {
+      }
+      else if (type == EXPR_9) {
         return new CompactExpr9Impl(node);
-      } else if (type == EXPR_SEQ) {
+      }
+      else if (type == EXPR_SEQ) {
         return new CompactExprSeqImpl(node);
-      } else if (type == EXTERNAL_CONTRACT_CIRCUIT) {
+      }
+      else if (type == EXTERNAL_CONTRACT_CIRCUIT) {
         return new CompactExternalContractCircuitImpl(node);
-      } else if (type == EXTERNAL_DECLARATION) {
+      }
+      else if (type == EXTERNAL_DECLARATION) {
         return new CompactExternalDeclarationImpl(node);
-      } else if (type == FUN) {
+      }
+      else if (type == FUN) {
         return new CompactFunImpl(node);
-      } else if (type == GARG) {
+      }
+      else if (type == GARG) {
         return new CompactGargImpl(node);
-      } else if (type == GARGS) {
+      }
+      else if (type == GARGS) {
         return new CompactGargsImpl(node);
-      } else if (type == GENERIC_PARAM) {
+      }
+      else if (type == GENERIC_PARAM) {
         return new CompactGenericParamImpl(node);
-      } else if (type == GPARAMS) {
+      }
+      else if (type == GPARAMS) {
         return new CompactGparamsImpl(node);
-      } else if (type == IMPLEMENTS_DECLARATION) {
+      }
+      else if (type == IMPLEMENTS_DECLARATION) {
         return new CompactImplementsDeclarationImpl(node);
-      } else if (type == IMPORT_ELEMENT) {
+      }
+      else if (type == IMPORT_ELEMENT) {
         return new CompactImportElementImpl(node);
-      } else if (type == IMPORT_FORM) {
+      }
+      else if (type == IMPORT_FORM) {
         return new CompactImportFormImpl(node);
-      } else if (type == IMPORT_NAME) {
+      }
+      else if (type == IMPORT_NAME) {
         return new CompactImportNameImpl(node);
-      } else if (type == IMPORT_PREFIX) {
+      }
+      else if (type == IMPORT_PREFIX) {
         return new CompactImportPrefixImpl(node);
-      } else if (type == IMPORT_SELECTION) {
+      }
+      else if (type == IMPORT_SELECTION) {
         return new CompactImportSelectionImpl(node);
-      } else if (type == INCLUDE_FORM) {
+      }
+      else if (type == INCLUDE_FORM) {
         return new CompactIncludeFormImpl(node);
-      } else if (type == LEDGER_DECLARATION) {
+      }
+      else if (type == LEDGER_DECLARATION) {
         return new CompactLedgerDeclarationImpl(node);
-      } else if (type == MODULE_DEFINITION) {
+      }
+      else if (type == MODULE_DEFINITION) {
         return new CompactModuleDefinitionImpl(node);
-      } else if (type == OPTIONALLY_TYPED_PATTERN) {
+      }
+      else if (type == OPTIONALLY_TYPED_PATTERN) {
         return new CompactOptionallyTypedPatternImpl(node);
-      } else if (type == PATTERN) {
+      }
+      else if (type == PATTERN) {
         return new CompactPatternImpl(node);
-      } else if (type == PATTERN_PARAMETER_LIST) {
+      }
+      else if (type == PATTERN_PARAMETER_LIST) {
         return new CompactPatternParameterListImpl(node);
-      } else if (type == PATTERN_STRUCT_ELT) {
+      }
+      else if (type == PATTERN_STRUCT_ELT) {
         return new CompactPatternStructEltImpl(node);
-      } else if (type == PRAGMA_FORM) {
+      }
+      else if (type == PRAGMA_FORM) {
         return new CompactPragmaFormImpl(node);
-      } else if (type == PROGRAM) {
+      }
+      else if (type == PROGRAM) {
         return new CompactProgramImpl(node);
-      } else if (type == PROGRAM_ELEMENT) {
+      }
+      else if (type == PROGRAM_ELEMENT) {
         return new CompactProgramElementImpl(node);
-      } else if (type == RETURN_TYPE) {
+      }
+      else if (type == RETURN_TYPE) {
         return new CompactReturnTypeImpl(node);
-      } else if (type == SIMPLE_PARAMETER_LIST) {
+      }
+      else if (type == SIMPLE_PARAMETER_LIST) {
         return new CompactSimpleParameterListImpl(node);
-      } else if (type == STMT) {
+      }
+      else if (type == STMT) {
         return new CompactStmtImpl(node);
-      } else if (type == STMT_0) {
+      }
+      else if (type == STMT_0) {
         return new CompactStmt0Impl(node);
-      } else if (type == STRUCT_ARG) {
+      }
+      else if (type == STRUCT_ARG) {
         return new CompactStructArgImpl(node);
-      } else if (type == STRUCT_DECLARATION) {
+      }
+      else if (type == STRUCT_DECLARATION) {
         return new CompactStructDeclarationImpl(node);
-      } else if (type == TERM) {
+      }
+      else if (type == TERM) {
         return new CompactTermImpl(node);
-      } else if (type == TREF) {
+      }
+      else if (type == TREF) {
         return new CompactTrefImpl(node);
-      } else if (type == TSIZE) {
+      }
+      else if (type == TSIZE) {
         return new CompactTsizeImpl(node);
-      } else if (type == TUPLE_ARG) {
+      }
+      else if (type == TUPLE_ARG) {
         return new CompactTupleArgImpl(node);
-      } else if (type == TYPED_ID) {
+      }
+      else if (type == TYPED_ID) {
         return new CompactTypedIdImpl(node);
-      } else if (type == TYPED_PATTERN) {
+      }
+      else if (type == TYPED_PATTERN) {
         return new CompactTypedPatternImpl(node);
-      } else if (type == TYPE_ALIAS_DECLARATION) {
+      }
+      else if (type == TYPE_ALIAS_DECLARATION) {
         return new CompactTypeAliasDeclarationImpl(node);
-      } else if (type == TYPE_EXPRESSION) {
+      }
+      else if (type == TYPE_EXPRESSION) {
         return new CompactTypeExpressionImpl(node);
-      } else if (type == VERSION_ATOM) {
+      }
+      else if (type == VERSION_ATOM) {
         return new CompactVersionAtomImpl(node);
-      } else if (type == VERSION_TERM) {
+      }
+      else if (type == VERSION_TERM) {
         return new CompactVersionTermImpl(node);
-      } else if (type == WITNESS_DECLARATION) {
+      }
+      else if (type == WITNESS_DECLARATION) {
         return new CompactWitnessDeclarationImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);

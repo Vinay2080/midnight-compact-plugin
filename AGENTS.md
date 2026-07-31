@@ -108,12 +108,12 @@ Implement Go To Declaration using Compact `PsiReference` support.
 
 ### 2026-07-29
 
-- Improved `src/main/grammar/Compact.bnf` against `references/compact-grammar.mdx`, cross-checked with
+- Improved `src/main/grammar/Reference.bnf` against `references/compact-grammar.mdx`, cross-checked with
   `references/lsrc.json`: factored repeated Grammar-Kit rules, added targeted pins/recovery, preserved accepted syntax,
   and verified with `.\gradlew.bat build` from repo root.
 - Synchronized the plugin with the `Lsrc.json` `External-Declaration` (`edecl`) and `Program-Element` sections by adding
   handwritten support for source `external` declarations.
-- Changed `Compact.bnf` and `Compact.flex` so `external` is a real Compact keyword and parses as
+- Changed `Reference.bnf` and `Compact.flex` so `external` is a real Compact keyword and parses as
   `export? external function-name type-param* arg* type` using the existing generic parameter, simple parameter list,
   and return type syntax; Kotlin token/highlighter wrappers were left unchanged until generated `CompactTypes` is
   refreshed.
@@ -134,14 +134,14 @@ Implement Go To Declaration using Compact `PsiReference` support.
   formatter.
 - Debugged a Grammar-Kit parser failure where `export enum ...` after an import caused the parser to report
   `'import' unexpected`: generated `export_form` was pinned on `EXPORT`, so it committed before `enum_declaration`
-  could parse exported declarations. Changed `export_form` in `Compact.bnf` to pin after `EXPORT LBRACE` (`pin=2`).
+  could parse exported declarations. Changed `export_form` in `Reference.bnf` to pin after `EXPORT LBRACE` (`pin=2`).
   Parser/PSI regeneration is still required because no Grammar-Kit generator task or jar is checked into the project.
 
 ### 2026-07-30
 
-- Audited `Compact.bnf` against `references/compact-grammar.mdx`, `references/lsrc.json`, `references/lexer.ss`, and
+- Audited `Reference.bnf` against `references/compact-grammar.mdx`, `references/lsrc.json`, `references/lexer.ss`, and
   syntax examples in `references/type-example.compact`.
-- Updated `nat` handling in `Compact.bnf` so plugin lexer tokens for decimal, hex, binary, and octal field literals are
+- Updated `nat` handling in `Reference.bnf` so plugin lexer tokens for decimal, hex, binary, and octal field literals are
   accepted everywhere the official compiler grammar consumes `nat`/`field`: version atoms, generic size arguments, type
   sizes, term field literals, `slice<...>`, and `pad(...)`.
 - Fixed Grammar-Kit ordered-choice behavior for `if/else` statements by trying `stmt0` before the one-armed `if`
@@ -184,7 +184,7 @@ These files must only change by regeneration.
 If parser behavior needs to change:
 
 1. Compare with `references/compact-grammar.mdx`; use `references/lsrc.json` when AST shape matters.
-2. Modify `Compact.bnf`
+2. Modify `Reference.bnf`
 3. Regenerate parser and PSI
 4. Never patch generated parser code manually
 
@@ -206,7 +206,7 @@ If tokenization changes:
 
 If PSI needs new elements:
 
-- Update `Compact.bnf`
+- Update `Reference.bnf`
 - Regenerate PSI
 - Extend handwritten PSI only when necessary
 
@@ -247,7 +247,7 @@ Handwritten source only:
 
 ## Regeneration Rule
 
-Whenever `Compact.bnf` changes:
+Whenever `Reference.bnf` changes:
 
 - Regenerate Parser
 - Regenerate PSI

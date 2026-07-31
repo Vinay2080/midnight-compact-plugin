@@ -186,9 +186,9 @@ object CompactTokenTypes {
     @JvmField
     val STRING_LITERAL: IElementType? = CompactTypes.STRING_LITERAL
 
-//    @JvmField
-//    val IDENTIFIER = CompactTypes.IDENTIFIER
-//
+    @JvmField
+    val IDENTIFIER: IElementType? = CompactTypes.IDENTIFIER
+
     // =========================================================
     // Operators
     // =========================================================

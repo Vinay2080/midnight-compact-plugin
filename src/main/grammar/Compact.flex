@@ -59,11 +59,15 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 /* Keywords                                                   */
 /* ========================================================= */
 
+// module related keywords
 "export"       { return CompactTypes.EXPORT; }
 "from"         { return CompactTypes.FROM; }
 "import"       { return CompactTypes.IMPORT; }
 "module"       { return CompactTypes.MODULE; }
 "prefix"       { return CompactTypes.PREFIX; }
+
+
+// statements and expression keywords
 
 "assert"       { return CompactTypes.ASSERT; }
 "as"           { return CompactTypes.AS; }
@@ -75,6 +79,7 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 "disclose"     { return CompactTypes.DISCLOSE; }
 "else"         { return CompactTypes.ELSE; }
 "enum"         { return CompactTypes.ENUM; }
+"emit"         { return CompactTypes.EMIT; }
 "external"     { return CompactTypes.EXTERNAL; }
 "fold"         { return CompactTypes.FOLD; }
 "for"          { return CompactTypes.FOR; }
@@ -94,7 +99,6 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 "struct"       { return CompactTypes.STRUCT; }
 "type"         { return CompactTypes.TYPE; }
 "witness"      { return CompactTypes.WITNESS; }
-"emit"         { return CompactTypes.EMIT; }
 
 /* ========================================================= */
 /* Built-in Types                                             */
