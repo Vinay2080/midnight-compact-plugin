@@ -8,12 +8,12 @@ public final class CompactParserUtil extends GeneratedParserUtilBase {
 
     private CompactParserUtil() {
     }
-
-    public static boolean pragmaIdentifier(PsiBuilder builder, int level) {
-        if (builder.getTokenType() != CompactTokenTypes.IDENTIFIER) {
-            builder.error("Identifier expected after 'pragma'");
-            return false;
-        }
-        return consumeToken(builder, CompactTokenTypes.IDENTIFIER);
-    }
+//
+//    public static boolean pragmaIdentifier(PsiBuilder builder, int level) {
+//        if (builder.getTokenType() != CompactTokenTypes.IDENTIFIER) {
+//            builder.error("Identifier expected after 'pragma'");
+//            return false;
+//        }
+//        return consumeToken(builder, CompactTokenTypes.IDENTIFIER);
+//    }
 }
