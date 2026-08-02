@@ -8,8 +8,8 @@ import org.jspecify.annotations.NonNull;
 
 public class CompactSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
-    @Override
-    public @NonNull SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
-        return new CompactSyntaxHighlighter();
-    }
+  @Override
+  public @NonNull SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
+    return new CompactSyntaxHighlighter();
+  }
 }

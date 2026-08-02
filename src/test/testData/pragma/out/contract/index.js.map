@@ -4,5 +4,5 @@
   "sourceRoot": "../../",
   "sources": ["DoublePragma.compact"],
   "names": [],
-  "mappings": ";;;;;;;;;;;EAAA;;;;;;;;;;;;;GAKC;EALD;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;GAKC;;;;;;;;;;;;;;;;;;;;;;;;;"
+  "mappings": ";;;;;;;;;;;EAAA;;;;;;;;;;;;;GAAgC;EAAhC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;GAAgC;;;;;;;;;;;;;;;;;;;;;;;;;"
 }

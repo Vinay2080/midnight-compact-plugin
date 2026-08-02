@@ -36,12 +36,12 @@
 (library (lexer)
   (export lexer)
   (import (except (chezscheme) errorf)
-          (utils)
-          (state-case)
-          (streams)
-          (only (field) field?)
-          (rename (only (lparser) make-token) (make-token $make-token))
-          (only (version) make-version))
+    (utils)
+    (state-case)
+    (streams)
+    (only (field) field?)
+    (rename (only (lparser) make-token) (make-token $make-token))
+    (only (version) make-version))
 
   (define lexer
     (lambda (sfd file-content)
@@ -55,27 +55,27 @@
         (define final-cols '())
         (define (getc)
           (let ([c (if (fx>= pos (string-length file-content))
-                       #!eof
-                       (string-ref file-content pos))])
+                     #!eof
+                     (string-ref file-content pos))])
             (set! pos (fx+ pos 1))
             (if (eqv? c #\newline)
-                (begin
-                  (set! line (fx+ line 1))
-                  (set! final-cols (cons col final-cols))
-                  (set! col 1))
-                (set! col (fx+ col 1)))
+              (begin
+                (set! line (fx+ line 1))
+                (set! final-cols (cons col final-cols))
+                (set! col 1))
+              (set! col (fx+ col 1)))
             c))
         (define (ungetc c)
           (set! pos (fx- pos 1))
           (if (eqv? col 1)
-              (begin
-                (set! col (car final-cols))
-                (set! final-cols (cdr final-cols))
-                (set! line (fx- line 1)))
-              (set! col (fx- col 1))))
+            (begin
+              (set! col (car final-cols))
+              (set! final-cols (cdr final-cols))
+              (set! line (fx- line 1)))
+            (set! col (fx- col 1))))
         (define (make-token type value)
           (let ([str (if (eq? type 'eof) "" (substring file-content prev-pos pos))]
-                [src (make-source-object sfd prev-pos pos prev-line prev-col)])
+                 [src (make-source-object sfd prev-pos pos prev-line prev-col)])
             (set! prev-pos pos)
             (set! prev-line line)
             (set! prev-col col)
@@ -84,10 +84,10 @@
         (define (current-src offset)
           (let-values ([(line col) (let loop ([offset offset] [final-cols final-cols] [line line] [col col])
                                      (if (fx= offset 0)
-                                         (values line col)
-                                         (if (fx= col 1)
-                                             (loop (fx+ offset 1) (cdr final-cols) (fx- line 1) (car final-cols))
-                                             (loop (fx+ offset 1) final-cols line (fx- col 1)))))])
+                                       (values line col)
+                                       (if (fx= col 1)
+                                         (loop (fx+ offset 1) (cdr final-cols) (fx- line 1) (car final-cols))
+                                         (loop (fx+ offset 1) final-cols line (fx- col 1)))))])
             (make-source-object sfd pos pos line col))))
       (define (unexpected c)
         (source-errorf (current-src -1) "unexpected ~a"
@@ -105,19 +105,19 @@
         (define-syntax define-state-case
           (syntax-rules (eof else)
             [(_ ?def-id ?char-id clause ...)
-             (identifier? #'?def-id)
-             (define-state-case (?def-id) ?char-id clause ...)]
-            [(_ (?def-id . args) ?char-id (eof eof1 eof2 ...) clause ... (else else1 else2 ...))
-             (and (identifier? #'?def-id) (identifier? #'?char-id))
-             (define (?def-id . args)
-               (let ([?char-id (getc)])
-                 (state-case ?char-id (eof eof1 eof2 ...) clause ... (else else1 else2 ...))))]
-            [(_ (?def-id . args) ?char-id clause ... (else else1 else2 ...))
-             (and (identifier? #'?def-id) (identifier? #'?char-id))
-             (define (?def-id . args)
-               (let ([?char-id (getc)])
-                 (let ([f (lambda () else1 else2 ...)])
-                   (state-case ?char-id (eof (f)) clause ... (else (f))))))]))
+              (identifier? #'?def-id)
+              (define-state-case (?def-id) ?char-id clause ...)]
+            [(_ (?def-id . args) ?char-id (eof eof1 eof2 ...) clause ... (else else 1 else 2 ...))
+              (and (identifier? #'?def-id) (identifier? #'?char-id))
+              (define (?def-id . args)
+                (let ([?char-id (getc)])
+                  (state-case ?char-id (eof eof1 eof2 ...) clause ... (else else 1 else 2 ...))))]
+            [(_ (?def-id . args) ?char-id clause ... (else else 1 else 2 ...))
+              (and (identifier? #'?def-id) (identifier? #'?char-id))
+              (define (?def-id . args)
+                (let ([?char-id (getc)])
+                  (let ([f (lambda () else 1 else 2 ...)])
+                    (state-case ?char-id (eof (f)) clause ... (else (f))))))]))
         (define-state-case lex c
           [eof (return-eof)]
           [char-whitespace? (put-char sp c) (lex-whitespace)]
@@ -139,7 +139,7 @@
           [#\| (seen-vertical-bar)]
           [#\. (seen-leading-dot)]
           [(#\: #\; #\, #\( #\) #\{ #\} #\[ #\] #\?)
-           (return-token 'punctuation c)]
+            (return-token 'punctuation c)]
           [else (unexpected c)])
         (module (identifier-initial? lex-identifier)
           ; follows https://tc39.es/ecma262/#sec-names-and-keywords
@@ -153,15 +153,15 @@
               ; Lo: Letter, other
               ; Nl: Number, letter
               (or (memq (char-general-category c) '(Lu Ll Lt Lm Lo Nl))
-                  (memv c '(#\_ #\$)))))
+                (memv c '(#\_ #\$)))))
           (define identifier-subsequent?
             (lambda (c)
               (or (identifier-initial? c)
-                  ; Mn: Mark, onspacing
-                  ; Mc: Mark, spacing combining
-                  ; Nd: Number, decimal digit
-                  ; Pc: Punctuation, connector
-                  (memq (char-general-category c) '(Mn Mc Nd Pc)))))
+                ; Mn: Mark, onspacing
+                ; Mc: Mark, spacing combining
+                ; Nd: Number, decimal digit
+                ; Pc: Punctuation, connector
+                (memq (char-general-category c) '(Mn Mc Nd Pc)))))
           (define (id)
             (return-token 'id (string->symbol (get-buf))))
           (define-state-case next c
@@ -170,8 +170,8 @@
           (define (lex-identifier c) (put-char sp c) (next)))
         (define-state-case lex-zero c
           [char-numeric?
-           (source-errorf (current-src -2)
-                          "unsupported numeric syntax syntax: leading 0 must be followed by b, B, o, O, x, X")]
+            (source-errorf (current-src -2)
+              "unsupported numeric syntax syntax: leading 0 must be followed by b, B, o, O, x, X")]
           [(#\b #\B) (lex-binary)]
           [(#\o #\O) (lex-octal)]
           [(#\x #\X) (lex-hexadecimal)]
@@ -242,10 +242,10 @@
             [else (unexpected c)])
           (define (hexchar-next a n terminator?)
             (if (fx= n 1)
-                (begin
-                  (put-char sp (integer->char a))
-                  (lex-string terminator?))
-                (hexchar a (fx- n 1) terminator?))))
+              (begin
+                (put-char sp (integer->char a))
+                (lex-string terminator?))
+              (hexchar a (fx- n 1) terminator?))))
         (define-state-case (seen-one-dot n1) c
           [((#\0 - #\9)) (put-char sp c) (seen-one-dot+decimal n1)]
           [(#\.) (ungetc c) (ungetc c) (return-field n1)]
@@ -322,8 +322,8 @@
               [#\space (skip-spaces (fx+ n 1))]
               [#\tab (skip-spaces (fx+ n (fx- 8 (fxmod n 8))))]
               [else
-               (when (fx> n base) (put-string sp (make-string (fx- n base) #\space)))
-               (lex-block-comment c)])
+                (when (fx> n base) (put-string sp (make-string (fx- n base) #\space)))
+                (lex-block-comment c)])
             (define-state-case maybe-end-comment c
               [eof (unexpected c)]
               [#\/ (return-token 'block-comment (get-buf))]
@@ -341,4 +341,4 @@
                 [else (put-char sp c) (lex-block-comment (getc))]))
             (lex-block-comment (getc))))
         (lex))))
-)
+  )

@@ -1,10 +1,20 @@
 package dev.verloren.midnight.lexer;
 
+
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 
 public final class CompactTokenTypes {
-//
+  public static final IElementType PRAGMA = new CompactTokenType("PRAGMA");
+  public static final IElementType IDENTIFIER = new CompactTokenType("IDENTIFIER");
+  public static final IElementType VERSION = new CompactTokenType("VERSION");
+  public static final IElementType SEMICOLON = new CompactTokenType("SEMICOLON");
+
+
+  public static final IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
+  public static final IElementType INVALID_VERSION = new CompactTokenType("INVALID_VERSION");
+
+  //
 //    // =========================================================
 //    // Keywords
 //    // =========================================================
@@ -131,6 +141,6 @@ public final class CompactTokenTypes {
 //    public static final IElementType UNTERMINATED_STRING = new CompactTokenType("UNTERMINATED_STRING");
 //    public static final IElementType UNTERMINATED_BLOCK_COMMENT = new CompactTokenType("UNTERMINATED_BLOCK_COMMENT");
 //
-    private CompactTokenTypes() {
-    }
+  private CompactTokenTypes() {
+  }
 }

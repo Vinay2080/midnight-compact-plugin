@@ -4,11 +4,11 @@ Build an IntelliJ IDEA plugin for the Midnight Compact language used for Midnigh
 
 Core technologies and feature areas:
 
-- IntelliJ Platform plugin in Kotlin
+- IntelliJ Platform plugin
 - Compact language support
-- Grammar-Kit parser
-- JFlex lexer
-- Generated PSI
+- Handwritten lexer extending `LexerBase`
+- Handwritten recursive-descent parser implementing `PsiParser`
+- Handwritten PSI and AST element types
 - ParserDefinition
 - Syntax highlighting
 - References
@@ -20,10 +20,11 @@ Core technologies and feature areas:
 
 - [x] Lexer
 - [x] Syntax Highlighting
-- [x] GrammarKit BNF
+- [x] Reference BNF reviewed
 - [x] Parser
-- [x] PSI Generation
+- [x] Handwritten PSI wrappers
 - [x] ParserDefinition
+- [x] Lexer/parser regression tests
 - [ ] References
 - [ ] Completion
 - [ ] Rename
@@ -54,7 +55,9 @@ Core technologies and feature areas:
 
 - Parser follows the official Compact language grammar where available.
 - Compiler optimizations are ignored unless they affect IDE-visible semantics.
-- Generated PSI under `src/main/gen` must never be edited manually.
+- `grammar/reference.bnf` and `grammar/compact.flex` / `src/main/grammar/*` are reference material only for the current
+  handwritten implementation; do not regenerate parser or lexer code from them unless the project explicitly migrates.
+- `src/main/gen` currently contains handwritten source despite the directory name. Treat it as editable project source.
 - References should be implemented using IntelliJ `PsiReference` APIs.
 - `AGENTS.md` is the permanent engineering notebook and must be updated after every completed task that changes project
   knowledge or status.
@@ -62,17 +65,15 @@ Core technologies and feature areas:
 ## Current Architecture
 
 ```text
-Compact.flex
-↓
-JFlex CompactLexer
+CompactLexer
 ↓
 CompactTokenTypes
 ↓
-Compact.bnf
+CompactParser
 ↓
-Grammar-Kit CompactParser
+CompactElementTypes
 ↓
-Generated PSI
+CompactPsiElement
 ↓
 CompactParserDefinition
 ↓
@@ -96,12 +97,14 @@ Implement Go To Declaration using Compact `PsiReference` support.
 ## Technical Debt
 
 - `README.md` still contains mostly generated IntelliJ plugin template content.
-- No automated parser or lexer regression tests are recorded in the project tree.
+- Old parser fixture files under `src/test/testData/pragma` still describe broader `reference.bnf` version-expression
+  behavior than the active handwritten parser supports.
 - Compiler file review history needs exact upstream file names and feature notes as future compiler files are analyzed.
 
 ## Lessons Learned
 
-- Keep generated PSI changes out of manual edits; update the Grammar-Kit BNF and regenerate instead.
+- Keep `reference.bnf` and `Compact.flex` as grammar/lexer references for now; the active parser and lexer are
+  handwritten and should be changed directly.
 - Keep this notebook concise and focused on engineering continuity, not end-user README content.
 
 ## Session Log
@@ -141,52 +144,52 @@ Implement Go To Declaration using Compact `PsiReference` support.
 
 - Audited `Reference.bnf` against `references/compact-grammar.mdx`, `references/lsrc.json`, `references/lexer.ss`, and
   syntax examples in `references/type-example.compact`.
-- Updated `nat` handling in `Reference.bnf` so plugin lexer tokens for decimal, hex, binary, and octal field literals are
-  accepted everywhere the official compiler grammar consumes `nat`/`field`: version atoms, generic size arguments, type
-  sizes, term field literals, `slice<...>`, and `pad(...)`.
+- Updated `nat` handling in `Reference.bnf` so plugin lexer tokens for decimal, hex, binary, and octal field literals
+  are accepted everywhere the official compiler grammar consumes `nat`/`field`: version atoms, generic size arguments,
+  type sizes, term field literals, `slice<...>`, and `pad(...)`.
 - Fixed Grammar-Kit ordered-choice behavior for `if/else` statements by trying `stmt0` before the one-armed `if`
   fallback, preserving the official dangling-else grammar while avoiding a stranded `else` token.
 - Verified with `.\gradlew.bat build`; parser/PSI regeneration is still required after the BNF changes.
+
+### 2026-08-03
+
+- Reconciled project documentation with the current handwritten architecture: `src/main/gen` is handwritten source in
+  this project, while grammar/flex files are reference-only.
+- Fixed the primary incremental PSI consistency risk by making `CompactParserDefinition.FILE` a stable static
+  `IFileElementType` instead of returning a new file element type on every `getFileNodeType()` call.
+- Hardened the handwritten `LexerBase` implementation: monotonic token offsets, explicit EOF token range, single-token
+  malformed versions for `12.`, `12..`, and `12.a`, and no `FlexLexer`/adapter assumptions.
+- Tightened the handwritten parser into a terminating top-level loop: parse pragma forms when possible, otherwise emit an
+  error and advance exactly one token; recovery now stops at `;`, `pragma`, or EOF.
+- Kept pragma parsing syntactic (`PRAGMA IDENTIFIER VERSION SEMICOLON`). Pragma-name validation belongs in a future
+  inspection, not in parser tree construction.
+- Replaced stale full-tree parser fixture assertions with focused parser/lexer regression tests for text preservation,
+  malformed version tokens, incomplete input recovery, and EOF offsets.
+- Verified with `.\gradlew.bat build`.
 
 # Development Constraints
 
 ## Source of Truth
 
-- Never modify generated files.
-- Always modify the source from which generated files are produced.
+- Preserve the handwritten implementation.
+- Use grammar and flex files as references only unless the project explicitly decides to regenerate code.
 
 ## Forbidden Files
 
 Never edit any file under:
 
-- src/main/gen/**
 - build/**
 - out/**
 - .gradle/**
 - .idea/**
-
-Never edit generated parser artifacts, including:
-
-- *_Parser.java
-- *_Parser.kt
-- *_Types.java
-- *_Types.kt
-- *_TokenTypes.java
-- *_ElementTypes.java
-- generated PSI implementations
-- generated visitors
-- generated factories
-
-These files must only change by regeneration.
 
 ## Grammar
 
 If parser behavior needs to change:
 
 1. Compare with `references/compact-grammar.mdx`; use `references/lsrc.json` when AST shape matters.
-2. Modify `Reference.bnf`
-3. Regenerate parser and PSI
-4. Never patch generated parser code manually
+2. Modify the handwritten parser.
+3. Keep `Reference.bnf` as reference documentation unless the change is specifically to reference material.
 
 Grammar-Kit notes:
 
@@ -198,19 +201,16 @@ Grammar-Kit notes:
 
 If tokenization changes:
 
-1. Modify the JFlex `.flex` file.
-2. Regenerate the lexer.
-3. Never edit generated lexer code.
+1. Compare with `references/lexer.ss` and `src/main/grammar/Compact.flex`.
+2. Modify the handwritten `LexerBase` implementation.
+3. Keep `.flex` files as reference documentation unless the change is specifically to reference material.
 
 ## PSI
 
 If PSI needs new elements:
 
-- Update `Reference.bnf`
-- Regenerate PSI
-- Extend handwritten PSI only when necessary
-
-Never edit generated PSI classes directly.
+- Add or update handwritten AST element types and PSI wrappers.
+- Keep wrapper creation compatible with IntelliJ incremental parsing.
 
 ## Existing Code
 
@@ -232,7 +232,7 @@ Before creating any new file:
 
 Always verify:
 
-- the feature is not already implemented
+- the feature is not yet implemented
 - the compiler file actually requires the change
 - the change belongs in an IntelliJ plugin rather than the compiler
 
@@ -244,19 +244,6 @@ Handwritten source only:
 - src/main/java/**
 - src/main/resources/**
 - src/main/grammars/**
-
-## Regeneration Rule
-
-Whenever `Reference.bnf` changes:
-
-- Regenerate Parser
-- Regenerate PSI
-
-Whenever `.flex` changes:
-
-- Regenerate Lexer
-
-Do not manually synchronize generated code.
 
 ## Scope
 

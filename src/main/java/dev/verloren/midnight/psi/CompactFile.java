@@ -9,17 +9,17 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompactFile extends PsiFileBase {
 
-    public CompactFile(@NotNull FileViewProvider viewProvider) {
-        super(viewProvider, CompactLanguage.INSTANCE);
-    }
+  public CompactFile(@NotNull FileViewProvider viewProvider) {
+    super(viewProvider, CompactLanguage.INSTANCE);
+  }
 
-    @Override
-    public @NotNull FileType getFileType() {
-        return CompactFileType.INSTANCE;
-    }
+  @Override
+  public @NotNull FileType getFileType() {
+    return CompactFileType.INSTANCE;
+  }
 
-    @Override
-    public String toString() {
-        return "Compact File";
-    }
+  @Override
+  public String toString() {
+    return "Compact File";
+  }
 }
