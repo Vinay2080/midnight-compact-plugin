@@ -4,7 +4,7 @@
 package dev.verloren.midnight.lexer;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.TokenType;import com.intellij.psi.tree.IElementType;
 import dev.verloren.midnight.psi.CompactTypes;
 
 
@@ -999,7 +999,7 @@ public final class CompactLexer implements FlexLexer {
           // fall through
           case 128: break;
           case 2:
-            { return CompactTokenTypes.WHITE_SPACE;
+            { return TokenType.WHITE_SPACE;
             }
           // fall through
           case 129: break;

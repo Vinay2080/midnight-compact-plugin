@@ -36,35 +36,60 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // arrow_parameter_list return_type? ARROW (block | expr)
-  static boolean arrow_function(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrow_function")) return false;
+  // arrow_parameter_list return_type? ARROW block
+  static boolean arrow_block(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrow_block")) return false;
     if (!nextTokenIs(b, LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
     r = arrow_parameter_list(b, l + 1);
-    r = r && arrow_function_1(b, l + 1);
+    r = r && arrow_block_1(b, l + 1);
     r = r && consumeToken(b, ARROW);
-    r = r && arrow_function_3(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
+    p = r; // pin = 3
+    r = r && block(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // return_type?
-  private static boolean arrow_function_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrow_function_1")) return false;
+  private static boolean arrow_block_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrow_block_1")) return false;
     return_type(b, l + 1);
     return true;
   }
 
-  // block | expr
-  private static boolean arrow_function_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "arrow_function_3")) return false;
+  /* ********************************************************** */
+  // arrow_parameter_list return_type? ARROW expr
+  static boolean arrow_expr(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrow_expr")) return false;
+    if (!nextTokenIs(b, LPAREN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = arrow_parameter_list(b, l + 1);
+    r = r && arrow_expr_1(b, l + 1);
+    r = r && consumeToken(b, ARROW);
+    p = r; // pin = 3
+    r = r && expr(b, l + 1);
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // return_type?
+  private static boolean arrow_expr_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrow_expr_1")) return false;
+    return_type(b, l + 1);
+    return true;
+  }
+
+  /* ********************************************************** */
+  // arrow_block
+  //     | arrow_expr
+  static boolean arrow_function(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "arrow_function")) return false;
+    if (!nextTokenIs(b, LPAREN)) return false;
     boolean r;
-    Marker m = enter_section_(b);
-    r = block(b, l + 1);
-    if (!r) r = expr(b, l + 1);
-    exit_section_(b, m, null, r);
+    r = arrow_block(b, l + 1);
+    if (!r) r = arrow_expr(b, l + 1);
     return r;
   }
 
@@ -116,7 +141,7 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !<<eof>> !(RBRACE | CONST | IF | FOR | RETURN | LBRACE)
+  // !<<eof>> !(RBRACE | stmt_start)
   static boolean block_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_recover")) return false;
     boolean r;
@@ -137,7 +162,7 @@ public class CompactParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !(RBRACE | CONST | IF | FOR | RETURN | LBRACE)
+  // !(RBRACE | stmt_start)
   private static boolean block_recover_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_recover_1")) return false;
     boolean r;
@@ -147,16 +172,12 @@ public class CompactParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // RBRACE | CONST | IF | FOR | RETURN | LBRACE
+  // RBRACE | stmt_start
   private static boolean block_recover_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_recover_1_0")) return false;
     boolean r;
     r = consumeToken(b, RBRACE);
-    if (!r) r = consumeToken(b, CONST);
-    if (!r) r = consumeToken(b, IF);
-    if (!r) r = consumeToken(b, FOR);
-    if (!r) r = consumeToken(b, RETURN);
-    if (!r) r = consumeToken(b, LBRACE);
+    if (!r) r = stmt_start(b, l + 1);
     return r;
   }
 
@@ -270,6 +291,44 @@ public class CompactParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, GT);
     r = r && expr4(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // CONST cbinding (COMMA cbinding)* SEMICOLON
+  static boolean const_stmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "const_stmt")) return false;
+    if (!nextTokenIs(b, CONST)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, CONST);
+    p = r; // pin = 1
+    r = r && report_error_(b, cbinding(b, l + 1));
+    r = p && report_error_(b, const_stmt_2(b, l + 1)) && r;
+    r = p && consumeToken(b, SEMICOLON) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  // (COMMA cbinding)*
+  private static boolean const_stmt_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "const_stmt_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!const_stmt_2_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "const_stmt_2", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA cbinding
+  private static boolean const_stmt_2_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "const_stmt_2_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && cbinding(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -1475,6 +1534,40 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // FOR LPAREN CONST IDENTIFIER OF expr_seq RPAREN stmt
+  static boolean for_iter_stmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_iter_stmt")) return false;
+    if (!nextTokenIs(b, FOR)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokens(b, 1, FOR, LPAREN, CONST, IDENTIFIER, OF);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr_seq(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, RPAREN)) && r;
+    r = p && stmt(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // FOR LPAREN CONST IDENTIFIER OF tsize RANGE tsize RPAREN stmt
+  static boolean for_range_stmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "for_range_stmt")) return false;
+    if (!nextTokenIs(b, FOR)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokens(b, 1, FOR, LPAREN, CONST, IDENTIFIER, OF);
+    p = r; // pin = 1
+    r = r && report_error_(b, tsize(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, RANGE)) && r;
+    r = p && report_error_(b, tsize(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, RPAREN)) && r;
+    r = p && stmt(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // IDENTIFIER gargs?                                                       // function-ref
   //       | arrow_function                                                         // function-arrow-block/function-arrow-expr
   //       | LPAREN fun RPAREN
@@ -1538,13 +1631,14 @@ public class CompactParser implements PsiParser, LightPsiParser {
   public static boolean gargs(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "gargs")) return false;
     if (!nextTokenIs(b, LT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_, GARGS, null);
     r = consumeToken(b, LT);
-    r = r && gargs_1(b, l + 1);
-    r = r && consumeToken(b, GT);
-    exit_section_(b, m, GARGS, r);
-    return r;
+    p = r; // pin = 1
+    r = r && report_error_(b, gargs_1(b, l + 1));
+    r = p && consumeToken(b, GT) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   // generic_arg_list?
@@ -1676,6 +1770,24 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // IF LPAREN expr_seq RPAREN stmt0 ELSE stmt
+  static boolean if_stmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "if_stmt")) return false;
+    if (!nextTokenIs(b, IF)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokens(b, 1, IF, LPAREN);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr_seq(b, l + 1));
+    r = p && report_error_(b, consumeToken(b, RPAREN)) && r;
+    r = p && report_error_(b, stmt0(b, l + 1)) && r;
+    r = p && report_error_(b, consumeToken(b, ELSE)) && r;
+    r = p && stmt(b, l + 1) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
   // CONTRACT IMPLEMENTS type_expression SEMICOLON
   public static boolean implements_declaration(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "implements_declaration")) return false;
@@ -1801,13 +1913,13 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PREFIX IDENTIFIER
+  // PREFFIX IDENTIFIER
   public static boolean import_prefix(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "import_prefix")) return false;
-    if (!nextTokenIs(b, PREFIX)) return false;
+    if (!nextTokenIs(b, PREFFIX)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, PREFIX, IDENTIFIER);
+    r = consumeTokens(b, 0, PREFFIX, IDENTIFIER);
     exit_section_(b, m, IMPORT_PREFIX, r);
     return r;
   }
@@ -1920,8 +2032,7 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !<<eof>> !(RBRACE | PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
-  //   | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT)
+  // !<<eof>> !(RBRACE | top_level_start)
   static boolean module_recover(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_recover")) return false;
     boolean r;
@@ -1942,8 +2053,7 @@ public class CompactParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // !(RBRACE | PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
-  //   | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT)
+  // !(RBRACE | top_level_start)
   private static boolean module_recover_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_recover_1")) return false;
     boolean r;
@@ -1953,26 +2063,12 @@ public class CompactParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // RBRACE | PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
-  //   | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT
+  // RBRACE | top_level_start
   private static boolean module_recover_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "module_recover_1_0")) return false;
     boolean r;
     r = consumeToken(b, RBRACE);
-    if (!r) r = consumeToken(b, PRAGMA);
-    if (!r) r = consumeToken(b, EXPORT);
-    if (!r) r = consumeToken(b, MODULE);
-    if (!r) r = consumeToken(b, IMPORT);
-    if (!r) r = consumeToken(b, INCLUDE);
-    if (!r) r = consumeToken(b, STRUCT);
-    if (!r) r = consumeToken(b, ENUM);
-    if (!r) r = consumeToken(b, CONTRACT);
-    if (!r) r = consumeToken(b, TYPE);
-    if (!r) r = consumeToken(b, LEDGER);
-    if (!r) r = consumeToken(b, EXTERNAL);
-    if (!r) r = consumeToken(b, WITNESS);
-    if (!r) r = consumeToken(b, CONSTRUCTOR);
-    if (!r) r = consumeToken(b, CIRCUIT);
+    if (!r) r = top_level_start(b, l + 1);
     return r;
   }
 
@@ -2270,7 +2366,7 @@ public class CompactParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_, PROGRAM, "<program>");
     r = program_0(b, l + 1);
     r = r && eof(b, l + 1);
-    exit_section_(b, l, m, r, false, CompactParser::program_recover);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -2325,66 +2421,6 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // !<<eof>> !(
-  //     PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
-  //   | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT
-  // )
-  static boolean program_recover(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "program_recover")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = program_recover_0(b, l + 1);
-    r = r && program_recover_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // !<<eof>>
-  private static boolean program_recover_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "program_recover_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !eof(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // !(
-  //     PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
-  //   | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT
-  // )
-  private static boolean program_recover_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "program_recover_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b, l, _NOT_);
-    r = !program_recover_1_0(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // PRAGMA | EXPORT | MODULE | IMPORT | INCLUDE | STRUCT | ENUM | CONTRACT
-  //   | TYPE | LEDGER | EXTERNAL | WITNESS | CONSTRUCTOR | CIRCUIT
-  private static boolean program_recover_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "program_recover_1_0")) return false;
-    boolean r;
-    r = consumeToken(b, PRAGMA);
-    if (!r) r = consumeToken(b, EXPORT);
-    if (!r) r = consumeToken(b, MODULE);
-    if (!r) r = consumeToken(b, IMPORT);
-    if (!r) r = consumeToken(b, INCLUDE);
-    if (!r) r = consumeToken(b, STRUCT);
-    if (!r) r = consumeToken(b, ENUM);
-    if (!r) r = consumeToken(b, CONTRACT);
-    if (!r) r = consumeToken(b, TYPE);
-    if (!r) r = consumeToken(b, LEDGER);
-    if (!r) r = consumeToken(b, EXTERNAL);
-    if (!r) r = consumeToken(b, WITNESS);
-    if (!r) r = consumeToken(b, CONSTRUCTOR);
-    if (!r) r = consumeToken(b, CIRCUIT);
-    return r;
-  }
-
-  /* ********************************************************** */
   // COLON type_expression
   public static boolean return_type(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "return_type")) return false;
@@ -2395,6 +2431,34 @@ public class CompactParser implements PsiParser, LightPsiParser {
     r = r && type_expression(b, l + 1);
     exit_section_(b, m, RETURN_TYPE, r);
     return r;
+  }
+
+  /* ********************************************************** */
+  // RETURN expr_seq SEMICOLON
+  static boolean return_value_stmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "return_value_stmt")) return false;
+    if (!nextTokenIs(b, RETURN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeToken(b, RETURN);
+    p = r; // pin = 1
+    r = r && report_error_(b, expr_seq(b, l + 1));
+    r = p && consumeToken(b, SEMICOLON) && r;
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
+  }
+
+  /* ********************************************************** */
+  // RETURN SEMICOLON
+  static boolean return_void_stmt(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "return_void_stmt")) return false;
+    if (!nextTokenIs(b, RETURN)) return false;
+    boolean r, p;
+    Marker m = enter_section_(b, l, _NONE_);
+    r = consumeTokens(b, 1, RETURN, SEMICOLON);
+    p = r; // pin = 1
+    exit_section_(b, l, m, r, p, null);
+    return r || p;
   }
 
   /* ********************************************************** */
@@ -2452,117 +2516,27 @@ public class CompactParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // CONST cbinding (COMMA cbinding)* SEMICOLON                       // statement-const     (SEP+ #f = no trailing comma)
-  //   | IF LPAREN expr_seq RPAREN stmt0 ELSE stmt                        // statement-if        (two-armed; consequent is stmt0)
-  //   | FOR LPAREN CONST IDENTIFIER OF tsize RANGE tsize RPAREN stmt     // statement-for1      (range form: start..end)
-  //   | FOR LPAREN CONST IDENTIFIER OF expr_seq RPAREN stmt              // statement-for2      (iterable form)
-  //   | RETURN SEMICOLON                                                  // statement-return-no-value
-  //   | RETURN expr_seq SEMICOLON                                         // statement-return-value
-  //   | block                                                             // statement-block
-  //   | expr_seq SEMICOLON
+  // const_stmt
+  //     | if_stmt
+  //     | for_range_stmt
+  //     | for_iter_stmt
+  //     | return_void_stmt
+  //     | return_value_stmt
+  //     | block
+  //     | expr_seq SEMICOLON
   public static boolean stmt0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "stmt0")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, STMT_0, "<stmt 0>");
-    r = stmt0_0(b, l + 1);
-    if (!r) r = stmt0_1(b, l + 1);
-    if (!r) r = stmt0_2(b, l + 1);
-    if (!r) r = stmt0_3(b, l + 1);
-    if (!r) r = parseTokens(b, 0, RETURN, SEMICOLON);
-    if (!r) r = stmt0_5(b, l + 1);
+    r = const_stmt(b, l + 1);
+    if (!r) r = if_stmt(b, l + 1);
+    if (!r) r = for_range_stmt(b, l + 1);
+    if (!r) r = for_iter_stmt(b, l + 1);
+    if (!r) r = return_void_stmt(b, l + 1);
+    if (!r) r = return_value_stmt(b, l + 1);
     if (!r) r = block(b, l + 1);
     if (!r) r = stmt0_7(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // CONST cbinding (COMMA cbinding)* SEMICOLON
-  private static boolean stmt0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, CONST);
-    r = r && cbinding(b, l + 1);
-    r = r && stmt0_0_2(b, l + 1);
-    r = r && consumeToken(b, SEMICOLON);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA cbinding)*
-  private static boolean stmt0_0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_0_2")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!stmt0_0_2_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "stmt0_0_2", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA cbinding
-  private static boolean stmt0_0_2_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_0_2_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && cbinding(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // IF LPAREN expr_seq RPAREN stmt0 ELSE stmt
-  private static boolean stmt0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, IF, LPAREN);
-    r = r && expr_seq(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    r = r && stmt0(b, l + 1);
-    r = r && consumeToken(b, ELSE);
-    r = r && stmt(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // FOR LPAREN CONST IDENTIFIER OF tsize RANGE tsize RPAREN stmt
-  private static boolean stmt0_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, FOR, LPAREN, CONST, IDENTIFIER, OF);
-    r = r && tsize(b, l + 1);
-    r = r && consumeToken(b, RANGE);
-    r = r && tsize(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    r = r && stmt(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // FOR LPAREN CONST IDENTIFIER OF expr_seq RPAREN stmt
-  private static boolean stmt0_3(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_3")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, FOR, LPAREN, CONST, IDENTIFIER, OF);
-    r = r && expr_seq(b, l + 1);
-    r = r && consumeToken(b, RPAREN);
-    r = r && stmt(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // RETURN expr_seq SEMICOLON
-  private static boolean stmt0_5(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "stmt0_5")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, RETURN);
-    r = r && expr_seq(b, l + 1);
-    r = r && consumeToken(b, SEMICOLON);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2574,6 +2548,23 @@ public class CompactParser implements PsiParser, LightPsiParser {
     r = expr_seq(b, l + 1);
     r = r && consumeToken(b, SEMICOLON);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // CONST
+  //     | IF
+  //     | FOR
+  //     | RETURN
+  //     | LBRACE
+  static boolean stmt_start(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "stmt_start")) return false;
+    boolean r;
+    r = consumeToken(b, CONST);
+    if (!r) r = consumeToken(b, IF);
+    if (!r) r = consumeToken(b, FOR);
+    if (!r) r = consumeToken(b, RETURN);
+    if (!r) r = consumeToken(b, LBRACE);
     return r;
   }
 
@@ -2856,6 +2847,43 @@ public class CompactParser implements PsiParser, LightPsiParser {
     r = r && expr_seq(b, l + 1);
     r = r && consumeToken(b, RPAREN);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // PRAGMA
+  //   | EXPORT
+  //   | MODULE
+  //   | IMPORT
+  //   | INCLUDE
+  //   | STRUCT
+  //   | ENUM
+  //   | CONTRACT
+  //   | IMPLEMENTS
+  //   | TYPE
+  //   | LEDGER
+  //   | EXTERNAL
+  //   | WITNESS
+  //   | CONSTRUCTOR
+  //   | CIRCUIT
+  static boolean top_level_start(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "top_level_start")) return false;
+    boolean r;
+    r = consumeToken(b, PRAGMA);
+    if (!r) r = consumeToken(b, EXPORT);
+    if (!r) r = consumeToken(b, MODULE);
+    if (!r) r = consumeToken(b, IMPORT);
+    if (!r) r = consumeToken(b, INCLUDE);
+    if (!r) r = consumeToken(b, STRUCT);
+    if (!r) r = consumeToken(b, ENUM);
+    if (!r) r = consumeToken(b, CONTRACT);
+    if (!r) r = consumeToken(b, IMPLEMENTS);
+    if (!r) r = consumeToken(b, TYPE);
+    if (!r) r = consumeToken(b, LEDGER);
+    if (!r) r = consumeToken(b, EXTERNAL);
+    if (!r) r = consumeToken(b, WITNESS);
+    if (!r) r = consumeToken(b, CONSTRUCTOR);
+    if (!r) r = consumeToken(b, CIRCUIT);
     return r;
   }
 

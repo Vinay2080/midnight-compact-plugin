@@ -146,6 +146,7 @@ public interface CompactTypes {
   IElementType PLUS = new CompactTokenType("+");
   IElementType PLUS_ASSIGN = new CompactTokenType("+=");
   IElementType PRAGMA = new CompactTokenType("pragma");
+  IElementType PREFFIX = new CompactTokenType("PREFFIX");
   IElementType PREFIX = new CompactTokenType("prefix");
   IElementType PRIVATE = new CompactTokenType("private");
   IElementType PROTECTED = new CompactTokenType("protected");

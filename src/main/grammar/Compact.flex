@@ -1,7 +1,7 @@
 package dev.verloren.midnight.lexer;
 
 import com.intellij.lexer.FlexLexer;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.TokenType;import com.intellij.psi.tree.IElementType;
 import dev.verloren.midnight.psi.CompactTypes;
 
 %%
@@ -44,7 +44,7 @@ BLOCK_COMMENT = "/*"([^*]|\*+[^*/])*\*+"/"
 /* Whitespace                                                 */
 /* ========================================================= */
 
-{WHITE_SPACE} { return CompactTokenTypes.WHITE_SPACE; }
+{WHITE_SPACE} { return TokenType.WHITE_SPACE; }
 
 /* ========================================================= */
 /* Comments                                                   */
