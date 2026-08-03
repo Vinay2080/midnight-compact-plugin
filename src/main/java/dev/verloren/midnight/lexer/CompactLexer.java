@@ -85,14 +85,88 @@ public final class CompactLexer extends LexerBase {
       return;
     }
 
-    if (ch == ';') {
-      position++;
-      finish(CompactTokenTypes.SEMICOLON);
-      return;
+    switch (ch) {
+      case ';':
+        position++;
+        finish(CompactTokenTypes.SEMICOLON);
+        return;
+      case '(':
+        position++;
+        finish(CompactTokenTypes.LPAREN);
+        return;
+      case ')':
+        position++;
+        finish(CompactTokenTypes.RPAREN);
+        return;
+      case '>':
+      case '<':
+      case '!':
+      case '&':
+      case '|':
+        lexOperator();
+        return;
+      default:
+        position++;
+        finish(TokenType.BAD_CHARACTER);
     }
 
     position++;
     finish(TokenType.BAD_CHARACTER);
+  }
+
+  private void lexOperator() {
+    char ch = buffer.charAt(position);
+
+    switch (ch) {
+      case '>':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '=') {
+          position++;
+          finish(CompactTokenTypes.GTE);
+        } else {
+          finish(CompactTokenTypes.GT);
+        }
+        return;
+
+      case '<':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '=') {
+          position++;
+          finish(CompactTokenTypes.LTE);
+        } else {
+          finish(CompactTokenTypes.LT);
+        }
+        return;
+
+      case '!':
+        position++;
+        finish(CompactTokenTypes.NOT);
+        return;
+
+      case '&':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '&') {
+          position++;
+          finish(CompactTokenTypes.AND);
+        } else {
+          finish(TokenType.BAD_CHARACTER);
+        }
+        return;
+
+      case '|':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '|') {
+          position++;
+          finish(CompactTokenTypes.OR);
+        } else {
+          finish(TokenType.BAD_CHARACTER);
+        }
+        return;
+
+      default:
+        position++;
+        finish(TokenType.BAD_CHARACTER);
+    }
   }
 
   private void lexWhitespace() {

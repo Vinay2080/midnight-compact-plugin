@@ -28,9 +28,15 @@ public final class CompactParser implements PsiParser {
     PsiBuilder.Marker pragma = builder.mark();
 
     expect(builder, CompactTokenTypes.PRAGMA, "Expected 'pragma'");
-    expectPragmaIdentifier(builder);
 
-    if (!expectVersion(builder)) {
+    if (!expectPragmaIdentifier(builder)) {
+      recoverPragmaTail(builder);
+      expect(builder, CompactTokenTypes.SEMICOLON, "Expected ';'");
+      pragma.done(CompactElementTypes.PRAGMA_FORM);
+      return;
+    }
+
+    if (!parseVersionExpression(builder)) {
       recoverPragmaTail(builder);
     }
 
@@ -38,9 +44,61 @@ public final class CompactParser implements PsiParser {
     pragma.done(CompactElementTypes.PRAGMA_FORM);
   }
 
+  private boolean parseVersionExpression(PsiBuilder builder) {
+
+    do {
+      if (!parseVersionConstraint(builder)) {
+        return false;
+      }
+    } while (parseLogicalOperator(builder));
+
+    return true;
+  }
+
+  private boolean parseLogicalOperator(PsiBuilder builder) {
+    if (at(builder, CompactTokenTypes.AND)
+            || at(builder, CompactTokenTypes.OR)) {
+      builder.advanceLexer();
+      return true;
+    }
+
+    if (at(builder, CompactTokenTypes.SEMICOLON)) {
+      return false;
+    }
+
+    builder.error("Expected '&&', '||', or ';'");
+    builder.advanceLexer();
+    return false;
+  }
+
+  private boolean parseVersionConstraint(PsiBuilder builder) {
+    parseComparisonOperator(builder);
+    return expectVersion(builder);
+  }
+
+  private void parseComparisonOperator(PsiBuilder builder) {
+    IElementType token = builder.getTokenType();
+    if (token == CompactTokenTypes.GT
+            || token == CompactTokenTypes.GTE
+            || token == CompactTokenTypes.LT
+            || token == CompactTokenTypes.LTE
+            || token == CompactTokenTypes.NOT) {
+
+      builder.advanceLexer();
+    }
+  }
+
   private boolean expectPragmaIdentifier(PsiBuilder builder) {
     if (!at(builder, CompactTokenTypes.IDENTIFIER)) {
       builder.error("Expected pragma identifier");
+      return false;
+    }
+    String text = builder.getTokenText();
+
+    if (!"language_version".equals(text)
+            && !"compiler_version".equals(text)) {
+      builder.error("Expected 'language_version' or 'compiler_version'");
+      builder.advanceLexer();   // consume the bad identifier
       return false;
     }
 
@@ -64,20 +122,19 @@ public final class CompactParser implements PsiParser {
     return false;
   }
 
-  private boolean expect(PsiBuilder builder, IElementType tokenType, String message) {
+  private void expect(PsiBuilder builder, IElementType tokenType, String message) {
     if (!at(builder, tokenType)) {
       builder.error(message);
-      return false;
+      return;
     }
 
     builder.advanceLexer();
-    return true;
   }
 
   private void recoverPragmaTail(PsiBuilder builder) {
     while (!builder.eof()
-        && !at(builder, CompactTokenTypes.SEMICOLON)
-        && !at(builder, CompactTokenTypes.PRAGMA)) {
+            && !at(builder, CompactTokenTypes.SEMICOLON)
+            && !at(builder, CompactTokenTypes.PRAGMA)) {
       builder.advanceLexer();
     }
   }

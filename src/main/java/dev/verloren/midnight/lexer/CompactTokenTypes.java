@@ -9,6 +9,17 @@ public final class CompactTokenTypes {
   public static final IElementType IDENTIFIER = new CompactTokenType("IDENTIFIER");
   public static final IElementType VERSION = new CompactTokenType("VERSION");
   public static final IElementType SEMICOLON = new CompactTokenType("SEMICOLON");
+  public static final IElementType GT = new CompactTokenType("GT");
+  public static final IElementType GTE = new CompactTokenType("GTE");
+  public static final IElementType LT = new CompactTokenType("LT");
+  public static final IElementType LTE = new CompactTokenType("LTE");
+
+  public static final IElementType NOT = new CompactTokenType("NOT");
+  public static final IElementType AND = new CompactTokenType("AND");
+  public static final IElementType OR = new CompactTokenType("OR");
+
+  public static final IElementType LPAREN = new CompactTokenType("LPAREN");
+  public static final IElementType RPAREN = new CompactTokenType("RPAREN");
 
 
   public static final IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
