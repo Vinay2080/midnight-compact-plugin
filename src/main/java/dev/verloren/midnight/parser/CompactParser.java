@@ -24,6 +24,14 @@ public final class CompactParser implements PsiParser {
     return builder.getTreeBuilt();
   }
 
+  /**
+   * pragma_form ::=
+   * PRAGMA
+   * pragma_identifier
+   * version_expression
+   * SEMICOLON
+   *
+   */
   private void parsePragma(PsiBuilder builder) {
     PsiBuilder.Marker pragma = builder.mark();
 
@@ -44,6 +52,11 @@ public final class CompactParser implements PsiParser {
     pragma.done(CompactElementTypes.PRAGMA_FORM);
   }
 
+  /**
+   * version_expression ::=
+   * version_constraint
+   * (logical_operator version_constraint)*
+   */
   private boolean parseVersionExpression(PsiBuilder builder) {
 
     do {
@@ -55,6 +68,11 @@ public final class CompactParser implements PsiParser {
     return true;
   }
 
+  /**
+   * logical_operator ::=
+   * AND
+   * | OR
+   */
   private boolean parseLogicalOperator(PsiBuilder builder) {
     if (at(builder, CompactTokenTypes.AND)
             || at(builder, CompactTokenTypes.OR)) {
@@ -71,11 +89,23 @@ public final class CompactParser implements PsiParser {
     return false;
   }
 
+  /**
+   * version_constraint ::=
+   * version_operator? VERSION
+   */
   private boolean parseVersionConstraint(PsiBuilder builder) {
     parseComparisonOperator(builder);
     return expectVersion(builder);
   }
 
+  /**
+   * version_operator ::=
+   * GT
+   * | GTE
+   * | LT
+   * | LTE
+   * | NOT
+   */
   private void parseComparisonOperator(PsiBuilder builder) {
     IElementType token = builder.getTokenType();
     if (token == CompactTokenTypes.GT
@@ -88,6 +118,10 @@ public final class CompactParser implements PsiParser {
     }
   }
 
+  /**
+   * pragma_identifier ::= IDENTIFIER
+   * only 'language_version' and 'compiler_version' are allowed
+   */
   private boolean expectPragmaIdentifier(PsiBuilder builder) {
     if (!at(builder, CompactTokenTypes.IDENTIFIER)) {
       builder.error("Expected pragma identifier");
@@ -106,6 +140,9 @@ public final class CompactParser implements PsiParser {
     return true;
   }
 
+  /**
+   * version ::= VERSION
+   */
   private boolean expectVersion(PsiBuilder builder) {
     if (at(builder, CompactTokenTypes.VERSION)) {
       builder.advanceLexer();

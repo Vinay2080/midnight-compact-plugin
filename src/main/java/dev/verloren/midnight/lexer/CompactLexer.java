@@ -98,6 +98,9 @@ public final class CompactLexer extends LexerBase {
         position++;
         finish(CompactTokenTypes.RPAREN);
         return;
+      case '/':
+        lexComment();
+        return;
       case '>':
       case '<':
       case '!':
@@ -177,7 +180,6 @@ public final class CompactLexer extends LexerBase {
   }
 
   private void lexIdentifierOrKeyword() {
-
     do {
       position++;
     } while (position < endOffset && isIdentifierPart(buffer.charAt(position)));
@@ -224,6 +226,65 @@ public final class CompactLexer extends LexerBase {
       }
       position++;
     }
+  }
+
+  private void lexComment() {
+    position++; // consume '/'
+
+    if (position >= endOffset) {
+      finish(TokenType.BAD_CHARACTER);
+      return;
+    }
+
+    char ch = buffer.charAt(position);
+
+    // Line comment: //
+    if (ch == '/') {
+
+      do {
+        position++;
+      } while (position < endOffset
+              && buffer.charAt(position) != '\n'
+              && buffer.charAt(position) != '\r');
+
+      finish(CompactTokenTypes.LINE_COMMENT);
+      return;
+    }
+
+    // Block comment: /* ... */
+    if (ch == '*') {
+      position++;
+
+      while (position < endOffset) {
+
+        // Nested block comments are invalid.
+        if (buffer.charAt(position) == '/'
+                && position + 1 < endOffset
+                && buffer.charAt(position + 1) == '*') {
+
+          finish(TokenType.BAD_CHARACTER);
+          return;
+        }
+
+        if (buffer.charAt(position) == '*'
+                && position + 1 < endOffset
+                && buffer.charAt(position + 1) == '/') {
+
+          position += 2;
+          finish(CompactTokenTypes.BLOCK_COMMENT);
+          return;
+        }
+
+        position++;
+      }
+
+      // Unterminated block comment.
+      finish(TokenType.BAD_CHARACTER);
+      return;
+    }
+
+    // '/' is not a valid token in Compact.
+    finish(TokenType.BAD_CHARACTER);
   }
 
   private void finish(IElementType tokenType) {

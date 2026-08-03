@@ -12,6 +12,7 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.lexer.CompactLexer;
+import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.psi.CompactFile;
 import dev.verloren.midnight.psi.CompactPsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,10 @@ public class CompactParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull TokenSet getCommentTokens() {
-    return TokenSet.EMPTY;
+    return TokenSet.create(
+            CompactTokenTypes.LINE_COMMENT,
+            CompactTokenTypes.BLOCK_COMMENT
+    );
   }
 
   @Override

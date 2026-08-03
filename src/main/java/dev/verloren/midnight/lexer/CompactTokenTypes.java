@@ -21,6 +21,9 @@ public final class CompactTokenTypes {
   public static final IElementType LPAREN = new CompactTokenType("LPAREN");
   public static final IElementType RPAREN = new CompactTokenType("RPAREN");
 
+  public static final IElementType LINE_COMMENT = new CompactTokenType("LINE_COMMENT");
+
+  public static final IElementType BLOCK_COMMENT = new CompactTokenType("BLOCK_COMMENT");
 
   public static final IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
   public static final IElementType INVALID_VERSION = new CompactTokenType("INVALID_VERSION");
