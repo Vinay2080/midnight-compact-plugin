@@ -6,6 +6,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 
 public final class CompactLexer extends LexerBase {
 
@@ -15,6 +17,60 @@ public final class CompactLexer extends LexerBase {
   private int tokenStart;
   private int tokenEnd;
   private IElementType tokenType;
+
+  private static final Map<String, IElementType> KEYWORDS = Map.ofEntries(
+          Map.entry("pragma", CompactTokenTypes.PRAGMA),
+          Map.entry("export", CompactTokenTypes.EXPORT),
+          Map.entry("from", CompactTokenTypes.FROM),
+          Map.entry("import", CompactTokenTypes.IMPORT),
+          Map.entry("module", CompactTokenTypes.MODULE),
+          Map.entry("prefix", CompactTokenTypes.PREFIX),
+          Map.entry("assert", CompactTokenTypes.ASSERT),
+          Map.entry("as", CompactTokenTypes.AS),
+          Map.entry("circuit", CompactTokenTypes.CIRCUIT),
+          Map.entry("const", CompactTokenTypes.CONST),
+          Map.entry("constructor", CompactTokenTypes.CONSTRUCTOR),
+          Map.entry("contract", CompactTokenTypes.CONTRACT),
+          Map.entry("default", CompactTokenTypes.DEFAULT),
+          Map.entry("disclose", CompactTokenTypes.DISCLOSE),
+          Map.entry("else", CompactTokenTypes.ELSE),
+          Map.entry("enum", CompactTokenTypes.ENUM),
+          Map.entry("fold", CompactTokenTypes.FOLD),
+          Map.entry("for", CompactTokenTypes.FOR),
+          Map.entry("if", CompactTokenTypes.IF),
+          Map.entry("include", CompactTokenTypes.INCLUDE),
+          Map.entry("ledger", CompactTokenTypes.LEDGER),
+          Map.entry("map", CompactTokenTypes.MAP),
+          Map.entry("new", CompactTokenTypes.NEW),
+          Map.entry("of", CompactTokenTypes.OF),
+          Map.entry("pad", CompactTokenTypes.PAD),
+          Map.entry("pure", CompactTokenTypes.PURE),
+          Map.entry("return", CompactTokenTypes.RETURN),
+          Map.entry("sealed", CompactTokenTypes.SEALED),
+          Map.entry("slice", CompactTokenTypes.SLICE),
+          Map.entry("struct", CompactTokenTypes.STRUCT),
+          Map.entry("type", CompactTokenTypes.TYPE),
+          Map.entry("witness", CompactTokenTypes.WITNESS),
+          Map.entry("emit", CompactTokenTypes.EMIT),
+          Map.entry("true", CompactTokenTypes.TRUE),
+          Map.entry("false", CompactTokenTypes.FALSE)
+  );
+
+  private static final Map<String, IElementType> BUILTIN_TYPES = Map.ofEntries(
+          Map.entry("Boolean", CompactTokenTypes.BOOLEAN_TYPE),
+          Map.entry("Bytes", CompactTokenTypes.BYTES_TYPE),
+          Map.entry("Field", CompactTokenTypes.FIELD_TYPE),
+          Map.entry("Opaque", CompactTokenTypes.OPAQUE_TYPE),
+          Map.entry("Uint", CompactTokenTypes.UINT_TYPE),
+          Map.entry("Vector", CompactTokenTypes.VECTOR_TYPE),
+          Map.entry("JubjubScalar", CompactTokenTypes.JUBJUB_SCALAR_TYPE),
+          Map.entry("Secp256k1Base", CompactTokenTypes.SECP256K1_BASE_TYPE),
+          Map.entry("Secp256k1Scalar", CompactTokenTypes.SECP256K1_SCALAR_TYPE)
+  );
+  private static final Map<String, IElementType> BOOLEAN_LITERALS = Map.ofEntries(
+          Map.entry("true", CompactTokenTypes.TRUE),
+          Map.entry("false", CompactTokenTypes.FALSE)
+  );
 
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
@@ -87,16 +143,40 @@ public final class CompactLexer extends LexerBase {
 
     switch (ch) {
       case ';':
-        position++;
         finish(CompactTokenTypes.SEMICOLON);
         return;
       case '(':
-        position++;
-        finish(CompactTokenTypes.LPAREN);
+        finishHelper(CompactTokenTypes.LPAREN);
         return;
       case ')':
-        position++;
-        finish(CompactTokenTypes.RPAREN);
+        finishHelper(CompactTokenTypes.RPAREN);
+        return;
+      case ',':
+        finishHelper(CompactTokenTypes.COMMA);
+        return;
+      case '[':
+        finishHelper(CompactTokenTypes.LBRACKET);
+        return;
+      case ']':
+        finishHelper(CompactTokenTypes.RBRACKET);
+        return;
+      case '{':
+        finishHelper(CompactTokenTypes.LBRACE);
+        return;
+      case '}':
+        finishHelper(CompactTokenTypes.RBRACE);
+        return;
+      case ':':
+        finishHelper(CompactTokenTypes.COLON);
+        return;
+      case '?':
+        finishHelper(CompactTokenTypes.QUESTION);
+        return;
+      case '%':
+        finishHelper(CompactTokenTypes.PERCENT);
+        return;
+      case '*':
+        finishHelper(CompactTokenTypes.STAR);
         return;
       case '/':
         lexComment();
@@ -106,15 +186,17 @@ public final class CompactLexer extends LexerBase {
       case '!':
       case '&':
       case '|':
+      case '=':
+      case '+':
+      case '-':
+      case '.':
         lexOperator();
         return;
       default:
-        position++;
-        finish(TokenType.BAD_CHARACTER);
+        finishHelper(TokenType.BAD_CHARACTER);
     }
 
-    position++;
-    finish(TokenType.BAD_CHARACTER);
+    finishHelper(CompactTokenTypes.BAD_CHARACTER);
   }
 
   private void lexOperator() {
@@ -124,8 +206,7 @@ public final class CompactLexer extends LexerBase {
       case '>':
         position++;
         if (position < endOffset && buffer.charAt(position) == '=') {
-          position++;
-          finish(CompactTokenTypes.GTE);
+          finishHelper(CompactTokenTypes.GTE);
         } else {
           finish(CompactTokenTypes.GT);
         }
@@ -134,8 +215,7 @@ public final class CompactLexer extends LexerBase {
       case '<':
         position++;
         if (position < endOffset && buffer.charAt(position) == '=') {
-          position++;
-          finish(CompactTokenTypes.LTE);
+          finishHelper(CompactTokenTypes.LTE);
         } else {
           finish(CompactTokenTypes.LT);
         }
@@ -149,8 +229,7 @@ public final class CompactLexer extends LexerBase {
       case '&':
         position++;
         if (position < endOffset && buffer.charAt(position) == '&') {
-          position++;
-          finish(CompactTokenTypes.AND);
+          finishHelper(CompactTokenTypes.ANDAND);
         } else {
           finish(TokenType.BAD_CHARACTER);
         }
@@ -159,13 +238,52 @@ public final class CompactLexer extends LexerBase {
       case '|':
         position++;
         if (position < endOffset && buffer.charAt(position) == '|') {
-          position++;
-          finish(CompactTokenTypes.OR);
+          finishHelper(CompactTokenTypes.OROR);
         } else {
           finish(TokenType.BAD_CHARACTER);
         }
         return;
 
+      case '=':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '=') {
+          finishHelper(CompactTokenTypes.EQEQ);
+        } else if (position < endOffset && buffer.charAt(position) == '>') {
+          finishHelper(CompactTokenTypes.ARROW);
+        } else {
+          finishHelper(CompactTokenTypes.ASSIGN);
+        }
+        return;
+
+      case '+':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '=') {
+          finishHelper(CompactTokenTypes.PLUS_ASSIGN);
+        } else {
+          finishHelper(CompactTokenTypes.PLUS);
+        }
+        return;
+
+      case '-':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '=') {
+          finishHelper(CompactTokenTypes.MINUS_ASSIGN);
+        } else {
+          finishHelper(CompactTokenTypes.MINUS);
+        }
+        return;
+      case '.':
+        position++;
+        if (position < endOffset && buffer.charAt(position) == '.') {
+          if (position + 1 < endOffset && buffer.charAt(position + 1) == '.') {
+            position += 2;
+            finish(CompactTokenTypes.SPREAD);
+          } else {
+            finish(CompactTokenTypes.RANGE);
+          }
+        } else {
+          finishHelper(CompactTokenTypes.DOT);
+        }
       default:
         position++;
         finish(TokenType.BAD_CHARACTER);
@@ -184,8 +302,26 @@ public final class CompactLexer extends LexerBase {
       position++;
     } while (position < endOffset && isIdentifierPart(buffer.charAt(position)));
 
-    CharSequence text = buffer.subSequence(tokenStart, position);
-    finish("pragma".contentEquals(text) ? CompactTokenTypes.PRAGMA : CompactTokenTypes.IDENTIFIER);
+    String text = buffer.subSequence(tokenStart, position).toString();
+
+    IElementType token = KEYWORDS.get(text);
+
+    if (token != null) {
+      finish(token);
+      return;
+    }
+
+    token = BUILTIN_TYPES.get(text);
+    if (token != null) {
+      finish(token);
+      return;
+    }
+    token = BOOLEAN_LITERALS.get(text);
+    if (token != null) {
+      finish(token);
+      return;
+    }
+    finish(CompactTokenTypes.IDENTIFIER);
   }
 
   private void lexVersion() {
@@ -209,7 +345,7 @@ public final class CompactLexer extends LexerBase {
       return;
     }
 
-    finish(CompactTokenTypes.VERSION);
+    finish(CompactTokenTypes.VERSION_LITERAL);
   }
 
   private void consumeDigits() {
@@ -262,7 +398,7 @@ public final class CompactLexer extends LexerBase {
                 && position + 1 < endOffset
                 && buffer.charAt(position + 1) == '*') {
 
-          finish(TokenType.BAD_CHARACTER);
+          finish(CompactTokenTypes.UNTERMINATED_BLOCK_COMMENT);
           return;
         }
 
@@ -279,12 +415,17 @@ public final class CompactLexer extends LexerBase {
       }
 
       // Unterminated block comment.
-      finish(TokenType.BAD_CHARACTER);
+      finish(CompactTokenTypes.SLASH);
       return;
     }
 
     // '/' is not a valid token in Compact.
     finish(TokenType.BAD_CHARACTER);
+  }
+
+  private void finishHelper(IElementType tokenType) {
+    position++;
+    finish(tokenType);
   }
 
   private void finish(IElementType tokenType) {

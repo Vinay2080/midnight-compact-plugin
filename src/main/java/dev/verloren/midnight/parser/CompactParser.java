@@ -74,8 +74,8 @@ public final class CompactParser implements PsiParser {
    * | OR
    */
   private boolean parseLogicalOperator(PsiBuilder builder) {
-    if (at(builder, CompactTokenTypes.AND)
-            || at(builder, CompactTokenTypes.OR)) {
+    if (at(builder, CompactTokenTypes.ANDAND)
+            || at(builder, CompactTokenTypes.OROR)) {
       builder.advanceLexer();
       return true;
     }
@@ -144,7 +144,7 @@ public final class CompactParser implements PsiParser {
    * version ::= VERSION
    */
   private boolean expectVersion(PsiBuilder builder) {
-    if (at(builder, CompactTokenTypes.VERSION)) {
+    if (at(builder, CompactTokenTypes.VERSION_LITERAL)) {
       builder.advanceLexer();
       return true;
     }
