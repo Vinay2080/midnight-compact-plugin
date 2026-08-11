@@ -45,6 +45,9 @@ public final class CompactTokenTypes {
   public static final IElementType TYPE = new CompactTokenType("TYPE");
   public static final IElementType WITNESS = new CompactTokenType("WITNESS");
   public static final IElementType EMIT = new CompactTokenType("EMIT");
+  public static final IElementType IMPLEMENTS = new CompactTokenType("IMPLEMENTS");
+  public static final IElementType EXTERNAL = new CompactTokenType("EXTERNAL");
+  public static final IElementType HASH = new CompactTokenType("HASH");
 
   // =========================================================
   // Built-in Types

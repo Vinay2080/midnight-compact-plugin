@@ -11,7 +11,7 @@ import static org.junit.Assert.assertNull;
 public class PragmaTest {
   @Test
   public void lexesValidVersionLiterals() {
-    assertSingleToken("1", CompactTokenTypes.VERSION_LITERAL);
+    assertSingleToken("1", CompactTokenTypes.DECIMAL_LITERAL);
     assertSingleToken("1.0", CompactTokenTypes.VERSION_LITERAL);
     assertSingleToken("1.2.3", CompactTokenTypes.VERSION_LITERAL);
   }
@@ -19,7 +19,6 @@ public class PragmaTest {
   @Test
   public void lexesMalformedVersionAsSingleToken() {
     assertSingleToken("12.", CompactTokenTypes.INVALID_VERSION);
-    assertSingleToken("12..", CompactTokenTypes.INVALID_VERSION);
     assertSingleToken("12.a", CompactTokenTypes.INVALID_VERSION);
   }
 
@@ -36,7 +35,7 @@ public class PragmaTest {
     lexer.advance();
     assertToken(lexer, TokenType.WHITE_SPACE, 14, 15);
     lexer.advance();
-    assertToken(lexer, CompactTokenTypes.VERSION_LITERAL, 15, 16);
+    assertToken(lexer, CompactTokenTypes.DECIMAL_LITERAL, 15, 16);
     lexer.advance();
     assertToken(lexer, CompactTokenTypes.SEMICOLON, 16, 17);
     lexer.advance();

@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-
 public final class CompactLexer extends LexerBase {
 
   private CharSequence buffer = "";
@@ -38,6 +37,7 @@ public final class CompactLexer extends LexerBase {
           Map.entry("fold", CompactTokenTypes.FOLD),
           Map.entry("for", CompactTokenTypes.FOR),
           Map.entry("if", CompactTokenTypes.IF),
+          Map.entry("implements", CompactTokenTypes.IMPLEMENTS),
           Map.entry("include", CompactTokenTypes.INCLUDE),
           Map.entry("ledger", CompactTokenTypes.LEDGER),
           Map.entry("map", CompactTokenTypes.MAP),
@@ -52,6 +52,7 @@ public final class CompactLexer extends LexerBase {
           Map.entry("type", CompactTokenTypes.TYPE),
           Map.entry("witness", CompactTokenTypes.WITNESS),
           Map.entry("emit", CompactTokenTypes.EMIT),
+          Map.entry("external", CompactTokenTypes.EXTERNAL),
           Map.entry("true", CompactTokenTypes.TRUE),
           Map.entry("false", CompactTokenTypes.FALSE)
   );
@@ -137,13 +138,17 @@ public final class CompactLexer extends LexerBase {
     }
 
     if (Character.isDigit(ch)) {
-      lexVersion();
+      lexNumberOrVersion();
       return;
     }
 
+    if (ch == '"' || ch == '\'') {
+      lexString(ch);
+      return;
+    }
     switch (ch) {
       case ';':
-        finish(CompactTokenTypes.SEMICOLON);
+        finishHelper(CompactTokenTypes.SEMICOLON);
         return;
       case '(':
         finishHelper(CompactTokenTypes.LPAREN);
@@ -178,6 +183,9 @@ public final class CompactLexer extends LexerBase {
       case '*':
         finishHelper(CompactTokenTypes.STAR);
         return;
+      case '#':
+        finishHelper(CompactTokenTypes.HASH);
+        return;
       case '/':
         lexComment();
         return;
@@ -197,6 +205,46 @@ public final class CompactLexer extends LexerBase {
     }
 
     finishHelper(CompactTokenTypes.BAD_CHARACTER);
+  }
+
+  private void lexString(char quote) {
+    position++; // consume opening quote
+
+    while (position < endOffset) {
+      char ch = buffer.charAt(position);
+
+      // Handle escape sequences
+      if (ch == '\\') {
+        position++;
+
+        // '\' at end of file -> unterminated string
+        if (position >= endOffset) {
+          finish(CompactTokenTypes.UNTERMINATED_STRING);
+          return;
+        }
+
+        position++; // consume escaped character
+        continue;
+      }
+
+      // Closing quote
+      if (ch == quote) {
+        position++;
+        finish(CompactTokenTypes.STRING_LITERAL);
+        return;
+      }
+
+      // Newline before closing quote -> invalid
+      if (ch == '\n' || ch == '\r') {
+        finish(CompactTokenTypes.UNTERMINATED_STRING);
+        return;
+      }
+
+      position++;
+    }
+
+    // EOF before closing quote
+    finish(CompactTokenTypes.UNTERMINATED_STRING);
   }
 
   private void lexOperator() {
@@ -223,7 +271,11 @@ public final class CompactLexer extends LexerBase {
 
       case '!':
         position++;
-        finish(CompactTokenTypes.NOT);
+        if (position < endOffset && buffer.charAt(position) == '=') {
+          finishHelper(CompactTokenTypes.NEQ);
+        } else {
+          finish(CompactTokenTypes.NOT);
+        }
         return;
 
       case '&':
@@ -246,12 +298,13 @@ public final class CompactLexer extends LexerBase {
 
       case '=':
         position++;
+
         if (position < endOffset && buffer.charAt(position) == '=') {
           finishHelper(CompactTokenTypes.EQEQ);
         } else if (position < endOffset && buffer.charAt(position) == '>') {
           finishHelper(CompactTokenTypes.ARROW);
         } else {
-          finishHelper(CompactTokenTypes.ASSIGN);
+          finish(CompactTokenTypes.ASSIGN);
         }
         return;
 
@@ -260,7 +313,7 @@ public final class CompactLexer extends LexerBase {
         if (position < endOffset && buffer.charAt(position) == '=') {
           finishHelper(CompactTokenTypes.PLUS_ASSIGN);
         } else {
-          finishHelper(CompactTokenTypes.PLUS);
+          finish(CompactTokenTypes.PLUS);
         }
         return;
 
@@ -269,7 +322,7 @@ public final class CompactLexer extends LexerBase {
         if (position < endOffset && buffer.charAt(position) == '=') {
           finishHelper(CompactTokenTypes.MINUS_ASSIGN);
         } else {
-          finishHelper(CompactTokenTypes.MINUS);
+          finish(CompactTokenTypes.MINUS);
         }
         return;
       case '.':
@@ -279,11 +332,12 @@ public final class CompactLexer extends LexerBase {
             position += 2;
             finish(CompactTokenTypes.SPREAD);
           } else {
-            finish(CompactTokenTypes.RANGE);
+            finishHelper(CompactTokenTypes.RANGE);
           }
         } else {
-          finishHelper(CompactTokenTypes.DOT);
+          finish(CompactTokenTypes.DOT);
         }
+        return;
       default:
         position++;
         finish(TokenType.BAD_CHARACTER);
@@ -324,10 +378,66 @@ public final class CompactLexer extends LexerBase {
     finish(CompactTokenTypes.IDENTIFIER);
   }
 
-  private void lexVersion() {
+  private void lexNumberOrVersion() {
+
+    // Hex: 0x...
+    if (buffer.charAt(position) == '0'
+            && position + 1 < endOffset
+            && (buffer.charAt(position + 1) == 'x' || buffer.charAt(position + 1) == 'X')) {
+
+      position += 2;
+
+      while (position < endOffset && isHexDigit(buffer.charAt(position))) {
+        position++;
+      }
+
+      finish(CompactTokenTypes.HEX_LITERAL);
+      return;
+    }
+
+    // Binary: 0b...
+    if (buffer.charAt(position) == '0'
+            && position + 1 < endOffset
+            && (buffer.charAt(position + 1) == 'b' || buffer.charAt(position + 1) == 'B')) {
+
+      position += 2;
+
+      while (position < endOffset
+              && (buffer.charAt(position) == '0' || buffer.charAt(position) == '1')) {
+        position++;
+      }
+
+      finish(CompactTokenTypes.BINARY_LITERAL);
+      return;
+    }
+
+    // Octal: 0o... or 0O...
+    if (buffer.charAt(position) == '0'
+            && position + 1 < endOffset
+            && (buffer.charAt(position + 1) == 'o' || buffer.charAt(position + 1) == 'O')) {
+
+      position += 2;
+
+      while (position < endOffset
+              && (buffer.charAt(position) >= '0' && buffer.charAt(position) <= '7')) {
+        position++;
+      }
+
+      finish(CompactTokenTypes.OCTAL_LITERAL);
+      return;
+    }
+
+    // Consume decimal digits
     consumeDigits();
 
+    boolean isVersion = false;
+
     while (position < endOffset && buffer.charAt(position) == '.') {
+      if (position + 1 < endOffset && buffer.charAt(position + 1) == '.') {
+        // Range operator '..' follows - stop parsing decimal/version number here!
+        break;
+      }
+      isVersion = true;
       position++;
 
       if (position >= endOffset || !Character.isDigit(buffer.charAt(position))) {
@@ -345,7 +455,18 @@ public final class CompactLexer extends LexerBase {
       return;
     }
 
-    finish(CompactTokenTypes.VERSION_LITERAL);
+    if (isVersion) {
+      finish(CompactTokenTypes.VERSION_LITERAL);
+      return;
+    }
+
+    finish(CompactTokenTypes.DECIMAL_LITERAL);
+  }
+
+  private static boolean isHexDigit(char ch) {
+    return Character.isDigit(ch)
+            || (ch >= 'a' && ch <= 'f')
+            || (ch >= 'A' && ch <= 'F');
   }
 
   private void consumeDigits() {
@@ -368,7 +489,7 @@ public final class CompactLexer extends LexerBase {
     position++; // consume '/'
 
     if (position >= endOffset) {
-      finish(TokenType.BAD_CHARACTER);
+      finish(CompactTokenTypes.SLASH);
       return;
     }
 
@@ -415,12 +536,12 @@ public final class CompactLexer extends LexerBase {
       }
 
       // Unterminated block comment.
-      finish(CompactTokenTypes.SLASH);
+      finish(CompactTokenTypes.UNTERMINATED_BLOCK_COMMENT);
       return;
     }
 
-    // '/' is not a valid token in Compact.
-    finish(TokenType.BAD_CHARACTER);
+    // Bare '/' is SLASH operator
+    finish(CompactTokenTypes.SLASH);
   }
 
   private void finishHelper(IElementType tokenType) {
@@ -434,11 +555,12 @@ public final class CompactLexer extends LexerBase {
   }
 
   private static boolean isIdentifierStart(char ch) {
-    return Character.isLetter(ch) || ch == '_';
+    return Character.isLetter(ch) || ch == '_' || ch == '$';
   }
 
   private static boolean isIdentifierPart(char ch) {
-    return Character.isLetterOrDigit(ch) || ch == '_';
+    return Character.isLetterOrDigit(ch) || ch == '_' || ch == '$';
   }
 
 }
+

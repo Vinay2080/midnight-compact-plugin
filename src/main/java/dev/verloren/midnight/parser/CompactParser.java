@@ -144,7 +144,7 @@ public final class CompactParser implements PsiParser {
    * version ::= VERSION
    */
   private boolean expectVersion(PsiBuilder builder) {
-    if (at(builder, CompactTokenTypes.VERSION_LITERAL)) {
+    if (at(builder, CompactTokenTypes.VERSION_LITERAL) || at(builder, CompactTokenTypes.DECIMAL_LITERAL)) {
       builder.advanceLexer();
       return true;
     }

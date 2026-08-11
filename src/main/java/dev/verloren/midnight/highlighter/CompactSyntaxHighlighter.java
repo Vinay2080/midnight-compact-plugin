@@ -72,7 +72,9 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
             tokenType == CompactTokenTypes.STRUCT ||
             tokenType == CompactTokenTypes.TYPE ||
             tokenType == CompactTokenTypes.WITNESS ||
-            tokenType == CompactTokenTypes.EMIT
+            tokenType == CompactTokenTypes.EMIT ||
+            tokenType == CompactTokenTypes.IMPLEMENTS ||
+            tokenType == CompactTokenTypes.EXTERNAL
             ) {
             return pack(KEYWORD);
         }

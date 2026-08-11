@@ -17,7 +17,7 @@ public class PragmaParserTest extends ParsingTestCase {
 
   public void testValidPragma() {
     String text = """
-        pragma version 1;
+        pragma language_version 1;
         pragma language_version 1.0;
         pragma compiler_version 1.2.3;
         """;
