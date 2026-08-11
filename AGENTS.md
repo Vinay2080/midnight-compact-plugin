@@ -450,6 +450,11 @@ Implement Go To Declaration using Compact `PsiReference` support.
 - Verified test suite execution with `gradlew.bat test` (all 14 tests passing).
 - Conducted deep investigation of official Compact compiler repository at `./compact`. Documented authoritative compiler locations, lexer (`lexer.ss`), parser (`parser.ss`), monadic combinator engine (`ez-grammar.ss`), CST/AST schemas (`Lparser`, `Lsrc`), error recovery mechanisms, test suites (`test.ss`, `test-contracts`), and syntax examples (`compact/examples/*.compact`).
 - Added `## Compact Language Reference` and `## IntelliJ Parser Porting Notes` sections to `AGENTS.md`. Defined exact mappings for official AST nodes to IntelliJ PSI elements, expression precedence climbing strategy, PsiBuilder marker rollback strategies, and missing reserved keyword tokens.
+- Implemented the handwritten Compact parser plan in `CompactParser.java`: top-level declaration dispatch, include/import/export/module/struct/enum/contract/implements/type/ledger/witness/constructor/circuit parsing, structured types/generics/patterns/parameters, block/statement parsing, and precedence-climbing expressions with generic-call versus relational `<` rollback.
+- Added handwritten composite element types, shared `CompactTokenSets`, parser utilities, AST-to-PSI factory wiring, declaration PSI interfaces/implementations, `CompactNamedElement` support, `CompactBlock`, and `CompactReferenceExpr` for future references.
+- Added parser and PSI regression coverage for declarations, names/name identifiers, types/generics/patterns, statements/blocks, expressions/ambiguity, recovery, factory consistency, and end-to-end parsing of `references/type-example.compact`.
+- Fixed real-reference parser gaps found by `references/type-example.compact`: allow `Map<...>` in type context and avoid mis-parsing immediately-invoked lambdas like `(() => ...)()` as outer lambda parameter lists.
+- Verified with `.\gradlew.bat build` (all tests passing).
 
 # Development Constraints
 
