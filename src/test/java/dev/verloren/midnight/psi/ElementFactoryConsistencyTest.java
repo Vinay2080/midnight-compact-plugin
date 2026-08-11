@@ -22,6 +22,7 @@ public class ElementFactoryConsistencyTest extends BasePlatformTestCase {
     assertDedicated(CompactElementTypes.CIRCUIT_DEFINITION);
     assertDedicated(CompactElementTypes.BLOCK);
     assertDedicated(CompactElementTypes.REFERENCE_EXPR);
+    assertDedicated(CompactElementTypes.CALL_EXPR);
   }
 
   private static void assertDedicated(IElementType elementType) {

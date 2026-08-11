@@ -26,12 +26,23 @@ public abstract class CompactNamedElementImpl extends CompactPsiElement implemen
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    throw new IncorrectOperationException("Rename is not implemented yet");
+    PsiElement nameIdentifier = getNameIdentifier();
+    if (nameIdentifier == null) {
+      throw new IncorrectOperationException("Cannot rename Compact element without a name");
+    }
+    PsiElement newIdentifier = CompactElementFactory.createIdentifierLeaf(getProject(), name);
+    nameIdentifier.replace(newIdentifier);
+    return this;
   }
 
   @Override
   public int getTextOffset() {
     PsiElement nameIdentifier = getNameIdentifier();
     return nameIdentifier == null ? super.getTextOffset() : nameIdentifier.getTextOffset();
+  }
+
+  @Override
+  public @NotNull com.intellij.psi.search.SearchScope getUseScope() {
+    return new com.intellij.psi.search.LocalSearchScope(getContainingFile());
   }
 }

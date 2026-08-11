@@ -101,6 +101,10 @@ public final class CompactParser implements PsiParser {
         parseExternalContract(builder, true);
         return true;
       }
+      if (nextAfterModifier == CompactTokenTypes.CONST) {
+        parseConstStatement(builder, true);
+        return true;
+      }
       if (nextAfterModifier == CompactTokenTypes.TYPE) {
         parseTypeAlias(builder, true);
         return true;
@@ -149,6 +153,10 @@ public final class CompactParser implements PsiParser {
     }
     if (at(builder, CompactTokenTypes.WITNESS)) {
       parseWitness(builder, false);
+      return true;
+    }
+    if (at(builder, CompactTokenTypes.CONST)) {
+      parseConstStatement(builder, false);
       return true;
     }
     if (at(builder, CompactTokenTypes.CONSTRUCTOR)) {
@@ -673,7 +681,10 @@ public final class CompactParser implements PsiParser {
     }
 
     if (isTypeReferenceStart(builder.getTokenType())) {
-      builder.advanceLexer();
+      if (at(builder, CompactTokenTypes.HASH)) {
+        builder.advanceLexer();
+      }
+      expect(builder, CompactTokenTypes.IDENTIFIER, "Expected type reference name");
       if (at(builder, CompactTokenTypes.LT)) {
         parseGenericArgumentList(builder);
       }
@@ -810,8 +821,11 @@ public final class CompactParser implements PsiParser {
     statement.done(CompactElementTypes.FOR_STATEMENT);
   }
 
-  private void parseConstStatement(PsiBuilder builder) {
+  private void parseConstStatement(PsiBuilder builder, boolean exported) {
     PsiBuilder.Marker statement = builder.mark();
+    if (exported) {
+      expect(builder, CompactTokenTypes.EXPORT, "Expected 'export'");
+    }
     expect(builder, CompactTokenTypes.CONST, "Expected 'const'");
     while (!builder.eof() && !at(builder, CompactTokenTypes.SEMICOLON)) {
       parseConstBinding(builder);
@@ -824,6 +838,10 @@ public final class CompactParser implements PsiParser {
     }
     expect(builder, CompactTokenTypes.SEMICOLON, "Expected ';'");
     statement.done(CompactElementTypes.CONST_STATEMENT);
+  }
+
+  private void parseConstStatement(PsiBuilder builder) {
+    parseConstStatement(builder, false);
   }
 
   private void parseConstBinding(PsiBuilder builder) {
@@ -1387,6 +1405,7 @@ public final class CompactParser implements PsiParser {
 
   private static boolean isTypeReferenceStart(IElementType token) {
     return token == CompactTokenTypes.IDENTIFIER
+            || token == CompactTokenTypes.HASH
             || token == CompactTokenTypes.MAP;
   }
 

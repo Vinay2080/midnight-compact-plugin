@@ -1,8 +1,12 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.util.PsiTreeUtil;
+import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,8 +61,51 @@ public final class CompactElementFactory {
     if (elementType == CompactElementTypes.REFERENCE_EXPR) {
       return new CompactReferenceExprImpl(node);
     }
+    if (elementType == CompactElementTypes.CALL_EXPR) {
+      return new CompactCallExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.TYPE_REFERENCE) {
+      return new CompactTypeReferenceImpl(node);
+    }
+    if (elementType == CompactElementTypes.STRUCT_LITERAL_EXPR) {
+      return new CompactStructLiteralExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.MEMBER_EXPR) {
+      return new CompactMemberExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.IMPORT_ELEMENT) {
+      return new CompactImportElementImpl(node);
+    }
+    if (elementType == CompactElementTypes.TYPED_ID) {
+      return new CompactParameterImpl(node);
+    }
+    if (elementType == CompactElementTypes.STRUCT_FIELD) {
+      return new CompactStructFieldImpl(node);
+    }
+    if (elementType == CompactElementTypes.ENUM_MEMBER) {
+      return new CompactEnumMemberImpl(node);
+    }
+    if (elementType == CompactElementTypes.CONST_BINDING) {
+      return new CompactConstBindingImpl(node);
+    }
+    if (elementType == CompactElementTypes.GENERIC_PARAMETER) {
+      return new CompactGenericParameterImpl(node);
+    }
+    if (elementType == CompactElementTypes.PATTERN) {
+      return new CompactPatternImpl(node);
+    }
 
     return new CompactPsiElement(node);
+  }
+
+  public static @NotNull PsiElement createIdentifierLeaf(@NotNull Project project, @NotNull String text) {
+    CompactFile file = (CompactFile)PsiFileFactory.getInstance(project)
+            .createFileFromText("rename.compact", CompactFileType.INSTANCE, "type " + text + " = Field;");
+    CompactTypeDefinition typeDefinition = PsiTreeUtil.findChildOfType(file, CompactTypeDefinition.class);
+    if (typeDefinition == null || typeDefinition.getNameIdentifier() == null) {
+      throw new IllegalArgumentException("Invalid Compact identifier: " + text);
+    }
+    return typeDefinition.getNameIdentifier();
   }
 
   public static boolean hasDedicatedElement(@NotNull IElementType elementType) {
@@ -77,7 +124,18 @@ public final class CompactElementFactory {
             || elementType == CompactElementTypes.CONSTRUCTOR_DEFINITION
             || elementType == CompactElementTypes.CIRCUIT_DEFINITION
             || elementType == CompactElementTypes.BLOCK
-            || elementType == CompactElementTypes.REFERENCE_EXPR;
+            || elementType == CompactElementTypes.REFERENCE_EXPR
+            || elementType == CompactElementTypes.CALL_EXPR
+            || elementType == CompactElementTypes.TYPE_REFERENCE
+            || elementType == CompactElementTypes.STRUCT_LITERAL_EXPR
+            || elementType == CompactElementTypes.MEMBER_EXPR
+            || elementType == CompactElementTypes.IMPORT_ELEMENT
+            || elementType == CompactElementTypes.TYPED_ID
+            || elementType == CompactElementTypes.STRUCT_FIELD
+            || elementType == CompactElementTypes.ENUM_MEMBER
+            || elementType == CompactElementTypes.CONST_BINDING
+            || elementType == CompactElementTypes.GENERIC_PARAMETER
+            || elementType == CompactElementTypes.PATTERN;
   }
 
   private CompactElementFactory() {

@@ -1,0 +1,36 @@
+package dev.verloren.midnight.psi;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.TokenSet;
+import dev.verloren.midnight.lexer.CompactTokenTypes;
+import dev.verloren.midnight.reference.CompactEnumMemberReference;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class CompactMemberExprImpl extends CompactPsiElement {
+  public CompactMemberExprImpl(@NotNull ASTNode node) {
+    super(node);
+  }
+
+  @Override
+  public @Nullable PsiReference getReference() {
+    PsiElement member = getMemberIdentifier();
+    if (member == null) {
+      return null;
+    }
+    int start = member.getTextRange().getStartOffset() - getTextRange().getStartOffset();
+    return new CompactEnumMemberReference(this, TextRange.from(start, member.getTextLength()));
+  }
+
+  public @Nullable PsiElement getMemberIdentifier() {
+    ASTNode[] nodes = getNode().getChildren(TokenSet.create(CompactTokenTypes.IDENTIFIER));
+    PsiElement[] identifiers = new PsiElement[nodes.length];
+    for (int i = 0; i < nodes.length; i++) {
+      identifiers[i] = nodes[i].getPsi();
+    }
+    return identifiers.length == 0 ? null : identifiers[identifiers.length - 1];
+  }
+}

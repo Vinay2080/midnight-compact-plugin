@@ -5,12 +5,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
-import dev.verloren.midnight.reference.CompactValueReference;
+import dev.verloren.midnight.reference.CompactTypeReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompactReferenceExprImpl extends CompactPsiElement implements CompactReferenceExpr {
-  public CompactReferenceExprImpl(@NotNull ASTNode node) {
+public class CompactStructLiteralExprImpl extends CompactPsiElement {
+  public CompactStructLiteralExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -22,6 +22,6 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
     }
     PsiElement psi = identifier.getPsi();
     int start = psi.getTextRange().getStartOffset() - getTextRange().getStartOffset();
-    return new CompactValueReference(this, TextRange.from(start, psi.getTextLength()));
+    return new CompactTypeReference(this, TextRange.from(start, psi.getTextLength()));
   }
 }

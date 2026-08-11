@@ -25,10 +25,11 @@ Core technologies and feature areas:
 - [x] Handwritten PSI wrappers
 - [x] ParserDefinition
 - [x] Lexer/parser regression tests
-- [ ] References
-- [ ] Completion
-- [ ] Rename
-- [ ] Find Usages
+- [x] References
+- [x] Completion
+- [x] Rename
+- [x] Find Usages
+- [x] Phase 3 Automated Test Suite (57/57 unit tests passing across resolution, references, completion, rename, and find usages)
 - [ ] Type Inference
 - [ ] Inspections
 - [ ] Formatter
@@ -42,11 +43,6 @@ Core technologies and feature areas:
 
 ## Missing
 
-- Go To Declaration using Compact references
-- Reference resolution for imports, modules, declarations, and type references
-- Completion for keywords, declarations, imports, types, and struct fields
-- Rename support
-- Find Usages support
 - Type inference
 - Inspections
 - Formatter
@@ -89,6 +85,17 @@ Inspections (pending)
 ↓
 Formatter (pending)
 ```
+
+## Phase 3 Architecture — References, Resolution & Completion
+
+- Phase 3 is implemented as a PSI/reference layer on top of the handwritten parser and existing element types; `CompactParser.java`, token types, and grammar reference files remain unchanged.
+- References are owned by handwritten PSI wrappers rather than a central `PsiReferenceContributor`: value references on `REFERENCE_EXPR`, type references on `TYPE_REFERENCE` and struct literals, enum-member references on `MEMBER_EXPR`, import references on import forms/elements, and implements targets through the contained type reference.
+- Resolution uses single-file `PsiTreeUtil` scope walking in `CompactResolveUtil` with separate value/type namespaces and innermost-first shadowing; it intentionally avoids stubs, indexes, cross-file include/import resolution, stdlib symbol indexes, and type inference.
+- Named wrappers now cover parameters, struct fields, enum members, const bindings, generic parameters, simple patterns, and import aliases so Go To Declaration, Rename, and Find Usages share the same `CompactNamedElement` model.
+- Module imports are modeled in-file: `import M prefix $;` exposes exported module members as flat `$name` references/completions, and `import { a as b } from M;` treats the alias as the local named declaration while the source name references the module export.
+- Completion is contextual through `CompactCompletionContributor`: declaration/statement keywords at starts, builtin and in-scope types in type positions, in-scope values plus value keywords in expression positions, and enum members after `Enum.`; struct field and ADT method completion remain deferred until type inference.
+- Find Usages uses `DefaultWordsScanner` over the handwritten lexer and `CompactNamedElement` classification; Rename uses `CompactNamedElementImpl.setName`, reference `handleElementRename`, and `CompactNamesValidator` to reject keywords and invalid identifiers.
+- Open questions remain: exact disjointness of type/value namespaces for same-name declarations, visibility of non-exported module members, cross-file include/import semantics, stdlib builtin resolution surface, and first-class destructuring/for-loop binding ownership without parser changes.
 
 ## Compact Language Reference
 
@@ -454,6 +461,15 @@ Implement Go To Declaration using Compact `PsiReference` support.
 - Added handwritten composite element types, shared `CompactTokenSets`, parser utilities, AST-to-PSI factory wiring, declaration PSI interfaces/implementations, `CompactNamedElement` support, `CompactBlock`, and `CompactReferenceExpr` for future references.
 - Added parser and PSI regression coverage for declarations, names/name identifiers, types/generics/patterns, statements/blocks, expressions/ambiguity, recovery, factory consistency, and end-to-end parsing of `references/type-example.compact`.
 - Fixed real-reference parser gaps found by `references/type-example.compact`: allow `Map<...>` in type context and avoid mis-parsing immediately-invoked lambdas like `(() => ...)()` as outer lambda parameter lists.
+- Verified with `.\gradlew.bat build` (all tests passing).
+
+### 2026-08-12
+
+- Implemented Phase 3 editor navigation/code-intelligence foundation from `.junie/plans/phase-3-reference-resolution-completion.md` without changing the handwritten parser, lexer, token types, grammar references, or tests.
+- Added single-file scope-walking resolution (`CompactResolveUtil`) with separate value/type namespaces, local shadowing, module export lookup, selected imports, and prefix flattening for `$name` imports.
+- Added dedicated PSI wrappers for reference sites and named local/import elements; `CompactNamedElementImpl.setName()` now performs parsed identifier replacement for rename.
+- Added `PsiReference` implementations for values, types, enum members, imports, struct literal names, and implements targets, enabling default Go To Declaration through platform reference resolution.
+- Added Find Usages, NamesValidator, refactoring support, and contextual completion extension registrations in `plugin.xml`.
 - Verified with `.\gradlew.bat build` (all tests passing).
 
 # Development Constraints

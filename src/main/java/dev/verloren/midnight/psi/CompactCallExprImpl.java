@@ -9,8 +9,8 @@ import dev.verloren.midnight.reference.CompactValueReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompactReferenceExprImpl extends CompactPsiElement implements CompactReferenceExpr {
-  public CompactReferenceExprImpl(@NotNull ASTNode node) {
+public class CompactCallExprImpl extends CompactPsiElement {
+  public CompactCallExprImpl(@NotNull ASTNode node) {
     super(node);
   }
 
