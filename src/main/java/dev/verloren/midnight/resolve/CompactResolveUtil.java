@@ -3,26 +3,20 @@ package dev.verloren.midnight.resolve;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import dev.verloren.midnight.scope.CompactScope;
-import dev.verloren.midnight.scope.CompactScopes;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.*;
+import dev.verloren.midnight.scope.CompactScope;
+import dev.verloren.midnight.scope.CompactScopes;
 import dev.verloren.midnight.symbol.CompactSymbol;
 import dev.verloren.midnight.symbol.CompactSymbols;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class CompactResolveUtil {
-  public enum Namespace {
-    VALUE,
-    TYPE
+  private CompactResolveUtil() {
   }
 
   public static @NotNull List<CompactNamedElement> resolveValue(@NotNull String name, @NotNull PsiElement place) {
@@ -190,11 +184,11 @@ public final class CompactResolveUtil {
         layers.add(collectNamedBefore(scope, place, namespace));
       }
       if (scope instanceof CompactModuleDefinition) {
-        layers.add(collectModuleDeclarations((CompactModuleDefinition)scope, namespace, place));
+        layers.add(collectModuleDeclarations((CompactModuleDefinition) scope, namespace, place));
       }
       if (scope instanceof CompactFile) {
-        layers.add(collectFileDeclarations((CompactFile)scope, namespace, place));
-        layers.add(collectSelectionImports((CompactFile)scope, namespace));
+        layers.add(collectFileDeclarations((CompactFile) scope, namespace, place));
+        layers.add(collectSelectionImports((CompactFile) scope, namespace));
         break;
       }
     }
@@ -284,7 +278,7 @@ public final class CompactResolveUtil {
 
   private static boolean isInNamespace(@NotNull CompactNamedElement declaration, @NotNull Namespace namespace, @NotNull PsiElement place) {
     if (declaration instanceof CompactImportElementImpl) {
-      CompactNamedElement target = resolveImportElementSource((CompactImportElementImpl)declaration);
+      CompactNamedElement target = resolveImportElementSource((CompactImportElementImpl) declaration);
       return target != null && isInNamespace(target, namespace, place);
     }
     if (namespace == Namespace.TYPE) {
@@ -341,7 +335,7 @@ public final class CompactResolveUtil {
 
   private static @Nullable CompactFile getCompactFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    return file instanceof CompactFile ? (CompactFile)file : null;
+    return file instanceof CompactFile ? (CompactFile) file : null;
   }
 
   private static @NotNull List<CompactSymbol> toSymbols(@NotNull Collection<? extends CompactNamedElement> declarations) {
@@ -355,6 +349,8 @@ public final class CompactResolveUtil {
     return result;
   }
 
-  private CompactResolveUtil() {
+  public enum Namespace {
+    VALUE,
+    TYPE
   }
 }

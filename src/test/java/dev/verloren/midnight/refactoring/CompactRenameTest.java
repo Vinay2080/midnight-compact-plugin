@@ -2,9 +2,9 @@ package dev.verloren.midnight.refactoring;
 
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.parser.CompactParserDefinition;
-import dev.verloren.midnight.CompactFileType;
 
 
 public class CompactRenameTest extends BasePlatformTestCase {
@@ -13,12 +13,12 @@ public class CompactRenameTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     com.intellij.lang.LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-      CompactLanguage.INSTANCE,
-      new CompactParserDefinition()
+            CompactLanguage.INSTANCE,
+            new CompactParserDefinition()
     );
     com.intellij.lang.findUsages.LanguageFindUsages.INSTANCE.addExplicitExtension(
-      CompactLanguage.INSTANCE,
-      new dev.verloren.midnight.findUsages.CompactFindUsagesProvider()
+            CompactLanguage.INSTANCE,
+            new dev.verloren.midnight.findUsages.CompactFindUsagesProvider()
     );
   }
 

@@ -22,14 +22,14 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
   }
 
   @Override
-  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, RESOLVER, false, incompleteCode);
-  }
-
-  @Override
   public @Nullable PsiElement resolve() {
     ResolveResult[] results = multiResolve(false);
     return results.length == 1 ? results[0].getElement() : null;
+  }
+
+  @Override
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, RESOLVER, false, incompleteCode);
   }
 
   @Override
@@ -50,6 +50,10 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
     return getElement();
   }
 
+  private @Nullable PsiElement getReferencedIdentifier() {
+    return getElement().findElementAt(getRangeInElement().getStartOffset());
+  }
+
   protected ResolveResult @NotNull [] toResults(@NotNull Collection<? extends CompactNamedElement> elements) {
     ResolveResult[] results = new ResolveResult[elements.size()];
     int i = 0;
@@ -60,8 +64,4 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
   }
 
   protected abstract ResolveResult @NotNull [] resolveInner();
-
-  private @Nullable PsiElement getReferencedIdentifier() {
-    return getElement().findElementAt(getRangeInElement().getStartOffset());
-  }
 }

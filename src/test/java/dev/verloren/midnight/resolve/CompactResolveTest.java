@@ -15,8 +15,8 @@ public class CompactResolveTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     com.intellij.lang.LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-      dev.verloren.midnight.CompactLanguage.INSTANCE,
-      new dev.verloren.midnight.parser.CompactParserDefinition()
+            dev.verloren.midnight.CompactLanguage.INSTANCE,
+            new dev.verloren.midnight.parser.CompactParserDefinition()
     );
   }
 
@@ -186,7 +186,7 @@ public class CompactResolveTest extends BasePlatformTestCase {
 
   public void testGenericParameterResolution() {
     myFixture.configureByText(CompactFileType.INSTANCE,
-      "type Container<#N> = Vector<#<caret>N, Field>;\n"
+            "type Container<#N> = Vector<#<caret>N, Field>;\n"
     );
     PsiReference ref = myFixture.getReferenceAtCaretPosition();
     assertNotNull(ref);
@@ -200,7 +200,7 @@ public class CompactResolveTest extends BasePlatformTestCase {
 
   public void testSoftUnresolvedBuiltins() {
     myFixture.configureByText(CompactFileType.INSTANCE,
-      "circuit test(b: <caret>UnknownType) {}\n"
+            "circuit test(b: <caret>UnknownType) {}\n"
     );
     PsiReference ref = myFixture.getReferenceAtCaretPosition();
     assertNotNull("Type reference object should exist even for unresolved custom type", ref);

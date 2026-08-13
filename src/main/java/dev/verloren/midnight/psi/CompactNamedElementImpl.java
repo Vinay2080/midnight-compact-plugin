@@ -20,18 +20,6 @@ public abstract class CompactNamedElementImpl extends CompactPsiElement implemen
   }
 
   @Override
-  public @Nullable PsiElement getNameIdentifier() {
-    ASTNode identifier = getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
-    return identifier == null ? null : identifier.getPsi();
-  }
-
-  @Override
-  public @Nullable String getName() {
-    PsiElement nameIdentifier = getNameIdentifier();
-    return nameIdentifier == null ? null : nameIdentifier.getText();
-  }
-
-  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PsiElement nameIdentifier = getNameIdentifier();
     if (nameIdentifier == null) {
@@ -51,5 +39,17 @@ public abstract class CompactNamedElementImpl extends CompactPsiElement implemen
   @Override
   public @NotNull com.intellij.psi.search.SearchScope getUseScope() {
     return new com.intellij.psi.search.LocalSearchScope(getContainingFile());
+  }
+
+  @Override
+  public @Nullable String getName() {
+    PsiElement nameIdentifier = getNameIdentifier();
+    return nameIdentifier == null ? null : nameIdentifier.getText();
+  }
+
+  @Override
+  public @Nullable PsiElement getNameIdentifier() {
+    ASTNode identifier = getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
+    return identifier == null ? null : identifier.getPsi();
   }
 }

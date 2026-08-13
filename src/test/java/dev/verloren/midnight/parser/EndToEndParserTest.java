@@ -1,7 +1,7 @@
 package dev.verloren.midnight.parser;
 
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ParsingTestCase;
@@ -35,9 +35,9 @@ public class EndToEndParserTest extends ParsingTestCase {
 
   public void testBadDeclarationRecoveryKeepsFollowingDeclaration() {
     String text = """
-        ledger missingType: ;
-        export circuit ok(): Field { return 1; }
-        """;
+            ledger missingType: ;
+            export circuit ok(): Field { return 1; }
+            """;
     PsiFile file = parseFile("BadDeclarationRecovery", text);
     String tree = DebugUtil.psiToString(file, true);
 

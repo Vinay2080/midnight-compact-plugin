@@ -5,5 +5,5 @@ import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 
 public interface CompactExpression extends PsiElement {
-    @NotNull CompactType getType();
+  @NotNull CompactType getType();
 }

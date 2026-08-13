@@ -17,10 +17,10 @@ public class PragmaParserTest extends ParsingTestCase {
 
   public void testValidPragma() {
     String text = """
-        pragma language_version 1;
-        pragma language_version 1.0;
-        pragma compiler_version 1.2.3;
-        """;
+            pragma language_version 1;
+            pragma language_version 1.0;
+            pragma compiler_version 1.2.3;
+            """;
 
     PsiFile file = parseFile("ValidPragma", text);
 
@@ -30,10 +30,10 @@ public class PragmaParserTest extends ParsingTestCase {
 
   public void testInvalidPragma() {
     String text = """
-        pragma 1;
-        pragma version;
-        pragma version 12.;
-        """;
+            pragma 1;
+            pragma version;
+            pragma version 12.;
+            """;
 
     PsiFile file = parseFile("InvalidPragma", text);
     String tree = DebugUtil.psiToString(file, true);
@@ -45,10 +45,10 @@ public class PragmaParserTest extends ParsingTestCase {
 
   public void testHangTest() {
     String text = """
-        pragma
-        pragma version 1
-        pragma compiler_version 1.2.3;
-        """;
+            pragma
+            pragma version 1
+            pragma compiler_version 1.2.3;
+            """;
 
     PsiFile file = parseFile("HangTest", text);
 

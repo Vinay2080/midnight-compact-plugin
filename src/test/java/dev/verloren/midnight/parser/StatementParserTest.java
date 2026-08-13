@@ -16,14 +16,14 @@ public class StatementParserTest extends ParsingTestCase {
 
   public void testStatementsAndBlocks() {
     String text = """
-        export circuit test(flag: Boolean): Field {
-          const x = 1, y: Field = pad(32, "a");
-          if (flag) { return x; } else return y;
-          for (const i of 0..10) { x; }
-          for (const item of items) item;
-          return;
-        }
-        """;
+            export circuit test(flag: Boolean): Field {
+              const x = 1, y: Field = pad(32, "a");
+              if (flag) { return x; } else return y;
+              for (const i of 0..10) { x; }
+              for (const item of items) item;
+              return;
+            }
+            """;
 
     PsiFile file = parseFile("StatementsAndBlocks", text);
     String tree = DebugUtil.psiToString(file, true);
@@ -42,10 +42,10 @@ public class StatementParserTest extends ParsingTestCase {
 
   public void testIncompleteBlockRecovery() {
     String text = """
-        export circuit bad(flag: Boolean): Field {
-          const x = ;
-          if (flag) { return x; }
-        """;
+            export circuit bad(flag: Boolean): Field {
+              const x = ;
+              if (flag) { return x; }
+            """;
 
     PsiFile file = parseFile("IncompleteBlockRecovery", text);
     String tree = DebugUtil.psiToString(file, true);

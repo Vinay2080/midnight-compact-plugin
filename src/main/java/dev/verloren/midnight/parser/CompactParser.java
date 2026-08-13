@@ -37,6 +37,68 @@ public final class CompactParser implements PsiParser {
   );
   private static final TokenSet COLON_TERMINATOR = TokenSet.create(CompactTokenTypes.COLON);
 
+  private static boolean at(PsiBuilder builder, IElementType tokenType) {
+    return builder.getTokenType() == tokenType;
+  }
+
+  private static boolean isProgramElementStart(PsiBuilder builder) {
+    IElementType token = builder.getTokenType();
+    return token == CompactTokenTypes.PRAGMA
+            || token == CompactTokenTypes.INCLUDE
+            || token == CompactTokenTypes.IMPORT
+            || token == CompactTokenTypes.EXPORT
+            || token == CompactTokenTypes.MODULE
+            || token == CompactTokenTypes.CONTRACT
+            || token == CompactTokenTypes.CIRCUIT
+            || token == CompactTokenTypes.STRUCT
+            || token == CompactTokenTypes.ENUM
+            || token == CompactTokenTypes.TYPE
+            || token == CompactTokenTypes.LEDGER
+            || token == CompactTokenTypes.WITNESS
+            || token == CompactTokenTypes.CONSTRUCTOR
+            || token == CompactTokenTypes.SEALED
+            || token == CompactTokenTypes.PURE
+            || token == CompactTokenTypes.NEW;
+  }
+
+  private static void sync(PsiBuilder builder, TokenSet recoverySet) {
+    while (!builder.eof() && !recoverySet.contains(builder.getTokenType())) {
+      builder.advanceLexer();
+    }
+  }
+
+  private static boolean isBuiltinType(IElementType token) {
+    return token == CompactTokenTypes.BOOLEAN_TYPE
+            || token == CompactTokenTypes.BYTES_TYPE
+            || token == CompactTokenTypes.FIELD_TYPE
+            || token == CompactTokenTypes.OPAQUE_TYPE
+            || token == CompactTokenTypes.UINT_TYPE
+            || token == CompactTokenTypes.VECTOR_TYPE
+            || token == CompactTokenTypes.JUBJUB_SCALAR_TYPE
+            || token == CompactTokenTypes.SECP256K1_BASE_TYPE
+            || token == CompactTokenTypes.SECP256K1_SCALAR_TYPE;
+  }
+
+  private static boolean isTypeReferenceStart(IElementType token) {
+    return token == CompactTokenTypes.IDENTIFIER
+            || token == CompactTokenTypes.HASH
+            || token == CompactTokenTypes.MAP;
+  }
+
+  private static boolean isNatLiteral(IElementType token) {
+    return token == CompactTokenTypes.DECIMAL_LITERAL
+            || token == CompactTokenTypes.BINARY_LITERAL
+            || token == CompactTokenTypes.OCTAL_LITERAL
+            || token == CompactTokenTypes.HEX_LITERAL;
+  }
+
+  private static boolean isLiteral(IElementType token) {
+    return token == CompactTokenTypes.TRUE
+            || token == CompactTokenTypes.FALSE
+            || token == CompactTokenTypes.STRING_LITERAL
+            || isNatLiteral(token);
+  }
+
   @Override
   public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     PsiBuilder.Marker file = builder.mark();
@@ -520,7 +582,7 @@ public final class CompactParser implements PsiParser {
 
   private void parseSimpleParameterList(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
-    if (!expect(builder, CompactTokenTypes.LPAREN, "Expected '('") ) {
+    if (!expect(builder, CompactTokenTypes.LPAREN, "Expected '('")) {
       list.done(CompactElementTypes.SIMPLE_PARAMETER_LIST);
       return;
     }
@@ -539,7 +601,7 @@ public final class CompactParser implements PsiParser {
 
   private void parsePatternParameterList(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
-    if (!expect(builder, CompactTokenTypes.LPAREN, "Expected '('") ) {
+    if (!expect(builder, CompactTokenTypes.LPAREN, "Expected '('")) {
       list.done(CompactElementTypes.PATTERN_PARAMETER_LIST);
       return;
     }
@@ -620,7 +682,7 @@ public final class CompactParser implements PsiParser {
 
   private void parseArrowParameterList(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
-    if (!expect(builder, CompactTokenTypes.LPAREN, "Expected '('") ) {
+    if (!expect(builder, CompactTokenTypes.LPAREN, "Expected '('")) {
       list.done(CompactElementTypes.ARROW_PARAMETER_LIST);
       return;
     }
@@ -940,7 +1002,7 @@ public final class CompactParser implements PsiParser {
   }
 
   private PsiBuilder.Marker parseUnaryExpression(PsiBuilder builder) {
-    if (at(builder, CompactTokenTypes.NOT)) {
+    if (at(builder, CompactTokenTypes.NOT) || at(builder, CompactTokenTypes.MINUS)) {
       PsiBuilder.Marker unary = builder.mark();
       builder.advanceLexer();
       parseUnaryExpression(builder);
@@ -1359,68 +1421,6 @@ public final class CompactParser implements PsiParser {
     if (!builder.eof()) {
       builder.advanceLexer();
     }
-  }
-
-  private static boolean at(PsiBuilder builder, IElementType tokenType) {
-    return builder.getTokenType() == tokenType;
-  }
-
-  private static boolean isProgramElementStart(PsiBuilder builder) {
-    IElementType token = builder.getTokenType();
-    return token == CompactTokenTypes.PRAGMA
-            || token == CompactTokenTypes.INCLUDE
-            || token == CompactTokenTypes.IMPORT
-            || token == CompactTokenTypes.EXPORT
-            || token == CompactTokenTypes.MODULE
-            || token == CompactTokenTypes.CONTRACT
-            || token == CompactTokenTypes.CIRCUIT
-            || token == CompactTokenTypes.STRUCT
-            || token == CompactTokenTypes.ENUM
-            || token == CompactTokenTypes.TYPE
-            || token == CompactTokenTypes.LEDGER
-            || token == CompactTokenTypes.WITNESS
-            || token == CompactTokenTypes.CONSTRUCTOR
-            || token == CompactTokenTypes.SEALED
-            || token == CompactTokenTypes.PURE
-            || token == CompactTokenTypes.NEW;
-  }
-
-  private static void sync(PsiBuilder builder, TokenSet recoverySet) {
-    while (!builder.eof() && !recoverySet.contains(builder.getTokenType())) {
-      builder.advanceLexer();
-    }
-  }
-
-  private static boolean isBuiltinType(IElementType token) {
-    return token == CompactTokenTypes.BOOLEAN_TYPE
-            || token == CompactTokenTypes.BYTES_TYPE
-            || token == CompactTokenTypes.FIELD_TYPE
-            || token == CompactTokenTypes.OPAQUE_TYPE
-            || token == CompactTokenTypes.UINT_TYPE
-            || token == CompactTokenTypes.VECTOR_TYPE
-            || token == CompactTokenTypes.JUBJUB_SCALAR_TYPE
-            || token == CompactTokenTypes.SECP256K1_BASE_TYPE
-            || token == CompactTokenTypes.SECP256K1_SCALAR_TYPE;
-  }
-
-  private static boolean isTypeReferenceStart(IElementType token) {
-    return token == CompactTokenTypes.IDENTIFIER
-            || token == CompactTokenTypes.HASH
-            || token == CompactTokenTypes.MAP;
-  }
-
-  private static boolean isNatLiteral(IElementType token) {
-    return token == CompactTokenTypes.DECIMAL_LITERAL
-            || token == CompactTokenTypes.BINARY_LITERAL
-            || token == CompactTokenTypes.OCTAL_LITERAL
-            || token == CompactTokenTypes.HEX_LITERAL;
-  }
-
-  private static boolean isLiteral(IElementType token) {
-    return token == CompactTokenTypes.TRUE
-            || token == CompactTokenTypes.FALSE
-            || token == CompactTokenTypes.STRING_LITERAL
-            || isNatLiteral(token);
   }
 
 }

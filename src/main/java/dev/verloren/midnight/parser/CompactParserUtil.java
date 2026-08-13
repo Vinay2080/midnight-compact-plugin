@@ -16,8 +16,7 @@ public final class CompactParserUtil {
   public static final int PREC_ADDITIVE = 5;
   public static final int PREC_MULTIPLICATIVE = 6;
 
-  public static boolean at(@NotNull PsiBuilder builder, @NotNull IElementType tokenType) {
-    return builder.getTokenType() == tokenType;
+  private CompactParserUtil() {
   }
 
   public static boolean expect(@NotNull PsiBuilder builder, @NotNull IElementType tokenType, @NotNull String message) {
@@ -28,6 +27,10 @@ public final class CompactParserUtil {
 
     builder.advanceLexer();
     return true;
+  }
+
+  public static boolean at(@NotNull PsiBuilder builder, @NotNull IElementType tokenType) {
+    return builder.getTokenType() == tokenType;
   }
 
   public static void errorAndAdvance(@NotNull PsiBuilder builder, @NotNull String message) {
@@ -70,8 +73,5 @@ public final class CompactParserUtil {
     }
 
     return -1;
-  }
-
-  private CompactParserUtil() {
   }
 }

@@ -9,11 +9,7 @@ import dev.verloren.midnight.psi.CompactTypeReferenceImpl;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompactCompletionContext {
-  public enum Kind {
-    KEYWORD,
-    TYPE,
-    VALUE,
-    MEMBER
+  private CompactCompletionContext() {
   }
 
   public static @NotNull Kind classify(@NotNull PsiElement position) {
@@ -59,6 +55,10 @@ public final class CompactCompletionContext {
             || previous.getNode().getElementType() == CompactElementTypes.BLOCK;
   }
 
-  private CompactCompletionContext() {
+  public enum Kind {
+    KEYWORD,
+    TYPE,
+    VALUE,
+    MEMBER
   }
 }

@@ -2,12 +2,12 @@ package dev.verloren.midnight.findUsages;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.usageView.UsageInfo;
+import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.parser.CompactParserDefinition;
-import dev.verloren.midnight.CompactFileType;
-import dev.verloren.midnight.psi.*;
+import dev.verloren.midnight.psi.CompactNamedElement;
 
 import java.util.Collection;
 
@@ -17,12 +17,12 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     com.intellij.lang.LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-      CompactLanguage.INSTANCE,
-      new CompactParserDefinition()
+            CompactLanguage.INSTANCE,
+            new CompactParserDefinition()
     );
     com.intellij.lang.findUsages.LanguageFindUsages.INSTANCE.addExplicitExtension(
-      CompactLanguage.INSTANCE,
-      new CompactFindUsagesProvider()
+            CompactLanguage.INSTANCE,
+            new CompactFindUsagesProvider()
     );
   }
 
@@ -104,7 +104,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
     CompactFindUsagesProvider provider = new CompactFindUsagesProvider();
 
     myFixture.configureByText(CompactFileType.INSTANCE,
-      "struct <caret>Point { x: Field }\n"
+            "struct <caret>Point { x: Field }\n"
     );
     PsiElement element = myFixture.getElementAtCaret();
     assertTrue(provider.canFindUsagesFor(element));

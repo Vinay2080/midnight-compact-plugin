@@ -23,11 +23,6 @@ public class CompactImportElementImpl extends CompactNamedElementImpl {
     return identifiers[identifiers.length - 1];
   }
 
-  public @Nullable PsiElement getSourceIdentifier() {
-    PsiElement[] identifiers = findIdentifierChildren();
-    return identifiers.length == 0 ? null : identifiers[0];
-  }
-
   private PsiElement @NotNull [] findIdentifierChildren() {
     ASTNode[] nodes = getNode().getChildren(TokenSet.create(CompactTokenTypes.IDENTIFIER));
     PsiElement[] elements = new PsiElement[nodes.length];
@@ -35,5 +30,10 @@ public class CompactImportElementImpl extends CompactNamedElementImpl {
       elements[i] = nodes[i].getPsi();
     }
     return elements;
+  }
+
+  public @Nullable PsiElement getSourceIdentifier() {
+    PsiElement[] identifiers = findIdentifierChildren();
+    return identifiers.length == 0 ? null : identifiers[0];
   }
 }

@@ -16,8 +16,8 @@ public class CompactCompletionTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     com.intellij.lang.LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-      CompactLanguage.INSTANCE,
-      new CompactParserDefinition()
+            CompactLanguage.INSTANCE,
+            new CompactParserDefinition()
     );
   }
 

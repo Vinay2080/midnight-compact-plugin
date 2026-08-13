@@ -22,22 +22,38 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
     this.namespace = namespace;
   }
 
-  @Override
+  public static final class Value extends CompactPsiSymbol implements CompactValueSymbol {
+    public Value(@NotNull CompactNamedElement declaration, @NotNull CompactSymbolKind kind) {
+      super(declaration, kind, CompactSymbolNamespace.VALUE);
+    }
+  }  @Override
   public @Nullable String getName() {
     return declaration.getName();
   }
 
-  @Override
+  public static final class Type extends CompactPsiSymbol implements CompactTypeSymbol {
+    public Type(@NotNull CompactNamedElement declaration, @NotNull CompactSymbolKind kind) {
+      super(declaration, kind, CompactSymbolNamespace.TYPE);
+    }
+  }  @Override
   public @NotNull CompactNamedElement getDeclaration() {
     return declaration;
   }
 
-  @Override
+  public static final class Module extends CompactPsiSymbol implements CompactModuleSymbol {
+    public Module(@NotNull CompactNamedElement declaration) {
+      super(declaration, CompactSymbolKind.MODULE, CompactSymbolNamespace.MODULE);
+    }
+  }  @Override
   public @Nullable PsiElement getNavigationElement() {
     return declaration.getNavigationElement();
   }
 
-  @Override
+  public static final class Unknown extends CompactPsiSymbol {
+    public Unknown(@NotNull CompactNamedElement declaration) {
+      super(declaration, CompactSymbolKind.UNKNOWN, CompactSymbolNamespace.UNKNOWN);
+    }
+  }  @Override
   public @NotNull CompactSymbolKind getKind() {
     return kind;
   }
@@ -73,7 +89,7 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
     }
     CompactModuleDefinition module = PsiTreeUtil.getParentOfType(declaration, CompactModuleDefinition.class);
     CompactSymbol symbol = module == null ? null : CompactSymbols.from(module);
-    return symbol instanceof CompactModuleSymbol ? (CompactModuleSymbol)symbol : null;
+    return symbol instanceof CompactModuleSymbol ? (CompactModuleSymbol) symbol : null;
   }
 
   @Override
@@ -97,27 +113,11 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
     return declaration.getNameIdentifier() != null;
   }
 
-  public static final class Value extends CompactPsiSymbol implements CompactValueSymbol {
-    public Value(@NotNull CompactNamedElement declaration, @NotNull CompactSymbolKind kind) {
-      super(declaration, kind, CompactSymbolNamespace.VALUE);
-    }
-  }
 
-  public static final class Type extends CompactPsiSymbol implements CompactTypeSymbol {
-    public Type(@NotNull CompactNamedElement declaration, @NotNull CompactSymbolKind kind) {
-      super(declaration, kind, CompactSymbolNamespace.TYPE);
-    }
-  }
 
-  public static final class Module extends CompactPsiSymbol implements CompactModuleSymbol {
-    public Module(@NotNull CompactNamedElement declaration) {
-      super(declaration, CompactSymbolKind.MODULE, CompactSymbolNamespace.MODULE);
-    }
-  }
 
-  public static final class Unknown extends CompactPsiSymbol {
-    public Unknown(@NotNull CompactNamedElement declaration) {
-      super(declaration, CompactSymbolKind.UNKNOWN, CompactSymbolNamespace.UNKNOWN);
-    }
-  }
+
+
+
+
 }

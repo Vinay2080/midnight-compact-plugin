@@ -16,16 +16,16 @@ public class TypePatternParserTest extends ParsingTestCase {
 
   public void testTypesGenericsAndPatterns() {
     String text = """
-        export struct Box<#N, T> {
-          values: Vector<N, T>,
-          range: Uint<0..N>,
-          data: Bytes<N>,
-          secret: Opaque<"tag">,
-          pair: [Field, Boolean],
-        };
-        export witness choose<T>(left: T, right: Vector<2, T>): [T, Field];
-        constructor([owner, balance]: [Field, Uint<64>], { key: value, flag }: Pair<Field>) {}
-        """;
+            export struct Box<#N, T> {
+              values: Vector<N, T>,
+              range: Uint<0..N>,
+              data: Bytes<N>,
+              secret: Opaque<"tag">,
+              pair: [Field, Boolean],
+            };
+            export witness choose<T>(left: T, right: Vector<2, T>): [T, Field];
+            constructor([owner, balance]: [Field, Uint<64>], { key: value, flag }: Pair<Field>) {}
+            """;
 
     PsiFile file = parseFile("TypesGenericsAndPatterns", text);
     String tree = DebugUtil.psiToString(file, true);

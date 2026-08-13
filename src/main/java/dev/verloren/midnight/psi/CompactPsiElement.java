@@ -10,22 +10,22 @@ public class CompactPsiElement extends ASTWrapperPsiElement {
     super(node);
   }
 
-  public void accept(@NotNull CompactVisitor visitor) {
-    visitor.visitCompactElement(this);
+  @Override
+  public com.intellij.psi.PsiReference @NotNull [] getReferences() {
+    com.intellij.psi.PsiReference ref = getReference();
+    return ref == null ? super.getReferences() : new com.intellij.psi.PsiReference[]{ref};
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof CompactVisitor) {
-      accept((CompactVisitor)visitor);
+      accept((CompactVisitor) visitor);
     } else {
       super.accept(visitor);
     }
   }
 
-  @Override
-  public com.intellij.psi.PsiReference @NotNull [] getReferences() {
-    com.intellij.psi.PsiReference ref = getReference();
-    return ref == null ? super.getReferences() : new com.intellij.psi.PsiReference[]{ref};
+  public void accept(@NotNull CompactVisitor visitor) {
+    visitor.visitCompactElement(this);
   }
 }

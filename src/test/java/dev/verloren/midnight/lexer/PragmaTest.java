@@ -16,6 +16,23 @@ public class PragmaTest {
     assertSingleToken("1.2.3", CompactTokenTypes.VERSION_LITERAL);
   }
 
+  private static void assertSingleToken(String text, IElementType expectedTokenType) {
+    CompactLexer lexer = new CompactLexer();
+    lexer.start(text, 0, text.length(), 0);
+
+    assertToken(lexer, expectedTokenType, 0, text.length());
+    lexer.advance();
+    assertNull(lexer.getTokenType());
+    assertEquals(text.length(), lexer.getTokenStart());
+    assertEquals(text.length(), lexer.getTokenEnd());
+  }
+
+  private static void assertToken(CompactLexer lexer, IElementType expectedTokenType, int start, int end) {
+    assertEquals(expectedTokenType, lexer.getTokenType());
+    assertEquals(start, lexer.getTokenStart());
+    assertEquals(end, lexer.getTokenEnd());
+  }
+
   @Test
   public void lexesMalformedVersionAsSingleToken() {
     assertSingleToken("12.", CompactTokenTypes.INVALID_VERSION);
@@ -42,22 +59,5 @@ public class PragmaTest {
     assertNull(lexer.getTokenType());
     assertEquals(17, lexer.getTokenStart());
     assertEquals(17, lexer.getTokenEnd());
-  }
-
-  private static void assertSingleToken(String text, IElementType expectedTokenType) {
-    CompactLexer lexer = new CompactLexer();
-    lexer.start(text, 0, text.length(), 0);
-
-    assertToken(lexer, expectedTokenType, 0, text.length());
-    lexer.advance();
-    assertNull(lexer.getTokenType());
-    assertEquals(text.length(), lexer.getTokenStart());
-    assertEquals(text.length(), lexer.getTokenEnd());
-  }
-
-  private static void assertToken(CompactLexer lexer, IElementType expectedTokenType, int start, int end) {
-    assertEquals(expectedTokenType, lexer.getTokenType());
-    assertEquals(start, lexer.getTokenStart());
-    assertEquals(end, lexer.getTokenEnd());
   }
 }

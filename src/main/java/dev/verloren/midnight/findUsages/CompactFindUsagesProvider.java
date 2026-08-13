@@ -36,7 +36,7 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
   @Override
   public @NotNull String getType(@NotNull PsiElement element) {
     switch (element) {
-      case CompactCircuitDefinition _ -> {
+      case CompactCircuitDefinition _-> {
         return "circuit";
       }
       case CompactWitnessDeclaration _ -> {
@@ -54,7 +54,7 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
       case CompactEnumDefinition _ -> {
         return "enum";
       }
-      case CompactEnumMemberImpl compactEnumMember -> {
+      case CompactEnumMemberImpl _ -> {
         return "enum member";
       }
       case CompactTypeDefinition _ -> {
@@ -77,7 +77,7 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
   @Override
   public @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof CompactNamedElement) {
-      String name = ((CompactNamedElement)element).getName();
+      String name = ((CompactNamedElement) element).getName();
       return name == null ? "<unnamed>" : name;
     }
     return element.getText();

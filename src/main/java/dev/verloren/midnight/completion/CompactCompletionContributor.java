@@ -1,10 +1,6 @@
 package dev.verloren.midnight.completion;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionProvider;
-import com.intellij.codeInsight.completion.CompletionResultSet;
-import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
@@ -68,15 +64,33 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
   }
 
+  private static void addAll(@NotNull CompletionResultSet result, String @NotNull [] values) {
+    for (String value : values) {
+      result.addElement(LookupElementBuilder.create(value));
+    }
+  }
+
+  private static void addNamed(@NotNull CompletionResultSet result, @NotNull Collection<? extends CompactNamedElement> elements) {
+    for (CompactNamedElement element : elements) {
+      addNamed(result, element);
+    }
+  }
+
+  private static void addPrefixed(@NotNull CompletionResultSet result, @NotNull Collection<String> values) {
+    for (String value : values) {
+      result.addElement(LookupElementBuilder.create(value));
+    }
+  }
+
   private static void addEnumMembers(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
     CompactMemberExprImpl memberExpr = PsiTreeUtil.getParentOfType(position, CompactMemberExprImpl.class, false);
     if (memberExpr == null || !(memberExpr.getReference() instanceof CompactEnumMemberReference)) {
       return;
     }
-    ResolveResult[] resolveResults = ((CompactEnumMemberReference)memberExpr.getReference()).multiResolve(false);
+    ResolveResult[] resolveResults = ((CompactEnumMemberReference) memberExpr.getReference()).multiResolve(false);
     for (ResolveResult resolveResult : resolveResults) {
       if (resolveResult.getElement() instanceof CompactEnumMemberImpl) {
-        addNamed(result, (CompactNamedElement)resolveResult.getElement());
+        addNamed(result, (CompactNamedElement) resolveResult.getElement());
       }
     }
     PsiElement base = memberExpr.getFirstChild();
@@ -87,24 +101,6 @@ public class CompactCompletionContributor extends CompletionContributor {
       if (target instanceof CompactEnumDefinition) {
         addNamed(result, PsiTreeUtil.findChildrenOfType(target, CompactEnumMemberImpl.class));
       }
-    }
-  }
-
-  private static void addAll(@NotNull CompletionResultSet result, String @NotNull [] values) {
-    for (String value : values) {
-      result.addElement(LookupElementBuilder.create(value));
-    }
-  }
-
-  private static void addPrefixed(@NotNull CompletionResultSet result, @NotNull Collection<String> values) {
-    for (String value : values) {
-      result.addElement(LookupElementBuilder.create(value));
-    }
-  }
-
-  private static void addNamed(@NotNull CompletionResultSet result, @NotNull Collection<? extends CompactNamedElement> elements) {
-    for (CompactNamedElement element : elements) {
-      addNamed(result, element);
     }
   }
 

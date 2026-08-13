@@ -13,10 +13,14 @@ public class CompactConstBindingImpl extends CompactNamedElementImpl {
 
   @Override
   public @NotNull CompactType getType() {
-    CompactExpression expr = PsiTreeUtil.findChildOfType(this, CompactExpression.class);
+    CompactExpression expr = getInitializer();
     if (expr != null) {
       return expr.getType();
     }
     return CompactPrimitiveType.UNKNOWN;
+  }
+
+  public CompactExpression getInitializer() {
+    return PsiTreeUtil.findChildOfType(this, CompactExpression.class);
   }
 }

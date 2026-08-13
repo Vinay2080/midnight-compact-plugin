@@ -4,7 +4,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
-import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.psi.CompactReferenceExprImpl;
 import dev.verloren.midnight.psi.CompactStructDefinition;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
@@ -71,6 +70,15 @@ public class CompactSymbolTest extends BasePlatformTestCase {
     assertContainsSymbol(scope.getSymbols(CompactSymbolNamespace.MODULE), "Math", CompactSymbolKind.MODULE);
   }
 
+  private static void assertContainsSymbol(Collection<CompactSymbol> symbols, String name, CompactSymbolKind kind) {
+    for (CompactSymbol symbol : symbols) {
+      if (name.equals(symbol.getName()) && symbol.getKind() == kind) {
+        return;
+      }
+    }
+    fail("Expected symbol " + name + " of kind " + kind);
+  }
+
   public void testResolvedPsiCanBeProjectedToSymbol() {
     myFixture.configureByText(CompactFileType.INSTANCE,
             """
@@ -88,18 +96,9 @@ public class CompactSymbolTest extends BasePlatformTestCase {
 
     List<CompactSymbol> symbols = CompactResolveUtil.resolveValueSymbols(expr.getText(), expr);
     assertEquals(1, symbols.size());
-    CompactSymbol symbol = symbols.get(0);
+    CompactSymbol symbol = symbols.getFirst();
     assertInstanceOf(symbol, CompactValueSymbol.class);
     assertEquals(CompactSymbolKind.PARAMETER, symbol.getKind());
     assertEquals("Field", symbol.getType().getName());
-  }
-
-  private static void assertContainsSymbol(Collection<CompactSymbol> symbols, String name, CompactSymbolKind kind) {
-    for (CompactSymbol symbol : symbols) {
-      if (name.equals(symbol.getName()) && symbol.getKind() == kind) {
-        return;
-      }
-    }
-    fail("Expected symbol " + name + " of kind " + kind);
   }
 }

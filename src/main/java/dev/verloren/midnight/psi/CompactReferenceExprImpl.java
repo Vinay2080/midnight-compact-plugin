@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompactReferenceExprImpl extends CompactPsiElement implements CompactReferenceExpr {
+  private static final com.intellij.openapi.util.Key<Boolean> RESOLVING = com.intellij.openapi.util.Key.create("COMPACT_RESOLVING");
+
   public CompactReferenceExprImpl(@NotNull ASTNode node) {
     super(node);
   }
-
-  private static final com.intellij.openapi.util.Key<Boolean> RESOLVING = com.intellij.openapi.util.Key.create("COMPACT_RESOLVING");
 
   @Override
   public @NotNull CompactType getType() {

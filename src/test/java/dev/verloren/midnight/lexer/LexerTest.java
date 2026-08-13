@@ -19,6 +19,17 @@ public class LexerTest {
             CompactTokenTypes.IDENTIFIER);
   }
 
+  private static void assertTokens(String text, IElementType... expectedTypes) {
+    CompactLexer lexer = new CompactLexer();
+    lexer.start(text, 0, text.length(), 0);
+
+    for (IElementType expectedType : expectedTypes) {
+      assertEquals("Mismatch in token stream for input: " + text, expectedType, lexer.getTokenType());
+      lexer.advance();
+    }
+    assertNull(lexer.getTokenType());
+  }
+
   @Test
   public void lexesRangeExpressions() {
     assertTokens("1..10",
@@ -59,16 +70,5 @@ public class LexerTest {
   @Test
   public void lexesSlashOperator() {
     assertTokens("/", CompactTokenTypes.SLASH);
-  }
-
-  private static void assertTokens(String text, IElementType... expectedTypes) {
-    CompactLexer lexer = new CompactLexer();
-    lexer.start(text, 0, text.length(), 0);
-
-    for (IElementType expectedType : expectedTypes) {
-      assertEquals("Mismatch in token stream for input: " + text, expectedType, lexer.getTokenType());
-      lexer.advance();
-    }
-    assertNull(lexer.getTokenType());
   }
 }

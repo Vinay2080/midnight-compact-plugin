@@ -16,21 +16,21 @@ public class ExpressionParserTest extends ParsingTestCase {
 
   public void testExpressionFormsAndAmbiguity() {
     String text = """
-        export circuit expressions(a: Field, b: Field, c: Field): Field {
-          const precedence = a + b * c == default<Field> ? f<Field>(a).method(b)[0] : S<Field>{ value: b };
-          const member = token.field;
-          const relational = a < b > c;
-          const tuple = [a, ...items];
-          const bytes = Bytes[1, 2, 3];
-          const sliced = slice<4>(bytes, 0);
-          const padded = pad(32, "a");
-          const mapped = map(items, (x: Field) => x + 1);
-          x += assert(a > 0);
-          emit(x);
-          disclose(x as Field);
-          return fold(items, 0, (acc: Field, item: Field) => acc + item);
-        }
-        """;
+            export circuit expressions(a: Field, b: Field, c: Field): Field {
+              const precedence = a + b * c == default<Field> ? f<Field>(a).method(b)[0] : S<Field>{ value: b };
+              const member = token.field;
+              const relational = a < b > c;
+              const tuple = [a, ...items];
+              const bytes = Bytes[1, 2, 3];
+              const sliced = slice<4>(bytes, 0);
+              const padded = pad(32, "a");
+              const mapped = map(items, (x: Field) => x + 1);
+              x += assert(a > 0);
+              emit(x);
+              disclose(x as Field);
+              return fold(items, 0, (acc: Field, item: Field) => acc + item);
+            }
+            """;
 
     PsiFile file = parseFile("ExpressionFormsAndAmbiguity", text);
     String tree = DebugUtil.psiToString(file, true);

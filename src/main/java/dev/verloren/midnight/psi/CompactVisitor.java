@@ -9,6 +9,11 @@ public class CompactVisitor extends PsiElementVisitor {
     visitElement(pragmaForm);
   }
 
+  @Override
+  public void visitElement(@NotNull PsiElement element) {
+    super.visitElement(element);
+  }
+
   public void visitIncludeDeclaration(@NotNull CompactIncludeDeclaration includeDeclaration) {
     visitElement(includeDeclaration);
   }
@@ -63,10 +68,5 @@ public class CompactVisitor extends PsiElementVisitor {
 
   public void visitCompactElement(@NotNull CompactPsiElement element) {
     visitElement(element);
-  }
-
-  @Override
-  public void visitElement(@NotNull PsiElement element) {
-    super.visitElement(element);
   }
 }

@@ -1,16 +1,19 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import org.jetbrains.annotations.NotNull;
 
 public final class CompactElementFactory {
+  private CompactElementFactory() {
+  }
+
   public static @NotNull PsiElement createElement(@NotNull ASTNode node) {
     IElementType elementType = node.getElementType();
     if (elementType == CompactElementTypes.PRAGMA_FORM) {
@@ -117,7 +120,7 @@ public final class CompactElementFactory {
   }
 
   public static @NotNull PsiElement createIdentifierLeaf(@NotNull Project project, @NotNull String text) {
-    CompactFile file = (CompactFile)PsiFileFactory.getInstance(project)
+    CompactFile file = (CompactFile) PsiFileFactory.getInstance(project)
             .createFileFromText("rename.compact", CompactFileType.INSTANCE, "type " + text + " = Field;");
     CompactTypeDefinition typeDefinition = PsiTreeUtil.findChildOfType(file, CompactTypeDefinition.class);
     if (typeDefinition == null || typeDefinition.getNameIdentifier() == null) {
@@ -160,8 +163,5 @@ public final class CompactElementFactory {
             || elementType == CompactElementTypes.CONST_BINDING
             || elementType == CompactElementTypes.GENERIC_PARAMETER
             || elementType == CompactElementTypes.PATTERN;
-  }
-
-  private CompactElementFactory() {
   }
 }

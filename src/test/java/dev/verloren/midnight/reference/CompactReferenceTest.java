@@ -13,8 +13,8 @@ public class CompactReferenceTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     com.intellij.lang.LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-      dev.verloren.midnight.CompactLanguage.INSTANCE,
-      new dev.verloren.midnight.parser.CompactParserDefinition()
+            dev.verloren.midnight.CompactLanguage.INSTANCE,
+            new dev.verloren.midnight.parser.CompactParserDefinition()
     );
   }
 
@@ -80,7 +80,7 @@ public class CompactReferenceTest extends BasePlatformTestCase {
                     module Utils {
                       export const MAX = 100;
                     }
-                    import { MAX as LIMIT } from U<caret>utils;
+                    import { MAX as LIMIT } from U<caret>tils;
                     """
     );
     PsiReference ref = myFixture.getReferenceAtCaretPosition();

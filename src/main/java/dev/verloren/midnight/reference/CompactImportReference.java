@@ -13,11 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class CompactImportReference extends CompactReferenceBase {
-  public enum Kind {
-    MODULE,
-    IMPORT_ELEMENT
-  }
-
   private final Kind kind;
 
   public CompactImportReference(@NotNull PsiElement element, @NotNull TextRange rangeInElement, @NotNull Kind kind) {
@@ -32,9 +27,14 @@ public class CompactImportReference extends CompactReferenceBase {
       return module == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(module));
     }
     if (kind == Kind.IMPORT_ELEMENT && getElement() instanceof CompactImportElementImpl) {
-      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl)getElement());
+      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) getElement());
       return target == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(target));
     }
     return ResolveResult.EMPTY_ARRAY;
+  }
+
+  public enum Kind {
+    MODULE,
+    IMPORT_ELEMENT
   }
 }

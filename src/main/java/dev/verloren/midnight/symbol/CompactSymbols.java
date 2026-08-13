@@ -25,6 +25,9 @@ public final class CompactSymbols {
           new CompactBuiltinTypeSymbol("Secp256k1Scalar", new CompactPrimitiveType("Secp256k1Scalar"))
   );
 
+  private CompactSymbols() {
+  }
+
   public static @NotNull List<CompactBuiltinTypeSymbol> builtinTypes() {
     return BUILTIN_TYPES;
   }
@@ -42,14 +45,18 @@ public final class CompactSymbols {
   }
 
   public static @Nullable CompactSymbol from(@Nullable CompactNamedElement declaration) {
-    if (declaration == null) {
-      return null;
-    }
-    if (declaration instanceof CompactImportElementImpl) {
-      return importAlias((CompactImportElementImpl)declaration);
-    }
-    if (declaration instanceof CompactModuleDefinition) {
-      return new CompactPsiSymbol.Module(declaration);
+    switch (declaration) {
+      case null -> {
+        return null;
+      }
+      case CompactImportElementImpl compactImportElement -> {
+        return importAlias(compactImportElement);
+      }
+      case CompactModuleDefinition compactModuleDefinition -> {
+        return new CompactPsiSymbol.Module(declaration);
+      }
+      default -> {
+      }
     }
 
     CompactSymbolKind kind = kindOf(declaration);
@@ -66,8 +73,10 @@ public final class CompactSymbols {
     if (declaration instanceof CompactCircuitDefinition) return CompactSymbolKind.CIRCUIT;
     if (declaration instanceof CompactWitnessDeclaration) return CompactSymbolKind.WITNESS;
     if (declaration instanceof CompactLedgerDeclaration) return CompactSymbolKind.LEDGER;
-    if (declaration instanceof CompactParameterImpl || isPatternParameter(declaration)) return CompactSymbolKind.PARAMETER;
-    if (declaration instanceof CompactConstBindingImpl || declaration instanceof CompactPatternImpl) return CompactSymbolKind.LOCAL_BINDING;
+    if (declaration instanceof CompactParameterImpl || isPatternParameter(declaration))
+      return CompactSymbolKind.PARAMETER;
+    if (declaration instanceof CompactConstBindingImpl || declaration instanceof CompactPatternImpl)
+      return CompactSymbolKind.LOCAL_BINDING;
     if (declaration instanceof CompactStructFieldImpl) return CompactSymbolKind.STRUCT_FIELD;
     if (declaration instanceof CompactEnumMemberImpl) return CompactSymbolKind.ENUM_MEMBER;
     if (declaration instanceof CompactStructDefinition) return CompactSymbolKind.STRUCT;
@@ -82,7 +91,7 @@ public final class CompactSymbols {
 
   public static @NotNull CompactSymbolNamespace namespaceOf(@NotNull CompactNamedElement declaration) {
     if (declaration instanceof CompactImportElementImpl) {
-      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl)declaration);
+      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) declaration);
       return target == null ? CompactSymbolNamespace.UNKNOWN : namespaceOf(target);
     }
     if (declaration instanceof CompactModuleDefinition) {
@@ -96,7 +105,8 @@ public final class CompactSymbols {
       return CompactSymbolNamespace.TYPE;
     }
     return switch (kindOf(declaration)) {
-      case CIRCUIT, WITNESS, LEDGER, PARAMETER, LOCAL_BINDING, STRUCT_FIELD, ENUM_MEMBER -> CompactSymbolNamespace.VALUE;
+      case CIRCUIT, WITNESS, LEDGER, PARAMETER, LOCAL_BINDING, STRUCT_FIELD, ENUM_MEMBER ->
+              CompactSymbolNamespace.VALUE;
       default -> CompactSymbolNamespace.UNKNOWN;
     };
   }
@@ -114,7 +124,7 @@ public final class CompactSymbols {
       return CompactVisibility.LOCAL;
     }
     if (declaration instanceof CompactImportElementImpl) {
-      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl)declaration);
+      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) declaration);
       return target == null ? CompactVisibility.UNKNOWN : visibilityOf(target);
     }
     return CompactVisibility.MODULE;
@@ -190,8 +200,5 @@ public final class CompactSymbols {
 
   private static boolean isToken(@NotNull PsiElement element, @NotNull IElementType tokenType) {
     return element.getNode() != null && element.getNode().getElementType() == tokenType;
-  }
-
-  private CompactSymbols() {
   }
 }

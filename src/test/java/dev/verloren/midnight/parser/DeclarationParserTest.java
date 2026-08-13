@@ -38,20 +38,20 @@ public class DeclarationParserTest extends ParsingTestCase {
 
   public static String declarationFixture() {
     return """
-        pragma language_version 1;
-        include "std.compact";
-        import { Foo, Bar as Baz } from "lib.compact" prefix Lib;
-        export { Foo, Bar };
-        export module Math { ledger inner: Field; }
-        export struct Pair<T> { left: Field; right: Field; };
-        enum Choice { A, B, }
-        export contract Token { pure circuit balance(owner: Field): Field; circuit transfer(to: Field, amount: Uint<64>): Boolean, };
-        contract implements Token;
-        export new type Amount = Uint<64>;
-        export sealed ledger totalSupply: Uint<64>;
-        export witness secret(): Field;
-        constructor() {}
-        export pure circuit mint(to: Field, amount: Uint<64>): Boolean {}
-        """;
+            pragma language_version 1;
+            include "std.compact";
+            import { Foo, Bar as Baz } from "lib.compact" prefix Lib;
+            export { Foo, Bar };
+            export module Math { ledger inner: Field; }
+            export struct Pair<T> { left: Field; right: Field; };
+            enum Choice { A, B, }
+            export contract Token { pure circuit balance(owner: Field): Field; circuit transfer(to: Field, amount: Uint<64>): Boolean, };
+            contract implements Token;
+            export new type Amount = Uint<64>;
+            export sealed ledger totalSupply: Uint<64>;
+            export witness secret(): Field;
+            constructor() {}
+            export pure circuit mint(to: Field, amount: Uint<64>): Boolean {}
+            """;
   }
 }
