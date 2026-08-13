@@ -30,7 +30,7 @@ Core technologies and feature areas:
 - [x] Rename
 - [x] Find Usages
 - [x] Phase 3 Automated Test Suite (57/57 unit tests passing across resolution, references, completion, rename, and find usages)
-- [ ] Type Inference
+- [x] Type Inference
 - [ ] Inspections
 - [ ] Formatter
 
@@ -43,7 +43,6 @@ Core technologies and feature areas:
 
 ## Missing
 
-- Type inference
 - Inspections
 - Formatter
 
@@ -96,6 +95,19 @@ Formatter (pending)
 - Completion is contextual through `CompactCompletionContributor`: declaration/statement keywords at starts, builtin and in-scope types in type positions, in-scope values plus value keywords in expression positions, and enum members after `Enum.`; struct field and ADT method completion remain deferred until type inference.
 - Find Usages uses `DefaultWordsScanner` over the handwritten lexer and `CompactNamedElement` classification; Rename uses `CompactNamedElementImpl.setName`, reference `handleElementRename`, and `CompactNamesValidator` to reject keywords and invalid identifiers.
 - Open questions remain: exact disjointness of type/value namespaces for same-name declarations, visibility of non-exported module members, cross-file include/import semantics, stdlib builtin resolution surface, and first-class destructuring/for-loop binding ownership without parser changes.
+
+## Phase 4 Architecture — Type Inference
+
+- Phase 4 implements a lightweight type system on top of the PSI, enabling `getType()` for expressions and named elements.
+- Core types are modeled in Java/Kotlin (`CompactType`, `CompactPrimitiveType`) representing Boolean, Field, Uint, and nominal types for structs/enums.
+- All expression PSI nodes (Reference, Call, Member, Literal, Binary, Unary) implement a common `CompactExpression` interface.
+- All named declarations (Parameter, Const, Struct, Enum) implement `CompactTypeElement` to provide their declared or inferred types.
+- Type inference handles:
+    - Literals (Boolean, Numeric).
+    - Reference resolution to typed declarations.
+    - Binary and Unary operators via `CompactTypeInferenceUtil`.
+    - Struct field access via `CompactStructFieldReference`, which uses the inferred type of the base expression to resolve the field in the target struct definition.
+- The implementation avoids complex dataflow analysis or global type checking, focusing on local, editor-visible type information.
 
 ## Compact Language Reference
 
@@ -364,9 +376,31 @@ The `intellij-elixir` repository (`./intellij-elixir`) provides a clean referenc
 | **Formatter** | `intellij-rust/src/main/kotlin/org/rust/ide/formatter/RsFormattingModelBuilder.kt` | Block-based code formatting model builder. |
 | **Tests** | `intellij-rust/src/test/kotlin/org/rust/lang/core/parser/RsParsingTestCase.kt` | Standard `ParsingTestCase` setup for automated `.compact` -> parse tree testing. |
 
-## Next Task
+## Phase 4 Architecture — Semantic Intelligence
 
-Implement Go To Declaration using Compact `PsiReference` support.
+Phase 4 implements the semantic layer for the Midnight Compact plugin, providing type inference, semantic highlighting, and code inspections.
+
+### Type System & Inference
+- **Core Types:** Modeled via `CompactType` and `CompactPrimitiveType`.
+- **Expression Interface:** `CompactExpression` provides `getType()` for all expression nodes.
+- **Inference Strategy:** Innermost-first local inference using `CompactResolveUtil` for symbol lookup and `CompactStructFieldReference` for member access.
+- **Safety:** Always returns `CompactPrimitiveType.UNKNOWN` for unresolved or malformed code.
+
+### Semantic Model (Planned)
+- Maps PSI declarations to durable `CompactSymbol` objects.
+- Decouples resolution logic from PSI traversal where possible.
+
+### Highlighting & Inspections (Planned)
+- Uses `Annotator` for semantic token coloring.
+- Inspections target unresolved references, type mismatches, and duplicate declarations via `CompactVisitor`.
+
+### Implementation Files
+- `CompactType.java`, `CompactPrimitiveType.java`: Core type definitions.
+- `CompactExpression.java`, `CompactTypeElement.java`: PSI interfaces for type-awareness.
+- `CompactStructFieldReference.java`: Type-aware field resolution.
+
+## Next Task
+Implement semantic highlighting using `CompactSemanticHighlightingAnnotator`.
 
 ## Technical Debt
 
@@ -471,6 +505,17 @@ Implement Go To Declaration using Compact `PsiReference` support.
 - Added `PsiReference` implementations for values, types, enum members, imports, struct literal names, and implements targets, enabling default Go To Declaration through platform reference resolution.
 - Added Find Usages, NamesValidator, refactoring support, and contextual completion extension registrations in `plugin.xml`.
 - Verified with `.\gradlew.bat build` (all tests passing).
+
+### 2026-08-13
+
+- Implemented Phase 4 Type Inference system.
+- Introduced `CompactType` and `CompactPrimitiveType` for language-level type representation.
+- Refactored expression PSI to implement `CompactExpression` and `getType()`.
+- Integrated `CompactTypeElement` into the named declaration hierarchy.
+- Implemented inference for literals, references, and binary/unary operators.
+- Added `CompactStructFieldReference` for type-based field resolution in `CompactMemberExpr`.
+- Added `CompactTypeInferenceTest` verifying core inference logic and field resolution.
+- Verified all changes with a suite of automated tests.
 
 # Development Constraints
 

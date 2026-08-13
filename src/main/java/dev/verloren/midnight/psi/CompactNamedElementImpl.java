@@ -4,12 +4,19 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
+import dev.verloren.midnight.type.CompactPrimitiveType;
+import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class CompactNamedElementImpl extends CompactPsiElement implements CompactNamedElement {
   protected CompactNamedElementImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public @NotNull CompactType getType() {
+    return CompactPrimitiveType.UNKNOWN;
   }
 
   @Override

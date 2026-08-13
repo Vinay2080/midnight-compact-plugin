@@ -3,9 +3,13 @@ package dev.verloren.midnight.resolve;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import dev.verloren.midnight.scope.CompactScope;
+import dev.verloren.midnight.scope.CompactScopes;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.*;
+import dev.verloren.midnight.symbol.CompactSymbol;
+import dev.verloren.midnight.symbol.CompactSymbols;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +33,40 @@ public final class CompactResolveUtil {
     return resolve(name, place, Namespace.TYPE);
   }
 
+  public static @NotNull List<CompactSymbol> resolveValueSymbols(@NotNull String name, @NotNull PsiElement place) {
+    return toSymbols(resolveValue(name, place));
+  }
+
+  public static @NotNull List<CompactSymbol> resolveTypeSymbols(@NotNull String name, @NotNull PsiElement place) {
+    List<CompactSymbol> result = new ArrayList<>();
+    CompactSymbol builtin = CompactSymbols.builtinType(name);
+    if (builtin != null) {
+      result.add(builtin);
+    }
+    result.addAll(toSymbols(resolveType(name, place)));
+    return result;
+  }
+
   public static @NotNull Collection<CompactNamedElement> collectValueDeclarations(@NotNull PsiElement place) {
     return collectDeclarations(place, Namespace.VALUE);
   }
 
   public static @NotNull Collection<CompactNamedElement> collectTypeDeclarations(@NotNull PsiElement place) {
     return collectDeclarations(place, Namespace.TYPE);
+  }
+
+  public static @NotNull Collection<CompactSymbol> collectValueSymbols(@NotNull PsiElement place) {
+    return toSymbols(collectValueDeclarations(place));
+  }
+
+  public static @NotNull Collection<CompactSymbol> collectTypeSymbols(@NotNull PsiElement place) {
+    List<CompactSymbol> result = new ArrayList<>(CompactSymbols.builtinTypes());
+    result.addAll(toSymbols(collectTypeDeclarations(place)));
+    return result;
+  }
+
+  public static @Nullable CompactScope scopeFor(@NotNull PsiElement place) {
+    return CompactScopes.nearest(place);
   }
 
   public static @Nullable CompactModuleDefinition findModule(@NotNull PsiElement place, @Nullable String name) {
@@ -310,6 +342,17 @@ public final class CompactResolveUtil {
   private static @Nullable CompactFile getCompactFile(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     return file instanceof CompactFile ? (CompactFile)file : null;
+  }
+
+  private static @NotNull List<CompactSymbol> toSymbols(@NotNull Collection<? extends CompactNamedElement> declarations) {
+    List<CompactSymbol> result = new ArrayList<>();
+    for (CompactNamedElement declaration : declarations) {
+      CompactSymbol symbol = CompactSymbols.from(declaration);
+      if (symbol != null) {
+        result.add(symbol);
+      }
+    }
+    return result;
   }
 
   private CompactResolveUtil() {

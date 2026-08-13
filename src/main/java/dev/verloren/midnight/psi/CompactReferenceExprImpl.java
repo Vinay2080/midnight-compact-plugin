@@ -6,12 +6,36 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.reference.CompactValueReference;
+import dev.verloren.midnight.type.CompactPrimitiveType;
+import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompactReferenceExprImpl extends CompactPsiElement implements CompactReferenceExpr {
   public CompactReferenceExprImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  private static final com.intellij.openapi.util.Key<Boolean> RESOLVING = com.intellij.openapi.util.Key.create("COMPACT_RESOLVING");
+
+  @Override
+  public @NotNull CompactType getType() {
+    if (getUserData(RESOLVING) != null) {
+      return CompactPrimitiveType.UNKNOWN;
+    }
+    putUserData(RESOLVING, true);
+    try {
+      PsiReference ref = getReference();
+      if (ref != null) {
+        PsiElement resolved = ref.resolve();
+        if (resolved instanceof CompactTypeElement) {
+          return ((CompactTypeElement) resolved).getType();
+        }
+      }
+      return CompactPrimitiveType.UNKNOWN;
+    } finally {
+      putUserData(RESOLVING, null);
+    }
   }
 
   @Override

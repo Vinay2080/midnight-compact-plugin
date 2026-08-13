@@ -58,14 +58,29 @@ public final class CompactElementFactory {
     if (elementType == CompactElementTypes.BLOCK) {
       return new CompactBlock(node);
     }
+    if (elementType == CompactElementTypes.BINARY_EXPR) {
+      return new CompactBinaryExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.UNARY_EXPR) {
+      return new CompactUnaryExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.PAREN_EXPR) {
+      return new CompactParenExprImpl(node);
+    }
     if (elementType == CompactElementTypes.REFERENCE_EXPR) {
       return new CompactReferenceExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.LITERAL_EXPR) {
+      return new CompactLiteralExprImpl(node);
     }
     if (elementType == CompactElementTypes.CALL_EXPR) {
       return new CompactCallExprImpl(node);
     }
     if (elementType == CompactElementTypes.TYPE_REFERENCE) {
       return new CompactTypeReferenceImpl(node);
+    }
+    if (elementType == CompactElementTypes.BUILTIN_TYPE) {
+      return new CompactBuiltinTypeImpl(node);
     }
     if (elementType == CompactElementTypes.STRUCT_LITERAL_EXPR) {
       return new CompactStructLiteralExprImpl(node);
@@ -78,6 +93,9 @@ public final class CompactElementFactory {
     }
     if (elementType == CompactElementTypes.TYPED_ID) {
       return new CompactParameterImpl(node);
+    }
+    if (elementType == CompactElementTypes.TYPED_PATTERN) {
+      return new CompactTypedPatternImpl(node);
     }
     if (elementType == CompactElementTypes.STRUCT_FIELD) {
       return new CompactStructFieldImpl(node);
@@ -124,13 +142,19 @@ public final class CompactElementFactory {
             || elementType == CompactElementTypes.CONSTRUCTOR_DEFINITION
             || elementType == CompactElementTypes.CIRCUIT_DEFINITION
             || elementType == CompactElementTypes.BLOCK
+            || elementType == CompactElementTypes.BINARY_EXPR
+            || elementType == CompactElementTypes.UNARY_EXPR
+            || elementType == CompactElementTypes.PAREN_EXPR
             || elementType == CompactElementTypes.REFERENCE_EXPR
+            || elementType == CompactElementTypes.LITERAL_EXPR
             || elementType == CompactElementTypes.CALL_EXPR
             || elementType == CompactElementTypes.TYPE_REFERENCE
+            || elementType == CompactElementTypes.BUILTIN_TYPE
             || elementType == CompactElementTypes.STRUCT_LITERAL_EXPR
             || elementType == CompactElementTypes.MEMBER_EXPR
             || elementType == CompactElementTypes.IMPORT_ELEMENT
             || elementType == CompactElementTypes.TYPED_ID
+            || elementType == CompactElementTypes.TYPED_PATTERN
             || elementType == CompactElementTypes.STRUCT_FIELD
             || elementType == CompactElementTypes.ENUM_MEMBER
             || elementType == CompactElementTypes.CONST_BINDING

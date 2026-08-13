@@ -1,6 +1,6 @@
 package dev.verloren.midnight.psi;
 
-import com.intellij.psi.PsiElement;
 
-public interface CompactReferenceExpr extends PsiElement {
+
+public interface CompactReferenceExpr extends CompactExpression {
 }
