@@ -39,6 +39,22 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.highlighter.CompactSyntaxHighlighterFactory"/>
 
+        <lang.findUsagesProvider
+                language="Compact"
+                implementationClass="dev.verloren.midnight.findUsages.CompactFindUsagesProvider"/>
+
+        <lang.namesValidator
+                language="Compact"
+                implementationClass="dev.verloren.midnight.refactoring.CompactNamesValidator"/>
+
+        <lang.refactoringSupport
+                language="Compact"
+                implementationClass="dev.verloren.midnight.refactoring.CompactRefactoringSupportProvider"/>
+
+        <completion.contributor
+                language="Compact"
+                implementationClass="dev.verloren.midnight.completion.CompactCompletionContributor"/>
+
     </extensions>
 
 </idea-plugin>

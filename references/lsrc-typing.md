@@ -1314,7 +1314,7 @@ argt (unnamed _ type , ⊢arg' wf) = mkTy type wf
 ⊢void = ⊢vector (⊢quote 0) ⊢undeclared
 ```
 
-##      
+##       
 
 ```agda
 data _≲_ {Δ} : (τ₁ τ₂ : ⊢Type Δ) → Set where

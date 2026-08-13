@@ -8,32 +8,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import dev.verloren.midnight.CompactLanguage;
-import dev.verloren.midnight.lexer.CompactLexerAdapter;
-import dev.verloren.midnight.lexer.CompactTokenTypes;
+import dev.verloren.midnight.lexer.CompactLexer;
+import dev.verloren.midnight.lexer.CompactTokenSets;
+import dev.verloren.midnight.psi.CompactElementFactory;
 import dev.verloren.midnight.psi.CompactFile;
-import dev.verloren.midnight.psi.CompactTypes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class CompactParserDefinition implements ParserDefinition {
-
-  public static final IFileElementType FILE =
-          new IFileElementType(CompactLanguage.INSTANCE);
-
-  public static final TokenSet WHITE_SPACES =
-          TokenSet.create(TokenType.WHITE_SPACE);
+  public static final IFileElementType FILE = new IFileElementType(CompactLanguage.INSTANCE);
 
   @Override
-  public @NotNull Lexer createLexer(@Nullable Project project) {
-    return new CompactLexerAdapter();
+  public @NotNull Lexer createLexer(Project project) {
+    return new CompactLexer();
   }
 
   @Override
-  public @NotNull PsiParser createParser(@Nullable Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new CompactParser();
   }
 
@@ -44,25 +37,17 @@ public class CompactParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull TokenSet getCommentTokens() {
-    return TokenSet.create(
-            CompactTokenTypes.LINE_COMMENT,
-            CompactTokenTypes.BLOCK_COMMENT
-    );
+    return CompactTokenSets.COMMENTS;
   }
 
   @Override
   public @NotNull TokenSet getStringLiteralElements() {
-    return TokenSet.create(CompactTypes.STRING_LITERAL);
+    return TokenSet.EMPTY;
   }
 
   @Override
-  public @NotNull TokenSet getWhitespaceTokens() {
-    return WHITE_SPACES;
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
-    return CompactTypes.Factory.createElement(node);
+  public @NotNull PsiElement createElement(ASTNode node) {
+    return CompactElementFactory.createElement(node);
   }
 
   @Override

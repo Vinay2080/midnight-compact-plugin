@@ -1,0 +1,20 @@
+package dev.verloren.midnight.symbol;
+
+public enum CompactSymbolKind {
+  CIRCUIT,
+  WITNESS,
+  LEDGER,
+  PARAMETER,
+  LOCAL_BINDING,
+  STRUCT_FIELD,
+  ENUM_MEMBER,
+  STRUCT,
+  ENUM,
+  TYPE_ALIAS,
+  EXTERNAL_CONTRACT,
+  GENERIC_PARAMETER,
+  BUILTIN_TYPE,
+  MODULE,
+  IMPORT_ALIAS,
+  UNKNOWN
+}

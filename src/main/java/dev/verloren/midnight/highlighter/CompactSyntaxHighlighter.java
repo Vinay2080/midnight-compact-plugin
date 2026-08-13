@@ -1,26 +1,46 @@
 package dev.verloren.midnight.highlighter;
 
 import com.intellij.lexer.Lexer;
+
+
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import dev.verloren.midnight.lexer.CompactLexerAdapter;
+import dev.verloren.midnight.lexer.CompactLexer;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jspecify.annotations.NonNull;
 
 public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
 
-    @Override
-    public @NonNull Lexer getHighlightingLexer() {
-        return new CompactLexerAdapter();
-    }
+  public static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("COMPACT_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey TYPE = TextAttributesKey.createTextAttributesKey("COMPACT_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
+  public static final TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("COMPACT_STRING", DefaultLanguageHighlighterColors.STRING);
+  public static final TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("COMPACT_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
+  public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey("COMPACT_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+  public static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey("COMPACT_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
+  public static final TextAttributesKey RESERVED_KEYWORD = TextAttributesKey.createTextAttributesKey("COMPACT_RESERVED_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey CONSTANT = TextAttributesKey.createTextAttributesKey("COMPACT_CONSTANT", DefaultLanguageHighlighterColors.CONSTANT);
+  public static final TextAttributesKey VERSION = TextAttributesKey.createTextAttributesKey("COMPACT_VERSION", DefaultLanguageHighlighterColors.NUMBER);
+  public static final TextAttributesKey OPERATOR = TextAttributesKey.createTextAttributesKey("COMPACT_OPERATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+  public static final TextAttributesKey PARENTHESES = TextAttributesKey.createTextAttributesKey("COMPACT_PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES);
+  public static final TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey("COMPACT_BRACES", DefaultLanguageHighlighterColors.BRACES);
+  public static final TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey("COMPACT_BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);
+  public static final TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey("COMPACT_COMMA", DefaultLanguageHighlighterColors.COMMA);
+  public static final TextAttributesKey SEMICOLON = TextAttributesKey.createTextAttributesKey("COMPACT_SEMICOLON", DefaultLanguageHighlighterColors.SEMICOLON);
+  public static final TextAttributesKey DOT = TextAttributesKey.createTextAttributesKey("COMPACT_DOT", DefaultLanguageHighlighterColors.DOT);
 
-    @Override
-    public TextAttributesKey @NonNull [] getTokenHighlights(IElementType tokenType) {
-        if (tokenType == CompactTokenTypes.EXPORT ||
+  @Override
+  public @NonNull Lexer getHighlightingLexer() {
+    return new CompactLexer();
+  }
+
+  @Override
+  public TextAttributesKey @NonNull [] getTokenHighlights(IElementType tokenType) {
+        if (
+        tokenType == CompactTokenTypes.EXPORT ||
             tokenType == CompactTokenTypes.IMPORT ||
             tokenType == CompactTokenTypes.FROM ||
             tokenType == CompactTokenTypes.MODULE ||
@@ -52,7 +72,10 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
             tokenType == CompactTokenTypes.STRUCT ||
             tokenType == CompactTokenTypes.TYPE ||
             tokenType == CompactTokenTypes.WITNESS ||
-            tokenType == CompactTokenTypes.EMIT) {
+            tokenType == CompactTokenTypes.EMIT ||
+            tokenType == CompactTokenTypes.IMPLEMENTS ||
+            tokenType == CompactTokenTypes.EXTERNAL
+            ) {
             return pack(KEYWORD);
         }
 
@@ -91,7 +114,8 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
             return pack(COMMENT);
         }
 
-        if (tokenType == CompactTokenTypes.PLUS ||
+        if (
+        tokenType == CompactTokenTypes.PLUS ||
             tokenType == CompactTokenTypes.MINUS ||
             tokenType == CompactTokenTypes.STAR ||
             tokenType == CompactTokenTypes.SLASH ||
@@ -110,7 +134,8 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
             tokenType == CompactTokenTypes.SPREAD ||
             tokenType == CompactTokenTypes.RANGE ||
             tokenType == CompactTokenTypes.PLUS_ASSIGN ||
-            tokenType == CompactTokenTypes.MINUS_ASSIGN) {
+            tokenType == CompactTokenTypes.MINUS_ASSIGN
+            ) {
             return pack(OPERATOR);
         }
 
@@ -121,7 +146,6 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
         if (tokenType == CompactTokenTypes.LBRACE || tokenType == CompactTokenTypes.RBRACE) {
             return pack(BRACES);
         }
-
         if (tokenType == CompactTokenTypes.LBRACKET || tokenType == CompactTokenTypes.RBRACKET) {
             return pack(BRACKETS);
         }
@@ -144,23 +168,6 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
             return pack(BAD_CHARACTER);
         }
 
-        return new TextAttributesKey[0];
-    }
-
-    public static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("COMPACT_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
-    public static final TextAttributesKey TYPE = TextAttributesKey.createTextAttributesKey("COMPACT_TYPE", DefaultLanguageHighlighterColors.CLASS_NAME);
-    public static final TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("COMPACT_STRING", DefaultLanguageHighlighterColors.STRING);
-    public static final TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("COMPACT_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
-    public static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey("COMPACT_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
-    public static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey("COMPACT_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
-    public static final TextAttributesKey RESERVED_KEYWORD = TextAttributesKey.createTextAttributesKey("COMPACT_RESERVED_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
-    public static final TextAttributesKey CONSTANT = TextAttributesKey.createTextAttributesKey("COMPACT_CONSTANT", DefaultLanguageHighlighterColors.CONSTANT);
-    public static final TextAttributesKey VERSION = TextAttributesKey.createTextAttributesKey("COMPACT_VERSION", DefaultLanguageHighlighterColors.NUMBER);
-    public static final TextAttributesKey OPERATOR = TextAttributesKey.createTextAttributesKey("COMPACT_OPERATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
-    public static final TextAttributesKey PARENTHESES = TextAttributesKey.createTextAttributesKey("COMPACT_PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES);
-    public static final TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey("COMPACT_BRACES", DefaultLanguageHighlighterColors.BRACES);
-    public static final TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey("COMPACT_BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);
-    public static final TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey("COMPACT_COMMA", DefaultLanguageHighlighterColors.COMMA);
-    public static final TextAttributesKey SEMICOLON = TextAttributesKey.createTextAttributesKey("COMPACT_SEMICOLON", DefaultLanguageHighlighterColors.SEMICOLON);
-    public static final TextAttributesKey DOT = TextAttributesKey.createTextAttributesKey("COMPACT_DOT", DefaultLanguageHighlighterColors.DOT);
+    return new TextAttributesKey[0];
+  }
 }
