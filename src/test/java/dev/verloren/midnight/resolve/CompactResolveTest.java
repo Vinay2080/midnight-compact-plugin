@@ -293,4 +293,67 @@ public class CompactResolveTest extends BasePlatformTestCase {
     assertInstanceOf(resolved, CompactStructDefinition.class);
     assertEquals("Point", ((CompactNamedElement) resolved).getName());
   }
+
+  public void testParameterShadowsTopLevelConst() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    const total = 100;
+                    circuit test(total: Field) {
+                      const check = <caret>total;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    PsiElement resolved = ref.resolve();
+    assertNotNull(resolved);
+    assertInstanceOf(resolved, CompactPatternImpl.class);
+    assertEquals("total", ((CompactNamedElement) resolved).getName());
+  }
+
+  public void testDestructuredPatternBindingResolution() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test() {
+                      const [a, b] = [10, 20];
+                      const check = <caret>a;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    PsiElement resolved = ref.resolve();
+    assertNotNull("Pattern binding 'a' in destructured array should resolve", resolved);
+    assertTrue(resolved instanceof CompactNamedElement);
+    assertEquals("a", ((CompactNamedElement) resolved).getName());
+  }
+
+  public void testCustomTypeAliasResolution() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    type CustomAmount = Uint<8>;
+                    circuit check(val: <caret>CustomAmount) {}
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    PsiElement resolved = ref.resolve();
+    assertNotNull("Custom type alias 'CustomAmount' should resolve to type definition", resolved);
+    assertInstanceOf(resolved, CompactTypeDefinition.class);
+    assertEquals("CustomAmount", ((CompactNamedElement) resolved).getName());
+  }
+
+  public void testUnresolvedReferenceReturnsNull() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test() {
+                      const x = <caret>nonExistentVar;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    PsiElement resolved = ref.resolve();
+    assertNull("Reference to non-existent variable should return null cleanly", resolved);
+  }
 }

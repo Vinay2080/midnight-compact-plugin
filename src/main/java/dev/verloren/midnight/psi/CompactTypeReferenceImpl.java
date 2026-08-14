@@ -50,4 +50,10 @@ public class CompactTypeReferenceImpl extends CompactPsiElement implements Compa
     ASTNode identifier = getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
     return identifier == null ? null : identifier.getPsi();
   }
+
+  @Override
+  public PsiReference @NotNull [] getReferences() {
+    PsiReference ref = getReference();
+    return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
+  }
 }

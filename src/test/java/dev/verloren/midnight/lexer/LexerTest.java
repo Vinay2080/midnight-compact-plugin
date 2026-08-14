@@ -71,4 +71,48 @@ public class LexerTest {
   public void lexesSlashOperator() {
     assertTokens("/", CompactTokenTypes.SLASH);
   }
+
+  @Test
+  public void lexesStringEscapesAndUnclosedString() {
+    assertTokens("\"hello \\\"world\\\"\"", CompactTokenTypes.STRING_LITERAL);
+    assertTokens("\"line1\\nline2\"", CompactTokenTypes.STRING_LITERAL);
+    assertTokens("\"unclosed", CompactTokenTypes.UNTERMINATED_STRING);
+  }
+
+  @Test
+  public void lexesNumericBoundaries() {
+    assertTokens("0x0", CompactTokenTypes.HEX_LITERAL);
+    assertTokens("0b0", CompactTokenTypes.BINARY_LITERAL);
+    assertTokens("0o0", CompactTokenTypes.OCTAL_LITERAL);
+    assertTokens("12345678901234567890", CompactTokenTypes.DECIMAL_LITERAL);
+  }
+
+  @Test
+  public void lexesOperatorDisambiguation() {
+    assertTokens(". .. ...",
+            CompactTokenTypes.DOT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.RANGE, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.SPREAD);
+    assertTokens("= == =>",
+            CompactTokenTypes.ASSIGN, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.EQEQ, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.ARROW);
+    assertTokens("< <= > >=",
+            CompactTokenTypes.LT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.LTE, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.GT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.GTE);
+  }
+
+  @Test
+  public void lexesKeywordsAndIdentifiers() {
+    assertTokens("let const circuit struct enum contract witness",
+            CompactTokenTypes.LET, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.CONST, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.CIRCUIT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.STRUCT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.ENUM, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.CONTRACT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.WITNESS);
+  }
 }

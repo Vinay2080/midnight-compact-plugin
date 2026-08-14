@@ -48,4 +48,10 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
     int start = psi.getTextRange().getStartOffset() - getTextRange().getStartOffset();
     return new CompactValueReference(this, TextRange.from(start, psi.getTextLength()));
   }
+
+  @Override
+  public PsiReference @NotNull [] getReferences() {
+    PsiReference ref = getReference();
+    return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
+  }
 }

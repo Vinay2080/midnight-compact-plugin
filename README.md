@@ -1,114 +1,129 @@
-# Midnight-plugin
+# Midnight Language Plugin for IntelliJ IDEA
 
-[![Twitter Follow](https://img.shields.io/badge/follow-%40JBPlatform-1DA1F2?logo=twitter)](https://twitter.com/JBPlatform)
-[![Developers Forum](https://img.shields.io/badge/JetBrains%20Platform-Join-blue)][jb:forum]
+[![IntelliJ Platform](https://img.shields.io/badge/IntelliJ%20Platform-Plugin-blue.svg)](https://plugins.jetbrains.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## Plugin structure
+An open-source JetBrains IntelliJ IDEA plugin providing first-class development support for **Compact**, the smart contract programming language of the **Midnight** privacy-preserving blockchain.
 
-A generated project contains the following content structure:
+---
 
-```
+## 💡 What Problem Are We Solving?
+
+### The Midnight & Compact Context
+[Midnight](https://midnight.network) is a privacy-focused blockchain built around Zero-Knowledge (ZK) cryptography. Smart contracts on Midnight are written in **Compact**, a domain-specific language engineered specifically for ZK smart contract development. Compact allows developers to express private state logic (`witness`, `disclose`), public ledger state (`ledger`), zero-knowledge circuits (`circuit`), and cryptographic types (`Field`, `Uint`, `Bytes`) seamlessly.
+
+### The Developer Experience Gap
+Writing Compact smart contracts requires navigating complex ZK privacy primitives, strict syntax models, and custom type constructs. Without dedicated IDE support, developers face major hurdles:
+- **Lack of Feedback**: Syntax errors, unclosed blocks, and missing type declarations are only caught during compiler execution.
+- **Difficult Navigation**: Tracking variable bindings, circuit parameters, struct fields, and imported modules in complex contracts requires manual text searching.
+- **Risky Refactoring**: Renaming circuits, state variables, or struct types across a contract is manual and error-prone.
+- **Zero Discoverability**: Discovering keywords, primitive types, and enum members requires constantly referencing external documentation.
+
+### Our Solution
+The **Midnight Language Plugin** transforms IntelliJ IDEA into a full-featured IDE for Compact development. Built with a custom handwritten lexer, recursive-descent parser, Abstract Syntax Tree (PSI) model, and type inference engine, the plugin delivers intelligent editor features including syntax highlighting, symbol resolution, safe renaming, usage searching, and contextual code completion.
+
+---
+
+## ✨ Current Capabilities & Implemented Features
+
+### 🎨 1. Lexer & Syntax Highlighting
+- **Handwritten Lexer**: Custom state-machine lexer (`CompactLexer`) tailored for Compact syntax tokenization.
+- **Full Token & Keyword Highlighting**:
+  - Declaration & Control Keywords: `contract`, `circuit`, `witness`, `ledger`, `disclose`, `pragma`, `import`, `export`, `struct`, `enum`, `module`, `implements`, `pure`, `return`, `if`, `else`, `for`, `const`, `default`, `new`, `of`, `pad`, `sealed`, `slice`, `assert`, `as`.
+  - Primitive Types: `Boolean`, `Field`, `Uint`, `Bytes`, `Opaque`, `Vector`, `JubjubScalar`, `Secp256k1Base`, `Secp256k1Scalar`.
+  - Literals: Decimal, Hexadecimal (`0x`), Binary (`0b`), Octal (`0o`), strings, version strings, operators, and single/multi-line comments.
+
+### 🧩 2. Handwritten Parser & PSI AST Architecture
+- **Official Spec Alignment**: Built against official Compact compiler specifications (`Lparser` / `Lsrc`).
+- **Complete Language Structure Parsing**: Parses top-level contracts, circuit definitions, module blocks, witness declarations, ledger constructors, type aliases, and control structures.
+- **Pratt Expression Parser**: Precedence climbing for binary/unary operations, function calls, tuple expressions, member accesses, and ternary operations.
+- **Resilient Error Recovery**: Smart error bounds prevent single-line syntax errors from corrupting highlighting or navigation in the rest of the file.
+
+### 🔍 3. Symbol Navigation & Resolution (Go to Declaration)
+- **Scoped Reference Resolution**: Jump directly to declarations (`Ctrl+Click` / `Cmd+Click` or `F12`):
+  - Local variables, const bindings, parameters, and pattern destructuring.
+  - Circuit and function definitions.
+  - Struct, enum, and type alias declarations.
+  - Struct field accesses (`object.field`) and enum member references (`Enum.Member`).
+  - Module import bindings and import aliases (`import { a as b } from M`).
+
+### 💡 4. Contextual Code Completion
+- **Intelligent Autocomplete**: Context-aware completion suggestions via `Ctrl+Space`:
+  - **Keywords**: Suggested at statement and declaration starting positions.
+  - **Types**: Built-in primitives and user-defined types (structs, enums, type aliases) in type positions.
+  - **Values**: In-scope variables, consts, circuit names, and parameters in expression positions.
+  - **Enum Members**: Qualified member suggestions after typing `EnumName.`.
+
+### ✏️ 5. Refactoring & Symbol Search
+- **Safe Rename (`Shift+F6`)**: Rename circuits, variables, parameters, struct fields, and types. Automatically updates all reference sites with identifier validation to prevent invalid names or keyword collisions.
+- **Find Usages (`Alt+F7`)**: Instantly search for all usages of any named element across the file using a custom word scanner.
+
+### 🧮 6. Type Inference Engine
+- **PSI Type System**: Dynamic type evaluation (`getType()`) for expressions, primitive literals, reference declarations, binary/unary operators, and struct field accesses.
+- Powers downstream features such as field reference resolution and type-aware completion.
+
+### 🧪 7. Automated Test Suite
+- **91/91 Automated Integration Tests Passing**: Verified coverage for lexer/parser edge cases, string escapes, numeric boundaries, reserved keywords, syntax error recovery, parameter scope shadowing, destructured pattern bindings, type alias resolution, generic parameter completion, enum/enum-member renaming, struct field & enum member find usages, validator identifier rules, cast expression typing, string literal typing, nested arithmetic & logical binary typing, struct literal type inference, and unknown reference type fallbacks.
+
+---
+
+## 🗺️ Roadmap & Future Goals
+
+- [ ] **On-the-Fly Inspections & Annotators**: Linting for unused variables, missing types, invalid assignments, and Midnight privacy/circuit warnings.
+- [ ] **Code Formatter & Indenter**: AST-based code formatting and automatic re-indentation (`Ctrl+Alt+L`) adhering to official Compact formatting standards.
+- [ ] **Cross-File Resolution & Include Processing**: Workspace-wide resolution for `include` directives, multi-file module imports, and external contract definitions.
+- [ ] **Standard Library & ZKIR Indexing**: Pre-indexed resolution and auto-completion for `standard-library.compact` and built-in ZKIR v3 functions.
+- [ ] **Midnight Compiler Integration**: Embedded Midnight compiler execution with inline diagnostic overlays, compiler reporting, and circuit artifact verification.
+
+---
+
+## 🛠️ Project Structure
+
+```text
 .
-├── .run/                   Predefined Run/Debug Configurations
-├── build/                  Output build directory
-├── gradle
-│   ├── wrapper/            Gradle Wrapper
-│   ├── libs.versions.toml  Version catalog
-├── src                     Plugin sources
-│   ├── main
-│   │   ├── kotlin/         Kotlin production sources
-│   │   └── resources/      Resources - plugin.xml, icons, messages
-├── .gitignore              Git ignoring rules
-├── build.gradle.kts        Gradle build configuration
-├── gradle.properties       Gradle configuration properties
-├── gradlew                 *nix Gradle Wrapper script
-├── gradlew.bat             Windows Gradle Wrapper script
-├── README.md               README
-└── settings.gradle.kts     Gradle project settings
+├── src/main/java/dev/verloren/midnight/
+│   ├── CompactFileType.java              # File type definition (.compact)
+│   ├── lexer/                            # Handwritten Compact lexer & token definitions
+│   ├── parser/                           # Handwritten recursive-descent parser & ParserDefinition
+│   ├── psi/                              # PSI elements, interfaces, and resolve utilities
+│   ├── highlighter/                      # Syntax highlighting implementation
+│   ├── completion/                       # Code completion contributor
+│   ├── refactoring/                      # Rename validator & refactoring support
+│   ├── findUsages/                       # Find Usages provider & word scanner
+│   ├── type/                             # Type inference engine & primitive types
+│   └── reference/                        # PSI reference resolution implementations
+├── src/main/resources/META-INF/plugin.xml # Plugin manifest
+├── build.gradle.kts                      # Gradle build configuration
+└── AGENTS.md                             # Architecture notebook & developer log
 ```
 
-In addition to the configuration files, the most crucial part is the `src` directory, which contains our implementation
-and the manifest for our plugin – [plugin.xml][file:plugin.xml].
+---
 
-> [!NOTE]
-> To use Java in your plugin, create the `/src/main/java` directory.
+## 🚀 Development & Building
 
-## Plugin configuration file
+### Requirements
+- **JDK 17** or higher
+- **IntelliJ IDEA** (2023.2+ recommended)
 
-The plugin configuration file is a [plugin.xml][file:plugin.xml] file located in the `src/main/resources/META-INF`
-directory. It provides general information about the plugin, its dependencies, extensions, and listeners.
+### Build & Test Commands
 
-You can read more about this file in the [Plugin Configuration File][docs:plugin.xml] section of our documentation.
+- **Run Plugin Sandbox**:
+  ```bash
+  ./gradlew runIde
+  ```
 
-If you're still not quite sure what this is all about, read [Introduction to IntelliJ Platform][docs:intro].
+- **Run Automated Tests**:
+  ```bash
+  ./gradlew test
+  ```
 
-## Predefined Run/Debug configurations
+- **Build Plugin Distribution Package**:
+  ```bash
+  ./gradlew buildPlugin
+  ```
 
-Within the default project structure, there is a `.run` directory provided containing predefined *Run/Debug
-configurations* that expose corresponding Gradle tasks:
+---
 
-| Configuration name | Description                                                                                                                                                                         |
-|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Run Plugin         | Runs [`:runIde`][gh:intellij-platform-gradle-plugin-runIde] IntelliJ Platform Gradle Plugin task. Use the *Debug* icon for plugin debugging.                                        |
-| Run Tests          | Runs [`:check`][gradle:lifecycle-tasks] Gradle task.                                                                                                                                |
-| Run Verifications  | Runs [`:verifyPlugin`][gh:intellij-platform-gradle-plugin-verifyPlugin] IntelliJ Platform Gradle Plugin task to check the plugin compatibility against the specified IntelliJ IDEs. |
+## 📄 License
 
-> [!NOTE]
-> You can find the logs from the running task in the `idea.log` tab.
-
-## Publishing the plugin
-
-> [!TIP]
-> Make sure to follow all guidelines listed in [Publishing a Plugin][docs:publishing] to follow all recommended and
-> required steps.
-
-Releasing a plugin to [JetBrains Marketplace](https://plugins.jetbrains.com) is a straightforward operation that uses
-the `publishPlugin` Gradle task provided by
-the [intellij-platform-gradle-plugin][gh:intellij-platform-gradle-plugin-docs].
-
-You can also upload the plugin to the [JetBrains Plugin Repository](https://plugins.jetbrains.com/plugin/upload)
-manually via UI.
-
-## Useful links
-
-- [IntelliJ Platform SDK Plugin SDK][docs]
-- [IntelliJ Platform Gradle Plugin Documentation][gh:intellij-platform-gradle-plugin-docs]
-- [IntelliJ Platform Explorer][jb:ipe]
-- [JetBrains Marketplace Quality Guidelines][jb:quality-guidelines]
-- [IntelliJ Platform UI Guidelines][jb:ui-guidelines]
-- [JetBrains Marketplace Paid Plugins][jb:paid-plugins]
-- [IntelliJ SDK Code Samples][gh:code-samples]
-
-[docs]: https://plugins.jetbrains.com/docs/intellij
-
-[docs:intro]: https://plugins.jetbrains.com/docs/intellij/intellij-platform.html?from=IJPluginTemplate
-
-[docs:plugin.xml]: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html?from=IJPluginTemplate
-
-[docs:publishing]: https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate
-
-[file:plugin.xml]: ./src/main/resources/META-INF/plugin.xml
-
-[gh:code-samples]: https://github.com/JetBrains/intellij-sdk-code-samples
-
-[gh:intellij-platform-gradle-plugin]: https://github.com/JetBrains/intellij-platform-gradle-plugin
-
-[gh:intellij-platform-gradle-plugin-docs]: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
-
-[gh:intellij-platform-gradle-plugin-runIde]: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-tasks.html#runIde
-
-[gh:intellij-platform-gradle-plugin-verifyPlugin]: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-tasks.html#verifyPlugin
-
-[gradle:lifecycle-tasks]: https://docs.gradle.org/current/userguide/java_plugin.html#lifecycle_tasks
-
-[jb:github]: https://github.com/JetBrains/.github/blob/main/profile/README.md
-
-[jb:forum]: https://platform.jetbrains.com/
-
-[jb:quality-guidelines]: https://plugins.jetbrains.com/docs/marketplace/quality-guidelines.html
-
-[jb:paid-plugins]: https://plugins.jetbrains.com/docs/marketplace/paid-plugins-marketplace.html
-
-[jb:ipe]: https://jb.gg/ipe
-
-[jb:ui-guidelines]: https://jetbrains.github.io/ui
+This project is open-source under the [MIT License](LICENSE).

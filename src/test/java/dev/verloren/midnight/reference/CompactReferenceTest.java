@@ -93,4 +93,40 @@ public class CompactReferenceTest extends BasePlatformTestCase {
     assertTrue(target instanceof dev.verloren.midnight.psi.CompactModuleDefinition);
     assertEquals("Utils", ((dev.verloren.midnight.psi.CompactModuleDefinition) target).getName());
   }
+
+  public void testGenericParameterReferenceRangeAndTarget() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    type Container<#N> = Vector<#<caret>N, Field>;
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    assertInstanceOf(ref, CompactTypeReference.class);
+    assertEquals("N", ref.getCanonicalText());
+
+    PsiElement target = ref.resolve();
+    assertNotNull(target);
+    assertInstanceOf(target, dev.verloren.midnight.psi.CompactGenericParameterImpl.class);
+    assertEquals("N", ((CompactNamedElement) target).getName());
+  }
+
+  public void testStructFieldReferenceRangeAndTarget() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    struct Point { x: Field, y: Field }
+                    circuit draw(p: Point) {
+                      const val = p.<caret>x;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("Struct field reference should exist at caret", ref);
+    assertInstanceOf(ref, CompactStructFieldReference.class);
+    assertEquals("x", ref.getCanonicalText());
+
+    PsiElement target = ref.resolve();
+    assertNotNull("Struct field reference should resolve to field declaration", target);
+    assertEquals("x", ((CompactNamedElement) target).getName());
+  }
 }

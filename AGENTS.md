@@ -29,8 +29,14 @@ Core technologies and feature areas:
 - [x] Completion
 - [x] Rename
 - [x] Find Usages
-- [x] Phase 3 Automated Test Suite (57/57 unit tests passing across resolution, references, completion, rename, and find usages)
+- [x] Phase 3 & 4 Automated Test Suite (66/66 unit tests passing across resolution, references, completion, rename, find usages, and type inference)
+- [x] Phase 1 Extended Test Suite (74/74 unit tests passing including lexer edge cases, string escapes, numeric boundaries, reserved keywords, advanced control flows, and AST error recovery)
+- [x] Phase 2 Extended Test Suite (80/80 unit tests passing including parameter shadowing, destructured pattern resolution, custom type alias resolution, soft-unresolved references, generic parameters, and struct field references)
+- [x] Phase 3 Extended Test Suite (85/85 unit tests passing including generic type parameter completion, enum/enum-member renaming, struct field & enum member find usages, and validator invalid identifier rejection)
+- [x] Phase 4 Extended Test Suite (91/91 unit tests passing including cast expression typing, string literal typing, nested arithmetic & logical binary typing, struct literal type inference, and unknown reference type fallbacks)
+- [x] Parser Freeze & EDT Deadlock Fix (Fixed infinite parsing loop on isolated `export` keywords/invalid modifier sequences during background document commit; added regression test suite, 95/95 unit tests passing)
 - [x] Type Inference
+- [x] Updated README documentation (Problem statement, implemented features, roadmap, build instructions)
 - [ ] Inspections
 - [ ] Formatter
 
@@ -108,6 +114,20 @@ Formatter (pending)
     - Binary and Unary operators via `CompactTypeInferenceUtil`.
     - Struct field access via `CompactStructFieldReference`, which uses the inferred type of the base expression to resolve the field in the target struct definition.
 - The implementation avoids complex dataflow analysis or global type checking, focusing on local, editor-visible type information.
+
+## Test Infrastructure & Context Reference
+
+To streamline future test development and lower API credit consumption, key test patterns and element type mappings are recorded here:
+
+### 1. Test Framework Setup & Classes
+- **Lexer Tests** (`LexerTest.java`): Standalone JUnit 4 test class using `CompactLexer.start(text, 0, len, 0)` and `assertTokens(text, IElementType...)`.
+- **Parser & Recovery Tests** (`ParsingTestCase` subclasses): `DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `ErrorRecoveryParserTest`. Extends IntelliJ `ParsingTestCase("category", "compact", new CompactParserDefinition())` with `parseFile("Name", text)` and `DebugUtil.psiToString(file, true)`.
+- **Fixture Tests** (`BasePlatformTestCase` subclasses): `CompactResolveTest`, `CompactReferenceTest`, `CompactCompletionTest`, `CompactRenameTest`, `CompactFindUsagesTest`, `CompactTypeInferenceTest`. Configured using `myFixture.configureByText(CompactFileType.INSTANCE, text)`.
+
+### 2. Token & AST Element Mappings Quick Reference
+- **Equality Operator**: `CompactTokenTypes.EQEQ` (`==`), `NEQ` (`!=`), `ASSIGN` (`=`).
+- **Control & Keywords**: `CompactTokenTypes.LET` (`let`), `CONST` (`const`), `DISCLOSE` (`disclose`), `FOR` (`for`), `IF` (`if`), `STRUCT` (`struct`), `ENUM` (`enum`).
+- **AST Nodes**: `DISCLOSE_EXPR`, `PATTERN` (destructuring patterns), `TUPLE_EXPR`, `STRUCT_DECLARATION`, `CIRCUIT_DEFINITION`, `CONST_STATEMENT`, `RETURN_STATEMENT`, `PsiErrorElement`.
 
 ## Compact Language Reference
 

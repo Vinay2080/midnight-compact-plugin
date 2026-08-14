@@ -7,6 +7,8 @@ import java.util.Objects;
 public class CompactPrimitiveType implements CompactType {
   public static final CompactPrimitiveType BOOLEAN = new CompactPrimitiveType("Boolean");
   public static final CompactPrimitiveType FIELD = new CompactPrimitiveType("Field");
+  public static final CompactPrimitiveType BYTES = new CompactPrimitiveType("Bytes");
+  public static final CompactPrimitiveType OPAQUE = new CompactPrimitiveType("Opaque");
   public static final CompactPrimitiveType UNKNOWN = new CompactPrimitiveType("Unknown");
 
   private final String name;

@@ -38,4 +38,10 @@ public class CompactStructLiteralExprImpl extends CompactPsiElement implements C
     int start = psi.getTextRange().getStartOffset() - getTextRange().getStartOffset();
     return new CompactTypeReference(this, TextRange.from(start, psi.getTextLength()));
   }
+
+  @Override
+  public PsiReference @NotNull [] getReferences() {
+    PsiReference ref = getReference();
+    return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
+  }
 }

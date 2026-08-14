@@ -75,4 +75,19 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNotNull(pos);
     assertEquals(CompactCompletionContext.Kind.MEMBER, CompactCompletionContext.classify(pos));
   }
+
+  public void testGenericParameterTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    type Container<#N> = Vector<#<caret>, Field>;
+                    """
+    );
+    PsiElement pos = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(pos);
+    assertEquals(CompactCompletionContext.Kind.TYPE, CompactCompletionContext.classify(pos));
+
+    Collection<CompactNamedElement> typeDecls = CompactResolveUtil.collectTypeDeclarations(pos);
+    Collection<String> names = typeDecls.stream().map(CompactNamedElement::getName).toList();
+    assertTrue("Generic parameter 'N' should be collectible in type context", names.contains("N"));
+  }
 }

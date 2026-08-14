@@ -46,6 +46,7 @@ public final class CompactLexer extends LexerBase {
           Map.entry("witness", CompactTokenTypes.WITNESS),
           Map.entry("emit", CompactTokenTypes.EMIT),
           Map.entry("external", CompactTokenTypes.EXTERNAL),
+          Map.entry("let", CompactTokenTypes.LET),
           Map.entry("true", CompactTokenTypes.TRUE),
           Map.entry("false", CompactTokenTypes.FALSE)
   );

@@ -104,6 +104,7 @@ public final class CompactParser implements PsiParser {
     PsiBuilder.Marker file = builder.mark();
 
     while (!builder.eof()) {
+      int startOffset = builder.getCurrentOffset();
       if (!parseProgramElement(builder)) {
         builder.error("Expected Compact declaration");
         if (!builder.eof() && !TOP_LEVEL_RECOVERY.contains(builder.getTokenType())) {
@@ -114,6 +115,9 @@ public final class CompactParser implements PsiParser {
         } else if (!builder.eof() && !isProgramElementStart(builder)) {
           builder.advanceLexer();
         }
+      }
+      if (!builder.eof() && builder.getCurrentOffset() == startOffset) {
+        builder.advanceLexer();
       }
     }
 
@@ -429,6 +433,15 @@ public final class CompactParser implements PsiParser {
     implementsDecl.done(CompactElementTypes.IMPLEMENTS_DECLARATION);
   }
 
+  private boolean expectIdentifier(PsiBuilder builder, String errorMessage) {
+    if (at(builder, CompactTokenTypes.IDENTIFIER) || isBuiltinType(builder.getTokenType())) {
+      builder.advanceLexer();
+      return true;
+    }
+    builder.error(errorMessage);
+    return false;
+  }
+
   private void parseTypeAlias(PsiBuilder builder, boolean exported) {
     PsiBuilder.Marker typeAlias = builder.mark();
     if (exported) {
@@ -438,7 +451,7 @@ public final class CompactParser implements PsiParser {
       builder.advanceLexer();
     }
     expect(builder, CompactTokenTypes.TYPE, "Expected 'type'");
-    expect(builder, CompactTokenTypes.IDENTIFIER, "Expected type name");
+    expectIdentifier(builder, "Expected type name");
     if (at(builder, CompactTokenTypes.LT)) {
       parseGenericParameterList(builder);
     }
@@ -1108,7 +1121,7 @@ public final class CompactParser implements PsiParser {
 
   private boolean looksLikeLambdaExpression(PsiBuilder builder) {
     int depth = 0;
-    for (int i = 0; ; i++) {
+    for (int i = 0; i < 200; i++) {
       IElementType token = builder.lookAhead(i);
       if (token == null) {
         return false;
@@ -1123,6 +1136,7 @@ public final class CompactParser implements PsiParser {
         }
       }
     }
+    return false;
   }
 
   private PsiBuilder.Marker tryParseLambdaExpression(PsiBuilder builder) {

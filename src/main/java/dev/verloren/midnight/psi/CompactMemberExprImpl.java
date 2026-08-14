@@ -81,4 +81,10 @@ public class CompactMemberExprImpl extends CompactPsiElement implements CompactE
     }
     return null;
   }
+
+  @Override
+  public PsiReference @NotNull [] getReferences() {
+    PsiReference ref = getReference();
+    return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
+  }
 }

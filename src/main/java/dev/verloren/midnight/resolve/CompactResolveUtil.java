@@ -294,7 +294,8 @@ public final class CompactResolveUtil {
     return declaration instanceof CompactLedgerDeclaration
             || declaration instanceof CompactWitnessDeclaration
             || declaration instanceof CompactCircuitDefinition
-            || declaration instanceof CompactPatternImpl;
+            || declaration instanceof CompactPatternImpl
+            || declaration instanceof CompactEnumDefinition;
   }
 
   private static boolean hasAncestorOfType(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType type) {

@@ -27,7 +27,9 @@ public class CompactLiteralExprImpl extends CompactPsiElement implements Compact
             type == CompactTokenTypes.OCTAL_LITERAL) {
       return CompactPrimitiveType.FIELD;
     }
-    // Other literal types (Uint, Bytes, Field) would be handled here
+    if (type == CompactTokenTypes.STRING_LITERAL) {
+      return CompactPrimitiveType.BYTES;
+    }
     return CompactPrimitiveType.UNKNOWN;
   }
 }

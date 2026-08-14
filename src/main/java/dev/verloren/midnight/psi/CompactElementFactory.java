@@ -70,6 +70,9 @@ public final class CompactElementFactory {
     if (elementType == CompactElementTypes.PAREN_EXPR) {
       return new CompactParenExprImpl(node);
     }
+    if (elementType == CompactElementTypes.CAST_EXPR) {
+      return new CompactCastExprImpl(node);
+    }
     if (elementType == CompactElementTypes.REFERENCE_EXPR) {
       return new CompactReferenceExprImpl(node);
     }
@@ -148,6 +151,7 @@ public final class CompactElementFactory {
             || elementType == CompactElementTypes.BINARY_EXPR
             || elementType == CompactElementTypes.UNARY_EXPR
             || elementType == CompactElementTypes.PAREN_EXPR
+            || elementType == CompactElementTypes.CAST_EXPR
             || elementType == CompactElementTypes.REFERENCE_EXPR
             || elementType == CompactElementTypes.LITERAL_EXPR
             || elementType == CompactElementTypes.CALL_EXPR

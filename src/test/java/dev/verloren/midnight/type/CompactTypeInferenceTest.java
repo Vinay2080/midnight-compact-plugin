@@ -104,4 +104,45 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
     CompactExpression expr = getExpressionAtCaret();
     assertEquals("Boolean", expr.getType().getName());
   }
+
+  public void testCastExpressionTypes() {
+    assertExpressionType("10 as Uint<64>", "Uint<64>");
+  }
+
+  public void testStringLiteralTypes() {
+    assertExpressionType("\"hello\"", "Bytes");
+  }
+
+  public void testNestedArithmeticBinaryExpressionTypes() {
+    assertExpressionType("1 + 2 * 3", "Field");
+  }
+
+  public void testNestedLogicalBinaryExpressionTypes() {
+    assertExpressionType("(true || false) && true", "Boolean");
+  }
+
+  public void testStructLiteralTypeInference() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    struct Point { x: Field, y: Boolean }
+                    circuit test() {
+                      const p = <caret>Point { x: 0, y: true };
+                    }
+                    """
+    );
+    CompactExpression expr = getExpressionAtCaret();
+    assertEquals("Point", expr.getType().getName());
+  }
+
+  public void testUnresolvedReferenceTypeFallback() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test() {
+                      const x = <caret>nonExistentVar;
+                    }
+                    """
+    );
+    CompactExpression expr = getExpressionAtCaret();
+    assertEquals("Unknown", expr.getType().getName());
+  }
 }

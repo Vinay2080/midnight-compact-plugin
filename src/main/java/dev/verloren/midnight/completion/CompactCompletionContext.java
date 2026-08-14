@@ -38,7 +38,8 @@ public final class CompactCompletionContext {
     }
     return previous.getNode().getElementType() == CompactTokenTypes.COLON
             || previous.getNode().getElementType() == CompactTokenTypes.AS
-            || previous.getNode().getElementType() == CompactTokenTypes.LT;
+            || previous.getNode().getElementType() == CompactTokenTypes.LT
+            || previous.getNode().getElementType() == CompactTokenTypes.HASH;
   }
 
   private static boolean isDeclarationOrStatementStart(PsiElement previous) {

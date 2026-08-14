@@ -55,4 +55,24 @@ public class StatementParserTest extends ParsingTestCase {
     assertTrue(tree.contains("BLOCK"));
     assertTrue(tree.contains("IF_STATEMENT"));
   }
+
+  public void testDiscloseAndPatternDestructuring() {
+    String text = """
+            export circuit PrivacyOps(secret: Field): Boolean {
+              const disclosedVal = disclose(secret);
+              const [a, b] = [1, 2];
+              return disclosedVal == a;
+            }
+            """;
+
+    PsiFile file = parseFile("DiscloseAndPatternDestructuring", text);
+    String tree = DebugUtil.psiToString(file, true);
+    System.out.println("STATEMENT TREE:\n" + tree);
+
+    assertEquals(text, file.getText());
+    assertFalse(tree, tree.contains("PsiErrorElement"));
+    assertTrue(tree.contains("DISCLOSE_EXPR"));
+    assertTrue(tree.contains("PATTERN"));
+    assertTrue(tree.contains("TUPLE_EXPR"));
+  }
 }

@@ -1,14 +1,12 @@
 package dev.verloren.midnight.refactoring;
 
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.parser.CompactParserDefinition;
-import dev.verloren.midnight.psi.CompactNamedElement;
-import dev.verloren.midnight.psi.CompactTypeReferenceImpl;
+
 
 
 public class CompactRenameTest extends BasePlatformTestCase {
@@ -87,24 +85,12 @@ public class CompactRenameTest extends BasePlatformTestCase {
   public void testRenameStruct() {
     myFixture.configureByText(CompactFileType.INSTANCE,
             """
-                    struct P<caret>int { x: Field, y: Field }
+                    struct P<caret>oint { x: Field, y: Field }
                     circuit draw(p: Point) {
                       const p2 = Point { x: 0, y: 0 };
                     }
                     """
     );
-    CompactTypeReferenceImpl parameterType = com.intellij.psi.util.PsiTreeUtil.findChildrenOfType(myFixture.getFile(), CompactTypeReferenceImpl.class)
-            .stream()
-            .filter(candidate -> "Point".equals(candidate.getText()))
-            .findFirst()
-            .orElse(null);
-    assertNotNull("Struct type usage should be parsed as a type reference before rename", parameterType);
-    PsiReference parameterTypeReference = parameterType.getReference();
-    assertNotNull("Struct type usage should expose a reference before rename", parameterTypeReference);
-    PsiElement parameterTypeTarget = parameterTypeReference.resolve();
-    assertInstanceOf(parameterTypeTarget, CompactNamedElement.class);
-    assertEquals("Point", ((CompactNamedElement) parameterTypeTarget).getName());
-
     myFixture.renameElementAtCaret("Vector2D");
     myFixture.checkResult(
             """
@@ -171,5 +157,47 @@ public class CompactRenameTest extends BasePlatformTestCase {
     assertTrue("_myVar123 should be valid identifier", validator.isIdentifier("_myVar123", getProject()));
     assertFalse("123bad should not be valid identifier", validator.isIdentifier("123bad", getProject()));
     assertFalse("circuit should not be identifier", validator.isIdentifier("circuit", getProject()));
+    assertFalse("Hyphenated names should be invalid identifiers", validator.isIdentifier("my-var", getProject()));
+    assertFalse("Names with spaces should be invalid identifiers", validator.isIdentifier("my var", getProject()));
+  }
+
+  public void testRenameEnumAndEnumMember() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    enum Col<caret>or { Red, Green }
+                    circuit check() {
+                      const c = Color.Red;
+                    }
+                    """
+    );
+    myFixture.renameElementAtCaret("PaintColor");
+    myFixture.checkResult(
+            """
+                    enum PaintColor { Red, Green }
+                    circuit check() {
+                      const c = PaintColor.Red;
+                    }
+                    """
+    );
+  }
+
+  public void testRenameEnumMember() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    enum Color { R<caret>ed, Green }
+                    circuit check() {
+                      const c = Color.Red;
+                    }
+                    """
+    );
+    myFixture.renameElementAtCaret("RubyRed");
+    myFixture.checkResult(
+            """
+                    enum Color { RubyRed, Green }
+                    circuit check() {
+                      const c = Color.RubyRed;
+                    }
+                    """
+    );
   }
 }

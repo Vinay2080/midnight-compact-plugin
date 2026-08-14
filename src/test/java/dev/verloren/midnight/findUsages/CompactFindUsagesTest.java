@@ -111,4 +111,36 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
     assertEquals("Point", provider.getDescriptiveName(element));
     assertEquals("struct", provider.getType(element));
   }
+
+  public void testFindUsagesForEnumMember() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    enum Color { R<caret>ed, Green }
+                    circuit check() {
+                      const c = Color.Red;
+                    }
+                    """
+    );
+    PsiElement element = myFixture.getElementAtCaret();
+    CompactNamedElement namedElement = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
+    assertNotNull(namedElement);
+    Collection<UsageInfo> usages = myFixture.findUsages(namedElement);
+    assertEquals(1, usages.size());
+  }
+
+  public void testFindUsagesForStructField() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    struct Point { <caret>x: Field }
+                    circuit draw(p: Point) {
+                      const val = p.x;
+                    }
+                    """
+    );
+    PsiElement element = myFixture.getElementAtCaret();
+    dev.verloren.midnight.psi.CompactStructFieldImpl structField = PsiTreeUtil.getParentOfType(element, dev.verloren.midnight.psi.CompactStructFieldImpl.class, false);
+    assertNotNull(structField);
+    Collection<UsageInfo> usages = myFixture.findUsages(structField);
+    assertEquals(1, usages.size());
+  }
 }
