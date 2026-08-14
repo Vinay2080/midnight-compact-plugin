@@ -228,6 +228,12 @@ public class CompactResolveTest extends BasePlatformTestCase {
   }
 
   public void testPrefixedModuleImportResolution() {
+
+
+
+
+
+
     myFixture.configureByText(CompactFileType.INSTANCE,
             """
                     module M {

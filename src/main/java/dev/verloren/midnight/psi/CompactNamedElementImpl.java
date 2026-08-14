@@ -49,7 +49,11 @@ public abstract class CompactNamedElementImpl extends CompactPsiElement implemen
 
   @Override
   public @Nullable PsiElement getNameIdentifier() {
-    ASTNode identifier = getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
-    return identifier == null ? null : identifier.getPsi();
+    for (ASTNode child : getNode().getChildren(null)) {
+      if (child.getElementType() == CompactTokenTypes.IDENTIFIER) {
+        return child.getPsi();
+      }
+    }
+    return null;
   }
 }

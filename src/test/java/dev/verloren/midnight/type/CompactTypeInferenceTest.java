@@ -3,6 +3,7 @@ package dev.verloren.midnight.type;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.psi.CompactExpression;
+import dev.verloren.midnight.psi.CompactStructFieldImpl;
 
 public class CompactTypeInferenceTest extends BasePlatformTestCase {
 
@@ -93,6 +94,13 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
                     }
                     """
     );
+    CompactStructFieldImpl field = com.intellij.psi.util.PsiTreeUtil.findChildrenOfType(myFixture.getFile(), CompactStructFieldImpl.class)
+            .stream()
+            .filter(candidate -> "y".equals(candidate.getName()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull("Struct field 'y' should be parsed as a typed PSI field", field);
+    assertEquals("Boolean", field.getType().getName());
     CompactExpression expr = getExpressionAtCaret();
     assertEquals("Boolean", expr.getType().getName());
   }

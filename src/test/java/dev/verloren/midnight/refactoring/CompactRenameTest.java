@@ -1,10 +1,14 @@
 package dev.verloren.midnight.refactoring;
 
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.parser.CompactParserDefinition;
+import dev.verloren.midnight.psi.CompactNamedElement;
+import dev.verloren.midnight.psi.CompactTypeReferenceImpl;
 
 
 public class CompactRenameTest extends BasePlatformTestCase {
@@ -89,6 +93,18 @@ public class CompactRenameTest extends BasePlatformTestCase {
                     }
                     """
     );
+    CompactTypeReferenceImpl parameterType = com.intellij.psi.util.PsiTreeUtil.findChildrenOfType(myFixture.getFile(), CompactTypeReferenceImpl.class)
+            .stream()
+            .filter(candidate -> "Point".equals(candidate.getText()))
+            .findFirst()
+            .orElse(null);
+    assertNotNull("Struct type usage should be parsed as a type reference before rename", parameterType);
+    PsiReference parameterTypeReference = parameterType.getReference();
+    assertNotNull("Struct type usage should expose a reference before rename", parameterTypeReference);
+    PsiElement parameterTypeTarget = parameterTypeReference.resolve();
+    assertInstanceOf(parameterTypeTarget, CompactNamedElement.class);
+    assertEquals("Point", ((CompactNamedElement) parameterTypeTarget).getName());
+
     myFixture.renameElementAtCaret("Vector2D");
     myFixture.checkResult(
             """

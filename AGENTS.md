@@ -508,6 +508,12 @@ Implement semantic highlighting using `CompactSemanticHighlightingAnnotator`.
 
 ### 2026-08-13
 
+- Strengthened the failing rename/type-inference tests with explicit precondition assertions for struct type references
+  and struct field declared types.
+- Hardened `CompactNamedElementImpl.getNameIdentifier()` to select only direct identifier children, keeping rename
+  anchored to declaration names rather than nested identifiers in composite declarations.
+- Fixed struct field type inference to use the shared `CompactTypeElement` child lookup, so fields declared with builtin
+  type nodes such as `Boolean` and `Field` return their actual declared type instead of `Unknown`.
 - Implemented Phase 4 Type Inference system.
 - Introduced `CompactType` and `CompactPrimitiveType` for language-level type representation.
 - Refactored expression PSI to implement `CompactExpression` and `getType()`.

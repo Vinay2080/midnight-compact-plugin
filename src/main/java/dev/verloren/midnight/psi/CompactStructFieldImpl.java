@@ -12,9 +12,9 @@ public class CompactStructFieldImpl extends CompactNamedElementImpl {
 
   @Override
   public @NotNull CompactType getType() {
-    CompactTypeReferenceImpl typeRef = PsiTreeUtil.findChildOfType(this, CompactTypeReferenceImpl.class);
-    if (typeRef != null) {
-      return typeRef.getType();
+    CompactTypeElement typeElement = PsiTreeUtil.findChildOfType(this, CompactTypeElement.class);
+    if (typeElement != null) {
+      return typeElement.getType();
     }
     return super.getType();
   }
