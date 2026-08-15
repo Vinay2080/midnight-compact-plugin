@@ -40,7 +40,7 @@ public class CompactSymbolTest extends BasePlatformTestCase {
     assertEquals(CompactSymbolKind.STRUCT, symbol.getKind());
     assertEquals(CompactSymbolNamespace.TYPE, symbol.getNamespace());
     assertEquals(CompactVisibility.EXPORTED, symbol.getVisibility());
-    assertEquals("Point", symbol.getType().getName());
+    assertEquals("Point", symbol.getType().name());
     assertTrue(symbol.canBeReferenced());
     assertTrue(symbol.canBeRenamed());
   }
@@ -99,6 +99,6 @@ public class CompactSymbolTest extends BasePlatformTestCase {
     CompactSymbol symbol = symbols.getFirst();
     assertInstanceOf(symbol, CompactValueSymbol.class);
     assertEquals(CompactSymbolKind.PARAMETER, symbol.getKind());
-    assertEquals("Field", symbol.getType().getName());
+    assertEquals("Field", symbol.getType().name());
   }
 }

@@ -26,7 +26,7 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
   private void assertExpressionType(String code, String expectedType) {
     myFixture.configureByText(CompactFileType.INSTANCE, "circuit test() { const x = <caret>" + code + "; }");
     CompactExpression expr = getExpressionAtCaret();
-    assertEquals(expectedType, expr.getType().getName());
+    assertEquals(expectedType, expr.getType().name());
   }
 
   private CompactExpression getExpressionAtCaret() {
@@ -69,7 +69,7 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
                     """
     );
     CompactExpression expr = getExpressionAtCaret();
-    assertEquals("Uint<32>", expr.getType().getName());
+    assertEquals("Uint<32>", expr.getType().name());
   }
 
   public void testConstBindingTypeInference() {
@@ -82,7 +82,7 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
                     """
     );
     CompactExpression expr = getExpressionAtCaret();
-    assertEquals("Field", expr.getType().getName());
+    assertEquals("Field", expr.getType().name());
   }
 
   public void testStructFieldTypeInference() {
@@ -100,9 +100,9 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
             .findFirst()
             .orElse(null);
     assertNotNull("Struct field 'y' should be parsed as a typed PSI field", field);
-    assertEquals("Boolean", field.getType().getName());
+    assertEquals("Boolean", field.getType().name());
     CompactExpression expr = getExpressionAtCaret();
-    assertEquals("Boolean", expr.getType().getName());
+    assertEquals("Boolean", expr.getType().name());
   }
 
   public void testCastExpressionTypes() {
@@ -131,7 +131,7 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
                     """
     );
     CompactExpression expr = getExpressionAtCaret();
-    assertEquals("Point", expr.getType().getName());
+    assertEquals("Point", expr.getType().name());
   }
 
   public void testUnresolvedReferenceTypeFallback() {
@@ -143,6 +143,6 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
                     """
     );
     CompactExpression expr = getExpressionAtCaret();
-    assertEquals("Unknown", expr.getType().getName());
+    assertEquals("Unknown", expr.getType().name());
   }
 }

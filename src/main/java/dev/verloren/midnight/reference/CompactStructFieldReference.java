@@ -25,7 +25,7 @@ public class CompactStructFieldReference extends CompactReferenceBase {
     if (element.getBaseExpression() == null) return ResolveResult.EMPTY_ARRAY;
 
     CompactType baseType = element.getBaseExpression().getType();
-    String typeName = baseType.getName();
+    String typeName = baseType.name();
 
     List<CompactNamedElement> typeDefs = CompactResolveUtil.resolveType(typeName, element);
     List<CompactNamedElement> fields = new ArrayList<>();

@@ -37,7 +37,8 @@ Core technologies and feature areas:
 - [x] Parser Freeze & EDT Deadlock Fix (Fixed infinite parsing loop on isolated `export` keywords/invalid modifier sequences during background document commit; added regression test suite, 95/95 unit tests passing)
 - [x] Type Inference
 - [x] Updated README documentation (Problem statement, implemented features, roadmap, build instructions)
-- [ ] Inspections
+- [x] Phase 5 Semantic Inspections & QuickFix Test Suite (138/138 unit tests passing across resolution, references, completion, rename, find usages, type inference, unresolved reference inspection, duplicate declaration inspection, unused local variable inspection with quick-fix, and type mismatch inspection)
+- [x] Inspections
 - [ ] Formatter
 
 ## Compiler Files Reviewed
@@ -49,7 +50,6 @@ Core technologies and feature areas:
 
 ## Missing
 
-- Inspections
 - Formatter
 
 ## Decisions
@@ -114,6 +114,15 @@ Formatter (pending)
     - Binary and Unary operators via `CompactTypeInferenceUtil`.
     - Struct field access via `CompactStructFieldReference`, which uses the inferred type of the base expression to resolve the field in the target struct definition.
 - The implementation avoids complex dataflow analysis or global type checking, focusing on local, editor-visible type information.
+
+## Phase 5 Architecture — Semantic Inspections & Quick Fixes
+
+- Phase 5 implements a first-class IntelliJ inspection layer via `LocalInspectionTool` subclasses registered in `plugin.xml`:
+    - **`CompactUnresolvedReferenceInspection`**: Flags unresolved identifier references (`CompactReferenceExprImpl`), enum member accesses (`CompactEnumMemberReference`), and struct field accesses (`CompactStructFieldReference`). Soft-unresolved type references (such as builtins, stdlib, or external include types) are intentionally not flagged to prevent false positives in single-file analysis.
+    - **`CompactDuplicateDeclarationInspection`**: Detects duplicate sibling declarations within the same scope container (file, module, callable parameters, struct fields, enum members, local blocks). Distinguishes `TYPE` vs `VALUE` namespaces and correctly handles nested block shadowing without false positives.
+    - **`CompactUnusedLocalVariableInspection`**: Identifies unused local variable bindings within callable bodies (`circuit`, `witness`, `constructor`) using `ReferencesSearch`. Excludes top-level constants, parameters, struct fields, and underscore-prefixed bindings (`_name`). Provides the `CompactRemoveUnusedVariableFix` quick-fix to safely delete unused variable statements.
+    - **`CompactTypeMismatchInspection`**: Verifies type safety using the Phase 4 lightweight type system: requires `Boolean` operands for logical (`&&`, `||`) and negation (`!`) expressions, and checks type compatibility for equality operators (`==`, `!=`). Defers inspection whenever operand types evaluate to `CompactPrimitiveType.UNKNOWN` to prevent cascading false positives on incomplete or un-inferable code.
+- All inspections include resilience guards that safely ignore `PsiErrorElement` trees and incomplete PSI structures during interactive editing.
 
 ## Test Infrastructure & Context Reference
 
@@ -225,7 +234,7 @@ Compiler Pass Pipeline (Frontend -> Analysis -> Lowering -> ZKIR Code Gen)
 ### 3. PsiBuilder Adaptation Strategies
 - **Monadic Combinators -> PsiBuilder Markers**:
   - `ez-grammar.ss` monadic choice (`++`) maps directly to `PsiBuilder.Marker` rollback:
-    ```java
+    ```text
     PsiBuilder.Marker m = builder.mark();
     if (parseBranch(builder)) {
         m.done(ELEMENT_TYPE);

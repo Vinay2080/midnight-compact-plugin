@@ -62,14 +62,20 @@ The **Midnight Language Plugin** transforms IntelliJ IDEA into a full-featured I
 - **PSI Type System**: Dynamic type evaluation (`getType()`) for expressions, primitive literals, reference declarations, binary/unary operators, and struct field accesses.
 - Powers downstream features such as field reference resolution and type-aware completion.
 
-### 🧪 7. Automated Test Suite
-- **91/91 Automated Integration Tests Passing**: Verified coverage for lexer/parser edge cases, string escapes, numeric boundaries, reserved keywords, syntax error recovery, parameter scope shadowing, destructured pattern bindings, type alias resolution, generic parameter completion, enum/enum-member renaming, struct field & enum member find usages, validator identifier rules, cast expression typing, string literal typing, nested arithmetic & logical binary typing, struct literal type inference, and unknown reference type fallbacks.
+### 🛡️ 7. Semantic Inspections & Quick-Fixes
+- **Unresolved Reference Inspection**: Live error detection for unresolved variables, constants, circuits, enum members, and struct fields.
+- **Duplicate Declaration Inspection**: Real-time detection for duplicate variables, parameters, circuits, structs, enums, or type aliases within the same scope container, with full awareness of separate type vs. value namespaces.
+- **Unused Local Variable Inspection & Quick-Fix**: Detects unused local `const` bindings within callable bodies (`circuit`, `witness`, `constructor`) with a one-click Quick-Fix (`Alt+Enter`) to safely delete the unused variable statement.
+- **Type Mismatch Inspection**: Type compatibility validation for logical (`&&`, `||`), negation (`!`), and equality (`==`, `!=`) expressions.
+
+### 🧪 8. Automated Test Suite
+- **138/138 Automated Integration Tests Passing**: Verified coverage for lexer/parser edge cases, string escapes, numeric boundaries, reserved keywords, syntax error recovery, parameter scope shadowing, destructured pattern bindings, type alias resolution, generic parameter completion, enum/enum-member renaming, struct field & enum member find usages, validator identifier rules, cast expression typing, string literal typing, nested arithmetic & logical binary typing, struct literal type inference, unknown reference type fallbacks, and all semantic inspections with quick-fix verification.
 
 ---
 
 ## 🗺️ Roadmap & Future Goals
 
-- [ ] **On-the-Fly Inspections & Annotators**: Linting for unused variables, missing types, invalid assignments, and Midnight privacy/circuit warnings.
+- [x] **Semantic Inspections & Quick-Fixes**: Inspections for unresolved references, duplicate declarations, unused local variables, and type mismatches.
 - [ ] **Code Formatter & Indenter**: AST-based code formatting and automatic re-indentation (`Ctrl+Alt+L`) adhering to official Compact formatting standards.
 - [ ] **Cross-File Resolution & Include Processing**: Workspace-wide resolution for `include` directives, multi-file module imports, and external contract definitions.
 - [ ] **Standard Library & ZKIR Indexing**: Pre-indexed resolution and auto-completion for `standard-library.compact` and built-in ZKIR v3 functions.
@@ -91,8 +97,11 @@ The **Midnight Language Plugin** transforms IntelliJ IDEA into a full-featured I
 │   ├── refactoring/                      # Rename validator & refactoring support
 │   ├── findUsages/                       # Find Usages provider & word scanner
 │   ├── type/                             # Type inference engine & primitive types
-│   └── reference/                        # PSI reference resolution implementations
-├── src/main/resources/META-INF/plugin.xml # Plugin manifest
+│   ├── reference/                        # PSI reference resolution implementations
+│   └── inspection/                       # Semantic inspections & quick-fixes
+├── src/main/resources/
+│   ├── META-INF/plugin.xml               # Plugin manifest
+│   └── inspectionDescriptions/           # Inspection documentation descriptions
 ├── build.gradle.kts                      # Gradle build configuration
 └── AGENTS.md                             # Architecture notebook & developer log
 ```

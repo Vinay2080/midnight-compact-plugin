@@ -55,6 +55,42 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.completion.CompactCompletionContributor"/>
 
+        <localInspection
+                language="Compact"
+                groupName="Compact"
+                shortName="CompactUnresolvedReference"
+                displayName="Unresolved reference"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection"/>
+
+        <localInspection
+                language="Compact"
+                groupName="Compact"
+                shortName="CompactDuplicateDeclaration"
+                displayName="Duplicate declaration"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection"/>
+
+        <localInspection
+                language="Compact"
+                groupName="Compact"
+                shortName="CompactUnusedLocalVariable"
+                displayName="Unused local variable"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection"/>
+
+        <localInspection
+                language="Compact"
+                groupName="Compact"
+                shortName="CompactTypeMismatch"
+                displayName="Type mismatch"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactTypeMismatchInspection"/>
+
     </extensions>
 
 </idea-plugin>

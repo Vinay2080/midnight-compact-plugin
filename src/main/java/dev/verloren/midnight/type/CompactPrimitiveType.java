@@ -1,30 +1,20 @@
 package dev.verloren.midnight.type;
 
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 
-public class CompactPrimitiveType implements CompactType {
+public record CompactPrimitiveType(String name) implements CompactType {
   public static final CompactPrimitiveType BOOLEAN = new CompactPrimitiveType("Boolean");
   public static final CompactPrimitiveType FIELD = new CompactPrimitiveType("Field");
   public static final CompactPrimitiveType BYTES = new CompactPrimitiveType("Bytes");
   public static final CompactPrimitiveType OPAQUE = new CompactPrimitiveType("Opaque");
   public static final CompactPrimitiveType UNKNOWN = new CompactPrimitiveType("Unknown");
 
-  private final String name;
-
-  public CompactPrimitiveType(String name) {
-    this.name = name;
-  }
-
   @Override
-  public @NotNull String getName() {
+  public @NotNull String name() {
     return name;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(name);
   }
 
   @Override
@@ -36,7 +26,7 @@ public class CompactPrimitiveType implements CompactType {
   }
 
   @Override
-  public String toString() {
+  public @NonNull String toString() {
     return name;
   }
 }
