@@ -55,6 +55,13 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.completion.CompactCompletionContributor"/>
 
+        <lang.formatter
+                language="Compact"
+                implementationClass="dev.verloren.midnight.formatter.CompactFormattingModelBuilder"/>
+
+        <langCodeStyleSettingsProvider
+                implementation="dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider"/>
+
         <localInspection
                 language="Compact"
                 groupName="Compact"

@@ -39,7 +39,8 @@ Core technologies and feature areas:
 - [x] Updated README documentation (Problem statement, implemented features, roadmap, build instructions)
 - [x] Phase 5 Semantic Inspections & QuickFix Test Suite (138/138 unit tests passing across resolution, references, completion, rename, find usages, type inference, unresolved reference inspection, duplicate declaration inspection, unused local variable inspection with quick-fix, and type mismatch inspection)
 - [x] Inspections
-- [ ] Formatter
+- [x] Formatter
+- [x] Phase 6 Formatter & Smart Indentation Test Suite (177/177 unit tests passing across basic formatting, nested blocks, declarations, expressions, comments, malformed/incomplete code resilience, idempotence, and official contract formatting regressions)
 
 ## Compiler Files Reviewed
 
@@ -50,7 +51,7 @@ Core technologies and feature areas:
 
 ## Missing
 
-- Formatter
+- None (all core feature areas implemented: Lexer, Parser, PSI, Highlighter, References, Completion, Rename, Find Usages, Type Inference, Inspections, Formatter)
 
 ## Decisions
 
@@ -82,13 +83,11 @@ CompactFileType
 ↓
 CompactSyntaxHighlighter
 ↓
-References (pending)
+References & Completion
 ↓
-Completion (pending)
+Semantic Inspections & Quick-Fixes
 ↓
-Inspections (pending)
-↓
-Formatter (pending)
+Formatter & Smart Indentation
 ```
 
 ## Phase 3 Architecture — References, Resolution & Completion
@@ -123,6 +122,27 @@ Formatter (pending)
     - **`CompactUnusedLocalVariableInspection`**: Identifies unused local variable bindings within callable bodies (`circuit`, `witness`, `constructor`) using `ReferencesSearch`. Excludes top-level constants, parameters, struct fields, and underscore-prefixed bindings (`_name`). Provides the `CompactRemoveUnusedVariableFix` quick-fix to safely delete unused variable statements.
     - **`CompactTypeMismatchInspection`**: Verifies type safety using the Phase 4 lightweight type system: requires `Boolean` operands for logical (`&&`, `||`) and negation (`!`) expressions, and checks type compatibility for equality operators (`==`, `!=`). Defers inspection whenever operand types evaluate to `CompactPrimitiveType.UNKNOWN` to prevent cascading false positives on incomplete or un-inferable code.
 - All inspections include resilience guards that safely ignore `PsiErrorElement` trees and incomplete PSI structures during interactive editing.
+
+## Phase 6 Architecture — Formatter & Smart Indentation
+
+- Phase 6 implements native IntelliJ formatting (`Ctrl + Alt + L`) and smart indentation support for Compact source files:
+    - **`CompactFormattingModelBuilder`**: Registered via `<lang.formatter>` in `plugin.xml`, creates a `DocumentBasedFormattingModel` wrapping a hierarchical `CompactBlock` AST block tree.
+    - **`CompactBlock`**: Extends `AbstractBlock`, computes node-level indentation, child attributes for smart Enter handling (`getChildAttributes`), and context-aware spacing (`getSpacing`) delegating to `SpacingBuilder`.
+    - **`CompactLanguageCodeStyleSettingsProvider`**: Registered via `<langCodeStyleSettingsProvider>` in `plugin.xml`, configures default 2-space indentation (`INDENT_SIZE = 2`, `TAB_SIZE = 2`, `CONTINUATION_INDENT_SIZE = 2`, `USE_TAB_CHARACTER = false`) matching canonical Compact style.
+    - **Formatting Rules & Spacing**:
+        - Binary operators (`+`, `-`, `*`, `/`, `%`, `==`, `!=`, `<=`, `>=`, `&&`, `||`, `=>`, `?`, `as`) have 1 space around them.
+        - Delimiters (`,`, `;`, `:`) have 0 spaces before and 1 space after (with `:` in return types having 0 spaces before, 1 after).
+        - Member access (`.`), range (`..`), and spread (`...`) have 0 spaces around them.
+        - Generics angle brackets (`< ... >`) have 0 spaces inside and 0 spaces before in type/call contexts.
+        - Control statements (`if`, `for`) have 1 space before `(`, callable invocations and signatures have 0 spaces before `(`.
+        - Struct literals (`mariusz { 1, 2, 3, }`) and export forms (`export { Maybe };`) have 1 space inside braces.
+    - **Indentation**:
+        - 2-space normal indent for children of `BLOCK`, `STRUCT_DECLARATION`, `ENUM_DECLARATION`, `CONTRACT_DECLARATION`, and `MODULE_DEFINITION`.
+        - Enclosing delimiters (`{`, `}`, `(`, `)`, `[`, `]`) maintain parent indentation.
+        - Statement bodies in `if` / `for` without braces receive normal indent.
+    - **Resilience & Error Recovery**:
+        - Ignores and handles `PsiErrorElement` nodes gracefully without crashing.
+        - Idempotent formatting: `format(format(x)) == format(x)`.
 
 ## Test Infrastructure & Context Reference
 

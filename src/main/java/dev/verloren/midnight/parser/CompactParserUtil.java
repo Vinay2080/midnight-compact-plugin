@@ -68,7 +68,7 @@ public final class CompactParserUtil {
     if (tokenType == CompactTokenTypes.PLUS || tokenType == CompactTokenTypes.MINUS) {
       return PREC_ADDITIVE;
     }
-    if (tokenType == CompactTokenTypes.STAR || tokenType == CompactTokenTypes.SLASH) {
+    if (tokenType == CompactTokenTypes.STAR || tokenType == CompactTokenTypes.SLASH || tokenType == CompactTokenTypes.PERCENT) {
       return PREC_MULTIPLICATIVE;
     }
 
