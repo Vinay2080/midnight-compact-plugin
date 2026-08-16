@@ -1,0 +1,74 @@
+project: midnight-plugin
+language: Java
+platform: IntelliJ Platform (Gradle IntelliJ Plugin / 2026.2.0.1 SDK)
+language_supported: Compact (Midnight Smart Contracts)
+
+phases:
+  lexer: complete
+  parser: complete
+  psi: complete
+  syntax_highlighting: complete
+  references: complete
+  completion: complete
+  rename: complete
+  find_usages: complete
+  type_inference: complete
+  inspections: complete
+  formatter: complete
+  smart_indentation: complete
+  cross_file_resolution: planned
+  standard_library_indexing: planned
+  compiler_integration: planned
+  structure_view: planned
+  documentation_provider: planned
+
+tests:
+  last_known_passing: 177
+  failures: 0
+  skipped: 0
+  suites:
+    lexer: 15 (LexerTest: 12, PragmaTest: 3)
+    parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
+    psi: 2 (DeclarationPsiTest: 1, ElementFactoryConsistencyTest: 1)
+    resolve: 18 (CompactResolveTest: 18)
+    reference: 6 (CompactReferenceTest: 6)
+    completion: 5 (CompactCompletionTest: 5)
+    rename: 9 (CompactRenameTest: 9)
+    find_usages: 7 (CompactFindUsagesTest: 7)
+    symbol: 3 (CompactSymbolTest: 3)
+    type_inference: 12 (CompactTypeInferenceTest: 12)
+    inspections: 44 (CompactInspectionTest: 44)
+    formatter: 39 (CompactFormatterTest: 39)
+
+architecture:
+  lexer:
+    implementation: dev.verloren.midnight.lexer.CompactLexer
+    base_class: com.intellij.lexer.LexerBase
+    token_types: dev.verloren.midnight.lexer.CompactTokenTypes
+  parser:
+    implementation: dev.verloren.midnight.parser.CompactParser
+    base_interface: com.intellij.lang.PsiParser
+    definition: dev.verloren.midnight.parser.CompactParserDefinition
+    element_types: dev.verloren.midnight.psi.CompactElementTypes
+  psi:
+    base_element: dev.verloren.midnight.psi.impl.CompactPsiElement
+    named_element: dev.verloren.midnight.psi.impl.CompactNamedElementImpl
+    factory: dev.verloren.midnight.psi.impl.CompactElementFactory
+  references_and_resolve:
+    resolver: dev.verloren.midnight.resolve.CompactResolveUtil
+    scope_processor: dev.verloren.midnight.resolve.CompactScopeProcessor
+    namespace_model: Split TYPE and VALUE namespaces with innermost lexical shadowing
+  type_system:
+    interface: dev.verloren.midnight.type.CompactType
+    primitives: dev.verloren.midnight.type.CompactPrimitiveType
+    nominal_types: dev.verloren.midnight.type.CompactNamedType
+    inference_util: dev.verloren.midnight.type.CompactTypeInferenceUtil
+  inspections:
+    unresolved_reference: dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection
+    duplicate_declaration: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection
+    unused_local_variable: dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection
+    type_mismatch: dev.verloren.midnight.inspection.CompactTypeMismatchInspection
+  formatter:
+    model_builder: dev.verloren.midnight.formatter.CompactFormattingModelBuilder
+    block: dev.verloren.midnight.formatter.CompactBlock
+    settings_provider: dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
