@@ -71,9 +71,22 @@ public final class CompactResolveUtil {
     if (file == null) {
       return null;
     }
+    // 1. Search current file
     for (CompactModuleDefinition module : PsiTreeUtil.findChildrenOfType(file, CompactModuleDefinition.class)) {
       if (name.equals(module.getName())) {
         return module;
+      }
+    }
+    // 2. Search included files
+    Set<CompactFile> visited = new HashSet<>();
+    visited.add(file);
+    List<CompactFile> includedFiles = new ArrayList<>();
+    collectIncludedFiles(file, visited, includedFiles);
+    for (CompactFile incFile : includedFiles) {
+      for (CompactModuleDefinition module : PsiTreeUtil.findChildrenOfType(incFile, CompactModuleDefinition.class)) {
+        if (name.equals(module.getName())) {
+          return module;
+        }
       }
     }
     return null;
@@ -189,10 +202,46 @@ public final class CompactResolveUtil {
       if (scope instanceof CompactFile) {
         layers.add(collectFileDeclarations((CompactFile) scope, namespace, place));
         layers.add(collectSelectionImports((CompactFile) scope, namespace));
+        layers.add(collectIncludedDeclarations((CompactFile) scope, namespace, place));
         break;
       }
     }
     return layers;
+  }
+
+  private static void collectIncludedFiles(
+      @NotNull CompactFile file,
+      @NotNull Set<CompactFile> visited,
+      @NotNull List<CompactFile> out
+  ) {
+    for (CompactIncludeDeclarationImpl includeDecl : PsiTreeUtil.findChildrenOfType(file, CompactIncludeDeclarationImpl.class)) {
+      CompactFile includedFile = includeDecl.resolveIncludedFile();
+      if (includedFile != null && visited.add(includedFile)) {
+        out.add(includedFile);
+        collectIncludedFiles(includedFile, visited, out);
+      }
+    }
+  }
+
+  private static @NotNull List<CompactNamedElement> collectIncludedDeclarations(
+      @NotNull CompactFile file,
+      @NotNull Namespace namespace,
+      @NotNull PsiElement place
+  ) {
+    List<CompactNamedElement> result = new ArrayList<>();
+    Set<CompactFile> visited = new HashSet<>();
+    visited.add(file);
+    List<CompactFile> includedFiles = new ArrayList<>();
+    collectIncludedFiles(file, visited, includedFiles);
+
+    for (CompactFile incFile : includedFiles) {
+      for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(incFile, CompactNamedElement.class)) {
+        if (nearestModule(declaration) == null && isInNamespace(declaration, namespace, place)) {
+          result.add(declaration);
+        }
+      }
+    }
+    return result;
   }
 
   private static boolean isLocalScope(@NotNull PsiElement element) {

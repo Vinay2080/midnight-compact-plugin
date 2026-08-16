@@ -11,6 +11,7 @@ import dev.verloren.midnight.parser.CompactParserDefinition;
 
 import java.util.List;
 
+@SuppressWarnings("unchecked")
 public class CompactInspectionTest extends BasePlatformTestCase {
 
   @Override
@@ -582,9 +583,108 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     assertNotNull(myFixture.doHighlighting());
   }
 
+  public void testIfConditionNonBoolean() {
+    String code = """
+        circuit test(): [] {
+          if (42) {
+            const x = 1;
+          }
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected in 'if' condition, got 'Field'"))
+        .toList();
+    assertEquals("Should report 1 warning for non-boolean condition", 1, mismatches.size());
+  }
+
+  public void testIfConditionBoolean() {
+    String code = """
+        circuit test(flag: Boolean): [] {
+          if (flag) {
+            const x = 1;
+          }
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Boolean condition in 'if' should have no warnings", warnings.isEmpty());
+  }
+
+  public void testConstDeclarationTypeMismatch() {
+    String code = """
+        circuit test(): [] {
+          const x: Boolean = 42;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Boolean', got 'Field'"))
+        .toList();
+    assertEquals("Should report 1 type mismatch warning for const initializer", 1, mismatches.size());
+  }
+
+  public void testConstDeclarationTypeMatch() {
+    String code = """
+        circuit test(): [] {
+          const x: Field = 42;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Matching const declaration type should have no warnings", warnings.isEmpty());
+  }
+
+  public void testRelationalComparisonWithBoolean() {
+    String code = """
+        circuit test(): [] {
+          const x = true < false;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Relational operator not applicable to 'Boolean'"))
+        .toList();
+    assertEquals("Should report warning for relational comparison with boolean", 2, mismatches.size());
+  }
+
+  public void testArithmeticWithBoolean() {
+    String code = """
+        circuit test(): [] {
+          const x = true + 1;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Arithmetic operator not applicable to 'Boolean'"))
+        .toList();
+    assertEquals("Should report warning for arithmetic on boolean", 1, mismatches.size());
+  }
+
+  public void testUnaryMinusOnBoolean() {
+    String code = """
+        circuit test(): [] {
+          const x = -true;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unary minus not applicable to 'Boolean'"))
+        .toList();
+    assertEquals("Should report warning for unary minus on boolean", 1, mismatches.size());
+  }
+
   // =========================================================================
   // 5. Cross-Cutting & Malformed Code Tests
   // =========================================================================
+
 
   public void testCompleteValidContractNoWarnings() {
     String code = """

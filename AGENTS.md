@@ -4,7 +4,7 @@
 - **Project**: Midnight Compact Language Plugin for IntelliJ IDEA (`dev.verloren.midnight`).
 - **Purpose**: First-class development support for the Midnight blockchain's Compact smart contract language.
 - **Language**: Java 17+ (IntelliJ Platform Gradle Plugin).
-- **Core Status**: Lexer, Parser, PSI, References, Completion, Refactoring, Find Usages, Type Inference, Inspections, Formatter, and Smart Indentation are implemented and verified (177/177 unit tests passing).
+- **Core Status**: Lexer, Parser, PSI, References, Completion, Refactoring, Find Usages, Type Inference, Inspections, Formatter, Smart Indentation, Structure View, Documentation Provider, and Cross-File Resolution are implemented and verified (212/212 unit tests passing).
 
 ---
 
@@ -19,23 +19,23 @@ Compact Source Text (.compact)
   ↓
 [PSI] CompactPsiElement / CompactFile / Typed AST Wrappers (dev.verloren.midnight.psi.impl.*)
   ↓
-[Resolve & Scope] CompactResolveUtil (Innermost shadowing, split VALUE/TYPE namespaces)
+[Resolve & Scope] CompactResolveUtil (Innermost shadowing, split VALUE/TYPE namespaces, cross-file includes)
   ↓
 [Semantic Layer] CompactTypeInferenceUtil + Semantic Inspections & Quick-Fixes
   ↓
-[IDE Features] Completion, Rename, Find Usages, Formatter, Smart Indent
+[IDE Features] Completion, Rename, Find Usages, Formatter, Smart Indent, Structure View, Docs
 ```
 
 ---
 
 ## 3. Critical Invariants
 
-1. **Do not replace working architecture**: The handwritten lexer, parser, PSI wrappers, and resolver are mature and verified. Do not replace them with generated parsers or external tools without explicit directive.
+1. **Do not replace working architecture**: The handwritten lexer, parser, PSI wrappers, resolver, structure view, and docs provider are mature and verified. Do not replace them with generated parsers or external tools without explicit directive.
 2. **Reuse existing PSI and resolve infrastructure**: Always use `CompactResolveUtil` for symbol lookups and `CompactElementFactory` for PSI node generation.
 3. **Strict namespace separation**: Maintain distinct `CompactResolveUtil.Namespace.VALUE` and `CompactResolveUtil.Namespace.TYPE` handling.
-4. **Tolerance for incomplete code**: Guard all PSI accesses, inspections, and formatting routines against `null` and `PsiErrorElement` nodes.
+4. **Tolerance for incomplete code**: Guard all PSI accesses, inspections, structure elements, doc providers, and formatting routines against `null` and `PsiErrorElement` nodes.
 5. **Do not invent Compact language semantics**: Verify all syntax and typing rules against official compiler references (`compact/compiler/` and `.ai/context/compact-semantics.md`).
-6. **Preserve existing tests**: All 177 unit tests must pass before finishing any feature (`./gradlew test`).
+6. **Preserve existing tests**: All 212 unit tests must pass before finishing any feature (`./gradlew test`).
 7. **Inspect before modifying**: Read targeted production files before making code edits.
 
 ---

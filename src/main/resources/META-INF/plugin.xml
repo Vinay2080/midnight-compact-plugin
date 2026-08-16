@@ -5,7 +5,7 @@
 
     <!-- Public plugin name should be written in Title Case.
      Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
-    <name>Midnight Language</name>
+    <name>Midnight Compact Language</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor url="https://github.com/Vinay2080">Verloren</vendor>
@@ -62,41 +62,50 @@
         <langCodeStyleSettingsProvider
                 implementation="dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider"/>
 
+        <lang.psiStructureViewFactory
+                language="Compact"
+                implementationClass="dev.verloren.midnight.structure.CompactStructureViewFactory"/>
+
+        <lang.documentationProvider
+                language="Compact"
+                implementationClass="dev.verloren.midnight.documentation.CompactDocumentationProvider"/>
+
+
         <localInspection
                 language="Compact"
                 groupName="Compact"
                 shortName="CompactUnresolvedReference"
-                displayName="Unresolved reference"
                 enabledByDefault="true"
                 level="WARNING"
-                implementationClass="dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection"/>
+                implementationClass="dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection"
+                key="inspection.compact.unresolved.reference.display.name"/>
 
         <localInspection
                 language="Compact"
                 groupName="Compact"
                 shortName="CompactDuplicateDeclaration"
-                displayName="Duplicate declaration"
                 enabledByDefault="true"
                 level="WARNING"
-                implementationClass="dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection"/>
+                implementationClass="dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection"
+                key="inspection.compact.duplicate.declaration.display.name"/>
 
         <localInspection
                 language="Compact"
                 groupName="Compact"
                 shortName="CompactUnusedLocalVariable"
-                displayName="Unused local variable"
                 enabledByDefault="true"
                 level="WARNING"
-                implementationClass="dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection"/>
+                implementationClass="dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection"
+                key="inspection.compact.unused.local.variable.display.name"/>
 
         <localInspection
                 language="Compact"
                 groupName="Compact"
                 shortName="CompactTypeMismatch"
-                displayName="Type mismatch"
                 enabledByDefault="true"
                 level="WARNING"
-                implementationClass="dev.verloren.midnight.inspection.CompactTypeMismatchInspection"/>
+                implementationClass="dev.verloren.midnight.inspection.CompactTypeMismatchInspection"
+                key="inspection.compact.type.mismatch.display.name"/>
 
     </extensions>
 

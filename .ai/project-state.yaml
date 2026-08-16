@@ -16,29 +16,31 @@ phases:
   inspections: complete
   formatter: complete
   smart_indentation: complete
-  cross_file_resolution: planned
+  structure_view: complete
+  documentation_provider: complete
+  cross_file_resolution: complete
   standard_library_indexing: planned
   compiler_integration: planned
-  structure_view: planned
-  documentation_provider: planned
 
 tests:
-  last_known_passing: 177
+  last_known_passing: 212
   failures: 0
   skipped: 0
   suites:
     lexer: 15 (LexerTest: 12, PragmaTest: 3)
     parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
     psi: 2 (DeclarationPsiTest: 1, ElementFactoryConsistencyTest: 1)
-    resolve: 18 (CompactResolveTest: 18)
+    resolve: 28 (CompactResolveTest: 18, CompactCrossFileResolveTest: 10)
     reference: 6 (CompactReferenceTest: 6)
     completion: 5 (CompactCompletionTest: 5)
     rename: 9 (CompactRenameTest: 9)
     find_usages: 7 (CompactFindUsagesTest: 7)
     symbol: 3 (CompactSymbolTest: 3)
     type_inference: 12 (CompactTypeInferenceTest: 12)
-    inspections: 44 (CompactInspectionTest: 44)
+    inspections: 51 (CompactInspectionTest: 51)
     formatter: 39 (CompactFormatterTest: 39)
+    structure_view: 9 (CompactStructureViewTest: 9)
+    documentation: 9 (CompactDocumentationTest: 9)
 
 architecture:
   lexer:
@@ -57,6 +59,7 @@ architecture:
   references_and_resolve:
     resolver: dev.verloren.midnight.resolve.CompactResolveUtil
     scope_processor: dev.verloren.midnight.resolve.CompactScopeProcessor
+    cross_file_resolution: include relative/project path resolution with cycle-guarded recursive layers
     namespace_model: Split TYPE and VALUE namespaces with innermost lexical shadowing
   type_system:
     interface: dev.verloren.midnight.type.CompactType
@@ -72,3 +75,9 @@ architecture:
     model_builder: dev.verloren.midnight.formatter.CompactFormattingModelBuilder
     block: dev.verloren.midnight.formatter.CompactBlock
     settings_provider: dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
+  structure_view:
+    factory: dev.verloren.midnight.structure.CompactStructureViewFactory
+    view_model: dev.verloren.midnight.structure.CompactStructureViewModel
+    tree_element: dev.verloren.midnight.structure.CompactStructureViewElement
+  documentation_provider:
+    implementation: dev.verloren.midnight.documentation.CompactDocumentationProvider
