@@ -145,4 +145,50 @@ public class CompactTypeInferenceTest extends BasePlatformTestCase {
     CompactExpression expr = getExpressionAtCaret();
     assertEquals("Unknown", expr.getType().name());
   }
+
+  public void testUintArithmeticTypeInference() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test(x: Uint<8>) {
+                      const val = <caret>x + 1;
+                    }
+                    """
+    );
+    assertEquals("Uint<8>", getExpressionAtCaret().getType().name());
+
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test(x: Uint<8>) {
+                      const val = <caret>1 + x;
+                    }
+                    """
+    );
+    assertEquals("Uint<8>", getExpressionAtCaret().getType().name());
+  }
+
+  public void testUintComparisonTypeInference() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test(x: Uint<8>) {
+                      const val = <caret>x > 0;
+                    }
+                    """
+    );
+    assertEquals("Boolean", getExpressionAtCaret().getType().name());
+
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit test(x: Uint<8>) {
+                      const val = <caret>x <= 20;
+                    }
+                    """
+    );
+    assertEquals("Boolean", getExpressionAtCaret().getType().name());
+  }
+
+  public void testHexAndBinaryLiteralInference() {
+    assertExpressionType("0xFF", "Field");
+    assertExpressionType("0b1010", "Field");
+    assertExpressionType("0o77", "Field");
+  }
 }

@@ -39,42 +39,59 @@ public class CompactUnresolvedReferenceInspection extends LocalInspectionTool {
           return;
         }
 
-        if (element instanceof CompactReferenceExprImpl refExpr) {
-          PsiReference ref = refExpr.getReference();
-          if (ref != null && ref.resolve() == null) {
-            holder.registerProblem(
-                refExpr,
-                "Unresolved reference '" + ref.getCanonicalText() + "'",
-                ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-            );
-          }
-        } else if (element instanceof CompactMemberExprImpl memberExpr) {
-          PsiReference ref = memberExpr.getReference();
-          if (ref instanceof CompactEnumMemberReference) {
-            if (ref.resolve() == null) {
-              PsiElement memberId = memberExpr.getMemberIdentifier();
-              PsiElement target = memberId != null ? memberId : memberExpr;
+        switch (element) {
+          case CompactReferenceExprImpl refExpr -> {
+            PsiReference ref = refExpr.getReference();
+            if (ref != null && ref.resolve() == null) {
               holder.registerProblem(
-                  target,
-                  "Unresolved enum member '" + ref.getCanonicalText() + "'",
-                  ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                      refExpr,
+                      "Unresolved reference '" + ref.getCanonicalText() + "'",
+                      ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
               );
             }
-          } else if (ref instanceof CompactStructFieldReference) {
-            CompactExpression base = memberExpr.getBaseExpression();
-            if (base != null) {
-              CompactType baseType = base.getType();
-              // Only report unresolved field if base type is known and not UNKNOWN
-              if (!CompactPrimitiveType.UNKNOWN.equals(baseType) && ref.resolve() == null) {
+          }
+          case dev.verloren.midnight.psi.CompactImportElementImpl importElement -> {
+            PsiReference ref = importElement.getReference();
+            if (ref != null && ref.resolve() == null) {
+              PsiElement id = importElement.getNameIdentifier();
+              PsiElement target = id != null ? id : importElement;
+              holder.registerProblem(
+                      target,
+                      "Unresolved imported symbol '" + importElement.getName() + "'",
+                      ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+              );
+            }
+          }
+          case CompactMemberExprImpl memberExpr -> {
+            PsiReference ref = memberExpr.getReference();
+            if (ref instanceof CompactEnumMemberReference) {
+              if (ref.resolve() == null) {
                 PsiElement memberId = memberExpr.getMemberIdentifier();
                 PsiElement target = memberId != null ? memberId : memberExpr;
                 holder.registerProblem(
-                    target,
-                    "Unresolved struct field '" + ref.getCanonicalText() + "'",
-                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                        target,
+                        "Unresolved enum member '" + ref.getCanonicalText() + "'",
+                        ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
                 );
               }
+            } else if (ref instanceof CompactStructFieldReference) {
+              CompactExpression base = memberExpr.getBaseExpression();
+              if (base != null) {
+                CompactType baseType = base.getType();
+                // Only report unresolved field if base type is known and not UNKNOWN
+                if (!CompactPrimitiveType.UNKNOWN.equals(baseType) && ref.resolve() == null) {
+                  PsiElement memberId = memberExpr.getMemberIdentifier();
+                  PsiElement target = memberId != null ? memberId : memberExpr;
+                  holder.registerProblem(
+                          target,
+                          "Unresolved struct field '" + ref.getCanonicalText() + "'",
+                          ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                  );
+                }
+              }
             }
+          }
+          default -> {
           }
         }
       }

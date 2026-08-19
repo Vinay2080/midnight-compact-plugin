@@ -41,7 +41,13 @@ public class CompactMemberExprImpl extends CompactPsiElement implements CompactE
     int start = member.getStartOffsetInParent();
     PsiElement baseIdentifier = getBaseIdentifier();
     if (baseIdentifier != null) {
-      for (CompactNamedElement target : CompactResolveUtil.resolveType(baseIdentifier.getText(), this)) {
+      java.util.List<CompactNamedElement> baseTargets = new java.util.ArrayList<>();
+      baseTargets.addAll(CompactResolveUtil.resolveType(baseIdentifier.getText(), this));
+      baseTargets.addAll(CompactResolveUtil.resolveValue(baseIdentifier.getText(), this));
+      for (CompactNamedElement target : baseTargets) {
+        if (target instanceof CompactImportElementImpl) {
+          target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) target);
+        }
         if (target instanceof CompactEnumDefinition) {
           return new CompactEnumMemberReference(this, TextRange.from(start, member.getTextLength()));
         }

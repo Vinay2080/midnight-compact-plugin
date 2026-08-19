@@ -39,6 +39,10 @@ public class CompactTypeInferenceUtil {
     if (operator == CompactTokenTypes.PLUS || operator == CompactTokenTypes.MINUS ||
             operator == CompactTokenTypes.STAR || operator == CompactTokenTypes.SLASH ||
             operator == CompactTokenTypes.PERCENT) {
+      CompactType rightType = right.getType();
+      if (leftType instanceof CompactNumericLiteralType && !(rightType instanceof CompactNumericLiteralType) && !CompactPrimitiveType.UNKNOWN.equals(rightType)) {
+        return rightType;
+      }
       return leftType;
     }
 

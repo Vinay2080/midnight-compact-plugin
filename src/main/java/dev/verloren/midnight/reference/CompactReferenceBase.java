@@ -8,7 +8,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.util.IncorrectOperationException;
 import dev.verloren.midnight.psi.CompactElementFactory;
-import dev.verloren.midnight.psi.CompactNamedElement;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,10 +70,10 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
     return getElement().findElementAt(getRangeInElement().getStartOffset());
   }
 
-  protected ResolveResult @NotNull [] toResults(@NotNull Collection<? extends CompactNamedElement> elements) {
+  protected ResolveResult @NotNull [] toResults(@NotNull Collection<? extends PsiElement> elements) {
     ResolveResult[] results = new ResolveResult[elements.size()];
     int i = 0;
-    for (CompactNamedElement element : elements) {
+    for (PsiElement element : elements) {
       results[i++] = new PsiElementResolveResult(element);
     }
     return results;

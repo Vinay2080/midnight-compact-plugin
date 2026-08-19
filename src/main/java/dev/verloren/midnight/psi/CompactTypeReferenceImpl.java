@@ -46,7 +46,7 @@ public class CompactTypeReferenceImpl extends CompactPsiElement implements Compa
     return new CompactTypeReference(this, TextRange.from(start, identifier.getTextLength()));
   }
 
-  private @Nullable PsiElement findIdentifierChild() {
+  public @Nullable PsiElement findIdentifierChild() {
     ASTNode identifier = getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
     return identifier == null ? null : identifier.getPsi();
   }

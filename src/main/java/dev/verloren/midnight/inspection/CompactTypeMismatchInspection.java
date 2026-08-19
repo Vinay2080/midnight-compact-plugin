@@ -13,9 +13,13 @@ import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.*;
+import dev.verloren.midnight.type.CompactNumericLiteralType;
 import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
+import dev.verloren.midnight.type.CompactUintType;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static inspection verifying type compatibility in Compact expressions and control statements.
@@ -81,18 +85,7 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
   }
 
   private static void checkConstBinding(@NotNull CompactConstBindingImpl constBinding, @NotNull ProblemsHolder holder) {
-    CompactTypeElement declaredTypeElement = null;
-    for (PsiElement child : constBinding.getChildren()) {
-      if (child.getNode().getElementType() == CompactElementTypes.OPTIONALLY_TYPED_PATTERN
-          || child.getNode().getElementType() == CompactElementTypes.TYPED_PATTERN) {
-        for (PsiElement sub : child.getChildren()) {
-          if (sub instanceof CompactTypeElement && !(sub instanceof CompactPatternImpl)) {
-            declaredTypeElement = (CompactTypeElement) sub;
-            break;
-          }
-        }
-      }
-    }
+    CompactTypeElement declaredTypeElement = getDeclaredTypeElement(constBinding);
 
     CompactExpression initializer = constBinding.getInitializer();
     if (declaredTypeElement == null || initializer == null) {
@@ -111,6 +104,22 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING
       );
     }
+  }
+
+  private static @Nullable CompactTypeElement getDeclaredTypeElement(@NonNull CompactConstBindingImpl constBinding) {
+    CompactTypeElement declaredTypeElement = null;
+    for (PsiElement child : constBinding.getChildren()) {
+      if (child.getNode().getElementType() == CompactElementTypes.OPTIONALLY_TYPED_PATTERN
+          || child.getNode().getElementType() == CompactElementTypes.TYPED_PATTERN) {
+        for (PsiElement sub : child.getChildren()) {
+          if (sub instanceof CompactTypeElement && !(sub instanceof CompactPatternImpl)) {
+            declaredTypeElement = (CompactTypeElement) sub;
+            break;
+          }
+        }
+      }
+    }
+    return declaredTypeElement;
   }
 
   private static void checkBinaryExpr(@NotNull CompactBinaryExprImpl binaryExpr, @NotNull ProblemsHolder holder) {
@@ -146,7 +155,7 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     } else if (operator == CompactTokenTypes.EQEQ || operator == CompactTokenTypes.NEQ) {
       if (!CompactPrimitiveType.UNKNOWN.equals(leftType)
           && !CompactPrimitiveType.UNKNOWN.equals(rightType)
-          && !leftType.isAssignableTo(rightType)) {
+          && !areTypesEqualityComparable(leftType, rightType)) {
         holder.registerProblem(
             binaryExpr,
             "Cannot compare '" + leftType.name() + "' with '" + rightType.name() + "'",
@@ -173,7 +182,7 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
           && !CompactPrimitiveType.UNKNOWN.equals(rightType)
           && !CompactPrimitiveType.BOOLEAN.equals(leftType)
           && !CompactPrimitiveType.BOOLEAN.equals(rightType)
-          && !leftType.isAssignableTo(rightType)) {
+          && !areTypesRelationalComparable(leftType, rightType)) {
         holder.registerProblem(
             binaryExpr,
             "Cannot compare '" + leftType.name() + "' with '" + rightType.name() + "'",
@@ -237,5 +246,29 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
         );
       }
     }
+  }
+
+  private static boolean areTypesEqualityComparable(@NotNull CompactType left, @NotNull CompactType right) {
+    if (left.isAssignableTo(right) || right.isAssignableTo(left)) {
+      return true;
+    }
+    return isUnsignedType(left) && isUnsignedType(right);
+  }
+
+  private static boolean areTypesRelationalComparable(@NotNull CompactType left, @NotNull CompactType right) {
+    return isUnsignedOrNumericLiteral(left) && isUnsignedOrNumericLiteral(right);
+  }
+
+  private static boolean isUnsignedType(@NotNull CompactType type) {
+    if (type instanceof CompactUintType) return true;
+    if (type instanceof CompactPrimitiveType(String name)) {
+      return name != null && name.startsWith("Uint");
+    }
+    return type.name().startsWith("Uint");
+  }
+
+  private static boolean isUnsignedOrNumericLiteral(@NotNull CompactType type) {
+    if (type instanceof CompactNumericLiteralType) return true;
+    return isUnsignedType(type);
   }
 }

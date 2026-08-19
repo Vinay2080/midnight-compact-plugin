@@ -1,25 +1,39 @@
 # Current Handoff
 
 ## Current Feature
-Duplicate Declaration Inspection Scope Isolation & Bug Fix.
+Syntax Highlighting & Semantic Highlighting Overhaul.
 
 ## Status
-Resolved false-positive duplicate declaration warnings for identifiers declared in distinct scopes (parameters in different circuits/witnesses/constructors, variables in sibling blocks, and struct fields). All 224 automated unit tests are passing (100% success rate across 24 test suites).
+Substantially expanded syntax and semantic highlighting for Midnight Compact smart contracts. Implemented 42+ distinct `TextAttributesKey`s covering keywords, declaration modifiers, declarations, calls, read/write usages, built-in primitive/standard library types, built-in functions, string escapes, doc comments, and pragmas. Integrated a fully interactive `CompactColorSettingsPage` in IDE Settings -> Editor -> Color Scheme -> Compact. All 254 automated unit tests are passing (100% success rate across 26 test suites).
 
 ## Recently Completed
-- **Duplicate Declaration Scope Resolution**:
-  - Fixed [`CompactDuplicateDeclarationInspection.getDeclarationScope()`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/inspection/CompactDuplicateDeclarationInspection.java) so parameters (`CompactParameterImpl` and pattern parameters) are scoped strictly to their enclosing callable (`CompactCircuitDefinition`, `CompactWitnessDeclaration`, `CompactConstructorDeclaration`, `CompactExternalContractDeclaration`), preventing false-positive duplicate warnings across different functions or against file-level constants.
-  - Filtered inner `CompactParameterImpl` wrappers inside `CompactStructFieldImpl` to avoid false duplicate collisions for struct fields.
-  - Added 6 new unit tests in [`CompactInspectionTest.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/inspection/CompactInspectionTest.java) verifying:
-    - Same parameter names across different circuits.
-    - Same parameter names across different witnesses.
-    - Same variable names in sibling `if`/`else` blocks.
-    - Top-level consts vs function parameters with identical names.
-    - Block local variables shadowing function parameters.
-    - Same field names across different structs.
+- **Semantic & Syntactic Color Registry**:
+  - Created [`CompactHighlighterColors`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/highlighter/CompactHighlighterColors.java) with 42+ fine-grained `TextAttributesKey` entries categorized under Keywords & Modifiers, Types, Declarations, Calls & Usages (Read & Write), Literals & Escapes, Comments, Operators & Punctuation, and Pragmas.
+  - Mapped all keys cleanly to IntelliJ `DefaultLanguageHighlighterColors` (e.g. `REASSIGNED_LOCAL_VARIABLE`, `GLOBAL_VARIABLE`, `PREDEFINED_SYMBOL`, `CLASS_NAME`, `STATIC_FIELD`, `INSTANCE_FIELD`, `FUNCTION_DECLARATION`, `FUNCTION_CALL`) for seamless light/dark theme compatibility.
+- **Lexical Syntax Highlighter**:
+  - Enhanced [`CompactSyntaxHighlighter`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/highlighter/CompactSyntaxHighlighter.java) with support for modifiers (`export`, `pure`, `sealed`, `new`, `implements`, `external`), built-ins (`assert`, `disclose`, `fold`, `slice`, `pad`, `emit`, `map`), pragmas, colons, block comments, and doc comments.
+- **Semantic Highlighting Annotator**:
+  - Implemented [`CompactHighlightingAnnotator`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/highlighter/CompactHighlightingAnnotator.java) to provide high-fidelity semantic annotations during daemon code analysis:
+    - Declaration Modifiers: `export`, `pure`, `sealed`, `new`, `implements`, `external`.
+    - Declarations: circuits, witnesses, constructors, contracts, modules, structs, enums, enum members, fields, type aliases, type parameters, constants, parameters, local variables, ledgers, and imported symbols.
+    - Calls & Usages: circuit calls, witness calls, builtin functions (`assert`, `disclose`, `fold`, `slice`, `pad`, `emit`, `map`, `transientHash`, `persistentHash`, `transcribe`, `publicKey`, `degradeToTransient`, `default`, `some`, `none`, `left`, `right`, `merkleTreePathRoot`), enum member accesses, field accesses, constant usages, parameter usages, local variable usages, and ledger usages.
+    - Write Access / Reassignment: distinguished write targets on LHS of assignment (`totalPlayers = ...` -> `LEDGER_WRITE`, `x = ...` -> `LOCAL_VARIABLE_WRITE`).
+    - Struct Literals & Fields: `Point { x: 1, y: 2 }` struct name and field arguments highlighted.
+    - Type references: built-in primitive and standard library types (`Field`, `Boolean`, `Uint<N>`, `Bytes<N>`, `Vector<N, T>`, `Opaque`, `Cell`, `Void`, `Counter`, `Set`, `Map`, `List`, `HistoricMerkleTree`, `MerkleTree`, `Kernel`, `ContractAddress`, `ShieldedCoinInfo`, etc.) vs custom nominal types.
+    - Member Access Expressions: `BoardState.SET` correctly distinguishes enum type qualifier (`BoardState` -> `ENUM_DECLARATION`) from member variant (`SET` -> `ENUM_MEMBER_ACCESS`).
+    - String literals: valid escape sequences (`\n`, `\t`, `\xHH`, `\u{...}`) vs invalid escape sequences (`\q`).
+    - Comments: doc comments (`///`, `/**`) vs regular comments.
+    - Pragmas: pragma directive identifiers and version literals.
+- **Color Settings Page**:
+  - Implemented [`CompactColorSettingsPage`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/highlighter/CompactColorSettingsPage.java) displaying all configurable color descriptors with rich demo code and tag mappings.
+- **Extension Registration**:
+  - Registered `annotator` and `colorSettingsPage` in [`plugin.xml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/resources/META-INF/plugin.xml).
+- **Tests Added**:
+  - [`CompactHighlightingTest`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/highlighter/CompactHighlightingTest.java): Comprehensive suite testing declarations, calls/usages, write reassignments, `disclose(...)` locals, `assert(board2State == BoardState.SET)`, struct literals, standard library types, types, string escapes, doc comments, and cross-file imported highlighting (11 tests).
+  - [`CompactColorSettingsPageTest`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/highlighter/CompactColorSettingsPageTest.java): Verifies display name, icon, descriptors, demo text, and tag attribute mappings.
 
 ## Tests
-- **224/224 tests passing** (0 failures, 0 skipped, 100% success rate).
+- **254/254 tests passing** (0 failures, 0 skipped, 100% success rate across 26 test suites).
 - Verified via `./gradlew test`.
 
 ## Next Feature Options

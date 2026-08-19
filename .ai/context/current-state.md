@@ -21,7 +21,9 @@ Last Updated: August 2026
   - Navigation for identifiers, struct literals, enum members, and struct fields.
   - Rename and Find Usages support.
   - Contextual code completion in `CompactCompletionContributor`.
-- **Phase 4: Type Inference**
+- **Phase 4: Type Inference & Numeric Types**
+  - Concrete type system with `CompactType`, `CompactPrimitiveType`, `CompactUintType`, and `CompactNumericLiteralType`.
+  - Type-aware integer literal resolution preserving numeric values for boundary checking and assignability against `Uint<N>` / `Field`.
   - Lightweight type evaluation in `CompactTypeInferenceUtil` (literals, binary operations, member access, casts).
   - Type-aware struct field resolution.
 - **Phase 5: Semantic Inspections & Quick-Fixes**
@@ -31,11 +33,11 @@ Last Updated: August 2026
   - `CompactTypeMismatchInspection`:
     - Validates `&&` and `||` logical operands (`Boolean` expected).
     - Validates `!` negation operand (`Boolean` expected).
-    - Validates `==` and `!=` type compatibility.
+    - Validates `==` and `!=` type compatibility (supporting numeric literals and all `Uint` bit widths).
     - Validates `if (condition)` control-flow predicates (`Boolean` expected).
-    - Validates relational `<, <=, >, >=` operand compatibility and rejects `Boolean` operands.
+    - Validates relational `<, <=, >, >=` operand compatibility (permitting `Uint` and numeric literal comparisons and rejecting `Boolean`/`Field` relational operands).
     - Validates arithmetic `+, -, *, /, %` operations and rejects `Boolean` operands.
-    - Validates `const x: Type = expr;` declaration initializers against declared types.
+    - Validates `const x: Type = expr;` declaration initializers against declared types with bounds checking on numeric literals.
 - **Phase 6: Formatter & Smart Indentation**
   - `CompactFormattingModelBuilder` and `CompactBlock`.
   - 2-space canonical indentation and context-aware spacing rules.
@@ -46,18 +48,32 @@ Last Updated: August 2026
   - `CompactDocumentationProvider` rendering quick docs (`Ctrl + Q` / hover tooltips) with type signatures, parameter lists, parent containers, struct fields, enum variants, and doc-comments (`///`, `//`, `/* */`).
 - **Phase 9: Cross-File Resolution & Import Awareness**
   - Direct and transitive file inclusion resolution via `include "relative/path.compact";`.
+  - Selective and module imports via `import { Symbol } from './path';` and `import { square } from Module;`.
+  - Cross-file enum definition and enum-variant member navigation (`GameState.PLAYING`).
+  - Go To Declaration navigation on `include "..."` and `import ... from '...'` path strings.
   - Cycle-safe recursive include traversal.
-  - Cross-file module import resolution (`import { ... } from Module`).
-  - Go To Declaration navigation on `include "..."` path strings via `CompactIncludeReference`.
   - Strict preservation of local-over-external shadowing and `VALUE` vs `TYPE` namespaces across files.
 
 - **Phase 10: PSI Refactoring & Architectural Alignment**
   - Expanded `CompactNamedElementImpl.getUseScope()` to project search scope for top-level/exported declarations and local search scope for parameters and locals, enabling cross-file Find Usages.
   - Added strongly-typed accessors to PSI interfaces (`CompactCircuitDefinition.getParameters()`, `getBody()`, `getReturnTypeElement()`, `CompactStructDefinition.getFields()`, `CompactEnumDefinition.getMembers()`, `CompactTypeDefinition.getTargetTypeElement()`, `CompactConstructorDeclaration.getParameters()`, `getBody()`, etc.).
-  - Hardened `CompactIncludeDeclarationImpl.resolveIncludedFile()` with deterministic directory / content-root relative resolution and `CachedValuesManager` caching.
+  - Hardened `CompactIncludeDeclarationImpl.resolveIncludedFile()` and `CompactImportDeclarationImpl.resolveImportedFile()` with deterministic directory / content-root relative resolution and `CachedValuesManager` caching.
   - Implemented `equals()` and `hashCode()` on `CompactReferenceBase` for optimal `ResolveCache` hit rates.
   - Replaced thread-unsafe UserData recursion flags with thread-safe `RecursionManager` in `CompactReferenceExprImpl.getType()`.
   - Registered essential IDE typing ergonomics extensions: `CompactCommenter` (`//` and `/* */`), `CompactPairedBraceMatcher` (`{}`, `()`, `[]`, `<>`), and `CompactQuoteHandler` (`"`, `'`).
+
+- **Phase 11: Syntax & Semantic Highlighting Overhaul**
+  - Designed and implemented complete semantic and syntactic color registry (`CompactHighlighterColors`) with 42+ dedicated `TextAttributesKey`s mapped to standard `DefaultLanguageHighlighterColors`.
+  - Fine-grained semantic distinction for declarations vs call sites vs read/write usages: circuits, witnesses, constructors, contracts, modules, structs, enums, enum members, fields, type aliases, type parameters, constants, parameters, local variables, write reassignments (`LOCAL_VARIABLE_WRITE`), ledger states, ledger writes (`LEDGER_WRITE`), and imported symbols.
+  - Modifiers (`export`, `pure`, `sealed`, `new`, `implements`, `external`) distinguished with `CompactHighlighterColors.MODIFIER`.
+  - Built-in primitive types (`Field`, `Boolean`, `Uint<N>`, `Bytes<N>`, `Vector`, `Opaque`, `Cell`, `Void`, `JubjubScalar`, etc.) and standard library types (`Counter`, `Set`, `Map`, `List`, `HistoricMerkleTree`, `MerkleTree`, `Kernel`, `ContractAddress`, `ShieldedCoinInfo`, `Maybe`, `Either`, etc.) distinguished from custom nominal struct/enum/alias type references.
+  - Built-in functions (`assert`, `disclose`, `fold`, `slice`, `pad`, `emit`, `map`, `transientHash`, `persistentHash`, `transcribe`, `publicKey`, `degradeToTransient`, `default`, etc.) distinctively highlighted from user-defined circuit/witness calls.
+  - Struct literal field names (`Point { x: 1, y: 2 }`) and destructuring patterns highlighted appropriately.
+  - String escape sequence highlighting distinguishing valid escapes (`\n`, `\t`, `\xHH`, `\u{...}`) from invalid escape sequences.
+  - Doc comments (`///`, `/**`) visually distinguished from standard line and block comments.
+  - Pragma directives and semantic version literals (`^0.20.0`) highlighted.
+  - Full IDE Settings -> Editor -> Color Scheme -> Compact configuration page (`CompactColorSettingsPage`) with comprehensive demo code and interactive sample highlighting.
+  - Semantic annotator (`CompactHighlightingAnnotator`) registered in `plugin.xml`.
 
 ### Planned (Future Roadmap)
 - Standard library indexing (`standard-library.compact`, `zkir-v3-library.compact`).
@@ -68,20 +84,22 @@ Last Updated: August 2026
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **224 passing** (0 failures, 0 skipped, 100% success rate across 24 test classes).
+- **Total Unit Tests**: **254 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
-  - `CompactCrossFileResolveTest`: 10 tests
+  - `CompactHighlightingTest`: 11 tests
+  - `CompactColorSettingsPageTest`: 1 test
+  - `CompactCrossFileResolveTest`: 12 tests
   - `CompactResolveTest`: 18 tests
-  - `CompactInspectionTest`: 57 tests
+  - `CompactInspectionTest`: 69 tests
   - `CompactDocumentationTest`: 9 tests
   - `CompactStructureViewTest`: 9 tests
   - `CompactFormatterTest`: 39 tests
-  - `CompactTypeInferenceTest`: 12 tests
+  - `CompactTypeInferenceTest`: 15 tests
   - `LexerTest` + `PragmaTest`: 15 tests
   - Parser Tests (`DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`): 17 tests
   - `CompactRenameTest`: 9 tests
-  - `CompactFindUsagesTest`: 9 tests
+  - `CompactFindUsagesTest`: 10 tests
   - `CompactEditorFeaturesTest`: 3 tests
   - `CompactReferenceTest`: 6 tests
   - `CompactCompletionTest`: 5 tests

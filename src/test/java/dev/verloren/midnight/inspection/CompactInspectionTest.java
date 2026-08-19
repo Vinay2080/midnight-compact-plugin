@@ -762,6 +762,150 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     assertEquals("Should report warning for unary minus on boolean", 1, mismatches.size());
   }
 
+  public void testUint8ComparisonWithIntegerLiterals() {
+    String code = """
+        export circuit player2Shoot(x: Uint<8>): [] {
+          assert(x > 0 && x <= 20, "Shot out of bounds");
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Comparing Uint<8> with literals 0 and 20 should produce no warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testUint8BoundaryValues() {
+    String code = """
+        circuit testBounds(x: Uint<8>): [] {
+          const minBound = x >= 0;
+          const maxBound = x <= 255;
+          const belowMax = x < 256;
+          const leftZero = 0 <= x;
+          const leftMax = 255 >= x;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Uint<8> boundary comparisons should produce no warnings", warnings.isEmpty());
+  }
+
+  public void testUintConstInitializationBounds() {
+    String code = """
+        circuit testConstInit(): [] {
+          const valid1: Uint<8> = 0;
+          const valid2: Uint<8> = 20;
+          const valid3: Uint<8> = 255;
+          const valid4: Uint<16> = 65535;
+          const valid5: Uint<32> = 4294967295;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("In-bounds const initialization for Uint types should produce no warnings", warnings.isEmpty());
+  }
+
+  public void testUintConstInitializationOutOfBounds() {
+    String code = """
+        circuit testConstInitOOB(): [] {
+          const oob1: Uint<8> = 256;
+          const oob2: Uint<8> = 300;
+          const oob3: Uint<16> = 65536;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch"))
+        .toList();
+    assertEquals("Should report 3 type mismatch warnings for out-of-bounds Uint initializers", 3, mismatches.size());
+  }
+
+  public void testUintOtherBitWidthsComparisons() {
+    String code = """
+        circuit testOtherWidths(a: Uint<16>, b: Uint<32>, c: Uint<64>, d: Uint): [] {
+          const c1 = a > 0 && a <= 1000;
+          const c2 = b >= 0 && b < 1000000;
+          const c3 = c > 42;
+          const c4 = d >= 10;
+          const c5 = 0 < a && 100 >= b;
+          const c6 = a < b;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Comparisons across other Uint widths and literals should produce no warnings", warnings.isEmpty());
+  }
+
+  public void testUintArithmeticWithNumericLiterals() {
+    String code = """
+        circuit testArithmetic(x: Uint<8>, y: Uint<32>): [] {
+          const a = x + 1;
+          const b = 1 + x;
+          const c = y - 10;
+          const d = x * 2;
+          const e = y / 4;
+          const f = x % 5;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Arithmetic between Uint and literals should produce no warnings", warnings.isEmpty());
+  }
+
+  public void testUintEqualityWithLiteralsAndOtherUints() {
+    String code = """
+        circuit testEquality(x: Uint<8>, y: Uint<16>, z: Uint<8>): [] {
+          const e1 = x == 0;
+          const e2 = x != 20;
+          const e3 = 0 == x;
+          const e4 = 20 != x;
+          const e5 = x == z;
+          const e6 = x == y;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Equality comparisons for Uint should produce no warnings", warnings.isEmpty());
+  }
+
+  public void testUintIncompatibleComparisonsNegative() {
+    String code = """
+        circuit testIncompatible(x: Uint<8>, flag: Boolean, b: Bytes<32>, f: Field): [] {
+          const bad1 = x == flag;
+          const bad2 = x == b;
+          const bad3 = x == f;
+          const bad4 = x < b;
+          const bad5 = x < f;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare"))
+        .toList();
+    assertEquals("Should report 5 cannot compare warnings for incompatible Uint comparisons", 5, mismatches.size());
+  }
+
+  public void testFieldIncompatibleRelationalNegative() {
+    String code = """
+        circuit testFieldRelational(f1: Field, f2: Field): [] {
+          const bad1 = f1 < f2;
+          const bad2 = f1 > 10;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare"))
+        .toList();
+    assertEquals("Should report 2 cannot compare warnings for Field relational comparisons", 2, mismatches.size());
+  }
+
   // =========================================================================
   // 5. Cross-Cutting & Malformed Code Tests
   // =========================================================================
@@ -804,5 +948,87 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     enableAllInspections();
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     assertNotNull(myFixture.doHighlighting());
+  }
+
+  public void testCrossFileImportedEnumMemberValidNoWarnings() {
+    myFixture.addFileToProject(
+        "GameState.compact",
+        """
+        export enum GameState {
+            WAITING,
+            PLAYING,
+            FINISHED,
+        }
+        """
+    );
+    String code = """
+        import { GameState } from './GameState';
+
+        export circuit checkGame(): [] {
+            assert(
+                GameState.PLAYING == GameState.PLAYING,
+                "Game is not currently playing"
+            );
+        }
+        """;
+    enableAllInspections();
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+    List<HighlightInfo> criticalWarnings = highlights.stream()
+        .filter(h -> h.getDescription() != null && (
+            h.getDescription().contains("Unresolved")
+            || h.getDescription().contains("Duplicate")
+            || h.getDescription().contains("Cannot compare")
+        ))
+        .toList();
+    assertTrue("Cross-file imported enum comparison should produce zero warnings: " + criticalWarnings, criticalWarnings.isEmpty());
+  }
+
+  public void testCrossFileUnresolvedImportedSymbol() {
+    myFixture.addFileToProject(
+        "GameState.compact",
+        """
+        export enum GameState {
+            WAITING,
+            PLAYING,
+            FINISHED,
+        }
+        """
+    );
+    String code = """
+        import { NonExistentState } from './GameState';
+        """;
+    myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> unresolved = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved imported symbol 'NonExistentState'"))
+        .toList();
+    assertEquals("Should report 1 unresolved imported symbol error", 1, unresolved.size());
+  }
+
+  public void testCrossFileUnresolvedEnumMember() {
+    myFixture.addFileToProject(
+        "GameState.compact",
+        """
+        export enum GameState {
+            WAITING,
+            PLAYING,
+            FINISHED,
+        }
+        """
+    );
+    String code = """
+        import { GameState } from './GameState';
+
+        export circuit checkGame(): [] {
+            const state = GameState.DOES_NOT_EXIST;
+        }
+        """;
+    myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> unresolved = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved enum member 'DOES_NOT_EXIST'"))
+        .toList();
+    assertEquals("Should report 1 unresolved enum member error for cross-file enum", 1, unresolved.size());
   }
 }

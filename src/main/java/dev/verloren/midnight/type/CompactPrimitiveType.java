@@ -24,6 +24,18 @@ public record CompactPrimitiveType(String name) implements CompactType {
   }
 
   @Override
+  public boolean isAssignableTo(@NotNull CompactType other) {
+    if (this.equals(other)) return true;
+    if (name != null && name.startsWith("Uint")) {
+      CompactUintType uint = CompactUintType.parse(name);
+      if (uint != null) {
+        return uint.isAssignableTo(other);
+      }
+    }
+    return false;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

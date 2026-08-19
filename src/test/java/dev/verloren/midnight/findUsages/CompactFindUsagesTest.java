@@ -1,6 +1,7 @@
 package dev.verloren.midnight.findUsages;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -8,6 +9,8 @@ import com.intellij.usageView.UsageInfo;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.parser.CompactParserDefinition;
+import dev.verloren.midnight.psi.CompactImportElementImpl;
+import dev.verloren.midnight.psi.CompactMemberExprImpl;
 import dev.verloren.midnight.psi.CompactNamedElement;
 
 import java.util.Collection;
@@ -191,5 +194,48 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
 
     Collection<UsageInfo> usages = myFixture.findUsages(helperDecl);
     assertEquals(2, usages.size());
+  }
+
+  public void testFindUsagesCrossFileEnumAndMember() {
+    myFixture.addFileToProject("GameState.compact",
+            """
+                    export enum GameState {
+                      WAITING,
+                      PLAYING,
+                      FINISHED,
+                    }
+                    """
+    );
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    import { GameState } from './GameState';
+                    export circuit checkGame(): [] {
+                      assert(GameState.PLAYING == GameState.PLAYING, "Game is playing");
+                    }
+                    """
+    );
+
+    // 1. Find usages for imported enum GameState
+    PsiFile gameFile = myFixture.getFile();
+    CompactImportElementImpl importElement = PsiTreeUtil.findChildOfType(gameFile, CompactImportElementImpl.class);
+    assertNotNull(importElement);
+    assertNotNull(importElement.getReference());
+    PsiElement targetEnum = importElement.getReference().resolve();
+    assertNotNull(targetEnum);
+    assertTrue(targetEnum instanceof CompactNamedElement);
+    Collection<UsageInfo> enumUsages = myFixture.findUsages( targetEnum);
+    // Usages: import { GameState } and two GameState qualifiers in PLAYING access
+    assertFalse("Should find at least 1 usage of GameState across files", enumUsages.isEmpty());
+
+    // 2. Find usages for imported enum member PLAYING
+    CompactMemberExprImpl memberExpr = PsiTreeUtil.findChildOfType(gameFile, CompactMemberExprImpl.class);
+    assertNotNull(memberExpr);
+    assertNotNull(memberExpr.getReference());
+    PsiElement targetMember = memberExpr.getReference().resolve();
+    assertNotNull(targetMember);
+    assertTrue(targetMember instanceof CompactNamedElement);
+    assertEquals("PLAYING", ((CompactNamedElement) targetMember).getName());
+    Collection<UsageInfo> memberUsages = myFixture.findUsages(targetMember);
+    assertEquals("Should find 2 usages of PLAYING across files", 2, memberUsages.size());
   }
 }

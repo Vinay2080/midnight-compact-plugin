@@ -296,4 +296,112 @@ public class CompactCrossFileResolveTest extends BasePlatformTestCase {
     assertNotNull(memberExpr);
     assertEquals("Field", memberExpr.getType().name());
   }
+
+  public void testImportedEnumAndEnumMemberResolution() {
+    myFixture.addFileToProject(
+        "GameState.compact",
+        """
+        export enum GameState {
+            WAITING,
+            PLAYING,
+            FINISHED,
+        }
+        """
+    );
+    PsiFile gameFile = myFixture.configureByText(
+        CompactFileType.INSTANCE,
+        """
+        import { GameState } from './GameState';
+
+        export circuit checkGame(): [] {
+            assert(
+                GameState.PLAYING == GameState.PLAYING,
+                "Game is not currently playing"
+            );
+        }
+        """
+    );
+
+    // 1. GameState in import resolves to enum declaration in GameState.compact
+    CompactImportElementImpl importElement = PsiTreeUtil.findChildOfType(gameFile, CompactImportElementImpl.class);
+    assertNotNull("import element GameState should exist", importElement);
+    PsiReference importRef = importElement.getReference();
+    assertNotNull("import element GameState should have a reference", importRef);
+    PsiElement importTarget = importRef.resolve();
+    assertNotNull("import element GameState should resolve to GameState.compact declaration", importTarget);
+    assertTrue(importTarget instanceof CompactEnumDefinition);
+    assertEquals("GameState", ((CompactEnumDefinition) importTarget).getName());
+    assertEquals("GameState.compact", importTarget.getContainingFile().getName());
+
+    // 2. Import path './GameState' resolves to GameState.compact file
+    CompactImportDeclarationImpl importDecl = PsiTreeUtil.findChildOfType(gameFile, CompactImportDeclarationImpl.class);
+    assertNotNull(importDecl);
+    PsiReference pathRef = importDecl.getReference();
+    assertNotNull(pathRef);
+    PsiElement pathTarget = pathRef.resolve();
+    assertNotNull("Import path './GameState' should resolve to GameState.compact file", pathTarget);
+    assertTrue(pathTarget instanceof CompactFile);
+    assertEquals("GameState.compact", ((CompactFile) pathTarget).getName());
+
+    // 3. GameState in GameState.PLAYING resolves to the imported enum symbol
+    CompactReferenceExprImpl baseRefExpr = PsiTreeUtil.findChildrenOfType(gameFile, CompactReferenceExprImpl.class).stream()
+        .filter(e -> "GameState".equals(e.getText()))
+        .findFirst()
+        .orElse(null);
+    assertNotNull(baseRefExpr);
+    assertNotNull(baseRefExpr.getReference());
+    PsiElement baseTarget = baseRefExpr.getReference().resolve();
+    assertNotNull("GameState qualifier should resolve", baseTarget);
+    if (baseTarget instanceof CompactImportElementImpl) {
+      baseTarget = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) baseTarget);
+    }
+    assertNotNull("Unwrapped base target should resolve to CompactEnumDefinition", baseTarget);
+    assertTrue(baseTarget instanceof CompactEnumDefinition);
+    assertEquals("GameState.compact", baseTarget.getContainingFile().getName());
+
+    // 4. PLAYING in GameState.PLAYING resolves to CompactEnumMemberImpl in GameState.compact
+    CompactMemberExprImpl memberExpr = PsiTreeUtil.findChildrenOfType(gameFile, CompactMemberExprImpl.class).stream()
+        .findFirst()
+        .orElse(null);
+    assertNotNull("GameState.PLAYING member expr should exist", memberExpr);
+    PsiReference memberRef = memberExpr.getReference();
+    assertNotNull("GameState.PLAYING should have CompactEnumMemberReference", memberRef);
+    assertInstanceOf(memberRef, dev.verloren.midnight.reference.CompactEnumMemberReference.class);
+    PsiElement memberTarget = memberRef.resolve();
+    assertNotNull("PLAYING should resolve to enum member in GameState.compact", memberTarget);
+    assertTrue(memberTarget instanceof CompactEnumMemberImpl);
+    assertEquals("PLAYING", ((CompactEnumMemberImpl) memberTarget).getName());
+    assertEquals("GameState.compact", memberTarget.getContainingFile().getName());
+  }
+
+  public void testImportedEnumWithExtensionPath() {
+    myFixture.addFileToProject(
+        "GameState.compact",
+        """
+        export enum GameState {
+            WAITING,
+            PLAYING,
+            FINISHED,
+        }
+        """
+    );
+    myFixture.configureByText(
+        CompactFileType.INSTANCE,
+        """
+        import { GameState } from './GameState.compact';
+
+        export circuit checkGame(): [] {
+            const state = GameState.<caret>WAITING;
+        }
+        """
+    );
+
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("WAITING should have reference at caret", ref);
+    PsiElement target = ref.resolve();
+    assertNotNull("WAITING should resolve across file with .compact path", target);
+    assertTrue(target instanceof CompactEnumMemberImpl);
+    assertEquals("WAITING", ((CompactEnumMemberImpl) target).getName());
+    assertEquals("GameState.compact", target.getContainingFile().getName());
+  }
 }

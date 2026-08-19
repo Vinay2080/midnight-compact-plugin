@@ -39,6 +39,13 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.highlighter.CompactSyntaxHighlighterFactory"/>
 
+        <annotator
+                language="Compact"
+                implementationClass="dev.verloren.midnight.highlighter.CompactHighlightingAnnotator"/>
+
+        <colorSettingsPage
+                implementation="dev.verloren.midnight.highlighter.CompactColorSettingsPage"/>
+
         <lang.findUsagesProvider
                 language="Compact"
                 implementationClass="dev.verloren.midnight.findUsages.CompactFindUsagesProvider"/>

@@ -23,25 +23,26 @@ phases:
   compiler_integration: planned
 
 tests:
-  last_known_passing: 224
+  last_known_passing: 254
   failures: 0
   skipped: 0
   suites:
-    lexer: 15 (LexerTest: 12, PragmaTest: 3)
+    lexer: 15 (LexerTest: { 12, PragmaTest: 3) }
     parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
     psi: 3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)
-    resolve: 28 (CompactResolveTest: 18, CompactCrossFileResolveTest: 10)
+    resolve: 30 (CompactResolveTest: 18, CompactCrossFileResolveTest: 12)
     reference: 6 (CompactReferenceTest: 6)
     completion: 5 (CompactCompletionTest: 5)
     rename: 9 (CompactRenameTest: 9)
-    find_usages: 9 (CompactFindUsagesTest: 9)
+    find_usages: 10 (CompactFindUsagesTest: 10)
     editor: 3 (CompactEditorFeaturesTest: 3)
     symbol: 3 (CompactSymbolTest: 3)
-    type_inference: 12 (CompactTypeInferenceTest: 12)
-    inspections: 57 (CompactInspectionTest: 57)
+    type_inference: 15 (CompactTypeInferenceTest: 15)
+    inspections: 69 (CompactInspectionTest: 69)
     formatter: 39 (CompactFormatterTest: 39)
     structure_view: 9 (CompactStructureViewTest: 9)
     documentation: 9 (CompactDocumentationTest: 9)
+    highlighter: 12 (CompactHighlightingTest: 11, CompactColorSettingsPageTest: 1)
 
 architecture:
   lexer:
@@ -65,6 +66,8 @@ architecture:
   type_system:
     interface: dev.verloren.midnight.type.CompactType
     primitives: dev.verloren.midnight.type.CompactPrimitiveType
+    uint_types: dev.verloren.midnight.type.CompactUintType
+    numeric_literals: dev.verloren.midnight.type.CompactNumericLiteralType
     nominal_types: dev.verloren.midnight.type.CompactNamedType
     inference_util: dev.verloren.midnight.type.CompactTypeInferenceUtil
   inspections:

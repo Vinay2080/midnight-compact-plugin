@@ -34,10 +34,16 @@ public class CompactEnumMemberReference extends CompactReferenceBase {
       return ResolveResult.EMPTY_ARRAY;
     }
     PsiElement baseIdentifier = Objects.requireNonNull(base.getNode().findChildByType(CompactTokenTypes.IDENTIFIER)).getPsi();
-    List<CompactNamedElement> baseTargets = CompactResolveUtil.resolveType(baseIdentifier.getText(), getElement());
+    List<CompactNamedElement> baseTargets = new ArrayList<>();
+    baseTargets.addAll(CompactResolveUtil.resolveType(baseIdentifier.getText(), getElement()));
+    baseTargets.addAll(CompactResolveUtil.resolveValue(baseIdentifier.getText(), getElement()));
     List<CompactNamedElement> members = new ArrayList<>();
+    java.util.Set<PsiElement> seen = new java.util.HashSet<>();
     for (CompactNamedElement baseTarget : baseTargets) {
-      if (baseTarget instanceof CompactEnumDefinition) {
+      if (baseTarget instanceof CompactImportElementImpl) {
+        baseTarget = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) baseTarget);
+      }
+      if (baseTarget instanceof CompactEnumDefinition && seen.add(baseTarget)) {
         for (CompactEnumMemberImpl member : PsiTreeUtil.findChildrenOfType(baseTarget, CompactEnumMemberImpl.class)) {
           if (getValue().equals(member.getName())) {
             members.add(member);

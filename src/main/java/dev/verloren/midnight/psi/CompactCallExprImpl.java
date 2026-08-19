@@ -18,16 +18,22 @@ public class CompactCallExprImpl extends CompactPsiElement implements CompactExp
 
   @Override
   public @NotNull CompactType getType() {
-    PsiReference ref = getReference();
+    PsiReference ref = getCalleeReference();
     if (ref != null) {
       PsiElement resolved = ref.resolve();
       if (resolved instanceof CompactTypeElement) {
-        // For now, assume it's a function/circuit and we need its return type
-        // In a full implementation, we'd handle Function types here
         return ((CompactTypeElement) resolved).getType();
       }
     }
     return CompactPrimitiveType.UNKNOWN;
+  }
+
+  public @Nullable PsiReference getCalleeReference() {
+    CompactReferenceExprImpl refExpr = com.intellij.psi.util.PsiTreeUtil.getChildOfType(this, CompactReferenceExprImpl.class);
+    if (refExpr != null) {
+      return refExpr.getReference();
+    }
+    return getReference();
   }
 
   @Override
@@ -39,5 +45,11 @@ public class CompactCallExprImpl extends CompactPsiElement implements CompactExp
     PsiElement psi = identifier.getPsi();
     int start = psi.getTextRange().getStartOffset() - getTextRange().getStartOffset();
     return new CompactValueReference(this, TextRange.from(start, psi.getTextLength()));
+  }
+
+  @Override
+  public PsiReference @NotNull [] getReferences() {
+    PsiReference ref = getReference();
+    return ref != null ? new PsiReference[]{ref} : PsiReference.EMPTY_ARRAY;
   }
 }

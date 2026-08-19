@@ -155,14 +155,22 @@ public final class CompactResolveUtil {
       if (prefix == null) {
         continue;
       }
-      CompactModuleDefinition module = findModule(place, importDeclaration.getModuleName());
-      if (module == null) {
-        continue;
+      CompactFile importedFile = importDeclaration.resolveImportedFile();
+      if (importedFile != null) {
+        for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
+          String name = decl.getName();
+          if (nearestModule(decl) == null && name != null && isInNamespace(decl, namespace, importDeclaration)) {
+            result.add(prefix + name);
+          }
+        }
       }
-      for (CompactNamedElement exported : moduleExports(module)) {
-        String name = exported.getName();
-        if (name != null && isInNamespace(exported, namespace, importDeclaration)) {
-          result.add(prefix + name);
+      CompactModuleDefinition module = findModule(place, importDeclaration.getModuleName());
+      if (module != null) {
+        for (CompactNamedElement exported : moduleExports(module)) {
+          String name = exported.getName();
+          if (name != null && isInNamespace(exported, namespace, importDeclaration)) {
+            result.add(prefix + name);
+          }
         }
       }
     }
@@ -174,17 +182,36 @@ public final class CompactResolveUtil {
     if (source == null) {
       return null;
     }
+    String name = source.getText();
     CompactImportDeclarationImpl importDeclaration = PsiTreeUtil.getParentOfType(importElement, CompactImportDeclarationImpl.class);
     if (importDeclaration == null) {
       return null;
     }
-    CompactModuleDefinition module = findModule(importDeclaration, importDeclaration.getModuleName());
-    if (module == null) {
-      return null;
+
+    // 1. Check imported file (e.g. import { GameState } from './GameState')
+    CompactFile importedFile = importDeclaration.resolveImportedFile();
+    if (importedFile != null) {
+      for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
+        if (nearestModule(declaration) == null && name.equals(declaration.getName())) {
+          return declaration;
+        }
+      }
+      for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(importedFile, CompactModuleDefinition.class)) {
+        for (CompactNamedElement exported : moduleExports(mod)) {
+          if (name.equals(exported.getName())) {
+            return exported;
+          }
+        }
+      }
     }
-    for (CompactNamedElement exported : moduleExports(module)) {
-      if (source.getText().equals(exported.getName())) {
-        return exported;
+
+    // 2. Check module (e.g. import { square } from Math)
+    CompactModuleDefinition module = findModule(importDeclaration, importDeclaration.getModuleName());
+    if (module != null) {
+      for (CompactNamedElement exported : moduleExports(module)) {
+        if (name.equals(exported.getName())) {
+          return exported;
+        }
       }
     }
     return null;
@@ -343,17 +370,26 @@ public final class CompactResolveUtil {
       if (prefix == null || !name.startsWith(prefix)) {
         continue;
       }
-      CompactModuleDefinition module = findModule(place, importDeclaration.getModuleName());
-      if (module == null) {
-        continue;
-      }
       String exportedName = name.substring(prefix.length());
       if (exportedName.startsWith("_")) {
         exportedName = exportedName.substring(1);
       }
-      for (CompactNamedElement exported : moduleExports(module)) {
-        if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace, place)) {
-          result.add(exported);
+
+      CompactFile importedFile = importDeclaration.resolveImportedFile();
+      if (importedFile != null) {
+        for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
+          if (nearestModule(decl) == null && exportedName.equals(decl.getName()) && isInNamespace(decl, namespace, place)) {
+            result.add(decl);
+          }
+        }
+      }
+
+      CompactModuleDefinition module = findModule(place, importDeclaration.getModuleName());
+      if (module != null) {
+        for (CompactNamedElement exported : moduleExports(module)) {
+          if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace, place)) {
+            result.add(exported);
+          }
         }
       }
     }
