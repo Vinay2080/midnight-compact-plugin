@@ -13,6 +13,12 @@ import dev.verloren.midnight.lexer.CompactLexer;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jspecify.annotations.NonNull;
 
+/**
+ * Syntax highlighter for Compact source code.
+ *
+ * <p>Maps lexical tokens from {@link CompactLexer} to IntelliJ {@link TextAttributesKey}s
+ * for editor syntax highlighting.</p>
+ */
 public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
 
   public static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("COMPACT_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);

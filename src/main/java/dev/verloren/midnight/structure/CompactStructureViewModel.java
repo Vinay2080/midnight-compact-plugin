@@ -10,6 +10,12 @@ import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Structure View tree model for Compact source files.
+ *
+ * <p>Configures suitable PSI classes displayed in the tree (circuits, witnesses, structs, enums,
+ * contracts, modules, constants) and defines alphabetical sorting and leaf node behavior.</p>
+ */
 public class CompactStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
 
   public CompactStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {

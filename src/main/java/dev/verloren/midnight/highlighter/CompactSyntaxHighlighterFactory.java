@@ -6,6 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jspecify.annotations.NonNull;
 
+/**
+ * Factory creating {@link CompactSyntaxHighlighter} instances for Compact files.
+ */
 public class CompactSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
   @Override

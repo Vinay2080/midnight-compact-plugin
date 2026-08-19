@@ -23,21 +23,22 @@ phases:
   compiler_integration: planned
 
 tests:
-  last_known_passing: 212
+  last_known_passing: 224
   failures: 0
   skipped: 0
   suites:
     lexer: 15 (LexerTest: 12, PragmaTest: 3)
     parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
-    psi: 2 (DeclarationPsiTest: 1, ElementFactoryConsistencyTest: 1)
+    psi: 3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)
     resolve: 28 (CompactResolveTest: 18, CompactCrossFileResolveTest: 10)
     reference: 6 (CompactReferenceTest: 6)
     completion: 5 (CompactCompletionTest: 5)
     rename: 9 (CompactRenameTest: 9)
-    find_usages: 7 (CompactFindUsagesTest: 7)
+    find_usages: 9 (CompactFindUsagesTest: 9)
+    editor: 3 (CompactEditorFeaturesTest: 3)
     symbol: 3 (CompactSymbolTest: 3)
     type_inference: 12 (CompactTypeInferenceTest: 12)
-    inspections: 51 (CompactInspectionTest: 51)
+    inspections: 57 (CompactInspectionTest: 57)
     formatter: 39 (CompactFormatterTest: 39)
     structure_view: 9 (CompactStructureViewTest: 9)
     documentation: 9 (CompactDocumentationTest: 9)

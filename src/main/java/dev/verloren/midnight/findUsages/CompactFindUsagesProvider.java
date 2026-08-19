@@ -12,6 +12,13 @@ import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Find Usages provider for Compact language declarations.
+ *
+ * <p>Integrates with IntelliJ's indexer using {@link DefaultWordsScanner} to identify words
+ * matching {@link CompactTokenTypes#IDENTIFIER}. Formats descriptive type names
+ * ("circuit", "witness", "struct", "enum", "type") in the Find Usages results tool window.</p>
+ */
 public class CompactFindUsagesProvider implements FindUsagesProvider {
   @Override
   public @Nullable WordsScanner getWordsScanner() {

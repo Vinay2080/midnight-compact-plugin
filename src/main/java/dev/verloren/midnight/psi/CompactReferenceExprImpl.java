@@ -12,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompactReferenceExprImpl extends CompactPsiElement implements CompactReferenceExpr {
-  private static final com.intellij.openapi.util.Key<Boolean> RESOLVING = com.intellij.openapi.util.Key.create("COMPACT_RESOLVING");
+  private static final com.intellij.openapi.util.RecursionGuard<PsiElement> TYPE_INFERENCE_GUARD =
+      com.intellij.openapi.util.RecursionManager.createGuard("CompactReferenceExprType");
 
   public CompactReferenceExprImpl(@NotNull ASTNode node) {
     super(node);
@@ -20,11 +21,7 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
 
   @Override
   public @NotNull CompactType getType() {
-    if (getUserData(RESOLVING) != null) {
-      return CompactPrimitiveType.UNKNOWN;
-    }
-    putUserData(RESOLVING, true);
-    try {
+    CompactType type = TYPE_INFERENCE_GUARD.doPreventingRecursion(this, false, () -> {
       PsiReference ref = getReference();
       if (ref != null) {
         PsiElement resolved = ref.resolve();
@@ -33,9 +30,8 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
         }
       }
       return CompactPrimitiveType.UNKNOWN;
-    } finally {
-      putUserData(RESOLVING, null);
-    }
+    });
+    return type != null ? type : CompactPrimitiveType.UNKNOWN;
   }
 
   @Override

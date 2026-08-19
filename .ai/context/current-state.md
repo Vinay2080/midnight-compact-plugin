@@ -51,6 +51,14 @@ Last Updated: August 2026
   - Go To Declaration navigation on `include "..."` path strings via `CompactIncludeReference`.
   - Strict preservation of local-over-external shadowing and `VALUE` vs `TYPE` namespaces across files.
 
+- **Phase 10: PSI Refactoring & Architectural Alignment**
+  - Expanded `CompactNamedElementImpl.getUseScope()` to project search scope for top-level/exported declarations and local search scope for parameters and locals, enabling cross-file Find Usages.
+  - Added strongly-typed accessors to PSI interfaces (`CompactCircuitDefinition.getParameters()`, `getBody()`, `getReturnTypeElement()`, `CompactStructDefinition.getFields()`, `CompactEnumDefinition.getMembers()`, `CompactTypeDefinition.getTargetTypeElement()`, `CompactConstructorDeclaration.getParameters()`, `getBody()`, etc.).
+  - Hardened `CompactIncludeDeclarationImpl.resolveIncludedFile()` with deterministic directory / content-root relative resolution and `CachedValuesManager` caching.
+  - Implemented `equals()` and `hashCode()` on `CompactReferenceBase` for optimal `ResolveCache` hit rates.
+  - Replaced thread-unsafe UserData recursion flags with thread-safe `RecursionManager` in `CompactReferenceExprImpl.getType()`.
+  - Registered essential IDE typing ergonomics extensions: `CompactCommenter` (`//` and `/* */`), `CompactPairedBraceMatcher` (`{}`, `()`, `[]`, `<>`), and `CompactQuoteHandler` (`"`, `'`).
+
 ### Planned (Future Roadmap)
 - Standard library indexing (`standard-library.compact`, `zkir-v3-library.compact`).
 - Multi-file project indexing (`CompactFileStub` and IntelliJ `StubIndex`).
@@ -60,12 +68,12 @@ Last Updated: August 2026
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **212 passing** (0 failures, 0 skipped, 100% success rate across 23 test classes).
+- **Total Unit Tests**: **224 passing** (0 failures, 0 skipped, 100% success rate across 24 test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
   - `CompactCrossFileResolveTest`: 10 tests
   - `CompactResolveTest`: 18 tests
-  - `CompactInspectionTest`: 51 tests
+  - `CompactInspectionTest`: 57 tests
   - `CompactDocumentationTest`: 9 tests
   - `CompactStructureViewTest`: 9 tests
   - `CompactFormatterTest`: 39 tests
@@ -73,11 +81,12 @@ Last Updated: August 2026
   - `LexerTest` + `PragmaTest`: 15 tests
   - Parser Tests (`DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`): 17 tests
   - `CompactRenameTest`: 9 tests
-  - `CompactFindUsagesTest`: 7 tests
+  - `CompactFindUsagesTest`: 9 tests
+  - `CompactEditorFeaturesTest`: 3 tests
   - `CompactReferenceTest`: 6 tests
   - `CompactCompletionTest`: 5 tests
   - `CompactSymbolTest`: 3 tests
-  - PSI Tests (`DeclarationPsiTest`, `ElementFactoryConsistencyTest`): 2 tests
+  - PSI Tests (`DeclarationPsiTest`, `ElementFactoryConsistencyTest`): 3 tests
 
 ---
 

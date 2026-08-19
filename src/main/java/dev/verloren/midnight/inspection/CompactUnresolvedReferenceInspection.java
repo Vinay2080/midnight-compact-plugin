@@ -17,6 +17,12 @@ import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Inspection flagging unresolved identifiers, enum members, and struct fields in Compact source code.
+ *
+ * <p>Extends {@link LocalInspectionTool} and registers error annotations with {@link ProblemHighlightType#LIKE_UNKNOWN_SYMBOL}.
+ * Guards against reporting false errors on {@link PsiErrorElement} subtrees during editing.</p>
+ */
 public class CompactUnresolvedReferenceInspection extends LocalInspectionTool {
 
   @Override

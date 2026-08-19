@@ -15,6 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Factory and query utilities for discovering scopes and collecting visible symbols.
+ *
+ * <p>Finds the nearest {@link CompactScope} for any given {@link PsiElement} and aggregates
+ * visible symbols across value, type, and module namespaces.</p>
+ */
 public final class CompactScopes {
   private CompactScopes() {
   }

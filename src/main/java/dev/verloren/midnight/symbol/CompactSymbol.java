@@ -6,6 +6,12 @@ import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Unified symbol representation for Compact declarations and builtin language entities.
+ *
+ * <p>Provides symbol metadata including name, kind, namespace, visibility, inferred type,
+ * containing module, and navigability.</p>
+ */
 public interface CompactSymbol {
   @Nullable String getName();
 

@@ -10,10 +10,22 @@ import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Factory for creating Compact PSI elements from AST nodes and generating synthetic PSI fragments.
+ *
+ * <p>Invoked by {@link dev.verloren.midnight.parser.CompactParserDefinition#createElement(ASTNode)}
+ * to construct typed PSI nodes, and by refactoring/quick-fix routines to create fresh AST leaves.</p>
+ */
 public final class CompactElementFactory {
   private CompactElementFactory() {
   }
 
+  /**
+   * Maps an {@link ASTNode} to its dedicated {@link CompactPsiElement} subclass based on its {@link IElementType}.
+   *
+   * @param node the AST node to wrap
+   * @return the corresponding typed PSI wrapper
+   */
   public static @NotNull PsiElement createElement(@NotNull ASTNode node) {
     IElementType elementType = node.getElementType();
     if (elementType == CompactElementTypes.PRAGMA_FORM) {

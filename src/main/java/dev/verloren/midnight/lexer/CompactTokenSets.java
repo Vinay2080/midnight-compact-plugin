@@ -2,6 +2,14 @@ package dev.verloren.midnight.lexer;
 
 import com.intellij.psi.tree.TokenSet;
 
+/**
+ * Reusable {@link TokenSet} groupings used across the parser, syntax highlighter,
+ * code formatter, and word scanners.
+ *
+ * <p>Centralizes sets such as {@link #COMMENTS}, {@link #KEYWORDS}, {@link #BUILTIN_TYPES},
+ * {@link #LITERALS}, and {@link #OPERATORS} so that changes to language tokens propagate
+ * consistently to all IDE consumers.</p>
+ */
 public final class CompactTokenSets {
   public static final TokenSet COMMENTS = TokenSet.create(
           CompactTokenTypes.LINE_COMMENT,

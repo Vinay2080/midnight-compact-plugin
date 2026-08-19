@@ -9,6 +9,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Interface representing a lexical or structural scope container in Compact.
+ *
+ * <p>Provides symbol enumeration and scoped name lookup across different {@link CompactSymbolNamespace}s.</p>
+ */
 public interface CompactScope {
   @NotNull CompactScopeKind getKind();
 

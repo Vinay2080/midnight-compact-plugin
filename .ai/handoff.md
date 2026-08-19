@@ -1,34 +1,25 @@
 # Current Handoff
 
 ## Current Feature
-Cross-File Symbol Resolution & Import Awareness (Phase 9 Complete).
+Duplicate Declaration Inspection Scope Isolation & Bug Fix.
 
 ## Status
-Cross-file resolution via `include` and cross-file module imports is fully implemented and verified. All 212 automated unit tests are passing (100% success rate across 23 test suites).
+Resolved false-positive duplicate declaration warnings for identifiers declared in distinct scopes (parameters in different circuits/witnesses/constructors, variables in sibling blocks, and struct fields). All 224 automated unit tests are passing (100% success rate across 24 test suites).
 
 ## Recently Completed
-- Implemented `dev.verloren.midnight.reference.CompactIncludeReference` for include path navigation (`Ctrl+Click` on `"path.compact"` resolves to the target `CompactFile`).
-- Enhanced `dev.verloren.midnight.psi.CompactIncludeDeclarationImpl` with `getIncludePath()`, `resolveIncludedFile()`, and `getReference()`.
-- Updated `dev.verloren.midnight.resolve.CompactResolveUtil`:
-  - Added `collectIncludedFiles` with cycle-safe recursive traversal.
-  - Added `collectIncludedDeclarations` into `collectDeclarationLayers` so included symbols are available in resolution and completion while preserving local-over-external shadowing.
-  - Enhanced `findModule` to search included files for module definitions.
-- Created `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` with 10 unit tests.
-- Re-verified full test suite with `./gradlew test --rerun-tasks` (212/212 passing).
-
-## Files Added
-- `src/main/java/dev/verloren/midnight/reference/CompactIncludeReference.java`
-- `src/test/java/dev/verloren/midnight/resolve/CompactCrossFileResolveTest.java`
-
-## Files Modified
-- `src/main/java/dev/verloren/midnight/psi/CompactIncludeDeclarationImpl.java`
-- `src/main/java/dev/verloren/midnight/resolve/CompactResolveUtil.java`
-- `.ai/project-state.yaml`
-- `.ai/context/current-state.md`
-- `AGENTS.md`
+- **Duplicate Declaration Scope Resolution**:
+  - Fixed [`CompactDuplicateDeclarationInspection.getDeclarationScope()`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/inspection/CompactDuplicateDeclarationInspection.java) so parameters (`CompactParameterImpl` and pattern parameters) are scoped strictly to their enclosing callable (`CompactCircuitDefinition`, `CompactWitnessDeclaration`, `CompactConstructorDeclaration`, `CompactExternalContractDeclaration`), preventing false-positive duplicate warnings across different functions or against file-level constants.
+  - Filtered inner `CompactParameterImpl` wrappers inside `CompactStructFieldImpl` to avoid false duplicate collisions for struct fields.
+  - Added 6 new unit tests in [`CompactInspectionTest.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/inspection/CompactInspectionTest.java) verifying:
+    - Same parameter names across different circuits.
+    - Same parameter names across different witnesses.
+    - Same variable names in sibling `if`/`else` blocks.
+    - Top-level consts vs function parameters with identical names.
+    - Block local variables shadowing function parameters.
+    - Same field names across different structs.
 
 ## Tests
-- **212/212 tests passing** (0 failures, 0 skipped).
+- **224/224 tests passing** (0 failures, 0 skipped, 100% success rate).
 - Verified via `./gradlew test`.
 
 ## Next Feature Options

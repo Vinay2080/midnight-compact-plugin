@@ -5,6 +5,12 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 
+/**
+ * Represents a primitive or nominal scalar type in Compact (e.g. {@code Boolean}, {@code Field}, {@code Bytes}).
+ *
+ * <p>Contains singleton constants for standard builtins ({@link #BOOLEAN}, {@link #FIELD},
+ * {@link #BYTES}, {@link #OPAQUE}, {@link #UNKNOWN}).</p>
+ */
 public record CompactPrimitiveType(String name) implements CompactType {
   public static final CompactPrimitiveType BOOLEAN = new CompactPrimitiveType("Boolean");
   public static final CompactPrimitiveType FIELD = new CompactPrimitiveType("Field");

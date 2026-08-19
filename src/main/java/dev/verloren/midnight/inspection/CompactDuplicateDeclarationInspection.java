@@ -12,6 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * Inspection reporting duplicate declaration identifiers declared in the same lexical scope.
+ *
+ * <p>Separates value declarations from type declarations to allow legal name sharing across distinct namespaces,
+ * while flagging duplicate siblings in modules, blocks, structs, and contracts.</p>
+ */
 public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
 
   @Override
@@ -43,7 +49,8 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
         || element instanceof CompactEnumDefinition
         || element instanceof CompactCircuitDefinition
         || element instanceof CompactWitnessDeclaration
-        || element instanceof CompactConstructorDeclaration;
+        || element instanceof CompactConstructorDeclaration
+        || element instanceof CompactExternalContractDeclaration;
   }
 
   private static void checkScope(@NotNull PsiElement scope, @NotNull ProblemsHolder holder) {
@@ -51,7 +58,9 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
     Map<String, List<CompactNamedElement>> typeDeclarations = new LinkedHashMap<>();
 
     for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(scope, CompactNamedElement.class)) {
-      if (named instanceof CompactImportElementImpl || named instanceof CompactGenericParameterImpl) {
+      if (named instanceof CompactImportElementImpl
+          || named instanceof CompactGenericParameterImpl
+          || (named instanceof CompactParameterImpl && PsiTreeUtil.getParentOfType(named, CompactStructFieldImpl.class) != null)) {
         continue;
       }
       if (PsiTreeUtil.getParentOfType(named, PsiErrorElement.class) != null) {
@@ -106,20 +115,28 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
     if (element instanceof CompactEnumMemberImpl) {
       return PsiTreeUtil.getParentOfType(element, CompactEnumDefinition.class);
     }
-    if (element instanceof CompactParameterImpl) {
+    if (element instanceof CompactParameterImpl || isPatternParameter(element)) {
       CompactStructFieldImpl field = PsiTreeUtil.getParentOfType(element, CompactStructFieldImpl.class);
       if (field != null) {
-        return field;
+        return PsiTreeUtil.getParentOfType(element, CompactStructDefinition.class);
       }
       return PsiTreeUtil.getParentOfType(element,
           CompactCircuitDefinition.class,
           CompactWitnessDeclaration.class,
-          CompactConstructorDeclaration.class);
+          CompactConstructorDeclaration.class,
+          CompactExternalContractDeclaration.class);
     }
     if (element instanceof CompactConstBindingImpl || element instanceof CompactPatternImpl) {
       CompactBlock block = PsiTreeUtil.getParentOfType(element, CompactBlock.class);
       if (block != null) {
         return block;
+      }
+      PsiElement callable = PsiTreeUtil.getParentOfType(element,
+          CompactCircuitDefinition.class,
+          CompactWitnessDeclaration.class,
+          CompactConstructorDeclaration.class);
+      if (callable != null) {
+        return callable;
       }
       CompactModuleDefinition module = PsiTreeUtil.getParentOfType(element, CompactModuleDefinition.class);
       if (module != null) {
@@ -133,5 +150,26 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
       return module;
     }
     return element.getContainingFile();
+  }
+
+  private static boolean isPatternParameter(@NotNull PsiElement declaration) {
+    if (!(declaration instanceof CompactPatternImpl)) {
+      return false;
+    }
+    return hasAncestorOfType(declaration, dev.verloren.midnight.parser.CompactElementTypes.PATTERN_PARAMETER_LIST)
+        || hasAncestorOfType(declaration, dev.verloren.midnight.parser.CompactElementTypes.SIMPLE_PARAMETER_LIST)
+        || hasAncestorOfType(declaration, dev.verloren.midnight.parser.CompactElementTypes.ARROW_PARAMETER_LIST);
+  }
+
+  private static boolean hasAncestorOfType(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType type) {
+    for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
+      if (parent.getNode() != null && parent.getNode().getElementType() == type) {
+        return true;
+      }
+      if (parent instanceof CompactBlock) {
+        return false;
+      }
+    }
+    return false;
   }
 }

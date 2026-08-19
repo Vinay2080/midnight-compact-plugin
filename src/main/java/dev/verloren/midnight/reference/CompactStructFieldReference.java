@@ -14,6 +14,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Resolves struct field access expressions (e.g. {@code point.x}) to their {@link CompactStructFieldImpl} declaration.
+ *
+ * <p>Infers the static type of the base expression using {@link dev.verloren.midnight.psi.CompactExpression#getType()},
+ * resolves the corresponding struct definition via {@link CompactResolveUtil#resolveType},
+ * and matches the field identifier.</p>
+ */
 public class CompactStructFieldReference extends CompactReferenceBase {
   public CompactStructFieldReference(@NotNull CompactMemberExprImpl element, @NotNull TextRange rangeInElement) {
     super(element, rangeInElement);

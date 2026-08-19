@@ -15,6 +15,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Formatting block implementation for Compact AST nodes.
+ *
+ * <p>Extends {@link AbstractBlock} to calculate:
+ * <ul>
+ *   <li><b>Spacing ({@link #getSpacing(Block, Block)}):</b> Applies spacing rules across delimiters, colons, ternary operators, and blocks.</li>
+ *   <li><b>Indentation ({@link #computeChildIndent(ASTNode, ASTNode)}):</b> Assigns 2-space normal indent for statement blocks, struct field lists, enum variant lists, contract circuits, and module bodies.</li>
+ *   <li><b>Smart Enter & Incompleteness ({@link #isIncomplete()} / {@link #getChildAttributes(int)}):</b> Automatically indents when pressing Enter inside unclosed blocks or parameter lists.</li>
+ * </ul>
+ * </p>
+ */
 public class CompactBlock extends AbstractBlock {
   private final Indent myIndent;
   private final SpacingBuilder mySpacingBuilder;

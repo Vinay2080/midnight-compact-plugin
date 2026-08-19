@@ -357,6 +357,87 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     assertNotNull(myFixture.doHighlighting());
   }
 
+  public void testSameParamNameAcrossDifferentCircuits() {
+    String code = """
+        circuit foo(x: Field, amount: Uint<64>): Void {
+        }
+        circuit bar(x: Field, amount: Uint<64>): Void {
+        }
+        """;
+    myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Parameters with same name across different circuits should not produce duplicate warnings", warnings.isEmpty());
+  }
+
+  public void testSameParamNameAcrossDifferentWitnesses() {
+    String code = """
+        witness getSecretA(id: Field): Boolean;
+        witness getSecretB(id: Field): Boolean;
+        """;
+    myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Parameters with same name across different witnesses should not produce duplicate warnings", warnings.isEmpty());
+  }
+
+  public void testSameVarNameInSiblingBlocks() {
+    String code = """
+        circuit test(c: Boolean): Void {
+          if (c) {
+            const x = 1;
+          } else {
+            const x = 2;
+          }
+        }
+        """;
+    myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Variables with same name in sibling if/else blocks should not produce duplicate warnings", warnings.isEmpty());
+  }
+
+  public void testTopLevelConstAndParamSameName() {
+    String code = """
+        const x: Field = 42;
+        circuit test(x: Field): Void {
+        }
+        """;
+    myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Top-level const and circuit parameter with same name should not produce duplicate warnings", warnings.isEmpty());
+  }
+
+  public void testParamAndLocalShadowing() {
+    String code = """
+        circuit test(x: Field): Void {
+          const x = 1;
+        }
+        """;
+    myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Local variable in block shadowing circuit parameter should not produce duplicate warnings", warnings.isEmpty());
+  }
+
+  public void testSameFieldNameAcrossDifferentStructs() {
+    String code = """
+        struct Point {
+          x: Field,
+          y: Field
+        }
+        struct Vector {
+          x: Field,
+          y: Field
+        }
+        """;
+    myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Fields with same name across different structs should not produce duplicate warnings", warnings.isEmpty());
+  }
+
   // =========================================================================
   // 3. Unused Local Variable Inspection Tests
   // =========================================================================

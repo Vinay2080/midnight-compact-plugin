@@ -17,6 +17,19 @@ import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Static inspection verifying type compatibility in Compact expressions and control statements.
+ *
+ * <p>Checks:
+ * <ul>
+ *   <li>Condition expressions in {@code if} statements evaluate to {@code Boolean}.</li>
+ *   <li>Operands of logical {@code &&} and {@code ||} evaluate to {@code Boolean}.</li>
+ *   <li>Relational comparison operators ({@code <}, {@code >}) are not applied to {@code Boolean} values.</li>
+ *   <li>Equality operators ({@code ==}, {@code !=}) compare assignable types.</li>
+ *   <li>Initializer expressions in {@code const} bindings match declared type annotations.</li>
+ * </ul>
+ * </p>
+ */
 public class CompactTypeMismatchInspection extends LocalInspectionTool {
 
   @Override

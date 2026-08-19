@@ -8,6 +8,22 @@ import com.intellij.psi.tree.TokenSet;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Handwritten recursive-descent parser for the Compact smart contract language.
+ *
+ * <p>Implements IntelliJ's {@link PsiParser} interface, taking an {@link IElementType} root
+ * and a {@link PsiBuilder} stream of tokens, and building an Abstract Syntax Tree (AST) composed
+ * of {@link ASTNode} elements wrapped with {@link CompactElementTypes} markers.</p>
+ *
+ * <p><b>Grammar & Parsing Architecture:</b>
+ * <ul>
+ *   <li><b>Top-Level Declarations:</b> Parses pragmas, includes, imports, exports, modules, structs, enums, contracts, type aliases, ledger state, witnesses, constructors, and circuits.</li>
+ *   <li><b>Error Recovery:</b> When encountering invalid or incomplete code during live editing, uses {@link #TOP_LEVEL_RECOVERY} tokens to resynchronize the parser stream without dropping the remainder of the file.</li>
+ *   <li><b>Loop Progression Guarantee:</b> Enforces offset advancement on every loop iteration to prevent Event Dispatch Thread (EDT) freezes.</li>
+ *   <li><b>Precedence Climbing:</b> Expression parsing uses precedence climbing across binary operators, assignment operators, ternary conditionals, type casting ({@code as}), and unary operators.</li>
+ * </ul>
+ * </p>
+ */
 public final class CompactParser implements PsiParser {
   private static final TokenSet TOP_LEVEL_RECOVERY = TokenSet.create(
           CompactTokenTypes.SEMICOLON,

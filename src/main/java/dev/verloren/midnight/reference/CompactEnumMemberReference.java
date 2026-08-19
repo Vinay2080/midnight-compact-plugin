@@ -11,7 +11,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+/**
+ * Resolves qualified enum variant references (e.g. {@code State.Active}) to their {@link CompactEnumMemberImpl} declaration.
+ *
+ * <p>Extracts the base type name from the preceding member access expression, resolves the enum
+ * definition via {@link CompactResolveUtil#resolveType}, and locates the matching variant member.</p>
+ */
 public class CompactEnumMemberReference extends CompactReferenceBase {
   public CompactEnumMemberReference(@NotNull CompactMemberExprImpl element, @NotNull TextRange rangeInElement) {
     super(element, rangeInElement);
@@ -26,7 +33,7 @@ public class CompactEnumMemberReference extends CompactReferenceBase {
     if (base.getNode().findChildByType(CompactTokenTypes.IDENTIFIER) == null) {
       return ResolveResult.EMPTY_ARRAY;
     }
-    PsiElement baseIdentifier = base.getNode().findChildByType(CompactTokenTypes.IDENTIFIER).getPsi();
+    PsiElement baseIdentifier = Objects.requireNonNull(base.getNode().findChildByType(CompactTokenTypes.IDENTIFIER)).getPsi();
     List<CompactNamedElement> baseTargets = CompactResolveUtil.resolveType(baseIdentifier.getText(), getElement());
     List<CompactNamedElement> members = new ArrayList<>();
     for (CompactNamedElement baseTarget : baseTargets) {

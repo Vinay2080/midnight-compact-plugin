@@ -12,6 +12,12 @@ import dev.verloren.midnight.inspection.fix.CompactRemoveUnusedVariableFix;
 import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Inspection flagging local {@code const} variable bindings that have zero usages in their lexical scope.
+ *
+ * <p>Uses {@link ReferencesSearch} bounded to {@link CompactNamedElement#getUseScope()} and provides
+ * {@link CompactRemoveUnusedVariableFix} to delete unused variables.</p>
+ */
 public class CompactUnusedLocalVariableInspection extends LocalInspectionTool {
 
   @Override

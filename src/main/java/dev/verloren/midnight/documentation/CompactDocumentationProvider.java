@@ -12,11 +12,19 @@ import dev.verloren.midnight.psi.*;
 import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Quick Documentation provider for Compact declarations and references.
+ *
+ * <p>Extends {@link AbstractDocumentationProvider} to format rich HTML popups displayed
+ * when the user hovers over an identifier or invokes Quick Documentation (Ctrl+Q).
+ * Extracts signatures, types, field/variant listings, and preceding doc comments ({@code ///} or {@code /* ... *&#47;}).</p>
+ */
 public class CompactDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
@@ -129,8 +137,7 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       String name = ((CompactStructDefinition) element).getName();
       return "struct " + (name != null ? name : "");
     }
-    if (element instanceof CompactStructFieldImpl) {
-      CompactStructFieldImpl field = (CompactStructFieldImpl) element;
+    if (element instanceof CompactStructFieldImpl field) {
       String name = field.getName() != null ? field.getName() : "field";
       CompactType type = field.getType();
       CompactStructDefinition parentStruct = PsiTreeUtil.getParentOfType(field, CompactStructDefinition.class);
@@ -238,22 +245,7 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
   private static @Nullable String extractDocComments(@NotNull PsiElement element) {
     List<String> commentLines = new ArrayList<>();
 
-    PsiElement target = element;
-    while (target != null && target.getParent() != null &&
-           !(target.getParent() instanceof PsiFile) &&
-           !(target.getParent() instanceof CompactBlock) &&
-           !(target.getParent() instanceof CompactStructDefinition) &&
-           !(target.getParent() instanceof CompactEnumDefinition) &&
-           !(target.getParent() instanceof CompactExternalContractDeclaration) &&
-           !(target.getParent() instanceof CompactModuleDefinition)) {
-      target = target.getParent();
-    }
-
-    if (target == null) {
-      target = element;
-    }
-
-    PsiElement prev = target.getPrevSibling();
+    PsiElement prev = getPrev(element);
     while (prev instanceof PsiWhiteSpace || prev instanceof PsiComment) {
       if (prev instanceof PsiComment) {
         String commentText = prev.getText().trim();
@@ -277,6 +269,15 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       html.append(escapeHtml(line));
     }
     return html.toString();
+  }
+
+  private static PsiElement getPrev(@NonNull PsiElement element) {
+    PsiElement target = element;
+    while (target.getParent() != null && !(target.getParent() instanceof PsiFile) && !(target.getParent() instanceof CompactBlock) && !(target.getParent() instanceof CompactStructDefinition) && !(target.getParent() instanceof CompactEnumDefinition) && !(target.getParent() instanceof CompactExternalContractDeclaration) && !(target.getParent() instanceof CompactModuleDefinition)) {
+      target = target.getParent();
+    }
+
+    return target.getPrevSibling();
   }
 
   private static @NotNull String escapeHtml(@NotNull String text) {

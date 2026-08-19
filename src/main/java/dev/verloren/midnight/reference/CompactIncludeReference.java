@@ -8,6 +8,11 @@ import dev.verloren.midnight.psi.CompactIncludeDeclarationImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Resolves the string literal in an {@code include "path.compact";} statement to the target {@link dev.verloren.midnight.psi.CompactFile}.
+ *
+ * <p>Enables Ctrl+Click navigation directly from the include path string to the target file.</p>
+ */
 public class CompactIncludeReference extends PsiReferenceBase<CompactIncludeDeclarationImpl> {
 
   public CompactIncludeReference(@NotNull CompactIncludeDeclarationImpl element, @NotNull TextRange range) {

@@ -9,6 +9,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Factory creating Structure View builders for Compact files.
+ */
 public class CompactStructureViewFactory implements PsiStructureViewFactory {
   @Override
   public @Nullable StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {

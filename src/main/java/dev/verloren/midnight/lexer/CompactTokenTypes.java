@@ -4,6 +4,19 @@ package dev.verloren.midnight.lexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 
+/**
+ * Static registry of all lexical token types recognised in Compact source code.
+ *
+ * <p>Contains definitions for:
+ * <ul>
+ *   <li><b>Keywords:</b> Compact language keywords such as {@code circuit}, {@code witness}, {@code ledger}, {@code struct}, {@code enum}, {@code contract}.</li>
+ *   <li><b>Builtin Types:</b> Primitive type keywords such as {@code Boolean}, {@code Field}, {@code Uint}, {@code Bytes}, {@code Vector}.</li>
+ *   <li><b>Literals:</b> Boolean, numeric (decimal, hex, binary, octal), version, and string literals.</li>
+ *   <li><b>Operators & Delimiters:</b> Arithmetic, relational, logical, assignment, and punctuation tokens.</li>
+ *   <li><b>Comments & Whitespace:</b> Line and block comments, whitespace, and lexical error tokens.</li>
+ * </ul>
+ * </p>
+ */
 public final class CompactTokenTypes {
 
   public static final IElementType INVALID_VERSION = new CompactTokenType("INVALID_VERSION");

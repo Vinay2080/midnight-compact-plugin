@@ -6,6 +6,13 @@ import org.jspecify.annotations.NonNull;
 
 import javax.swing.*;
 
+/**
+ * Represents the Compact source file type ({@code .compact}) in IntelliJ IDEA.
+ *
+ * <p>Binds the file extension to {@link CompactLanguage#INSTANCE} and provides
+ * file metadata, descriptions, and the Midnight file icon displayed in the project tree
+ * and editor tabs.</p>
+ */
 public class CompactFileType extends LanguageFileType {
 
   public static final CompactFileType INSTANCE = new CompactFileType();

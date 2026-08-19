@@ -12,6 +12,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+/**
+ * Resolves imported module identifiers and selectively imported symbols in Compact import declarations.
+ *
+ * <p>Handles two cases:
+ * <ul>
+ *   <li>{@link Kind#MODULE}: Resolves the module name in {@code import ModuleName;} to a {@link dev.verloren.midnight.psi.CompactModuleDefinition}.</li>
+ *   <li>{@link Kind#IMPORT_ELEMENT}: Resolves the source identifier in {@code import { Symbol } from ModuleName;} to the exported declaration inside the module.</li>
+ * </ul>
+ * </p>
+ */
 public class CompactImportReference extends CompactReferenceBase {
   private final Kind kind;
 

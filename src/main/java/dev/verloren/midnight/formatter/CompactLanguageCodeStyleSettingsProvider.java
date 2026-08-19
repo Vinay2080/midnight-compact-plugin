@@ -7,6 +7,9 @@ import dev.verloren.midnight.CompactLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Configures the canonical code style settings and indent options (2 spaces) for Compact.
+ */
 public class CompactLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
 
   @Override

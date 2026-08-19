@@ -7,6 +7,12 @@ import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Builds the code formatting model for Compact files (reformat code action {@code Ctrl+Alt+L}).
+ *
+ * <p>Constructs a tree of {@link CompactBlock} instances and defines the canonical {@link SpacingBuilder}
+ * enforcing spacing rules around operators, keywords, punctuation, and delimiters.</p>
+ */
 public class CompactFormattingModelBuilder implements FormattingModelBuilder {
 
   @Override

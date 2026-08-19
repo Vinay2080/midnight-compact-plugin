@@ -70,6 +70,18 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.documentation.CompactDocumentationProvider"/>
 
+        <lang.commenter
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactCommenter"/>
+
+        <lang.braceMatcher
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactPairedBraceMatcher"/>
+
+        <lang.quoteHandler
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactQuoteHandler"/>
+
 
         <localInspection
                 language="Compact"

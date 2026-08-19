@@ -12,6 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * Factory and static registry for {@link CompactSymbol} instances.
+ *
+ * <p>Contains predefined instances for Compact's builtin primitive types and
+ * maps {@link dev.verloren.midnight.psi.CompactNamedElement} declarations to typed {@link CompactSymbol} models.</p>
+ */
 public final class CompactSymbols {
   private static final List<CompactBuiltinTypeSymbol> BUILTIN_TYPES = List.of(
           new CompactBuiltinTypeSymbol("Boolean", CompactPrimitiveType.BOOLEAN),

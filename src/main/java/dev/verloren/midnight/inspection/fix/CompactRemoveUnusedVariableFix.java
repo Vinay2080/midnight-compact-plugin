@@ -8,6 +8,11 @@ import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.CompactConstBindingImpl;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Quick-fix for removing unused local {@code const} variable bindings.
+ *
+ * <p>Deletes the containing {@code const} statement from the AST when triggered by the user.</p>
+ */
 public class CompactRemoveUnusedVariableFix implements LocalQuickFix {
   private final String variableName;
 

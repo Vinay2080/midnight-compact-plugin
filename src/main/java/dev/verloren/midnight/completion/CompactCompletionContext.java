@@ -8,6 +8,13 @@ import dev.verloren.midnight.psi.CompactMemberExprImpl;
 import dev.verloren.midnight.psi.CompactTypeReferenceImpl;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Context classifier determining the semantic role of the cursor position during code completion.
+ *
+ * <p>Inspects preceding AST tokens and containing PSI elements to distinguish between
+ * keyword positions, type positions (after {@code :}, {@code as}, {@code <}), member access (after {@code .}),
+ * and general value expressions.</p>
+ */
 public final class CompactCompletionContext {
   private CompactCompletionContext() {
   }

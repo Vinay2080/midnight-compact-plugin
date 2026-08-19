@@ -9,6 +9,12 @@ import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Validates proposed identifier names during rename refactoring in Compact source files.
+ *
+ * <p>Ensures that new names are valid Compact identifiers and prevents renaming declarations
+ * to reserved language keywords (e.g. {@code circuit}, {@code witness}, {@code ledger}).</p>
+ */
 public class CompactNamesValidator implements NamesValidator {
   @Override
   public boolean isKeyword(@NotNull String name, @Nullable Project project) {

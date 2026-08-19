@@ -1,6 +1,7 @@
 package dev.verloren.midnight.findUsages;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
@@ -142,5 +143,53 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
     assertNotNull(structField);
     Collection<UsageInfo> usages = myFixture.findUsages(structField);
     assertEquals(1, usages.size());
+  }
+
+  public void testUseScopeDifferentiation() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    circuit <caret>mint(amount: Uint<32>) {
+                      const local_var = amount;
+                    }
+                    """
+    );
+    PsiElement element = myFixture.getElementAtCaret();
+    CompactNamedElement circuit = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
+    assertNotNull(circuit);
+    assertTrue("Top-level circuit should have project useScope",
+            circuit.getUseScope() instanceof com.intellij.psi.search.GlobalSearchScope);
+
+    CompactNamedElement param = PsiTreeUtil.findChildOfType(circuit, dev.verloren.midnight.psi.CompactPatternImpl.class);
+    assertNotNull(param);
+    assertEquals("amount", param.getName());
+    assertTrue("Parameter should have LocalSearchScope",
+            param.getUseScope() instanceof com.intellij.psi.search.LocalSearchScope);
+  }
+
+  public void testFindUsagesCrossFile() {
+    myFixture.addFileToProject("included.compact",
+            """
+                    circuit helper(): Void {}
+                    """
+    );
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    include "included.compact";
+                    circuit main(): Void {
+                      <caret>helper();
+                      helper();
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    PsiElement target = ref.resolve();
+    assertNotNull(target);
+    assertTrue(target instanceof dev.verloren.midnight.psi.CompactCircuitDefinition);
+    CompactNamedElement helperDecl = (CompactNamedElement) target;
+    assertEquals("helper", helperDecl.getName());
+
+    Collection<UsageInfo> usages = myFixture.findUsages(helperDecl);
+    assertEquals(2, usages.size());
   }
 }

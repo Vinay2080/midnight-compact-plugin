@@ -11,6 +11,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * Root PSI element representing a complete Compact source file ({@code .compact}).
+ *
+ * <p>Extends {@link PsiFileBase} and serves as the top-level container for all
+ * top-level declarations, imports, pragmas, and include statements in a Compact file.</p>
+ */
 public class CompactFile extends PsiFileBase {
 
   public CompactFile(@NotNull FileViewProvider viewProvider) {

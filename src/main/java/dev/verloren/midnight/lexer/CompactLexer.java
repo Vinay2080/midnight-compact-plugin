@@ -3,11 +3,28 @@ package dev.verloren.midnight.lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import dev.verloren.midnight.parser.CompactParserDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * Handwritten, stateless lexer for the Compact smart contract language.
+ *
+ * <p>Extends IntelliJ's {@link LexerBase} and tokenizes an input character buffer
+ * into atomic {@link IElementType} tokens. The lexer is invoked during syntax highlighting,
+ * AST building in {@link CompactParserDefinition}, and word scanning for Find Usages.</p>
+ *
+ * <p><b>Lexing Strategy:</b>
+ * <ul>
+ *   <li><b>Statelessness:</b> Returns {@code 0} for {@link #getState()} because Compact tokenization is context-free at the lexical level.</li>
+ *   <li><b>Identifiers & Keywords:</b> Scans alphanumeric words and disambiguate against static lookup maps ({@code KEYWORDS}, {@code BUILTIN_TYPES}, {@code BOOLEAN_LITERALS}).</li>
+ *   <li><b>Numerics & SemVer:</b> Parses numeric literals (0x hex, 0b binary, 0o octal, decimal) and semantic version literals (e.g., in {@code pragma} statements).</li>
+ *   <li><b>Comments:</b> Line comments ({@code //}) and block comments ({@code /* ... *&#47;}). Rejects nested block comments as {@link CompactTokenTypes#UNTERMINATED_BLOCK_COMMENT}.</li>
+ * </ul>
+ * </p>
+ */
 public final class CompactLexer extends LexerBase {
 
   private static final Map<String, IElementType> KEYWORDS = Map.ofEntries(
@@ -300,7 +317,7 @@ public final class CompactLexer extends LexerBase {
 
     while (position < endOffset && buffer.charAt(position) == '.') {
       if (position + 1 < endOffset && buffer.charAt(position + 1) == '.') {
-        // Range operator '..' follows - stop parsing decimal/version number here!
+        // Range operator '. .' follows - stop parsing decimal/version number here!
         break;
       }
       isVersion = true;

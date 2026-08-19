@@ -18,6 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * Code completion provider for Compact smart contracts.
+ *
+ * <p>Extends {@link CompletionContributor} and classifies the caret context via
+ * {@link CompactCompletionContext#classify(PsiElement)} into keywords, types, values,
+ * or members, populating the {@link CompletionResultSet} with contextually valid lookup items.</p>
+ */
 public class CompactCompletionContributor extends CompletionContributor {
   private static final String[] DECLARATION_KEYWORDS = {
           "pragma", "include", "import", "export", "module", "contract", "struct", "enum", "type", "ledger", "witness", "constructor", "circuit"

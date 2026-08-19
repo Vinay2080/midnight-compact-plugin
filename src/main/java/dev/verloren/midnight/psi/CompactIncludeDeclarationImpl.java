@@ -1,21 +1,28 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.reference.CompactIncludeReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
+/**
+ * PSI representation of a Compact {@code include "filename.compact";} declaration.
+ *
+ * <p>Resolves the target Compact file relative to the containing directory or project
+ * content roots. Results are cached via {@link CachedValuesManager} tied to
+ * {@link PsiModificationTracker#MODIFICATION_COUNT}.</p>
+ */
 public class CompactIncludeDeclarationImpl extends CompactPsiElement implements CompactIncludeDeclaration {
   public CompactIncludeDeclarationImpl(@NotNull ASTNode node) {
     super(node);
@@ -51,6 +58,12 @@ public class CompactIncludeDeclarationImpl extends CompactPsiElement implements 
   }
 
   public @Nullable CompactFile resolveIncludedFile() {
+    return CachedValuesManager.getCachedValue(this, () ->
+        CachedValueProvider.Result.create(doResolveIncludedFile(), PsiModificationTracker.MODIFICATION_COUNT)
+    );
+  }
+
+  private @Nullable CompactFile doResolveIncludedFile() {
     String path = getIncludePath();
     if (path == null || path.isBlank()) {
       return null;
@@ -86,16 +99,16 @@ public class CompactIncludeDeclarationImpl extends CompactPsiElement implements 
           }
         }
       }
-    }
 
-    // 3. Fallback: Search by file name in project scope
-    String fileName = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
-    Collection<VirtualFile> virtualFiles = FilenameIndex.getVirtualFilesByName(fileName, GlobalSearchScope.allScope(getProject()));
-    for (VirtualFile vf : virtualFiles) {
-      if (vf.isValid()) {
-        PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vf);
-        if (psiFile instanceof CompactFile && psiFile != containingFile) {
-          return (CompactFile) psiFile;
+      // 3. Project content root relative path
+      VirtualFile[] contentRoots = ProjectRootManager.getInstance(getProject()).getContentRoots();
+      for (VirtualFile root : contentRoots) {
+        VirtualFile targetVirtualFile = root.findFileByRelativePath(path);
+        if (targetVirtualFile != null && targetVirtualFile.isValid()) {
+          PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(targetVirtualFile);
+          if (psiFile instanceof CompactFile && psiFile != containingFile) {
+            return (CompactFile) psiFile;
+          }
         }
       }
     }

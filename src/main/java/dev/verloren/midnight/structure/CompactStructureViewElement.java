@@ -19,6 +19,17 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Tree node adapter for Compact PSI elements displayed in the Structure View tool window.
+ *
+ * <p>Implements {@link StructureViewTreeElement} and {@link Navigatable} to provide:
+ * <ul>
+ *   <li><b>Presentable Text:</b> Formatted labels for circuits, witnesses, structs, fields, and modules.</li>
+ *   <li><b>Icons:</b> Specific IntelliJ standard icons reflecting element semantics.</li>
+ *   <li><b>Child Elements:</b> Hierarchical children for modules, contracts, structs, and enums.</li>
+ * </ul>
+ * </p>
+ */
 public class CompactStructureViewElement implements StructureViewTreeElement, Navigatable {
   private final PsiElement element;
 

@@ -5,6 +5,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Base PSI element for all Compact syntax nodes.
+ *
+ * <p>Extends {@link ASTWrapperPsiElement} and provides visitor dispatching
+ * for {@link CompactVisitor} and standardized reference array handling.</p>
+ */
 public class CompactPsiElement extends ASTWrapperPsiElement {
   public CompactPsiElement(@NotNull ASTNode node) {
     super(node);

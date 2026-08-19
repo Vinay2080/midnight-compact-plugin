@@ -10,6 +10,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * PSI-backed implementation of {@link CompactScope}.
+ *
+ * <p>Wraps an owner {@link PsiElement} and delegates symbol resolution and visibility
+ * queries to {@link dev.verloren.midnight.resolve.CompactResolveUtil} and {@link CompactScopes}.</p>
+ */
 public final class CompactPsiScope implements CompactScope {
   private final PsiElement owner;
   private final CompactScopeKind kind;

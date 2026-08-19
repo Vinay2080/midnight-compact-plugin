@@ -15,14 +15,44 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/**
+ * Core symbol resolution engine and lexical scope walker for the Compact language plugin.
+ *
+ * <p>Implements symbol lookup for Go to Declaration, Code Completion, Rename Refactoring,
+ * Find Usages, and semantic code inspections.</p>
+ *
+ * <p><b>Resolution Architecture & Invariants:</b>
+ * <ol>
+ *   <li><b>Namespace Isolation:</b> Strictly separates {@link Namespace#VALUE} (variables, parameters, circuits, witnesses, ledger state) from {@link Namespace#TYPE} (structs, enums, aliases, generic parameters, builtins).</li>
+ *   <li><b>Innermost Lexical Shadowing:</b> Scope layers are visited from innermost block scopes outward to module, file, imports, includes, and prefixes. A matching local declaration shadows identically named outer declarations.</li>
+ *   <li><b>Forward-Reference Safety in Blocks:</b> Within block scopes (functions, circuits, loops), only declarations whose offset precedes the reference site are visible.</li>
+ *   <li><b>Recursive Include Resolution:</b> Recursively resolves included files with cycle detection to prevent stack overflows on circular includes.</li>
+ *   <li><b>Module Visibility:</b> Symbols inside modules are only visible externally if exported via {@code export} or listed in an {@code export { ... }} form.</li>
+ * </ol>
+ * </p>
+ */
 public final class CompactResolveUtil {
   private CompactResolveUtil() {
   }
 
+  /**
+   * Resolves an identifier in the VALUE namespace visible from the specified PSI site.
+   *
+   * @param name  identifier text to resolve
+   * @param place the PSI context where the reference occurs
+   * @return list of matching declarations (first match represents the innermost shadowing declaration)
+   */
   public static @NotNull List<CompactNamedElement> resolveValue(@NotNull String name, @NotNull PsiElement place) {
     return resolve(name, place, Namespace.VALUE);
   }
 
+  /**
+   * Resolves an identifier in the TYPE namespace visible from the specified PSI site.
+   *
+   * @param name  type identifier text to resolve
+   * @param place the PSI context where the reference occurs
+   * @return list of matching type declarations
+   */
   public static @NotNull List<CompactNamedElement> resolveType(@NotNull String name, @NotNull PsiElement place) {
     return resolve(name, place, Namespace.TYPE);
   }
@@ -192,14 +222,19 @@ public final class CompactResolveUtil {
 
   private static @NotNull List<List<CompactNamedElement>> collectDeclarationLayers(@NotNull PsiElement place, @NotNull Namespace namespace) {
     List<List<CompactNamedElement>> layers = new ArrayList<>();
+    // Walk outward from the direct parent to the root file.
+    // Each scope level forms a distinct layer to enforce innermost lexical shadowing.
     for (PsiElement scope = place.getParent(); scope != null; scope = scope.getParent()) {
       if (isLocalScope(scope)) {
+        // Only consider local declarations placed BEFORE the reference to enforce forward declaration rules
         layers.add(collectNamedBefore(scope, place, namespace));
       }
       if (scope instanceof CompactModuleDefinition) {
+        // Enclosing module members
         layers.add(collectModuleDeclarations((CompactModuleDefinition) scope, namespace, place));
       }
       if (scope instanceof CompactFile) {
+        // File-level top declarations, then selective imports, then included files
         layers.add(collectFileDeclarations((CompactFile) scope, namespace, place));
         layers.add(collectSelectionImports((CompactFile) scope, namespace));
         layers.add(collectIncludedDeclarations((CompactFile) scope, namespace, place));
