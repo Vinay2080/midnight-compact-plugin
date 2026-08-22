@@ -34,37 +34,17 @@ public class CompactImportReference extends CompactReferenceBase {
 
   @Override
   protected ResolveResult @NotNull [] resolveInner() {
-    if (kind == Kind.FILE && getElement() instanceof CompactImportDeclarationImpl importDecl) {
-      CompactFile file = importDecl.resolveImportedFile();
-      if (file != null) {
-        return toResults(List.of(file));
-      }
-      String importPath = importDecl.getImportPath();
-      if (dev.verloren.midnight.resolve.npm.CompactNpmResolver.isExternalPackagePath(importPath)) {
-        PsiElement target = dev.verloren.midnight.resolve.npm.CompactNpmResolver.resolvePackageTarget(importDecl);
-        if (target != null) {
-          return toResults(List.of(target));
-        }
-      }
-      return ResolveResult.EMPTY_ARRAY;
+    if (kind == Kind.FILE && getElement() instanceof CompactImportDeclarationImpl) {
+      CompactFile file = ((CompactImportDeclarationImpl) getElement()).resolveImportedFile();
+      return file == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(file));
     }
-    if (kind == Kind.MODULE && getElement() instanceof CompactImportDeclarationImpl importDecl) {
+    if (kind == Kind.MODULE && getElement() instanceof CompactImportDeclarationImpl) {
       CompactModuleDefinition module = CompactResolveUtil.findModule(getElement(), getValue());
       if (module != null) {
         return toResults(List.of(module));
       }
-      CompactFile file = importDecl.resolveImportedFile();
-      if (file != null) {
-        return toResults(List.of(file));
-      }
-      String importPath = importDecl.getImportPath();
-      if (dev.verloren.midnight.resolve.npm.CompactNpmResolver.isExternalPackagePath(importPath)) {
-        PsiElement target = dev.verloren.midnight.resolve.npm.CompactNpmResolver.resolvePackageTarget(importDecl);
-        if (target != null) {
-          return toResults(List.of(target));
-        }
-      }
-      return ResolveResult.EMPTY_ARRAY;
+      CompactFile file = ((CompactImportDeclarationImpl) getElement()).resolveImportedFile();
+      return file == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(file));
     }
     if (kind == Kind.IMPORT_ELEMENT && getElement() instanceof CompactImportElementImpl) {
       CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) getElement());

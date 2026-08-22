@@ -92,17 +92,6 @@ public final class CompactSymbols {
     if (declaration instanceof CompactGenericParameterImpl) return CompactSymbolKind.GENERIC_PARAMETER;
     if (declaration instanceof CompactModuleDefinition) return CompactSymbolKind.MODULE;
     if (declaration instanceof CompactImportElementImpl) return CompactSymbolKind.IMPORT_ALIAS;
-    if (declaration instanceof dev.verloren.midnight.resolve.npm.CompactNpmSymbolElement npmSymbol) {
-      return switch (npmSymbol.getKind()) {
-        case FUNCTION -> CompactSymbolKind.CIRCUIT;
-        case CONST, LET, VAR -> CompactSymbolKind.LOCAL_BINDING;
-        case CLASS -> CompactSymbolKind.STRUCT;
-        case ENUM -> CompactSymbolKind.ENUM;
-        case INTERFACE, TYPE_ALIAS -> CompactSymbolKind.TYPE_ALIAS;
-        case NAMESPACE -> CompactSymbolKind.MODULE;
-        default -> CompactSymbolKind.UNKNOWN;
-      };
-    }
     return CompactSymbolKind.UNKNOWN;
   }
 
@@ -110,9 +99,6 @@ public final class CompactSymbols {
     if (declaration instanceof CompactImportElementImpl) {
       CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) declaration);
       return target == null ? CompactSymbolNamespace.UNKNOWN : namespaceOf(target);
-    }
-    if (declaration instanceof dev.verloren.midnight.resolve.npm.CompactNpmSymbolElement npmSymbol) {
-      return npmSymbol.getSymbolNamespace();
     }
     if (declaration instanceof CompactModuleDefinition) {
       return CompactSymbolNamespace.MODULE;

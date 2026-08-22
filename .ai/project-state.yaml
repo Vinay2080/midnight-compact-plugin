@@ -19,19 +19,18 @@ phases:
   structure_view: complete
   documentation_provider: complete
   cross_file_resolution: complete
-  npm_dependency_resolution: complete
   standard_library_indexing: planned
   compiler_integration: planned
 
 tests:
-  last_known_passing: 280
+  last_known_passing: 267
   failures: 0
   skipped: 0
   suites:
     lexer: 15 (LexerTest: { 12, PragmaTest: 3) }
     parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
     psi: 3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)
-    resolve: 43 (CompactResolveTest: 18, CompactCrossFileResolveTest: 12, CompactNpmDependencyResolveTest: 13)
+    resolve: 30 (CompactResolveTest: 18, CompactCrossFileResolveTest: 12)
     reference: 6 (CompactReferenceTest: 6)
     completion: 5 (CompactCompletionTest: 5)
     rename: 9 (CompactRenameTest: 9)
