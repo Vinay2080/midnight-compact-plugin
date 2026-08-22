@@ -188,34 +188,6 @@ public class CompactBlock extends AbstractBlock {
       }
     }
 
-    // Inside IMPORT_FORM
-    if (parentType == CompactElementTypes.IMPORT_FORM) {
-      if (type1 == CompactElementTypes.IMPORT_SELECTION) {
-        return Spacing.createSpacing(1, 1, 0, false, 0);
-      }
-    }
-
-    // Inside IMPORT_SELECTION
-    if (parentType == CompactElementTypes.IMPORT_SELECTION) {
-      if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
-      }
-      if (type1 == CompactTokenTypes.LBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 1);
-      }
-      if (type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 0);
-      }
-      if (type1 == CompactTokenTypes.RBRACE && type2 == CompactTokenTypes.FROM) {
-        return Spacing.createSpacing(1, 1, 0, false, 0);
-      }
-      if (type1 == CompactElementTypes.IMPORT_ELEMENT
-          || type1 == CompactTokenTypes.COMMA
-          || CompactTokenSets.COMMENTS.contains(type1)) {
-        return Spacing.createSpacing(1, 1, 0, true, 1);
-      }
-    }
-
     // Generics parameter and argument lists (and BUILTIN_TYPE, TYPE_REFERENCE, DEFAULT_EXPR, SLICE_EXPR angle brackets)
     if (parentType == CompactElementTypes.GENERIC_PARAMETER_LIST
         || parentType == CompactElementTypes.GENERIC_ARGUMENT_LIST
@@ -325,12 +297,11 @@ public class CompactBlock extends AbstractBlock {
       return Indent.getNormalIndent();
     }
 
-    // Inside STRUCT_DECLARATION, ENUM_DECLARATION, CONTRACT_DECLARATION, MODULE_DEFINITION, IMPORT_SELECTION
+    // Inside STRUCT_DECLARATION, ENUM_DECLARATION, CONTRACT_DECLARATION, MODULE_DEFINITION
     if (parentType == CompactElementTypes.STRUCT_DECLARATION
         || parentType == CompactElementTypes.ENUM_DECLARATION
         || parentType == CompactElementTypes.CONTRACT_DECLARATION
-        || parentType == CompactElementTypes.MODULE_DEFINITION
-        || parentType == CompactElementTypes.IMPORT_SELECTION) {
+        || parentType == CompactElementTypes.MODULE_DEFINITION) {
       if (isInsideBraces(parent, child)) {
         return Indent.getNormalIndent();
       }
@@ -377,8 +348,7 @@ public class CompactBlock extends AbstractBlock {
         || type == CompactElementTypes.STRUCT_DECLARATION
         || type == CompactElementTypes.ENUM_DECLARATION
         || type == CompactElementTypes.CONTRACT_DECLARATION
-        || type == CompactElementTypes.MODULE_DEFINITION
-        || type == CompactElementTypes.IMPORT_SELECTION) {
+        || type == CompactElementTypes.MODULE_DEFINITION) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);
@@ -391,8 +361,7 @@ public class CompactBlock extends AbstractBlock {
         || type == CompactElementTypes.STRUCT_DECLARATION
         || type == CompactElementTypes.ENUM_DECLARATION
         || type == CompactElementTypes.CONTRACT_DECLARATION
-        || type == CompactElementTypes.MODULE_DEFINITION
-        || type == CompactElementTypes.IMPORT_SELECTION) {
+        || type == CompactElementTypes.MODULE_DEFINITION) {
       return myNode.findChildByType(CompactTokenTypes.RBRACE) == null;
     }
     if (type == CompactElementTypes.SIMPLE_PARAMETER_LIST

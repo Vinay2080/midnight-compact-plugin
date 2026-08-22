@@ -23,7 +23,7 @@ phases:
   compiler_integration: planned
 
 tests:
-  last_known_passing: 267
+  last_known_passing: 254
   failures: 0
   skipped: 0
   suites:
@@ -39,7 +39,7 @@ tests:
     symbol: 3 (CompactSymbolTest: 3)
     type_inference: 15 (CompactTypeInferenceTest: 15)
     inspections: 69 (CompactInspectionTest: 69)
-    formatter: 52 (CompactFormatterTest: 52)
+    formatter: 39 (CompactFormatterTest: 39)
     structure_view: 9 (CompactStructureViewTest: 9)
     documentation: 9 (CompactDocumentationTest: 9)
     highlighter: 12 (CompactHighlightingTest: 11, CompactColorSettingsPageTest: 1)
