@@ -84,7 +84,7 @@ Last Updated: August 2026
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **254 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
+- **Total Unit Tests**: **267 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
   - `CompactHighlightingTest`: 11 tests
@@ -94,7 +94,7 @@ Last Updated: August 2026
   - `CompactInspectionTest`: 69 tests
   - `CompactDocumentationTest`: 9 tests
   - `CompactStructureViewTest`: 9 tests
-  - `CompactFormatterTest`: 39 tests
+  - `CompactFormatterTest`: 52 tests
   - `CompactTypeInferenceTest`: 15 tests
   - `LexerTest` + `PragmaTest`: 15 tests
   - Parser Tests (`DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`): 17 tests

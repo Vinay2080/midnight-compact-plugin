@@ -110,6 +110,9 @@ public class CompactFormattingModelBuilder implements FormattingModelBuilder {
         .before(CompactTokenTypes.ELSE).spaces(1)
 
         // Braces
-        .before(CompactTokenTypes.LBRACE).spaces(1);
+        .before(CompactTokenTypes.LBRACE).spaces(1)
+
+        // Import selection
+        .after(dev.verloren.midnight.parser.CompactElementTypes.IMPORT_SELECTION).spaces(1);
   }
 }

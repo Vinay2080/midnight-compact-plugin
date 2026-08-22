@@ -762,4 +762,209 @@ public class CompactFormatterTest extends BasePlatformTestCase {
         """
     );
   }
+
+  // =========================================================================
+  // Category J: Import Declarations Formatting
+  // =========================================================================
+
+  public void testFormatSingleLineImportMultipleSymbols() {
+    doFormatTest(
+        "import { Foo, Bar } from \"module\";\n",
+        "import { Foo, Bar } from \"module\";\n"
+    );
+  }
+
+  public void testFormatSingleLineImportUnformatted() {
+    doFormatTest(
+        "import   {   Foo  ,   Bar   }   from   \"module\"   ;\n",
+        "import { Foo, Bar } from \"module\";\n"
+    );
+  }
+
+  public void testFormatSingleLineImportSingleSymbol() {
+    doFormatTest(
+        "import { Foo } from \"module\";\n",
+        "import { Foo } from \"module\";\n"
+    );
+  }
+
+  public void testFormatSingleLineImportWithAliases() {
+    doFormatTest(
+        "import { Foo as MyFoo, Bar as MyBar } from \"module\";\n",
+        "import { Foo as MyFoo, Bar as MyBar } from \"module\";\n"
+    );
+  }
+
+  public void testFormatMultilineImportMultipleSymbols() {
+    doFormatTest(
+        """
+        import {
+        CompactTypeBytes,
+        CompactTypeVector,
+        convertFieldToBytes,
+        persistentHash
+        } from '@midnight-ntwrk/compact-runtime';
+        """,
+        """
+        import {
+          CompactTypeBytes,
+          CompactTypeVector,
+          convertFieldToBytes,
+          persistentHash
+        } from '@midnight-ntwrk/compact-runtime';
+        """
+    );
+  }
+
+  public void testFormatMultilineImportSingleSymbol() {
+    doFormatTest(
+        """
+        import {
+        Foo
+        } from "module";
+        """,
+        """
+        import {
+          Foo
+        } from "module";
+        """
+    );
+  }
+
+  public void testFormatMultilineImportPackage() {
+    doFormatTest(
+        """
+        import {
+        Foo,
+        Bar
+        } from "vitest";
+        """,
+        """
+        import {
+          Foo,
+          Bar
+        } from "vitest";
+        """
+    );
+  }
+
+  public void testFormatMultilineImportRelative() {
+    doFormatTest(
+        """
+        import {
+        Foo,
+        Bar
+        } from "./file.compact";
+        """,
+        """
+        import {
+          Foo,
+          Bar
+        } from "./file.compact";
+        """
+    );
+  }
+
+  public void testFormatMultilineImportWithAliases() {
+    doFormatTest(
+        """
+        import {
+        Foo as MyFoo,
+        Bar as MyBar
+        } from "module";
+        """,
+        """
+        import {
+          Foo as MyFoo,
+          Bar as MyBar
+        } from "module";
+        """
+    );
+  }
+
+  public void testFormatMultilineImportTrailingComma() {
+    doFormatTest(
+        """
+        import {
+        Foo,
+        Bar,
+        } from "module";
+        """,
+        """
+        import {
+          Foo,
+          Bar,
+        } from "module";
+        """
+    );
+  }
+
+  public void testFormatMultilineImportFollowedByOtherDeclarations() {
+    doFormatTest(
+        """
+        import {
+        Foo,
+        Bar
+        } from "./file.compact";
+        
+        export ledger round: Counter;
+        
+        export circuit get(): Field {
+        return 1;
+        }
+        """,
+        """
+        import {
+          Foo,
+          Bar
+        } from "./file.compact";
+        
+        export ledger round: Counter;
+        
+        export circuit get(): Field {
+          return 1;
+        }
+        """
+    );
+  }
+
+  public void testFormatMultilineImportInsideModule() {
+    doFormatTest(
+        """
+        export module Math {
+        import {
+        Foo,
+        Bar
+        } from "module";
+        
+        export circuit add(a: Field, b: Field): Field {
+        return a + b;
+        }
+        }
+        """,
+        """
+        export module Math {
+          import {
+            Foo,
+            Bar
+          } from "module";
+        
+          export circuit add(a: Field, b: Field): Field {
+            return a + b;
+          }
+        }
+        """
+    );
+  }
+
+  public void testFormatMultilineImportIdempotence() {
+    doIdempotenceTest(
+        """
+        import {
+          Foo,
+          Bar
+        } from "vitest";
+        """
+    );
+  }
 }
