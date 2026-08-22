@@ -448,6 +448,22 @@ public class CompactHighlightingAnnotator implements Annotator {
       }
     } else if (target instanceof CompactGenericParameterImpl) {
       highlight(holder, refExpr, CompactHighlighterColors.TYPE_PARAMETER);
+    } else if (target instanceof dev.verloren.midnight.resolve.npm.CompactNpmSymbolElement npmSymbol) {
+      if (isCall) {
+        highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
+      } else if (npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.CONST
+          || npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.LET
+          || npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.VAR) {
+        highlight(holder, refExpr, CompactHighlighterColors.CONSTANT_USAGE);
+      } else if (npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.TYPE_ALIAS
+          || npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.INTERFACE) {
+        highlight(holder, refExpr, CompactHighlighterColors.TYPE_ALIAS_DECLARATION);
+      } else if (npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.CLASS
+          || npmSymbol.getKind() == dev.verloren.midnight.resolve.npm.CompactNpmSymbolKind.ENUM) {
+        highlight(holder, refExpr, CompactHighlighterColors.STRUCT_DECLARATION);
+      } else {
+        highlight(holder, refExpr, CompactHighlighterColors.IMPORTED_SYMBOL);
+      }
     } else if (isCall) {
       highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
     }

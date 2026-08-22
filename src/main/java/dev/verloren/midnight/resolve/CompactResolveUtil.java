@@ -214,6 +214,15 @@ public final class CompactResolveUtil {
         }
       }
     }
+
+    // 3. Check external npm package (e.g. import { describe } from "vitest")
+    String importPath = importDeclaration.getImportPath();
+    if (dev.verloren.midnight.resolve.npm.CompactNpmResolver.isExternalPackagePath(importPath)) {
+      CompactNamedElement npmElement = dev.verloren.midnight.resolve.npm.CompactNpmResolver.resolveImportedSymbol(importDeclaration, name);
+      if (npmElement != null) {
+        return npmElement;
+      }
+    }
     return null;
   }
 
@@ -400,6 +409,9 @@ public final class CompactResolveUtil {
     if (declaration instanceof CompactImportElementImpl) {
       CompactNamedElement target = resolveImportElementSource((CompactImportElementImpl) declaration);
       return target != null && isInNamespace(target, namespace, place);
+    }
+    if (declaration instanceof dev.verloren.midnight.resolve.npm.CompactNpmSymbolElement npmSymbol) {
+      return npmSymbol.isInNamespace(namespace);
     }
     if (namespace == Namespace.TYPE) {
       return declaration instanceof CompactTypeDefinition

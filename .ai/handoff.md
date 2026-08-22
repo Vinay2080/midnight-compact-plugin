@@ -1,31 +1,28 @@
 # Current Handoff
 
 ## Current Feature
-Import Formatter Indentation & Multiline Import Alignment.
+External npm Dependency Resolution for Compact Smart Contracts.
 
 ## Status
-Fixed Compact code formatting for multiline and single-line import declarations. Multiline imports now correctly indent imported symbol elements inside `{ ... }` by 1 level, align the closing `}` with `import`, and position the `from <module>;` clause on the same line following `}` with canonical spacing. All 267 automated unit tests are passing (100% success rate across 26 test suites).
+Implemented first-class external npm dependency resolution for regular and scoped npm packages (e.g. `vitest`, `@midnight-ntwrk/compact-runtime`) inside `node_modules`. Properly resolves package entries via `package.json` (`types`, `typings`, `exports`, `module`, `main`), extracts exported symbols from `.d.ts`, `.ts`, and `.js` declarations with full re-export support (`export * from '...'`, `export { ... } from '...'`, ambient `declare module '...'`), differentiates valid from non-existent imported symbols without suppressing inspections, preserves local Compact cross-file resolution, and enables reference navigation (Go To Declaration). All 280 automated unit tests passing (100% success rate across 27 test suites).
 
 ## Recently Completed
-- **Import Block Indentation & Incompleteness Handling**:
-  - Updated [`CompactBlock`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/formatter/CompactBlock.java) `computeChildIndent` to recognize `CompactElementTypes.IMPORT_SELECTION`, assigning `Indent.getNormalIndent()` to children inside braces (`IMPORT_ELEMENT`, commas, comments) while maintaining `Indent.getNoneIndent()` for delimiters (`{`, `}`) and the trailing `from` keyword.
-  - Updated `getChildAttributes` and `isIncomplete` in [`CompactBlock`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/formatter/CompactBlock.java) for `IMPORT_SELECTION` to ensure smart enter auto-indentation and proper recovery on unclosed import blocks.
-- **Import Spacing Rules**:
-  - Defined explicit spacing rules in [`CompactBlock`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/formatter/CompactBlock.java) for `IMPORT_FORM` and `IMPORT_SELECTION`:
-    - Exactly 1 space after `IMPORT_SELECTION` before module name (`IDENTIFIER` / `STRING_LITERAL`).
-    - 1 space on single-line imports after `{` and before `}`, while preserving user linebreaks on multiline imports (`keepLineBreaks = true`).
-    - 0 spaces before `,` and 1 space / preserved newline after `,`.
-    - Exactly 1 space between `}` and `from` on the same line.
-  - Added `.after(CompactElementTypes.IMPORT_SELECTION).spaces(1)` in [`CompactFormattingModelBuilder`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/formatter/CompactFormattingModelBuilder.java).
-- **Comprehensive Formatter Test Suite (Category J)**:
-  - Added 13 new unit tests to [`CompactFormatterTest`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/formatter/CompactFormatterTest.java) covering:
-    - Single-line imports (single symbol, multiple symbols, unformatted spacing, imported aliases).
-    - Multiline imports (single symbol, multiple symbols, package paths, relative `./` file paths, imported aliases, trailing commas, imports inside modules).
-    - Multiline imports followed by other top-level declarations (ledgers, circuits).
-    - Idempotence verification for formatted imports.
+- **Subsystem Architecture (`dev.verloren.midnight.resolve.npm.*`)**:
+  - [`CompactNpmPackageSpec`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/npm/CompactNpmPackageSpec.java): Robust parsing of regular and scoped package names and subpaths.
+  - [`CompactNpmPackageFinder`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/npm/CompactNpmPackageFinder.java): Upward directory walker from file directory, project content roots, project base path, and `@types/*` packages.
+  - [`CompactNpmPackageMetadata`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/npm/CompactNpmPackageMetadata.java): Reads `package.json`, resolves conditional exports (`exports["."]`, `"types"`, `"import"`, `"default"`), `types`/`typings`, `module`, `main`, and companion `.d.ts` alongside `.js`.
+  - [`CompactNpmSymbolExtractor`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/npm/CompactNpmSymbolExtractor.java): Fast, resilient parser extracting exported symbols (functions, constants, classes, interfaces, types, enums, ambient modules, re-exports) with cycle guards.
+  - [`CompactNpmSymbolElement`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/npm/CompactNpmSymbolElement.java): Synthetic PSI declaration element implementing `CompactNamedElement` for references, inspections, and declaration offset navigation.
+  - [`CompactNpmResolver`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/npm/CompactNpmResolver.java): Integration facade with real-time `CachedValuesManager` caching on `PsiModificationTracker.MODIFICATION_COUNT`.
+- **PSI & Scope Integration**:
+  - Integrated with [`CompactResolveUtil`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/CompactResolveUtil.java) `resolveImportElementSource` and `isInNamespace`.
+  - Integrated with [`CompactImportReference`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/reference/CompactImportReference.java) for package path navigation.
+  - Integrated with [`CompactSymbols`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/symbol/CompactSymbols.java) and [`CompactHighlightingAnnotator`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/highlighter/CompactHighlightingAnnotator.java).
+- **Unit Test Suite (`CompactNpmDependencyResolveTest`)**:
+  - 13 comprehensive tests covering valid/invalid local imports, valid/invalid `vitest` imports, valid/invalid scoped `@midnight-ntwrk/compact-runtime` imports, uninstalled packages, multiple symbols, relative vs external coexistence, real-time edit responsiveness, navigation, and ambient declarations.
 
 ## Tests
-- **267/267 tests passing** (0 failures, 0 skipped, 100% success rate across 26 test suites).
+- **280/280 tests passing** (0 failures, 0 skipped, 100% success rate across 27 test suites).
 - Verified via `./gradlew test`.
 
 ## Next Feature Options

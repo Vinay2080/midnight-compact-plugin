@@ -75,6 +75,15 @@ Last Updated: August 2026
   - Full IDE Settings -> Editor -> Color Scheme -> Compact configuration page (`CompactColorSettingsPage`) with comprehensive demo code and interactive sample highlighting.
   - Semantic annotator (`CompactHighlightingAnnotator`) registered in `plugin.xml`.
 
+- **Phase 12: External npm Dependency Resolution**
+  - Designed and implemented clean npm dependency resolution layer under `dev.verloren.midnight.resolve.npm.*`.
+  - Discovers project and parent `node_modules` and content roots (`CompactNpmPackageFinder`).
+  - Supports regular (`vitest`) and scoped (`@midnight-ntwrk/compact-runtime`) packages with subpaths (`CompactNpmPackageSpec`).
+  - Parses `package.json` package metadata (`exports`, `types`, `typings`, `module`, `main`, `compact`, companion `.d.ts` alongside `.js`) via `CompactNpmPackageMetadata`.
+  - Extracts exported symbols, functions, constants, classes, interfaces, types, enums, ambient module blocks (`declare module '...'`), and transitive re-exports (`export * from '...'`, `export { ... } from '...'`) via `CompactNpmSymbolExtractor`.
+  - Creates synthetic `CompactNpmSymbolElement`s implementing `CompactNamedElement` for seamless reference resolution, inspections, namespace separation, and IDE navigation.
+  - Full real-time daemon re-analysis responsiveness via `CachedValuesManager` and `PsiModificationTracker.MODIFICATION_COUNT`.
+
 ### Planned (Future Roadmap)
 - Standard library indexing (`standard-library.compact`, `zkir-v3-library.compact`).
 - Multi-file project indexing (`CompactFileStub` and IntelliJ `StubIndex`).
@@ -84,12 +93,13 @@ Last Updated: August 2026
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **267 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
+- **Total Unit Tests**: **280 passing** (0 failures, 0 skipped, 100% success rate across 27 test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
   - `CompactHighlightingTest`: 11 tests
   - `CompactColorSettingsPageTest`: 1 test
   - `CompactCrossFileResolveTest`: 12 tests
+  - `CompactNpmDependencyResolveTest`: 13 tests
   - `CompactResolveTest`: 18 tests
   - `CompactInspectionTest`: 69 tests
   - `CompactDocumentationTest`: 9 tests
