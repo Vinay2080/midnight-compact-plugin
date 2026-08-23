@@ -23,14 +23,14 @@ phases:
   compiler_integration: planned
 
 tests:
-  last_known_passing: 254
+  last_known_passing: 264
   failures: 0
   skipped: 0
   suites:
     lexer: 15 (LexerTest: { 12, PragmaTest: 3) }
     parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
     psi: 3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)
-    resolve: 30 (CompactResolveTest: 18, CompactCrossFileResolveTest: 12)
+    resolve: 35 (CompactResolveTest: 18, CompactCrossFileResolveTest: 17)
     reference: 6 (CompactReferenceTest: 6)
     completion: 5 (CompactCompletionTest: 5)
     rename: 9 (CompactRenameTest: 9)

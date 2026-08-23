@@ -34,5 +34,7 @@ public class CompactColorSettingsPageTest extends BasePlatformTestCase {
     assertTrue("Demo text should contain circuit_decl tag", demoText.contains("<circuit_decl>"));
     assertTrue("Demo text should contain enum_decl tag", demoText.contains("<enum_decl>"));
     assertTrue("Demo text should contain escape_valid tag", demoText.contains("<escape_valid>"));
+    assertTrue("Demo text should contain doc_tag tag", demoText.contains("<doc_tag>"));
+    assertTrue("Demo text should contain doc_tag_value tag", demoText.contains("<doc_tag_value>"));
   }
 }

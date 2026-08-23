@@ -52,6 +52,8 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
       Map.entry("escape_valid", CompactHighlighterColors.VALID_STRING_ESCAPE),
       Map.entry("escape_invalid", CompactHighlighterColors.INVALID_STRING_ESCAPE),
       Map.entry("doc_comment", CompactHighlighterColors.DOC_COMMENT),
+      Map.entry("doc_tag", CompactHighlighterColors.DOC_COMMENT_TAG),
+      Map.entry("doc_tag_value", CompactHighlighterColors.DOC_COMMENT_TAG_VALUE),
       Map.entry("pragma", CompactHighlighterColors.PRAGMA),
       Map.entry("version", CompactHighlighterColors.VERSION)
   );
@@ -91,7 +93,8 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
     return """
         <pragma>pragma</pragma> <pragma>language_version</pragma> <version>^0.20.0</version>;
 
-        <doc_comment>/// Smart contract for managing decentralized game sessions.</doc_comment>
+        <doc_comment>/// <doc_tag>@description</doc_tag> Smart contract for managing decentralized game sessions.</doc_comment>
+        <doc_comment>/// <doc_tag>@param</doc_tag> <doc_tag_value>player</doc_tag_value> Initial player state</doc_comment>
         import { <import_symbol>Utils</import_symbol> } from './helpers';
 
         <modifier>export</modifier> enum <enum_decl>GameState</enum_decl> {

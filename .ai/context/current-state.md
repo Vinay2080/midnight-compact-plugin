@@ -84,12 +84,12 @@ Last Updated: August 2026
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **254 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
+- **Total Unit Tests**: **264 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
-  - `CompactHighlightingTest`: 11 tests
+  - `CompactHighlightingTest`: 16 tests
   - `CompactColorSettingsPageTest`: 1 test
-  - `CompactCrossFileResolveTest`: 12 tests
+  - `CompactCrossFileResolveTest`: 17 tests
   - `CompactResolveTest`: 18 tests
   - `CompactInspectionTest`: 69 tests
   - `CompactDocumentationTest`: 9 tests

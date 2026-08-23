@@ -37,8 +37,10 @@ public class CompactHighlightingAnnotator implements Annotator {
 
   private static final Set<String> BUILTIN_FUNCTIONS = Set.of(
       "assert", "disclose", "fold", "slice", "pad", "emit", "map",
-      "transientHash", "persistentHash", "transcribe", "publicKey", "degradeToTransient",
-      "default", "some", "none", "left", "right", "merkleTreePathRoot", "merkleTreePathRootNoLeafHash"
+      "transientHash", "persistentHash", "transientCommit", "persistentCommit",
+      "transcribe", "publicKey", "degradeToTransient",
+      "default", "some", "none", "left", "right",
+      "merkleTreePathRoot", "merkleTreePathRootNoLeafHash", "nativeToken", "tokenType"
   );
 
   private static final Set<String> BUILTIN_TYPES = Set.of(
@@ -46,6 +48,7 @@ public class CompactHighlightingAnnotator implements Annotator {
       "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar",
       "Counter", "Set", "Map", "List", "HistoricMerkleTree", "MerkleTree",
       "Kernel", "ContractAddress", "ShieldedCoinInfo", "QualifiedShieldedCoinInfo",
+      "ZswapCoinPublicKey", "ShieldedSendResult",
       "Maybe", "Either", "MerkleTreeDigest", "MerkleTreePath", "MerkleTreePathEntry", "LeafPreimage"
   );
 
@@ -60,13 +63,13 @@ public class CompactHighlightingAnnotator implements Annotator {
     // 1. Comments (Doc comments vs standard comments)
     if (tokenType == CompactTokenTypes.LINE_COMMENT) {
       if (element.getText().startsWith("///")) {
-        highlight(holder, element, CompactHighlighterColors.DOC_COMMENT);
+        highlightDocComment(holder, element);
       }
       return;
     }
     if (tokenType == CompactTokenTypes.BLOCK_COMMENT) {
       if (element.getText().startsWith("/**")) {
-        highlight(holder, element, CompactHighlighterColors.DOC_COMMENT);
+        highlightDocComment(holder, element);
       }
       return;
     }
@@ -115,8 +118,11 @@ public class CompactHighlightingAnnotator implements Annotator {
 
     // 6. Built-in types
     switch (element) {
-      case CompactBuiltinTypeImpl _ -> {
-        highlight(holder, element, CompactHighlighterColors.BUILTIN_TYPE);
+      case CompactBuiltinTypeImpl builtinType -> {
+        PsiElement firstChild = builtinType.getFirstChild();
+        if (firstChild != null) {
+          highlight(holder, firstChild, CompactHighlighterColors.BUILTIN_TYPE);
+        }
         return;
       }
 
@@ -450,6 +456,8 @@ public class CompactHighlightingAnnotator implements Annotator {
       highlight(holder, refExpr, CompactHighlighterColors.TYPE_PARAMETER);
     } else if (isCall) {
       highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
+    } else if (isConstantIdentifier(name)) {
+      highlight(holder, refExpr, CompactHighlighterColors.CONSTANT_USAGE);
     }
   }
 
@@ -571,5 +579,54 @@ public class CompactHighlightingAnnotator implements Annotator {
         .range(range)
         .textAttributes(key)
         .create();
+  }
+
+  private static final java.util.regex.Pattern DOC_TAG_PATTERN =
+      java.util.regex.Pattern.compile("@([a-zA-Z_][a-zA-Z0-9_]*)");
+
+  private static void highlightDocComment(@NotNull AnnotationHolder holder, @NotNull PsiElement element) {
+    highlight(holder, element, CompactHighlighterColors.DOC_COMMENT);
+
+    String text = element.getText();
+    int startOffset = element.getTextRange().getStartOffset();
+    java.util.regex.Matcher matcher = DOC_TAG_PATTERN.matcher(text);
+
+    while (matcher.find()) {
+      int tagStart = matcher.start();
+      int tagEnd = matcher.end();
+      highlightRange(holder, TextRange.create(startOffset + tagStart, startOffset + tagEnd), CompactHighlighterColors.DOC_COMMENT_TAG);
+
+      String tagName = matcher.group(1);
+      if ("param".equals(tagName) || "type".equals(tagName) || "module".equals(tagName)) {
+        int idx = tagEnd;
+        while (idx < text.length() && Character.isWhitespace(text.charAt(idx)) && text.charAt(idx) != '\n' && text.charAt(idx) != '\r') {
+          idx++;
+        }
+        if (idx < text.length() && (Character.isLetter(text.charAt(idx)) || text.charAt(idx) == '_' || text.charAt(idx) == '$')) {
+          int valueStart = idx;
+          while (idx < text.length() && (Character.isLetterOrDigit(text.charAt(idx)) || text.charAt(idx) == '_' || text.charAt(idx) == '$')) {
+            idx++;
+          }
+          int valueEnd = idx;
+          highlightRange(holder, TextRange.create(startOffset + valueStart, startOffset + valueEnd), CompactHighlighterColors.DOC_COMMENT_TAG_VALUE);
+        }
+      }
+    }
+  }
+
+  private static boolean isConstantIdentifier(@NotNull String name) {
+    if (name.length() < 2) {
+      return false;
+    }
+    if (!Character.isUpperCase(name.charAt(0))) {
+      return false;
+    }
+    for (int i = 0; i < name.length(); i++) {
+      char c = name.charAt(i);
+      if (!Character.isUpperCase(c) && !Character.isDigit(c) && c != '_') {
+        return false;
+      }
+    }
+    return !BUILTIN_TYPES.contains(name);
   }
 }

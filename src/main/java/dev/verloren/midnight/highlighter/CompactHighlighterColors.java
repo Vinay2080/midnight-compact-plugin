@@ -121,6 +121,10 @@ public final class CompactHighlighterColors {
       TextAttributesKey.createTextAttributesKey("COMPACT_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
   public static final TextAttributesKey DOC_COMMENT =
       TextAttributesKey.createTextAttributesKey("COMPACT_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
+  public static final TextAttributesKey DOC_COMMENT_TAG =
+      TextAttributesKey.createTextAttributesKey("COMPACT_DOC_COMMENT_TAG", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
+  public static final TextAttributesKey DOC_COMMENT_TAG_VALUE =
+      TextAttributesKey.createTextAttributesKey("COMPACT_DOC_COMMENT_TAG_VALUE", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE);
 
   // =========================================================================
   // 7. Operators & Punctuation
@@ -200,6 +204,8 @@ public final class CompactHighlighterColors {
       new AttributesDescriptor("Comments//Line comment", LINE_COMMENT),
       new AttributesDescriptor("Comments//Block comment", BLOCK_COMMENT),
       new AttributesDescriptor("Comments//Doc comment", DOC_COMMENT),
+      new AttributesDescriptor("Comments//Doc comment tag", DOC_COMMENT_TAG),
+      new AttributesDescriptor("Comments//Doc comment tag value", DOC_COMMENT_TAG_VALUE),
 
       new AttributesDescriptor("Operators & Punctuation//Operator", OPERATOR),
       new AttributesDescriptor("Operators & Punctuation//Parentheses", PARENTHESES),

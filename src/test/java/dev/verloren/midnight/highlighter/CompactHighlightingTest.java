@@ -291,6 +291,152 @@ public class CompactHighlightingTest extends BasePlatformTestCase {
     assertHasHighlight(highlights, "transientHash", CompactHighlighterColors.BUILTIN_FUNCTION);
   }
 
+  public void testGenericTypeArgumentsHighlighting() {
+    String code = """
+        export ledger b32: Bytes<32>;
+        export ledger b64: Bytes<64>;
+        export ledger vec: Vector<10, Bytes<32>>;
+        export ledger roleMap: Map<Bytes<32>, ContractAddress>;
+        export ledger optVal: Either<Bytes<32>, ContractAddress>;
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+
+    assertHasHighlight(highlights, "Bytes", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "Vector", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "Map", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "ContractAddress", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "Either", CompactHighlighterColors.BUILTIN_TYPE);
+  }
+
+  public void testDocTagsHighlighting() {
+    String code = """
+        /// @description Manages role revocation for accounts
+        /// @param roleId The identifier of the role
+        /// @param account The account address
+        /// @return Boolean indicating success
+        export circuit revokeRole(roleId: Bytes<32>, account: ContractAddress): Boolean {
+            return true;
+        }
+
+        /**
+         * @module SecurityModule
+         * @type AdminType
+         */
+        export module SecurityModule {}
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+
+    assertHasHighlight(highlights, "@description", CompactHighlighterColors.DOC_COMMENT_TAG);
+    assertHasHighlight(highlights, "@param", CompactHighlighterColors.DOC_COMMENT_TAG);
+    assertHasHighlight(highlights, "@return", CompactHighlighterColors.DOC_COMMENT_TAG);
+    assertHasHighlight(highlights, "@module", CompactHighlighterColors.DOC_COMMENT_TAG);
+    assertHasHighlight(highlights, "@type", CompactHighlighterColors.DOC_COMMENT_TAG);
+    assertHasHighlight(highlights, "roleId", CompactHighlighterColors.DOC_COMMENT_TAG_VALUE);
+    assertHasHighlight(highlights, "account", CompactHighlighterColors.DOC_COMMENT_TAG_VALUE);
+  }
+
+  public void testComplexContractAndCircuitDeclarationsHighlighting() {
+    String code = """
+        export sealed ledger MY_ROLE: Bytes<32>;
+
+        export circuit revokeRole(
+            roleId: Bytes<32>,
+            account: Either<Bytes<32>, ContractAddress>
+        ): Boolean {
+            return true;
+        }
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+
+    assertHasHighlight(highlights, "export", CompactHighlighterColors.MODIFIER);
+    assertHasHighlight(highlights, "sealed", CompactHighlighterColors.MODIFIER);
+    assertHasHighlight(highlights, "MY_ROLE", CompactHighlighterColors.LEDGER_DECLARATION);
+    assertHasHighlight(highlights, "Bytes", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "revokeRole", CompactHighlighterColors.CIRCUIT_DECLARATION);
+    assertHasHighlight(highlights, "roleId", CompactHighlighterColors.PARAMETER_DECLARATION);
+    assertHasHighlight(highlights, "account", CompactHighlighterColors.PARAMETER_DECLARATION);
+    assertHasHighlight(highlights, "Either", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "ContractAddress", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "Boolean", CompactHighlighterColors.BUILTIN_TYPE);
+  }
+
+  public void testLedgerMemberAndCallHighlighting() {
+    String code = """
+        export const DEFAULT_ADMIN_ROLE: Bytes<32> = 0;
+        export const MY_ROLE: Bytes<32> = 1;
+        export ledger _operatorRoles: Map<Bytes<32>, ContractAddress>;
+
+        witness fetchKey(): Bytes<32>;
+        circuit hasRole(account: ContractAddress, roleId: Bytes<32>): Boolean { return true; }
+        circuit Utils_canonicalize(account: ContractAddress): ContractAddress { return account; }
+
+        export circuit revokeRole(
+            roleId: Bytes<32>,
+            account: ContractAddress,
+            sk: Field
+        ): Boolean {
+            const hasRoleRes = hasRole(account, roleId);
+            const canonical = Utils_canonicalize(account);
+            const roleVal = _operatorRoles.lookup(roleId);
+            const disc = disclose(sk);
+            const admin = DEFAULT_ADMIN_ROLE;
+            const currentRole = MY_ROLE;
+            return hasRoleRes;
+        }
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+
+    assertHasHighlight(highlights, "_operatorRoles", CompactHighlighterColors.LEDGER_DECLARATION);
+    assertHasHighlight(highlights, "_operatorRoles", CompactHighlighterColors.LEDGER_USAGE);
+    assertHasHighlight(highlights, "lookup", CompactHighlighterColors.CIRCUIT_CALL);
+    assertHasHighlight(highlights, "hasRole", CompactHighlighterColors.CIRCUIT_CALL);
+    assertHasHighlight(highlights, "Utils_canonicalize", CompactHighlighterColors.CIRCUIT_CALL);
+    assertHasHighlight(highlights, "disclose", CompactHighlighterColors.BUILTIN_FUNCTION);
+    assertHasHighlight(highlights, "DEFAULT_ADMIN_ROLE", CompactHighlighterColors.CONSTANT_DECLARATION);
+    assertHasHighlight(highlights, "DEFAULT_ADMIN_ROLE", CompactHighlighterColors.CONSTANT_USAGE);
+    assertHasHighlight(highlights, "MY_ROLE", CompactHighlighterColors.CONSTANT_DECLARATION);
+    assertHasHighlight(highlights, "MY_ROLE", CompactHighlighterColors.CONSTANT_USAGE);
+    assertHasHighlight(highlights, "roleId", CompactHighlighterColors.PARAMETER_DECLARATION);
+    assertHasHighlight(highlights, "roleId", CompactHighlighterColors.PARAMETER_USAGE);
+    assertHasHighlight(highlights, "account", CompactHighlighterColors.PARAMETER_DECLARATION);
+    assertHasHighlight(highlights, "account", CompactHighlighterColors.PARAMETER_USAGE);
+    assertHasHighlight(highlights, "sk", CompactHighlighterColors.PARAMETER_DECLARATION);
+    assertHasHighlight(highlights, "sk", CompactHighlighterColors.PARAMETER_USAGE);
+  }
+
+  public void testSyntaxHighlighterLexicalTokens() {
+    CompactSyntaxHighlighter highlighter = new CompactSyntaxHighlighter();
+
+    // Operators
+    assertEquals(CompactHighlighterColors.OPERATOR, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.ASSIGN)[0]);
+    assertEquals(CompactHighlighterColors.OPERATOR, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.EQEQ)[0]);
+    assertEquals(CompactHighlighterColors.OPERATOR, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.NOT)[0]);
+    assertEquals(CompactHighlighterColors.OPERATOR, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.GTE)[0]);
+    assertEquals(CompactHighlighterColors.OPERATOR, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.LT)[0]);
+    assertEquals(CompactHighlighterColors.OPERATOR, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.GT)[0]);
+
+    // Numerics
+    assertEquals(CompactHighlighterColors.NUMBER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.DECIMAL_LITERAL)[0]);
+    assertEquals(CompactHighlighterColors.NUMBER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.HEX_LITERAL)[0]);
+    assertEquals(CompactHighlighterColors.NUMBER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.BINARY_LITERAL)[0]);
+    assertEquals(CompactHighlighterColors.NUMBER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.OCTAL_LITERAL)[0]);
+
+    // Modifiers
+    assertEquals(CompactHighlighterColors.MODIFIER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.EXPORT)[0]);
+    assertEquals(CompactHighlighterColors.MODIFIER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.SEALED)[0]);
+    assertEquals(CompactHighlighterColors.MODIFIER, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.PURE)[0]);
+
+    // Keywords & Pragma
+    assertEquals(CompactHighlighterColors.KEYWORD, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.CIRCUIT)[0]);
+    assertEquals(CompactHighlighterColors.KEYWORD, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.LEDGER)[0]);
+    assertEquals(CompactHighlighterColors.KEYWORD, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.LET)[0]);
+    assertEquals(CompactHighlighterColors.PRAGMA, highlighter.getTokenHighlights(dev.verloren.midnight.lexer.CompactTokenTypes.PRAGMA)[0]);
+  }
+
   // =========================================================================
   // Helpers
   // =========================================================================
