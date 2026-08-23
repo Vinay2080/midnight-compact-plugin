@@ -163,6 +163,14 @@ public final class CompactResolveUtil {
             result.add(prefix + name);
           }
         }
+        for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(importedFile, CompactModuleDefinition.class)) {
+          for (CompactNamedElement exported : moduleExports(mod)) {
+            String name = exported.getName();
+            if (name != null && isInNamespace(exported, namespace, importDeclaration)) {
+              result.add(prefix + name);
+            }
+          }
+        }
       }
       CompactModuleDefinition module = findModule(place, importDeclaration.getModuleName());
       if (module != null) {
@@ -371,15 +379,19 @@ public final class CompactResolveUtil {
         continue;
       }
       String exportedName = name.substring(prefix.length());
-      if (exportedName.startsWith("_")) {
-        exportedName = exportedName.substring(1);
-      }
 
       CompactFile importedFile = importDeclaration.resolveImportedFile();
       if (importedFile != null) {
         for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
           if (nearestModule(decl) == null && exportedName.equals(decl.getName()) && isInNamespace(decl, namespace, place)) {
             result.add(decl);
+          }
+        }
+        for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(importedFile, CompactModuleDefinition.class)) {
+          for (CompactNamedElement exported : moduleExports(mod)) {
+            if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace, place)) {
+              result.add(exported);
+            }
           }
         }
       }

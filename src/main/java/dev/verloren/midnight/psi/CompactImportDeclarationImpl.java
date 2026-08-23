@@ -130,6 +130,18 @@ public class CompactImportDeclarationImpl extends CompactPsiElement implements C
           return (CompactFile) direct;
         }
       }
+      VirtualFile dirVirtualFile = dir.getVirtualFile();
+      if (dirVirtualFile != null) {
+        for (String candidate : candidates) {
+          VirtualFile targetVirtualFile = dirVirtualFile.findFileByRelativePath(candidate);
+          if (targetVirtualFile != null && targetVirtualFile.isValid()) {
+            PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(targetVirtualFile);
+            if (psiFile instanceof CompactFile) {
+              return (CompactFile) psiFile;
+            }
+          }
+        }
+      }
     }
 
     // 2. VirtualFile parent relative path
@@ -137,7 +149,7 @@ public class CompactImportDeclarationImpl extends CompactPsiElement implements C
     if (virtualFile == null) {
       virtualFile = containingFile.getViewProvider().getVirtualFile();
     }
-    VirtualFile parentDir = virtualFile.getParent();
+    VirtualFile parentDir = virtualFile != null ? virtualFile.getParent() : null;
     if (parentDir != null) {
       for (String candidate : candidates) {
         VirtualFile targetVirtualFile = parentDir.findFileByRelativePath(candidate);
@@ -169,12 +181,13 @@ public class CompactImportDeclarationImpl extends CompactPsiElement implements C
 
   private static @NotNull List<String> getCandidateFilePaths(@NotNull String path) {
     List<String> candidates = new ArrayList<>();
-    candidates.add(path);
-    if (!path.endsWith(".compact")) {
-      candidates.add(path + ".compact");
+    String normalized = path.replace('\\', '/');
+    candidates.add(normalized);
+    if (!normalized.endsWith(".compact")) {
+      candidates.add(normalized + ".compact");
     }
-    if (path.startsWith("./")) {
-      String stripped = path.substring(2);
+    if (normalized.startsWith("./")) {
+      String stripped = normalized.substring(2);
       candidates.add(stripped);
       if (!stripped.endsWith(".compact")) {
         candidates.add(stripped + ".compact");

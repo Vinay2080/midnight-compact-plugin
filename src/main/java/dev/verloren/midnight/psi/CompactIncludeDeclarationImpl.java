@@ -16,6 +16,9 @@ import dev.verloren.midnight.reference.CompactIncludeReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
+import java.util.List;
+
 /**
  * PSI representation of a Compact {@code include "filename.compact";} declaration.
  *
@@ -74,12 +77,28 @@ public class CompactIncludeDeclarationImpl extends CompactPsiElement implements 
       return null;
     }
 
+    List<String> candidates = getCandidateFilePaths(path);
+
     // 1. Directory of containing file
     PsiDirectory dir = containingFile.getContainingDirectory();
     if (dir != null) {
-      PsiFile direct = dir.findFile(path);
-      if (direct instanceof CompactFile) {
-        return (CompactFile) direct;
+      for (String candidate : candidates) {
+        PsiFile direct = dir.findFile(candidate);
+        if (direct instanceof CompactFile) {
+          return (CompactFile) direct;
+        }
+      }
+      VirtualFile dirVirtualFile = dir.getVirtualFile();
+      if (dirVirtualFile != null) {
+        for (String candidate : candidates) {
+          VirtualFile targetVirtualFile = dirVirtualFile.findFileByRelativePath(candidate);
+          if (targetVirtualFile != null && targetVirtualFile.isValid()) {
+            PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(targetVirtualFile);
+            if (psiFile instanceof CompactFile) {
+              return (CompactFile) psiFile;
+            }
+          }
+        }
       }
     }
 
@@ -88,10 +107,10 @@ public class CompactIncludeDeclarationImpl extends CompactPsiElement implements 
     if (virtualFile == null) {
       virtualFile = containingFile.getViewProvider().getVirtualFile();
     }
-    if (virtualFile != null) {
-      VirtualFile parentDir = virtualFile.getParent();
-      if (parentDir != null) {
-        VirtualFile targetVirtualFile = parentDir.findFileByRelativePath(path);
+    VirtualFile parentDir = virtualFile != null ? virtualFile.getParent() : null;
+    if (parentDir != null) {
+      for (String candidate : candidates) {
+        VirtualFile targetVirtualFile = parentDir.findFileByRelativePath(candidate);
         if (targetVirtualFile != null && targetVirtualFile.isValid()) {
           PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(targetVirtualFile);
           if (psiFile instanceof CompactFile) {
@@ -99,11 +118,13 @@ public class CompactIncludeDeclarationImpl extends CompactPsiElement implements 
           }
         }
       }
+    }
 
-      // 3. Project content root relative path
-      VirtualFile[] contentRoots = ProjectRootManager.getInstance(getProject()).getContentRoots();
-      for (VirtualFile root : contentRoots) {
-        VirtualFile targetVirtualFile = root.findFileByRelativePath(path);
+    // 3. Project content root relative path
+    VirtualFile[] contentRoots = ProjectRootManager.getInstance(getProject()).getContentRoots();
+    for (VirtualFile root : contentRoots) {
+      for (String candidate : candidates) {
+        VirtualFile targetVirtualFile = root.findFileByRelativePath(candidate);
         if (targetVirtualFile != null && targetVirtualFile.isValid()) {
           PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(targetVirtualFile);
           if (psiFile instanceof CompactFile && psiFile != containingFile) {
@@ -114,5 +135,22 @@ public class CompactIncludeDeclarationImpl extends CompactPsiElement implements 
     }
 
     return null;
+  }
+
+  private static @NotNull java.util.List<String> getCandidateFilePaths(@NotNull String path) {
+    java.util.List<String> candidates = new java.util.ArrayList<>();
+    String normalized = path.replace('\\', '/');
+    candidates.add(normalized);
+    if (!normalized.endsWith(".compact")) {
+      candidates.add(normalized + ".compact");
+    }
+    if (normalized.startsWith("./")) {
+      String stripped = normalized.substring(2);
+      candidates.add(stripped);
+      if (!stripped.endsWith(".compact")) {
+        candidates.add(stripped + ".compact");
+      }
+    }
+    return candidates;
   }
 }
