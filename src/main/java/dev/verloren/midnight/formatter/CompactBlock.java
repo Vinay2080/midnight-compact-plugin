@@ -102,7 +102,7 @@ public class CompactBlock extends AbstractBlock {
       }
     }
 
-    // Colons in other contexts (e.g. type annotations, return types): 0 before, 1 after
+    // Colons in other contexts (e.g., type annotations, return types): 0 before, 1 after
     if (type2 == CompactTokenTypes.COLON) {
       return Spacing.createSpacing(0, 0, 0, false, 0);
     }
@@ -112,28 +112,18 @@ public class CompactBlock extends AbstractBlock {
 
     // Inside BLOCK { ... }
     if (parentType == CompactElementTypes.BLOCK) {
-      if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
-      }
-      if (type1 == CompactTokenTypes.LBRACE) {
-        return Spacing.createSpacing(0, 0, 1, false, 1);
-      }
-      if (type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 1, false, 0);
+      Spacing braceSpacing = getBraceSpacing(type1, type2, 0, 0, 1, false);
+      if (braceSpacing != null) {
+        return braceSpacing;
       }
       return Spacing.createSpacing(0, 0, 1, false, 1);
     }
 
     // Inside STRUCT_DECLARATION
     if (parentType == CompactElementTypes.STRUCT_DECLARATION) {
-      if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
-      }
-      if (type1 == CompactTokenTypes.LBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 1);
-      }
-      if (type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 0);
+      Spacing braceSpacing = getBraceSpacing(type1, type2, 1, 1, 0, true);
+      if (braceSpacing != null) {
+        return braceSpacing;
       }
       if (type1 == CompactElementTypes.STRUCT_FIELD || type1 == CompactTokenTypes.SEMICOLON || type1 == CompactTokenTypes.COMMA) {
         return Spacing.createSpacing(1, 1, 0, true, 1);
@@ -142,14 +132,9 @@ public class CompactBlock extends AbstractBlock {
 
     // Inside ENUM_DECLARATION
     if (parentType == CompactElementTypes.ENUM_DECLARATION) {
-      if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
-      }
-      if (type1 == CompactTokenTypes.LBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 1);
-      }
-      if (type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 0);
+      Spacing braceSpacing = getBraceSpacing(type1, type2, 1, 1, 0, true);
+      if (braceSpacing != null) {
+        return braceSpacing;
       }
       if (type1 == CompactElementTypes.ENUM_MEMBER || type1 == CompactTokenTypes.COMMA) {
         return Spacing.createSpacing(1, 1, 0, true, 1);
@@ -158,14 +143,9 @@ public class CompactBlock extends AbstractBlock {
 
     // Inside CONTRACT_DECLARATION
     if (parentType == CompactElementTypes.CONTRACT_DECLARATION) {
-      if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
-      }
-      if (type1 == CompactTokenTypes.LBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 1);
-      }
-      if (type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(1, 1, 0, true, 0);
+      Spacing braceSpacing = getBraceSpacing(type1, type2, 1, 1, 0, true);
+      if (braceSpacing != null) {
+        return braceSpacing;
       }
       if (type1 == CompactElementTypes.EXTERNAL_CIRCUIT || type1 == CompactTokenTypes.SEMICOLON || type1 == CompactTokenTypes.COMMA) {
         return Spacing.createSpacing(1, 1, 0, true, 1);
@@ -174,14 +154,9 @@ public class CompactBlock extends AbstractBlock {
 
     // Inside MODULE_DEFINITION
     if (parentType == CompactElementTypes.MODULE_DEFINITION) {
-      if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 0, false, 0);
-      }
-      if (type1 == CompactTokenTypes.LBRACE) {
-        return Spacing.createSpacing(0, 0, 1, false, 1);
-      }
-      if (type2 == CompactTokenTypes.RBRACE) {
-        return Spacing.createSpacing(0, 0, 1, false, 0);
+      Spacing braceSpacing = getBraceSpacing(type1, type2, 0, 0, 1, false);
+      if (braceSpacing != null) {
+        return braceSpacing;
       }
       if (isInsideBraces(myNode, node1) || isInsideBraces(myNode, node2)) {
         return Spacing.createSpacing(0, 0, 1, true, 1);
@@ -223,7 +198,7 @@ public class CompactBlock extends AbstractBlock {
       }
     }
 
-    // In STRUCT_LITERAL_EXPR: mariusz { 1, 2, 3, }
+    // In STRUCT_LITERAL_EXPR: Mariusz { 1, 2, 3, }
     if (parentType == CompactElementTypes.STRUCT_LITERAL_EXPR) {
       if (type1 == CompactTokenTypes.LBRACE) {
         return Spacing.createSpacing(1, 1, 0, false, 0);
@@ -310,13 +285,7 @@ public class CompactBlock extends AbstractBlock {
 
     // Statement body in IF / FOR without BLOCK
     if (parentType == CompactElementTypes.IF_STATEMENT || parentType == CompactElementTypes.FOR_STATEMENT) {
-      if (childType != CompactElementTypes.BLOCK
-          && childType != CompactTokenTypes.IF
-          && childType != CompactTokenTypes.FOR
-          && childType != CompactTokenTypes.ELSE
-          && childType != CompactTokenTypes.LPAREN
-          && childType != CompactTokenTypes.RPAREN
-          && childType != CompactElementTypes.EXPRESSION_SEQUENCE) {
+      if (childType != CompactElementTypes.BLOCK && childType != CompactTokenTypes.IF && childType != CompactTokenTypes.FOR && childType != CompactTokenTypes.ELSE && childType != CompactElementTypes.EXPRESSION_SEQUENCE) {
         return Indent.getNormalIndent();
       }
     }
@@ -385,5 +354,20 @@ public class CompactBlock extends AbstractBlock {
   @Override
   public boolean isLeaf() {
     return myNode.getFirstChildNode() == null;
+  }
+
+  private static @Nullable Spacing getBraceSpacing(IElementType type1, IElementType type2,
+                                                   int minSpaces, int maxSpaces, int minLineFeeds,
+                                                   boolean keepLineBreaks) {
+    if (type1 == CompactTokenTypes.LBRACE && type2 == CompactTokenTypes.RBRACE) {
+      return Spacing.createSpacing(0, 0, 0, false, 0);
+    }
+    if (type1 == CompactTokenTypes.LBRACE) {
+      return Spacing.createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, 1);
+    }
+    if (type2 == CompactTokenTypes.RBRACE) {
+      return Spacing.createSpacing(minSpaces, maxSpaces, minLineFeeds, keepLineBreaks, 0);
+    }
+    return null;
   }
 }

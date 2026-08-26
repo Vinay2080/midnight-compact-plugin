@@ -25,6 +25,7 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
       Map.entry("witness_decl", CompactHighlighterColors.WITNESS_DECLARATION),
       Map.entry("contract_decl", CompactHighlighterColors.CONTRACT_DECLARATION),
       Map.entry("module_decl", CompactHighlighterColors.MODULE_DECLARATION),
+          Map.entry("constructor_decl", CompactHighlighterColors.CONSTRUCTOR_DECLARATION),
       Map.entry("struct_decl", CompactHighlighterColors.STRUCT_DECLARATION),
       Map.entry("enum_decl", CompactHighlighterColors.ENUM_DECLARATION),
       Map.entry("enum_member_decl", CompactHighlighterColors.ENUM_MEMBER_DECLARATION),
@@ -55,7 +56,8 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
       Map.entry("doc_tag", CompactHighlighterColors.DOC_COMMENT_TAG),
       Map.entry("doc_tag_value", CompactHighlighterColors.DOC_COMMENT_TAG_VALUE),
       Map.entry("pragma", CompactHighlighterColors.PRAGMA),
-      Map.entry("version", CompactHighlighterColors.VERSION)
+          Map.entry("version", CompactHighlighterColors.VERSION),
+          Map.entry("bad_char", CompactHighlighterColors.BAD_CHARACTER)
   );
 
   @Override
@@ -91,43 +93,91 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
   @Override
   public @NotNull String getDemoText() {
     return """
-        <pragma>pragma</pragma> <pragma>language_version</pragma> <version>^0.20.0</version>;
+            // SPDX-License-Identifier: MIT
+            // OpenZeppelin Compact Contracts (ShieldedToken.compact)
+            <pragma>pragma</pragma> <pragma>language_version</pragma> <version>>= 0.23.0</version>;
 
-        <doc_comment>/// <doc_tag>@description</doc_tag> Smart contract for managing decentralized game sessions.</doc_comment>
-        <doc_comment>/// <doc_tag>@param</doc_tag> <doc_tag_value>player</doc_tag_value> Initial player state</doc_comment>
-        import { <import_symbol>Utils</import_symbol> } from './helpers';
+            <doc_comment>/**
+             * <doc_tag>@module</doc_tag> <doc_tag_value>ShieldedToken</doc_tag_value>
+             * <doc_tag>@description</doc_tag> A privacy-preserving shielded token module.
+             * <doc_tag>@notice</doc_tag> Utilizes zero-knowledge witness state and on-chain ledger circuits.
+             */</doc_comment>
+            <modifier>export</modifier> module <module_decl>ShieldedToken</module_decl> {
+                import CompactStandardLibrary;
+                import { <import_symbol>Utils</import_symbol> } from '../utils/Utils' prefix Utils_;
 
-        <modifier>export</modifier> enum <enum_decl>GameState</enum_decl> {
-            <enum_member_decl>WAITING</enum_member_decl>,
-            <enum_member_decl>PLAYING</enum_member_decl>,
-            <enum_member_decl>FINISHED</enum_member_decl>
-        }
+                // ─── Enums & Custom Types ──────────────────────────────────────────────
+                <modifier>export</modifier> enum <enum_decl>UpdateType</enum_decl> {
+                    <enum_member_decl>Grant</enum_member_decl>,
+                    <enum_member_decl>Revoke</enum_member_decl>
+                }
 
-        <modifier>export</modifier> struct <struct_decl>Player</struct_decl><<type_param>T</type_param>> {
-            <field_decl>id</field_decl>: <builtin_type>Field</builtin_type>,
-            <field_decl>score</field_decl>: <builtin_type>Uint</builtin_type><8>,
-            <field_decl>state</field_decl>: <type_ref>GameState</type_ref>,
-            <field_decl>tag</field_decl>: <type_param>T</type_param>
-        }
+                <modifier>export</modifier> <modifier>new</modifier> type <type_alias_decl>RoleCommitment</type_alias_decl> = <builtin_type>Bytes</builtin_type><32>;
+                <modifier>export</modifier> <modifier>new</modifier> type <type_alias_decl>AccountIdentifier</type_alias_decl> = <builtin_type>Bytes</builtin_type><32>;
+        
+                <modifier>export</modifier> struct <struct_decl>CoinInfo</struct_decl><<type_param>T</type_param>> {
+                    <field_decl>color</field_decl>: <builtin_type>Field</builtin_type>,
+                    <field_decl>value</field_decl>: <builtin_type>Uint</builtin_type><64>,
+                    <field_decl>tag</field_decl>: <type_param>T</type_param>
+                }
 
-        <modifier>export</modifier> type <type_alias_decl>PlayerId</type_alias_decl> = <builtin_type>Field</builtin_type>;
+                <modifier>export</modifier> const <const_decl>MAX_SUPPLY</const_decl>: <builtin_type>Uint</builtin_type><64> = 1000000;
+       
+                // ─── Public & Sealed Ledger State ──────────────────────────────────────
+                <modifier>export</modifier> <modifier>sealed</modifier> ledger <ledger_decl>_instanceSalt</ledger_decl>: <builtin_type>Bytes</builtin_type><32>;
+                <modifier>export</modifier> ledger <ledger_decl>_totalSupply</ledger_decl>: <builtin_type>Uint</builtin_type><64>;
+                <modifier>export</modifier> ledger <ledger_decl>_counter</ledger_decl>: <builtin_type>Counter</builtin_type>;
+                <modifier>export</modifier> ledger <ledger_decl>_name</ledger_decl>: <builtin_type>Maybe</builtin_type><<builtin_type>Opaque</builtin_type><"string">>;
+                <modifier>export</modifier> ledger <ledger_decl>_operatorRoles</ledger_decl>: <builtin_type>MerkleTree</builtin_type><20, <type_ref>RoleCommitment</type_ref>>;
+        
+                // ─── Witness Declarations (Private Off-Chain Callbacks) ────────────────
+                witness <witness_decl>wit_secretKey</witness_decl>(): <builtin_type>Bytes</builtin_type><32>;
+                witness <witness_decl>wit_getRolePath</witness_decl>(<param_decl>role</param_decl>: <type_ref>RoleCommitment</type_ref>): <builtin_type>MerkleTreePath</builtin_type><20, <type_ref>RoleCommitment</type_ref>>;
+        
+                // ─── Constructor ───────────────────────────────────────────────────────
+                <constructor_decl>constructor</constructor_decl>(<param_decl>salt</param_decl>: <builtin_type>Bytes</builtin_type><32>, <param_decl>initialSupply</param_decl>: <builtin_type>Uint</builtin_type><64>) {
+                    <ledger_write>_instanceSalt</ledger_write> = <builtin_fn>disclose</builtin_fn>(<param_usage>salt</param_usage>);
+                    <ledger_write>_totalSupply</ledger_write> = <builtin_fn>disclose</builtin_fn>(<param_usage>initialSupply</param_usage>);
+                    <ledger_write>_name</ledger_write> = <builtin_fn>some</builtin_fn><<builtin_type>Opaque</builtin_type><"string">>(<builtin_fn>pad</builtin_fn>(32, "ShieldedToken"));
+                    <ledger_write>_counter</ledger_write>.increment(1);
+                }
+        
+                // ─── Pure Circuit (Deterministic Off-Chain Prover) ─────────────────────
+                <modifier>export</modifier> <modifier>pure</modifier> circuit <circuit_decl>DEFAULT_ADMIN_ROLE</circuit_decl>(): <type_ref>RoleCommitment</type_ref> {
+                    return <builtin_fn>default</builtin_fn><<builtin_type>Bytes</builtin_type><32>> as <type_ref>RoleCommitment</type_ref>;
+                }
 
-        <modifier>export</modifier> const <const_decl>MAX_PLAYERS</const_decl>: <builtin_type>Uint</builtin_type><8> = 4;
+                /**
+                 * <doc_tag>@description</doc_tag> Mints tokens to recipient and generates coin commitment.
+                 * <doc_tag>@param</doc_tag> <doc_tag_value>recipient</doc_tag_value> The account identifier
+                 * <doc_tag>@param</doc_tag> <doc_tag_value>amount</doc_tag_value> The amount of tokens to mint
+                 * <doc_tag>@return</doc_tag> The newly minted CoinInfo struct
+                 */
+                <modifier>export</modifier> circuit <circuit_decl>mint</circuit_decl>(<param_decl>recipient</param_decl>: <type_ref>AccountIdentifier</type_ref>, <param_decl>amount</param_decl>: <builtin_type>Uint</builtin_type><64>): <struct_decl>CoinInfo</struct_decl><<builtin_type>Field</builtin_type>> {
+                    <builtin_fn>assert</builtin_fn>(<param_usage>amount</param_usage> > 0 && <param_usage>amount</param_usage> <= <const_usage>MAX_SUPPLY</const_usage>, "Invalid amount: <escape_valid>\\n</escape_valid><escape_valid>\\t</escape_valid><escape_invalid>\\q</escape_invalid>");
 
-        <modifier>export</modifier> ledger <ledger_decl>totalPlayers</ledger_decl>: <builtin_type>Uint</builtin_type><8>;
+                    const <local_decl>sk</local_decl> = <witness_call>wit_secretKey</witness_call>();
+                    const <local_decl>derivedHash</local_decl> = <builtin_fn>persistentHash</builtin_fn><<builtin_type>Vector</builtin_type><2, <builtin_type>Bytes</builtin_type><32>>>([<local_usage>sk</local_usage>, <ledger_usage>_instanceSalt</ledger_usage>]);
+                    <ledger_write>_totalSupply</ledger_write> = <builtin_fn>disclose</builtin_fn>(<ledger_usage>_totalSupply</ledger_usage> + <param_usage>amount</param_usage>);
 
-        witness <witness_decl>getSecretSalt</witness_decl>(): <builtin_type>Bytes</builtin_type><32>;
+                    const <local_decl>coin</local_decl> = <struct_decl>CoinInfo</struct_decl> {
+                        <field_decl>color</field_decl>: 0x1A2F,
+                        <field_decl>value</field_decl>: <param_usage>amount</param_usage>,
+                        <field_decl>tag</field_decl>: 12345
+                    };
 
-        <modifier>export</modifier> circuit <circuit_decl>initGame</circuit_decl>(<param_decl>player</param_decl>: <struct_decl>Player</struct_decl><<builtin_type>Field</builtin_type>>): [] {
-            const <local_decl>limit</local_decl> = <const_usage>MAX_PLAYERS</const_usage>;
-            const <local_decl>salt</local_decl> = <witness_call>getSecretSalt</witness_call>();
-            const <local_decl>currentShot</local_decl> = <builtin_fn>disclose</builtin_fn>(<param_usage>player</param_usage>.<field_access>id</field_access>);
-            <ledger_write>totalPlayers</ledger_write> = <param_usage>player</param_usage>.<field_access>score</field_access>;
+                    const <local_decl>coinValue</local_decl> = <local_usage>coin</local_usage>.<field_access>value</field_access>;
+                    const <local_decl>status</local_decl> = <enum_decl>UpdateType</enum_decl>.<enum_member_access>Grant</enum_member_access>;
+                    const <local_decl>admin</local_decl> = <circuit_call>DEFAULT_ADMIN_ROLE</circuit_call>();
 
-            <builtin_fn>assert</builtin_fn>(
-                <param_usage>player</param_usage>.<field_access>state</field_access> == <enum_decl>GameState</enum_decl>.<enum_member_access>PLAYING</enum_member_access>,
-                "Valid string escape: <escape_valid>\\n</escape_valid><escape_valid>\\t</escape_valid> Invalid: <escape_invalid>\\q</escape_invalid>"
-            );
+                    let <local_decl>localCounter</local_decl> = 0b1010;
+                    <local_write>localCounter</local_write> = <local_usage>localCounter</local_usage> + 1;
+        
+                    return <local_usage>coin</local_usage>;
+                }
+            }
+        
+            <modifier>export</modifier> contract <contract_decl>ShieldedTokenContract</contract_decl> <modifier>implements</modifier> <type_ref>ShieldedToken</type_ref> {
         }
         """;
   }

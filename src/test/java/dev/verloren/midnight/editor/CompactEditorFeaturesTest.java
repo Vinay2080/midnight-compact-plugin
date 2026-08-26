@@ -45,4 +45,9 @@ public class CompactEditorFeaturesTest extends BasePlatformTestCase {
     CompactQuoteHandler quoteHandler = new CompactQuoteHandler();
     assertNotNull(quoteHandler);
   }
+
+  public void testSpellcheckingStrategy() {
+    CompactSpellcheckingStrategy strategy = new CompactSpellcheckingStrategy();
+    assertNotNull(strategy);
+  }
 }

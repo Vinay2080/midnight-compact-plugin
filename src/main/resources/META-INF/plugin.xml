@@ -90,9 +90,34 @@
                 implementationClass="dev.verloren.midnight.editor.CompactQuoteHandler"/>
 
 
+        <fileTemplateGroup
+                implementation="dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory"/>
+
+        <defaultLiveTemplates
+                file="/liveTemplates/Compact.xml"/>
+
+        <liveTemplateContext
+                contextId="COMPACT_CODE"
+                implementation="dev.verloren.midnight.ide.templates.CompactLiveTemplateContextType"/>
+
+        <lang.foldingBuilder
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactFoldingBuilder"/>
+
+        <breadcrumbsInfoProvider
+                implementation="dev.verloren.midnight.editor.CompactBreadcrumbsProvider"/>
+
+        <spellchecker.support
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactSpellcheckingStrategy"/>
+
+        <lang.surroundDescriptor
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactSurroundDescriptor"/>
+
         <localInspection
                 language="Compact"
-                groupName="Compact"
+                groupKey="inspection.group.name.compact"
                 shortName="CompactUnresolvedReference"
                 enabledByDefault="true"
                 level="WARNING"
@@ -101,7 +126,7 @@
 
         <localInspection
                 language="Compact"
-                groupName="Compact"
+                groupKey="inspection.group.name.compact"
                 shortName="CompactDuplicateDeclaration"
                 enabledByDefault="true"
                 level="WARNING"
@@ -110,7 +135,7 @@
 
         <localInspection
                 language="Compact"
-                groupName="Compact"
+                groupKey="inspection.group.name.compact"
                 shortName="CompactUnusedLocalVariable"
                 enabledByDefault="true"
                 level="WARNING"
@@ -119,7 +144,7 @@
 
         <localInspection
                 language="Compact"
-                groupName="Compact"
+                groupKey="inspection.group.name.compact"
                 shortName="CompactTypeMismatch"
                 enabledByDefault="true"
                 level="WARNING"
@@ -127,5 +152,14 @@
                 key="inspection.compact.type.mismatch.display.name"/>
 
     </extensions>
+
+    <actions>
+        <action
+                id="dev.verloren.midnight.actions.CompactCreateFileAction"
+                class="dev.verloren.midnight.actions.CompactCreateFileAction"
+        >
+            <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+        </action>
+    </actions>
 
 </idea-plugin>

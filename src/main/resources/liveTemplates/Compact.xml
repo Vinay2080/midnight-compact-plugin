@@ -1,0 +1,165 @@
+<templateSet group="Compact">
+    <template name="cct"
+              value="export contract $NAME$ {&#10;  circuit $CIRCUIT$(): Void;&#10;}&#10;&#10;ledger {&#10;  $STATE$&#10;}&#10;&#10;constructor() {&#10;  $INIT$&#10;}&#10;&#10;export circuit $CIRCUIT$(): Void {&#10;  $END$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.cct.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;Contract&quot;" alwaysStopAt="true"/>
+        <variable name="CIRCUIT" expression="" defaultValue="&quot;main&quot;" alwaysStopAt="true"/>
+        <variable name="STATE" expression="" defaultValue="&quot;counter: Counter;&quot;" alwaysStopAt="true"/>
+        <variable name="INIT" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="ccti"
+              value="export contract implements $NAME$;&#10;&#10;export circuit $CIRCUIT$(): Void {&#10;  $END$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.ccti.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;Interface&quot;" alwaysStopAt="true"/>
+        <variable name="CIRCUIT" expression="" defaultValue="&quot;main&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="mod"
+              value="export module $NAME$ {&#10;  $END$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.mod.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;MyModule&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="cir"
+              value="export circuit $NAME$($PARAMS$): $RET$ {&#10;  $END$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.cir.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;circuitName&quot;" alwaysStopAt="true"/>
+        <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="RET" expression="" defaultValue="&quot;Void&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="wit"
+              value="witness $NAME$($PARAMS$): $RET$;"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.wit.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;witnessName&quot;" alwaysStopAt="true"/>
+        <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
+        <variable name="RET" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="led"
+              value="ledger {&#10;  $STATE$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.led.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="STATE" expression="" defaultValue="&quot;state: Field;&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="ledg"
+              value="export ledger $NAME$: $TYPE$;"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.ledg.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;balance&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;Cell&lt;Field&gt;&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="cons"
+              value="constructor($PARAMS$) {&#10;  $END$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.cons.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="str"
+              value="struct $NAME$ {&#10;  $FIELDS$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.str.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;MyStruct&quot;" alwaysStopAt="true"/>
+        <variable name="FIELDS" expression="" defaultValue="&quot;field1: Field;&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="en"
+              value="enum $NAME$ {&#10;  $MEMBERS$&#10;}"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.en.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;MyEnum&quot;" alwaysStopAt="true"/>
+        <variable name="MEMBERS" expression="" defaultValue="&quot;A, B&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="ass"
+              value="assert $COND$, &quot;$MSG$&quot;;"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.ass.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="COND" expression="" defaultValue="&quot;true&quot;" alwaysStopAt="true"/>
+        <variable name="MSG" expression="" defaultValue="&quot;Assertion failed&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="disc"
+              value="disclose($EXPR$);"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.disc.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="EXPR" expression="" defaultValue="&quot;value&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="inc"
+              value="include &quot;$PATH$&quot;;"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.inc.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="PATH" expression="" defaultValue="&quot;./types.compact&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="imp"
+              value="import { $SYMBOL$ } from '$PATH$';"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.imp.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="SYMBOL" expression="" defaultValue="&quot;symbol&quot;" alwaysStopAt="true"/>
+        <variable name="PATH" expression="" defaultValue="&quot;./module&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="type"
+              value="type $NAME$ = $TYPE$;"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.type.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="" defaultValue="&quot;MyType&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+</templateSet>

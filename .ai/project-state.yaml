@@ -19,30 +19,41 @@ phases:
   structure_view: complete
   documentation_provider: complete
   cross_file_resolution: complete
+  level_1_integration: complete
+  file_and_live_templates: complete
+  code_folding: complete
+  breadcrumbs: complete
+  spellchecker: complete
+  surround_with: complete
   standard_library_indexing: planned
   compiler_integration: planned
 
 tests:
-  last_known_passing: 264
+  last_known_passing: 282
   failures: 0
   skipped: 0
   suites:
-    lexer: 15 (LexerTest: { 12, PragmaTest: 3) }
-    parser: 17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)
-    psi: 3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)
-    resolve: 35 (CompactResolveTest: 18, CompactCrossFileResolveTest: 17)
-    reference: 6 (CompactReferenceTest: 6)
-    completion: 5 (CompactCompletionTest: 5)
-    rename: 9 (CompactRenameTest: 9)
-    find_usages: 10 (CompactFindUsagesTest: 10)
-    editor: 3 (CompactEditorFeaturesTest: 3)
-    symbol: 3 (CompactSymbolTest: 3)
-    type_inference: 15 (CompactTypeInferenceTest: 15)
-    inspections: 69 (CompactInspectionTest: 69)
-    formatter: 39 (CompactFormatterTest: 39)
-    structure_view: 9 (CompactStructureViewTest: 9)
-    documentation: 9 (CompactDocumentationTest: 9)
-    highlighter: 12 (CompactHighlightingTest: 11, CompactColorSettingsPageTest: 1)
+    lexer: "15 (LexerTest: 12, PragmaTest: 3)"
+    parser: "17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)"
+    psi: "3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)"
+    resolve: "35 (CompactResolveTest: 18, CompactCrossFileResolveTest: 17)"
+    reference: "6 (CompactReferenceTest: 6)"
+    completion: "5 (CompactCompletionTest: 5)"
+    rename: "9 (CompactRenameTest: 9)"
+    find_usages: "10 (CompactFindUsagesTest: 10)"
+    editor: "4 (CompactEditorFeaturesTest: 4)"
+    symbol: "3 (CompactSymbolTest: 3)"
+    type_inference: "15 (CompactTypeInferenceTest: 15)"
+    inspections: "69 (CompactInspectionTest: 69)"
+    formatter: "39 (CompactFormatterTest: 39)"
+    structure_view: "9 (CompactStructureViewTest: 9)"
+    documentation: "9 (CompactDocumentationTest: 9)"
+    highlighter: "12 (CompactHighlightingTest: 11, CompactColorSettingsPageTest: 1)"
+    folding: "4 (CompactFoldingTest: 4)"
+    breadcrumbs: "2 (CompactBreadcrumbsTest: 2)"
+    live_templates: "3 (CompactLiveTemplateTest: 3)"
+    file_templates: "3 (CompactFileTemplateTest: 3)"
+    surround_with: "5 (CompactSurroundWithTest: 5)"
 
 architecture:
   lexer:

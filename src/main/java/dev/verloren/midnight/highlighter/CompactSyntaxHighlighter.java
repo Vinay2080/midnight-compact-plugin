@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import dev.verloren.midnight.lexer.CompactLexer;
+import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jspecify.annotations.NonNull;
 
@@ -25,7 +26,6 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey NUMBER = CompactHighlighterColors.NUMBER;
   public static final TextAttributesKey COMMENT = CompactHighlighterColors.LINE_COMMENT;
   public static final TextAttributesKey BAD_CHARACTER = CompactHighlighterColors.BAD_CHARACTER;
-  public static final TextAttributesKey RESERVED_KEYWORD = CompactHighlighterColors.RESERVED_KEYWORD;
   public static final TextAttributesKey CONSTANT = CompactHighlighterColors.BOOLEAN;
   public static final TextAttributesKey VERSION = CompactHighlighterColors.VERSION;
   public static final TextAttributesKey OPERATOR = CompactHighlighterColors.OPERATOR;
@@ -37,7 +37,6 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
   public static final TextAttributesKey DOT = CompactHighlighterColors.DOT;
   public static final TextAttributesKey COLON = CompactHighlighterColors.COLON;
   public static final TextAttributesKey PRAGMA = CompactHighlighterColors.PRAGMA;
-  public static final TextAttributesKey DOC_COMMENT = CompactHighlighterColors.DOC_COMMENT;
   public static final TextAttributesKey BLOCK_COMMENT = CompactHighlighterColors.BLOCK_COMMENT;
 
   @Override
@@ -98,15 +97,7 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
       return pack(KEYWORD);
     }
 
-    if (tokenType == CompactTokenTypes.BOOLEAN_TYPE ||
-            tokenType == CompactTokenTypes.BYTES_TYPE ||
-            tokenType == CompactTokenTypes.FIELD_TYPE ||
-            tokenType == CompactTokenTypes.OPAQUE_TYPE ||
-            tokenType == CompactTokenTypes.UINT_TYPE ||
-            tokenType == CompactTokenTypes.VECTOR_TYPE ||
-            tokenType == CompactTokenTypes.JUBJUB_SCALAR_TYPE ||
-            tokenType == CompactTokenTypes.SECP256K1_BASE_TYPE ||
-            tokenType == CompactTokenTypes.SECP256K1_SCALAR_TYPE) {
+    if (CompactTokenSets.BUILTIN_TYPES.contains(tokenType)) {
       return pack(TYPE);
     }
 
@@ -122,10 +113,7 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
       return pack(VERSION);
     }
 
-    if (tokenType == CompactTokenTypes.DECIMAL_LITERAL ||
-            tokenType == CompactTokenTypes.BINARY_LITERAL ||
-            tokenType == CompactTokenTypes.OCTAL_LITERAL ||
-            tokenType == CompactTokenTypes.HEX_LITERAL) {
+    if (CompactTokenSets.NAT_LITERALS.contains(tokenType)) {
       return pack(NUMBER);
     }
 

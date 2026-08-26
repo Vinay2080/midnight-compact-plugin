@@ -59,7 +59,7 @@ public final class CompactSymbols {
         return importAlias(compactImportElement);
       }
       case CompactModuleDefinition compactModuleDefinition -> {
-        return new CompactPsiSymbol.Module(declaration);
+        return new CompactPsiSymbol.Module(compactModuleDefinition);
       }
       default -> {
       }
@@ -76,23 +76,35 @@ public final class CompactSymbols {
   }
 
   public static @NotNull CompactSymbolKind kindOf(@NotNull CompactNamedElement declaration) {
-    if (declaration instanceof CompactCircuitDefinition) return CompactSymbolKind.CIRCUIT;
-    if (declaration instanceof CompactWitnessDeclaration) return CompactSymbolKind.WITNESS;
-    if (declaration instanceof CompactLedgerDeclaration) return CompactSymbolKind.LEDGER;
+    switch (declaration) {
+      case CompactCircuitDefinition _ -> {
+        return CompactSymbolKind.CIRCUIT;
+      }
+      case CompactWitnessDeclaration _ -> {
+        return CompactSymbolKind.WITNESS;
+      }
+      case CompactLedgerDeclaration _ -> {
+        return CompactSymbolKind.LEDGER;
+      }
+      default -> {
+      }
+    }
     if (declaration instanceof CompactParameterImpl || isPatternParameter(declaration))
       return CompactSymbolKind.PARAMETER;
     if (declaration instanceof CompactConstBindingImpl || declaration instanceof CompactPatternImpl)
       return CompactSymbolKind.LOCAL_BINDING;
-    if (declaration instanceof CompactStructFieldImpl) return CompactSymbolKind.STRUCT_FIELD;
-    if (declaration instanceof CompactEnumMemberImpl) return CompactSymbolKind.ENUM_MEMBER;
-    if (declaration instanceof CompactStructDefinition) return CompactSymbolKind.STRUCT;
-    if (declaration instanceof CompactEnumDefinition) return CompactSymbolKind.ENUM;
-    if (declaration instanceof CompactTypeDefinition) return CompactSymbolKind.TYPE_ALIAS;
-    if (declaration instanceof CompactExternalContractDeclaration) return CompactSymbolKind.EXTERNAL_CONTRACT;
-    if (declaration instanceof CompactGenericParameterImpl) return CompactSymbolKind.GENERIC_PARAMETER;
-    if (declaration instanceof CompactModuleDefinition) return CompactSymbolKind.MODULE;
-    if (declaration instanceof CompactImportElementImpl) return CompactSymbolKind.IMPORT_ALIAS;
-    return CompactSymbolKind.UNKNOWN;
+    return switch (declaration) {
+      case CompactStructFieldImpl _ -> CompactSymbolKind.STRUCT_FIELD;
+      case CompactEnumMemberImpl _ -> CompactSymbolKind.ENUM_MEMBER;
+      case CompactStructDefinition _ -> CompactSymbolKind.STRUCT;
+      case CompactEnumDefinition _ -> CompactSymbolKind.ENUM;
+      case CompactTypeDefinition _ -> CompactSymbolKind.TYPE_ALIAS;
+      case CompactExternalContractDeclaration _ -> CompactSymbolKind.EXTERNAL_CONTRACT;
+      case CompactGenericParameterImpl _ -> CompactSymbolKind.GENERIC_PARAMETER;
+      case CompactModuleDefinition _ -> CompactSymbolKind.MODULE;
+      case CompactImportElementImpl _ -> CompactSymbolKind.IMPORT_ALIAS;
+      default -> CompactSymbolKind.UNKNOWN;
+    };
   }
 
   public static @NotNull CompactSymbolNamespace namespaceOf(@NotNull CompactNamedElement declaration) {

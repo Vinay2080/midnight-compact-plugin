@@ -12,6 +12,7 @@ dependencies {
     intellijPlatform {
         intellijIdea("2026.2.0.1")
         testFramework(TestFrameworkType.Platform)
+        bundledModule("intellij.spellchecker")
         compatiblePlugin("com.chrisrm.idea.MaterialThemeUI")
     }
 }

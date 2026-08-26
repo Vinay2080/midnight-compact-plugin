@@ -1,0 +1,7 @@
+#* @vtlvariable name="NAME" type="java.lang.String" *#
+pragma language_version >= 0.20.0;
+
+export contract ${NAME} {
+  circuit hello(): Void;
+}
+

@@ -2,6 +2,7 @@ package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.IElementType;
+import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.type.CompactNumericLiteralType;
 import dev.verloren.midnight.type.CompactPrimitiveType;
@@ -22,10 +23,7 @@ public class CompactLiteralExprImpl extends CompactPsiElement implements Compact
     if (type == CompactTokenTypes.TRUE || type == CompactTokenTypes.FALSE) {
       return CompactPrimitiveType.BOOLEAN;
     }
-    if (type == CompactTokenTypes.DECIMAL_LITERAL ||
-            type == CompactTokenTypes.HEX_LITERAL ||
-            type == CompactTokenTypes.BINARY_LITERAL ||
-            type == CompactTokenTypes.OCTAL_LITERAL) {
+    if (CompactTokenSets.NAT_LITERALS.contains(type)) {
       return new CompactNumericLiteralType(getText());
     }
     if (type == CompactTokenTypes.STRING_LITERAL) {

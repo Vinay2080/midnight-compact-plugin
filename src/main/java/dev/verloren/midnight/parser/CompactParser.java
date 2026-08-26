@@ -5,6 +5,7 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,22 +78,8 @@ public final class CompactParser implements PsiParser {
             || token == CompactTokenTypes.NEW;
   }
 
-  private static void sync(PsiBuilder builder, TokenSet recoverySet) {
-    while (!builder.eof() && !recoverySet.contains(builder.getTokenType())) {
-      builder.advanceLexer();
-    }
-  }
-
   private static boolean isBuiltinType(IElementType token) {
-    return token == CompactTokenTypes.BOOLEAN_TYPE
-            || token == CompactTokenTypes.BYTES_TYPE
-            || token == CompactTokenTypes.FIELD_TYPE
-            || token == CompactTokenTypes.OPAQUE_TYPE
-            || token == CompactTokenTypes.UINT_TYPE
-            || token == CompactTokenTypes.VECTOR_TYPE
-            || token == CompactTokenTypes.JUBJUB_SCALAR_TYPE
-            || token == CompactTokenTypes.SECP256K1_BASE_TYPE
-            || token == CompactTokenTypes.SECP256K1_SCALAR_TYPE;
+    return CompactTokenSets.BUILTIN_TYPES.contains(token);
   }
 
   private static boolean isTypeReferenceStart(IElementType token) {
@@ -102,10 +89,7 @@ public final class CompactParser implements PsiParser {
   }
 
   private static boolean isNatLiteral(IElementType token) {
-    return token == CompactTokenTypes.DECIMAL_LITERAL
-            || token == CompactTokenTypes.BINARY_LITERAL
-            || token == CompactTokenTypes.OCTAL_LITERAL
-            || token == CompactTokenTypes.HEX_LITERAL;
+    return CompactTokenSets.NAT_LITERALS.contains(token);
   }
 
   private static boolean isLiteral(IElementType token) {
@@ -124,7 +108,7 @@ public final class CompactParser implements PsiParser {
       if (!parseProgramElement(builder)) {
         builder.error("Expected Compact declaration");
         if (!builder.eof() && !TOP_LEVEL_RECOVERY.contains(builder.getTokenType())) {
-          sync(builder, TOP_LEVEL_RECOVERY);
+          CompactParserUtil.sync(builder, TOP_LEVEL_RECOVERY);
         }
         if (!builder.eof() && at(builder, CompactTokenTypes.SEMICOLON)) {
           builder.advanceLexer();
@@ -141,6 +125,7 @@ public final class CompactParser implements PsiParser {
     return builder.getTreeBuilt();
   }
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   private boolean parseProgramElement(PsiBuilder builder) {
     if (builder.eof()) {
       return false;
@@ -316,7 +301,7 @@ public final class CompactParser implements PsiParser {
     PsiBuilder.Marker export = builder.mark();
     expect(builder, CompactTokenTypes.EXPORT, "Expected 'export'");
     expect(builder, CompactTokenTypes.LBRACE, "Expected '{'");
-    parseIdentifierList(builder, CompactTokenTypes.RBRACE);
+    parseExportIdentifierList(builder);
     expect(builder, CompactTokenTypes.RBRACE, "Expected '}'");
     if (at(builder, CompactTokenTypes.SEMICOLON)) {
       builder.advanceLexer();
@@ -337,7 +322,7 @@ public final class CompactParser implements PsiParser {
     if (expect(builder, CompactTokenTypes.LBRACE, "Expected '{'")) {
       while (!builder.eof() && !at(builder, CompactTokenTypes.RBRACE)) {
         if (!parseProgramElement(builder)) {
-          errorAndAdvance(builder, "Expected module member declaration");
+          CompactParserUtil.errorAndAdvance(builder, "Expected module member declaration");
         }
       }
       expect(builder, CompactTokenTypes.RBRACE, "Expected '}'");
@@ -449,13 +434,12 @@ public final class CompactParser implements PsiParser {
     implementsDecl.done(CompactElementTypes.IMPLEMENTS_DECLARATION);
   }
 
-  private boolean expectIdentifier(PsiBuilder builder, String errorMessage) {
+  private void expectTypeName(PsiBuilder builder) {
     if (at(builder, CompactTokenTypes.IDENTIFIER) || isBuiltinType(builder.getTokenType())) {
       builder.advanceLexer();
-      return true;
+      return;
     }
-    builder.error(errorMessage);
-    return false;
+    builder.error("Expected type name");
   }
 
   private void parseTypeAlias(PsiBuilder builder, boolean exported) {
@@ -467,7 +451,7 @@ public final class CompactParser implements PsiParser {
       builder.advanceLexer();
     }
     expect(builder, CompactTokenTypes.TYPE, "Expected 'type'");
-    expectIdentifier(builder, "Expected type name");
+    expectTypeName(builder);
     if (at(builder, CompactTokenTypes.LT)) {
       parseGenericParameterList(builder);
     }
@@ -843,7 +827,7 @@ public final class CompactParser implements PsiParser {
     }
     while (!builder.eof() && !at(builder, CompactTokenTypes.RBRACE)) {
       if (!parseStatement(builder)) {
-        errorAndAdvance(builder, "Expected statement");
+        CompactParserUtil.errorAndAdvance(builder, "Expected statement");
       }
     }
     expect(builder, CompactTokenTypes.RBRACE, "Expected '}'");
@@ -975,11 +959,11 @@ public final class CompactParser implements PsiParser {
     sequence.done(CompactElementTypes.EXPRESSION_SEQUENCE);
   }
 
-  private PsiBuilder.Marker parseExpression(PsiBuilder builder) {
-    return parseAssignmentExpression(builder);
+  private void parseExpression(PsiBuilder builder) {
+    parseAssignmentExpression(builder);
   }
 
-  private PsiBuilder.Marker parseAssignmentExpression(PsiBuilder builder) {
+  private void parseAssignmentExpression(PsiBuilder builder) {
     PsiBuilder.Marker left = parseTernaryExpression(builder);
     if (at(builder, CompactTokenTypes.ASSIGN)
             || at(builder, CompactTokenTypes.PLUS_ASSIGN)
@@ -988,9 +972,7 @@ public final class CompactParser implements PsiParser {
       builder.advanceLexer();
       parseAssignmentExpression(builder);
       assignment.done(CompactElementTypes.ASSIGN_EXPR);
-      return assignment;
     }
-    return left;
   }
 
   private PsiBuilder.Marker parseTernaryExpression(PsiBuilder builder) {
@@ -1130,7 +1112,7 @@ public final class CompactParser implements PsiParser {
     }
 
     PsiBuilder.Marker error = builder.mark();
-    errorAndAdvance(builder, "Expected expression");
+    CompactParserUtil.errorAndAdvance(builder, "Expected expression");
     error.done(CompactElementTypes.LITERAL_EXPR);
     return error;
   }
@@ -1309,13 +1291,13 @@ public final class CompactParser implements PsiParser {
     argument.done(CompactElementTypes.STRUCT_ARG);
   }
 
-  private void parseIdentifierList(PsiBuilder builder, IElementType terminator) {
-    while (!builder.eof() && !at(builder, terminator)) {
+  private void parseExportIdentifierList(PsiBuilder builder) {
+    while (!builder.eof() && !at(builder, CompactTokenTypes.RBRACE)) {
       expect(builder, CompactTokenTypes.IDENTIFIER, "Expected identifier");
       if (at(builder, CompactTokenTypes.COMMA)) {
         builder.advanceLexer();
-      } else if (!at(builder, terminator)) {
-        builder.error("Expected ',' or terminator");
+      } else if (!at(builder, CompactTokenTypes.RBRACE)) {
+        builder.error("Expected ',' or '}'");
         builder.advanceLexer();
       }
     }
@@ -1442,13 +1424,6 @@ public final class CompactParser implements PsiParser {
     while (!builder.eof()
             && !at(builder, CompactTokenTypes.SEMICOLON)
             && !at(builder, CompactTokenTypes.PRAGMA)) {
-      builder.advanceLexer();
-    }
-  }
-
-  private void errorAndAdvance(PsiBuilder builder, String message) {
-    builder.error(message);
-    if (!builder.eof()) {
       builder.advanceLexer();
     }
   }

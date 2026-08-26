@@ -75,16 +75,45 @@ Last Updated: August 2026
   - Full IDE Settings -> Editor -> Color Scheme -> Compact configuration page (`CompactColorSettingsPage`) with comprehensive demo code and interactive sample highlighting.
   - Semantic annotator (`CompactHighlightingAnnotator`) registered in `plugin.xml`.
 
+- **Phase 12: Level 1 IntelliJ Platform Integration**
+    - **File Templates & "New Compact File" Action**:
+        - Created `CompactCreateFileAction` in `NewGroup` context menu with templates for Empty File, Compact Contract,
+          Compact Module, and Compact Interface.
+        - Registered `CompactFileTemplateGroupFactory` under `fileTemplateGroup`.
+    - **Live Templates (Snippets)**:
+        - Created `CompactLiveTemplateProvider` and `CompactLiveTemplateContextType`.
+        - Bundled standard live templates in `liveTemplates/Compact.xml` (`cct`, `cir`, `wit`, `led`, `str`, `en`,
+          `ass`, `disc`, `inc`, `imp`, `type`).
+    - **Code Folding Builder**:
+        - Implemented `CompactFoldingBuilder` with intelligent folding of `{ ... }` blocks (contracts, modules,
+          circuits, ledgers, constructors, structs, enums, blocks), multiline block comments (`/* ... */`), doc comments
+          (`/// ...`), and contiguous `include`/`import` statement groups.
+    - **Editor Breadcrumbs**:
+        - Implemented `CompactBreadcrumbsProvider` displaying live contextual scope breadcrumbs at the bottom of the
+          editor (`contract Name > circuit name > if block`).
+    - **Spellchecking Strategy**:
+        - Implemented `CompactSpellcheckingStrategy` with smart identifier sub-token splitting and comment/string
+          literal spellchecking.
+    - **Surround With**:
+        - Implemented `CompactSurroundDescriptor`, `CompactIfSurrounder`, and `CompactBlockSurrounder` enabling
+          `Ctrl + Alt + T` statement wrapping into `if (expr) { ... }` or `{ ... }` blocks.
+
 ### Planned (Future Roadmap)
-- Standard library indexing (`standard-library.compact`, `zkir-v3-library.compact`).
-- Multi-file project indexing (`CompactFileStub` and IntelliJ `StubIndex`).
-- Compact compiler (`compactc`) CLI integration and on-the-fly external linter.
+
+- **Level 2 Integration**: Search Everywhere (`GotoClass`, `GotoSymbol`), Inlay Hints Provider, Intentions & Quick
+  Actions.
+- **Level 3 Integration**: Midnight Settings Page (`compactc` path, Docker runner, Devnet RPC), Standard Library
+  Synthetic Library roots, Semantic Gutter Line Markers.
+- **Level 4 Integration**: Compact Compiler Run Configuration, Gutter Run/Play Buttons, Background External Linter
+  (`compactc check`).
+- **Level 5 Integration**: New Project/DApp Wizard, Interactive Debugger (`XDebugger`, breakpoints, simulator stack
+  frame inspector), Midnight Explorer Tool Window, TypeScript Polyglot Cross-Navigation.
 
 ---
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **264 passing** (0 failures, 0 skipped, 100% success rate across 26 test classes).
+- **Total Unit Tests**: **282 passing** (0 failures, 0 skipped, 100% success rate across 31 test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
   - `CompactHighlightingTest`: 16 tests
@@ -96,11 +125,16 @@ Last Updated: August 2026
   - `CompactStructureViewTest`: 9 tests
   - `CompactFormatterTest`: 39 tests
   - `CompactTypeInferenceTest`: 15 tests
+  - `CompactFoldingTest`: 4 tests
+  - `CompactBreadcrumbsTest`: 2 tests
+  - `CompactLiveTemplateTest`: 3 tests
+  - `CompactFileTemplateTest`: 3 tests
+  - `CompactSurroundWithTest`: 5 tests
+  - `CompactEditorFeaturesTest`: 4 tests
   - `LexerTest` + `PragmaTest`: 15 tests
   - Parser Tests (`DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`): 17 tests
   - `CompactRenameTest`: 9 tests
   - `CompactFindUsagesTest`: 10 tests
-  - `CompactEditorFeaturesTest`: 3 tests
   - `CompactReferenceTest`: 6 tests
   - `CompactCompletionTest`: 5 tests
   - `CompactSymbolTest`: 3 tests

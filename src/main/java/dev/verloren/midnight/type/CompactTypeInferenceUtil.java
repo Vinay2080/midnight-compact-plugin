@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CompactTypeInferenceUtil {
   /**
-   * Infers the result type of a binary expression {@code left op right}.
+   * Infers the resulting type of a binary expression {@code left op right}.
    *
    * @param left     left operand expression
    * @param operator binary operator token type
    * @param right    right operand expression
-   * @return inferred result type (e.g. {@link CompactPrimitiveType#BOOLEAN} for comparisons)
+   * @return inferred type of the expression (e.g. {@link CompactPrimitiveType#BOOLEAN} for comparisons)
    */
   public static @NotNull CompactType inferBinaryExprType(@NotNull CompactExpression left, @NotNull IElementType operator, @NotNull CompactExpression right) {
     CompactType leftType = left.getType();

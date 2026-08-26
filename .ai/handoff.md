@@ -1,26 +1,30 @@
 # Current Handoff
 
 ## Current Feature
-Prefixed Import Reference Resolution & Cross-File Symbol Lookup.
+Level 1 IDE Features (Code Folding, Breadcrumbs, Live Templates, File Templates, Surround With, Spellchecking) & Code Inspection Cleanups.
 
 ## Status
-Investigated and resolved reference-resolution issues with Compact prefixed imports. Verified end-to-end import path resolution, prefix association, prefixed symbol resolution, and navigation across relative paths, modules, and exported declarations. All 264 automated unit tests are passing (100% success rate across 26 test suites).
+Implemented all Level 1 IDE Polish features and resolved all compiler warnings, inspection reports, Velocity template warnings, HTML accessibility tags, and code duplications. All 282 automated unit tests are passing (100% success rate across 31 test suites).
 
 ## Recently Completed
-- **Prefixed Import Reference Resolution**:
-  - Investigated the resolution pipeline for `import "./utils/Utils" prefix Utils_;` and `Utils_isContractAddress(...)`.
-  - Identified and removed erroneous underscore stripping (`if (exportedName.startsWith("_")) ...`) in [`CompactResolveUtil.resolvePrefixedImport`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/CompactResolveUtil.java#L370-L415) to adhere to exact Compact prefix concatenation semantics (`prefix + symbolName`), preventing corruption of exported symbols starting with underscores.
-  - Added module exports discovery (`moduleExports(mod)`) to [`CompactResolveUtil.resolvePrefixedImport`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/CompactResolveUtil.java) and [`CompactResolveUtil.prefixedImportNames`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/resolve/CompactResolveUtil.java) so prefixed imports also resolve exported symbols from modules inside imported files.
-  - Hardened candidate file path resolution in [`CompactImportDeclarationImpl`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/psi/CompactImportDeclarationImpl.java) and [`CompactIncludeDeclarationImpl`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/psi/CompactIncludeDeclarationImpl.java) by normalizing path separators (`\` -> `/`) and searching directory `VirtualFile` relative paths for subdirectory imports (e.g. `./utils/Utils` or `utils/Utils.compact`).
-- **Tests Added**:
-  - [`CompactCrossFileResolveTest.testPrefixedRelativeImportResolvesCircuit`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/resolve/CompactCrossFileResolveTest.java#L408-L450): Tests exact user case (`import "./utils/Utils" prefix Utils_;` and `Utils_isContractAddress(account)` resolving to `export pure circuit isContractAddress` in `utils/Utils.compact`).
-  - [`CompactCrossFileResolveTest.testPrefixedRelativeImportWithExtensionResolvesCircuit`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/resolve/CompactCrossFileResolveTest.java#L452-L479): Tests prefixed import with explicit `.compact` extension.
-  - [`CompactCrossFileResolveTest.testPrefixedImportPreservesUnderscoreInExportedSymbol`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/resolve/CompactCrossFileResolveTest.java#L481-L508): Tests exported symbols with leading underscores (`_internalCheck`).
-  - [`CompactCrossFileResolveTest.testPrefixedRelativeImportResolvesStructType`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/resolve/CompactCrossFileResolveTest.java#L510-L536): Tests prefixed import in the `TYPE` namespace (`Types_AccountInfo`).
-  - [`CompactCrossFileResolveTest.testPrefixedRelativeImportResolvesModuleExportedCircuit`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/resolve/CompactCrossFileResolveTest.java#L538-L566): Tests prefixed import resolving exported circuits defined in modules inside an imported file.
+- **Level 1 IDE Features**:
+  - Code Folding (`CompactFoldingBuilder`): Folding for blocks, structs, enums, contracts, modules, ledgers, multiline imports/exports, pragma headers, and comments.
+  - Navigation Breadcrumbs (`CompactBreadcrumbsProvider`): Real-time breadcrumb trail for contracts, modules, circuits, witnesses, structs, enums, and control flow.
+  - Live Templates (`Compact.xml`, `CompactLiveTemplateContextType`): 15 smart contract code snippets with complete i18n support.
+  - File Templates (`CompactFileTemplateGroupFactory`): New Compact File actions and templates for Contract, Interface, Module, and Blank File.
+  - Surround With (`CompactSurroundDescriptor`, `CompactIfSurrounder`, `CompactBlockSurrounder`, `CompactSurrounderBase`): Statement surrounding and automatic reformatting.
+  - Spellchecking (`CompactSpellcheckingStrategy`): Token-aware spellchecking.
+- **Code Inspection Fixes & Polish**:
+  - Added `lang="en"` to HTML inspection description files.
+  - Removed unused properties in `MyMessageBundle.properties`.
+  - Added `#* @vtlvariable *#` annotations in Velocity `.compact.ft` templates.
+  - Replaced math bounds with `Math.clamp()` in `CompactSurroundDescriptor`.
+  - Converted `getElementInfo` in `CompactBreadcrumbsProvider` to pattern-matching switch expressions.
+  - Removed unused constant fields and redundant casts across production and test code.
+  - Cleaned YAML formatting in `.ai/project-state.yaml`.
 
 ## Tests
-- **264/264 tests passing** (0 failures, 0 skipped, 100% success rate across 26 test suites).
+- **282/282 tests passing** (0 failures, 0 skipped, 100% success rate across 31 test suites).
 - Verified via `./gradlew test`.
 
 ## Next Feature Options
