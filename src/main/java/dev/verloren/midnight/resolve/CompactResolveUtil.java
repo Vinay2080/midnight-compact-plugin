@@ -125,23 +125,14 @@ public final class CompactResolveUtil {
   public static @NotNull List<CompactNamedElement> moduleExports(@NotNull CompactModuleDefinition module) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement member : PsiTreeUtil.findChildrenOfType(module, CompactNamedElement.class)) {
-      if (member == module || nearestModule(member) != module) {
+      if (!isDirectModuleDeclaration(member, module)) {
         continue;
       }
-      if (hasAncestorWithToken(member, CompactTokenTypes.EXPORT, module) || isListedInExportForm(member, module)) {
+      if (CompactPsiUtil.hasAncestorWithToken(member, CompactTokenTypes.EXPORT, module) || isListedInExportForm(member, module)) {
         result.add(member);
       }
     }
     return result;
-  }
-
-  private static boolean hasAncestorWithToken(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType tokenType, @NotNull CompactModuleDefinition module) {
-    for (PsiElement p = element; p != null && p != module; p = p.getParent()) {
-      if (hasToken(p, tokenType)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public static @NotNull List<String> prefixedImportNames(@NotNull PsiElement place, Namespace namespace) {
@@ -159,7 +150,7 @@ public final class CompactResolveUtil {
       if (importedFile != null) {
         for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
           String name = decl.getName();
-          if (nearestModule(decl) == null && name != null && isInNamespace(decl, namespace, importDeclaration)) {
+          if (isTopLevelFileDeclaration(decl) && name != null && isInNamespace(decl, namespace, importDeclaration)) {
             result.add(prefix + name);
           }
         }
@@ -196,11 +187,11 @@ public final class CompactResolveUtil {
       return null;
     }
 
-    // 1. Check imported file (e.g. import { GameState } from './GameState')
+    // 1. Check imported file (e.g., import { GameState } from './GameState')
     CompactFile importedFile = importDeclaration.resolveImportedFile();
     if (importedFile != null) {
       for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
-        if (nearestModule(declaration) == null && name.equals(declaration.getName())) {
+        if (isTopLevelFileDeclaration(declaration) && name.equals(declaration.getName())) {
           return declaration;
         }
       }
@@ -213,7 +204,7 @@ public final class CompactResolveUtil {
       }
     }
 
-    // 2. Check module (e.g. import { square } from Math)
+    // 2. Check module (e.g., import { square } from Math)
     CompactModuleDefinition module = findModule(importDeclaration, importDeclaration.getModuleName());
     if (module != null) {
       for (CompactNamedElement exported : moduleExports(module)) {
@@ -229,10 +220,11 @@ public final class CompactResolveUtil {
     for (List<CompactNamedElement> layer : collectDeclarationLayers(place, namespace)) {
       List<CompactNamedElement> matches = new ArrayList<>();
       for (CompactNamedElement declaration : layer) {
-        if (name.equals(declaration.getName()) && !PsiTreeUtil.isAncestor(declaration, place, false)) {
+        if (name.equals(declaration.getName()) && (!PsiTreeUtil.isAncestor(declaration, place, false) || declaration instanceof CompactCircuitDefinition)) {
           matches.add(declaration);
         }
       }
+
       if (!matches.isEmpty()) {
         return matches;
       }
@@ -265,19 +257,50 @@ public final class CompactResolveUtil {
         layers.add(collectNamedBefore(scope, place, namespace));
       }
       if (scope instanceof CompactModuleDefinition) {
-        // Enclosing module members
+        // Enclosing module members (all top-level declarations in module available regardless of order)
         layers.add(collectModuleDeclarations((CompactModuleDefinition) scope, namespace, place));
       }
       if (scope instanceof CompactFile) {
-        // File-level top declarations, then selective imports, then included files
+        // Handle incomplete declarations directly preceding place at file level (e.g., during completion)
+        PsiElement prev = PsiTreeUtil.getPrevSiblingOfType(place, CompactTypeDefinition.class);
+        if (prev == null) {
+          prev = PsiTreeUtil.getPrevSiblingOfType(place, CompactStructDefinition.class);
+        }
+        if (prev == null) {
+          prev = PsiTreeUtil.getPrevSiblingOfType(place, CompactCircuitDefinition.class);
+        }
+        if (prev != null && isLocalScope(prev)) {
+          layers.add(collectNamedBefore(prev, place, namespace));
+        }
+
+        // File-level top declarations (all top-level declarations in file available regardless of order),
+        // then selective imports, then included files, then standard library
         layers.add(collectFileDeclarations((CompactFile) scope, namespace, place));
         layers.add(collectSelectionImports((CompactFile) scope, namespace));
         layers.add(collectIncludedDeclarations((CompactFile) scope, namespace, place));
+        layers.add(collectStandardLibraryDeclarations(place.getProject(), namespace, place));
         break;
       }
     }
     return layers;
   }
+
+  private static @NotNull List<CompactNamedElement> collectStandardLibraryDeclarations(
+      @NotNull com.intellij.openapi.project.Project project,
+      @NotNull Namespace namespace,
+      @NotNull PsiElement place
+  ) {
+    List<CompactNamedElement> result = new ArrayList<>();
+    for (CompactFile stdFile : dev.verloren.midnight.stdlib.CompactStandardLibraryProvider.getStandardLibraryFiles(project)) {
+      for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(stdFile, CompactNamedElement.class)) {
+        if (isTopLevelFileDeclaration(decl) && isInNamespace(decl, namespace, place)) {
+          result.add(decl);
+        }
+      }
+    }
+    return result;
+  }
+
 
   private static void collectIncludedFiles(
       @NotNull CompactFile file,
@@ -306,7 +329,7 @@ public final class CompactResolveUtil {
 
     for (CompactFile incFile : includedFiles) {
       for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(incFile, CompactNamedElement.class)) {
-        if (nearestModule(declaration) == null && isInNamespace(declaration, namespace, place)) {
+        if (isTopLevelFileDeclaration(declaration) && isInNamespace(declaration, namespace, place)) {
           result.add(declaration);
         }
       }
@@ -316,21 +339,82 @@ public final class CompactResolveUtil {
 
   private static boolean isLocalScope(@NotNull PsiElement element) {
     return element instanceof CompactBlock
-            || element.getNode().getElementType() == CompactElementTypes.CIRCUIT_DEFINITION
-            || element.getNode().getElementType() == CompactElementTypes.WITNESS_DECLARATION
-            || element.getNode().getElementType() == CompactElementTypes.CONSTRUCTOR_DEFINITION
-            || element.getNode().getElementType() == CompactElementTypes.LAMBDA_EXPR
-            || element.getNode().getElementType() == CompactElementTypes.FOR_STATEMENT
-            || element.getNode().getElementType() == CompactElementTypes.TYPE_ALIAS_DECLARATION
-            || element.getNode().getElementType() == CompactElementTypes.STRUCT_DECLARATION
-            || element.getNode().getElementType() == CompactElementTypes.CONTRACT_DECLARATION;
+            || element instanceof CompactCircuitDefinition
+            || element instanceof CompactWitnessDeclaration
+            || element instanceof CompactConstructorDeclaration
+            || element instanceof CompactTypeDefinition
+            || element instanceof CompactStructDefinition
+            || (element.getNode() != null && (element.getNode().getElementType() == CompactElementTypes.LAMBDA_EXPR
+                || element.getNode().getElementType() == CompactElementTypes.FOR_STATEMENT));
+  }
+
+  private static boolean belongsToLocalScope(@NotNull CompactNamedElement declaration, @NotNull PsiElement scope) {
+    if (scope instanceof CompactBlock) {
+      if (declaration instanceof CompactParameterImpl || CompactPsiUtil.isPatternParameter(declaration)) {
+        return false;
+      }
+      CompactBlock parentBlock = PsiTreeUtil.getParentOfType(declaration, CompactBlock.class);
+      return parentBlock == scope;
+    }
+    if (scope instanceof CompactCircuitDefinition
+        || scope instanceof CompactWitnessDeclaration
+        || scope instanceof CompactConstructorDeclaration
+        || scope instanceof CompactTypeDefinition
+        || scope instanceof CompactStructDefinition) {
+      if (declaration == scope) {
+        return true;
+      }
+      if (declaration instanceof CompactParameterImpl || CompactPsiUtil.isPatternParameter(declaration)) {
+        PsiElement callable = PsiTreeUtil.getParentOfType(declaration,
+            CompactCircuitDefinition.class,
+            CompactWitnessDeclaration.class,
+            CompactConstructorDeclaration.class);
+        return callable == scope;
+      }
+      if (declaration instanceof CompactGenericParameterImpl) {
+        PsiElement owner = PsiTreeUtil.getParentOfType(declaration,
+            CompactTypeDefinition.class,
+            CompactStructDefinition.class,
+            CompactCircuitDefinition.class,
+            CompactWitnessDeclaration.class);
+        return owner == scope;
+      }
+      return false;
+    }
+    if (scope.getNode() != null && scope.getNode().getElementType() == CompactElementTypes.LAMBDA_EXPR) {
+      if (declaration instanceof CompactParameterImpl || CompactPsiUtil.isPatternParameter(declaration)) {
+        for (PsiElement p = declaration.getParent(); p != null; p = p.getParent()) {
+          if (p.getNode() != null && p.getNode().getElementType() == CompactElementTypes.LAMBDA_EXPR) {
+            return p == scope;
+          }
+          if (p instanceof CompactBlock || p instanceof CompactFile) {
+            break;
+          }
+        }
+      }
+      return false;
+    }
+    if (scope.getNode() != null && scope.getNode().getElementType() == CompactElementTypes.FOR_STATEMENT) {
+      for (PsiElement p = declaration.getParent(); p != null; p = p.getParent()) {
+        if (p.getNode() != null && p.getNode().getElementType() == CompactElementTypes.FOR_STATEMENT) {
+          return p == scope;
+        }
+        if (p instanceof CompactBlock) {
+          break;
+        }
+      }
+      return false;
+    }
+    return true;
   }
 
   private static @NotNull List<CompactNamedElement> collectNamedBefore(@NotNull PsiElement scope, @NotNull PsiElement place, @NotNull Namespace namespace) {
     List<CompactNamedElement> result = new ArrayList<>();
     int placeOffset = place.getTextRange().getStartOffset();
     for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(scope, CompactNamedElement.class)) {
-      if (declaration.getTextRange().getStartOffset() < placeOffset && isInNamespace(declaration, namespace, place)) {
+      if (declaration.getTextRange().getStartOffset() < placeOffset
+          && isInNamespace(declaration, namespace, place)
+          && belongsToLocalScope(declaration, scope)) {
         result.add(declaration);
       }
     }
@@ -340,7 +424,7 @@ public final class CompactResolveUtil {
   private static @NotNull List<CompactNamedElement> collectModuleDeclarations(@NotNull CompactModuleDefinition module, @NotNull Namespace namespace, @NotNull PsiElement place) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(module, CompactNamedElement.class)) {
-      if (declaration != module && nearestModule(declaration) == module && isInNamespace(declaration, namespace, place)) {
+      if (isDirectModuleDeclaration(declaration, module) && isInNamespace(declaration, namespace, place)) {
         result.add(declaration);
       }
     }
@@ -350,11 +434,44 @@ public final class CompactResolveUtil {
   private static @NotNull List<CompactNamedElement> collectFileDeclarations(@NotNull CompactFile file, @NotNull Namespace namespace, @NotNull PsiElement place) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(file, CompactNamedElement.class)) {
-      if (nearestModule(declaration) == null && isInNamespace(declaration, namespace, place)) {
+      if (isTopLevelFileDeclaration(declaration) && isInNamespace(declaration, namespace, place)) {
         result.add(declaration);
       }
     }
     return result;
+  }
+
+  public static boolean isTopLevelFileDeclaration(@NotNull CompactNamedElement declaration) {
+    if (nearestModule(declaration) != null) {
+      return false;
+    }
+    return getDeclaration(declaration);
+  }
+
+  private static boolean getDeclaration(@NotNull CompactNamedElement declaration) {
+    if (declaration instanceof CompactParameterImpl || CompactPsiUtil.isPatternParameter(declaration)) {
+      return false;
+    }
+    if (declaration instanceof CompactStructFieldImpl || declaration instanceof CompactGenericParameterImpl) {
+      return false;
+    }
+    if (declaration instanceof CompactConstBindingImpl || declaration instanceof CompactPatternImpl) {
+      if (PsiTreeUtil.getParentOfType(declaration, CompactBlock.class) != null) {
+        return false;
+      }
+      return PsiTreeUtil.getParentOfType(declaration,
+              CompactCircuitDefinition.class,
+              CompactWitnessDeclaration.class,
+              CompactConstructorDeclaration.class) == null;
+    }
+    return true;
+  }
+
+  public static boolean isDirectModuleDeclaration(@NotNull CompactNamedElement declaration, @NotNull CompactModuleDefinition module) {
+    if (declaration == module || nearestModule(declaration) != module) {
+      return false;
+    }
+    return getDeclaration(declaration);
   }
 
   private static @NotNull List<CompactNamedElement> collectSelectionImports(@NotNull CompactFile file, @NotNull Namespace namespace) {
@@ -383,7 +500,7 @@ public final class CompactResolveUtil {
       CompactFile importedFile = importDeclaration.resolveImportedFile();
       if (importedFile != null) {
         for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
-          if (nearestModule(decl) == null && exportedName.equals(decl.getName()) && isInNamespace(decl, namespace, place)) {
+          if (isTopLevelFileDeclaration(decl) && exportedName.equals(decl.getName()) && isInNamespace(decl, namespace, place)) {
             result.add(decl);
           }
         }
@@ -421,22 +538,14 @@ public final class CompactResolveUtil {
               || declaration instanceof CompactGenericParameterImpl;
     }
     if (declaration instanceof CompactParameterImpl) {
-      return !hasAncestorOfType(declaration, CompactElementTypes.STRUCT_FIELD);
+      return !CompactPsiUtil.hasAncestorOfType(declaration, CompactElementTypes.STRUCT_FIELD);
     }
     return declaration instanceof CompactLedgerDeclaration
             || declaration instanceof CompactWitnessDeclaration
             || declaration instanceof CompactCircuitDefinition
             || declaration instanceof CompactPatternImpl
+            || declaration instanceof CompactConstBindingImpl
             || declaration instanceof CompactEnumDefinition;
-  }
-
-  private static boolean hasAncestorOfType(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType type) {
-    for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
-      if (parent.getNode() != null && parent.getNode().getElementType() == type) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static boolean isListedInExportForm(@NotNull CompactNamedElement member, @NotNull CompactModuleDefinition module) {

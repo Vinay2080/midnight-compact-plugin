@@ -61,12 +61,7 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
         groupEnd = child;
         groupCount++;
       } else if (!(child instanceof PsiWhiteSpace || child instanceof PsiComment)) {
-        if (groupCount >= 2 && groupStart != null && groupEnd != null) {
-          TextRange range = new TextRange(groupStart.getTextRange().getStartOffset(), groupEnd.getTextRange().getEndOffset());
-          if (isMultiLine(range, document)) {
-            descriptors.add(new FoldingDescriptor(groupStart.getNode(), range));
-          }
-        }
+        flushImportGroup(descriptors, groupStart, groupEnd, groupCount, document);
         groupStart = null;
         groupEnd = null;
         groupCount = 0;
@@ -74,6 +69,16 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
       child = child.getNextSibling();
     }
 
+    flushImportGroup(descriptors, groupStart, groupEnd, groupCount, document);
+  }
+
+  private void flushImportGroup(
+      @NotNull List<FoldingDescriptor> descriptors,
+      @Nullable PsiElement groupStart,
+      @Nullable PsiElement groupEnd,
+      int groupCount,
+      @NotNull Document document
+  ) {
     if (groupCount >= 2 && groupStart != null && groupEnd != null) {
       TextRange range = new TextRange(groupStart.getTextRange().getStartOffset(), groupEnd.getTextRange().getEndOffset());
       if (isMultiLine(range, document)) {

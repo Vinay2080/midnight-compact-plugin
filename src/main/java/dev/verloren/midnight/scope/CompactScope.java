@@ -15,9 +15,9 @@ import java.util.List;
  * <p>Provides symbol enumeration and scoped name lookup across different {@link CompactSymbolNamespace}s.</p>
  */
 public interface CompactScope {
-  @NotNull CompactScopeKind getKind();
+  @NotNull CompactScopeKind kind();
 
-  @NotNull PsiElement getOwner();
+  @NotNull PsiElement owner();
 
   @Nullable CompactScope getParentScope();
 

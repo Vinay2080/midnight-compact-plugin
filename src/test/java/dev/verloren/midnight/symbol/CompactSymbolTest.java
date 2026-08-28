@@ -40,7 +40,7 @@ public class CompactSymbolTest extends BasePlatformTestCase {
     assertEquals(CompactSymbolKind.STRUCT, symbol.getKind());
     assertEquals(CompactSymbolNamespace.TYPE, symbol.getNamespace());
     assertEquals(CompactVisibility.EXPORTED, symbol.getVisibility());
-    assertEquals("Point", symbol.getType().name());
+    assertEquals("Point", symbol.type().name());
     assertTrue(symbol.canBeReferenced());
     assertTrue(symbol.canBeRenamed());
   }
@@ -63,7 +63,7 @@ public class CompactSymbolTest extends BasePlatformTestCase {
     CompactScope scope = CompactResolveUtil.scopeFor(place);
 
     assertNotNull(scope);
-    assertEquals(CompactScopeKind.BLOCK, scope.getKind());
+    assertEquals(CompactScopeKind.BLOCK, scope.kind());
     assertContainsSymbol(scope.getSymbols(CompactSymbolNamespace.VALUE), "input", CompactSymbolKind.PARAMETER);
     assertContainsSymbol(scope.getSymbols(CompactSymbolNamespace.TYPE), "Amount", CompactSymbolKind.STRUCT);
     assertContainsSymbol(scope.getSymbols(CompactSymbolNamespace.TYPE), "Field", CompactSymbolKind.BUILTIN_TYPE);
@@ -72,7 +72,7 @@ public class CompactSymbolTest extends BasePlatformTestCase {
 
   private static void assertContainsSymbol(Collection<CompactSymbol> symbols, String name, CompactSymbolKind kind) {
     for (CompactSymbol symbol : symbols) {
-      if (name.equals(symbol.getName()) && symbol.getKind() == kind) {
+      if (name.equals(symbol.name()) && symbol.getKind() == kind) {
         return;
       }
     }
@@ -99,6 +99,6 @@ public class CompactSymbolTest extends BasePlatformTestCase {
     CompactSymbol symbol = symbols.getFirst();
     assertInstanceOf(symbol, CompactValueSymbol.class);
     assertEquals(CompactSymbolKind.PARAMETER, symbol.getKind());
-    assertEquals("Field", symbol.getType().name());
+    assertEquals("Field", symbol.type().name());
   }
 }

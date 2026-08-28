@@ -90,4 +90,152 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     Collection<String> names = typeDecls.stream().map(CompactNamedElement::getName).toList();
     assertTrue("Generic parameter 'N' should be collectible in type context", names.contains("N"));
   }
+
+  public void testStructMemberCompletionOnParameter() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Config {
+            timeout: Uint<32>,
+            retries: Uint<8>
+        }
+
+        enum State {
+            Idle,
+            Running,
+            Finished
+        }
+
+        circuit run(cfg: Config): Void {
+            const t = cfg.<caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'timeout'", lookupStrings.contains("timeout"));
+    assertTrue("Should suggest 'retries'", lookupStrings.contains("retries"));
+  }
+
+  public void testEnumMemberCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Config {
+            timeout: Uint<32>,
+            retries: Uint<8>
+        }
+
+        enum State {
+            Idle,
+            Running,
+            Finished
+        }
+
+        circuit run(cfg: Config): Void {
+            const s = State.<caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'Idle'", lookupStrings.contains("Idle"));
+    assertTrue("Should suggest 'Running'", lookupStrings.contains("Running"));
+    assertTrue("Should suggest 'Finished'", lookupStrings.contains("Finished"));
+  }
+
+  public void testStructMemberCompletionOnLocalConst() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Point {
+            x: Field,
+            y: Field
+        }
+
+        circuit draw(): Void {
+            const p: Point = Point { x: 1, y: 2 };
+            const px = p.<caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'x'", lookupStrings.contains("x"));
+    assertTrue("Should suggest 'y'", lookupStrings.contains("y"));
+  }
+
+  public void testReturnCompletionFieldTypeAwareness() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(secretKey: Field, publicAddress: Uint<32>): Field {
+            const multiplier = 5;
+            return <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'secretKey'", lookupStrings.contains("secretKey"));
+    assertTrue("Should suggest 'multiplier'", lookupStrings.contains("multiplier"));
+    assertFalse("Should NOT suggest 'publicAddress'", lookupStrings.contains("publicAddress"));
+    assertFalse("Should NOT suggest 'true'", lookupStrings.contains("true"));
+    assertFalse("Should NOT suggest 'false'", lookupStrings.contains("false"));
+    assertFalse("Should NOT suggest 'circuit'", lookupStrings.contains("circuit"));
+    assertFalse("Should NOT suggest 'const'", lookupStrings.contains("const"));
+  }
+
+  public void testReturnCompletionUintTypeAwareness() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit compute(secretKey: Field, publicAddress: Uint<32>, count: Uint<8>): Uint<32> {
+            const multiplier = 5;
+            return <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'publicAddress'", lookupStrings.contains("publicAddress"));
+    assertTrue("Should suggest 'count'", lookupStrings.contains("count"));
+    assertTrue("Should suggest 'multiplier'", lookupStrings.contains("multiplier"));
+    assertFalse("Should NOT suggest 'secretKey'", lookupStrings.contains("secretKey"));
+    assertFalse("Should NOT suggest 'true'", lookupStrings.contains("true"));
+  }
+
+  public void testReturnCompletionBooleanTypeAwareness() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit isValid(secretKey: Field, isActive: Boolean): Boolean {
+            return <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'isActive'", lookupStrings.contains("isActive"));
+    assertTrue("Should suggest 'true'", lookupStrings.contains("true"));
+    assertTrue("Should suggest 'false'", lookupStrings.contains("false"));
+    assertFalse("Should NOT suggest 'secretKey'", lookupStrings.contains("secretKey"));
+  }
+
+  public void testReturnCompletionStructTypeAwareness() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Point { x: Field, y: Field }
+        struct Config { timeout: Uint<32> }
+        circuit getPoint(p: Point, c: Config): Point {
+            return <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'p'", lookupStrings.contains("p"));
+    assertFalse("Should NOT suggest 'c'", lookupStrings.contains("c"));
+  }
 }

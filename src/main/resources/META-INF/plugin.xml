@@ -89,6 +89,41 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.editor.CompactQuoteHandler"/>
 
+        <gotoClassContributor
+                implementation="dev.verloren.midnight.navigation.CompactGotoClassContributor"/>
+
+        <gotoSymbolContributor
+                implementation="dev.verloren.midnight.navigation.CompactGotoSymbolContributor"/>
+
+        <gotoDeclarationHandler
+                implementation="dev.verloren.midnight.navigation.CompactGotoDeclarationHandler"/>
+
+        <psi.referenceContributor
+                language="Compact"
+                implementation="dev.verloren.midnight.reference.CompactReferenceContributor"/>
+
+        <configurationType
+                implementation="dev.verloren.midnight.run.CompactConfigurationType"/>
+
+        <runConfigurationProducer
+                implementation="dev.verloren.midnight.run.CompactRunConfigurationProducer"/>
+
+        <runLineMarkerContributor
+                language="Compact"
+                implementationClass="dev.verloren.midnight.run.CompactRunLineMarkerContributor"/>
+
+        <applicationService
+                serviceImplementation="dev.verloren.midnight.settings.MidnightSettingsState"/>
+
+        <applicationConfigurable
+                parentId="language"
+                instance="dev.verloren.midnight.settings.MidnightSettingsConfigurable"
+                id="dev.verloren.midnight.settings.MidnightSettingsConfigurable"
+                displayName="Midnight Compact"/>
+
+
+
+
 
         <fileTemplateGroup
                 implementation="dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory"/>
@@ -114,6 +149,21 @@
         <lang.surroundDescriptor
                 language="Compact"
                 implementationClass="dev.verloren.midnight.editor.CompactSurroundDescriptor"/>
+
+        <codeInsight.parameterNameHints
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactInlayParameterHintsProvider"/>
+
+        <externalAnnotator
+                language="Compact"
+                implementationClass="dev.verloren.midnight.annotator.CompactExternalAnnotator"/>
+
+        <codeInsight.lineMarkerProvider
+                language="Compact"
+                implementationClass="dev.verloren.midnight.editor.CompactLineMarkerProvider"/>
+
+
+
 
         <localInspection
                 language="Compact"
@@ -150,6 +200,51 @@
                 level="WARNING"
                 implementationClass="dev.verloren.midnight.inspection.CompactTypeMismatchInspection"
                 key="inspection.compact.type.mismatch.display.name"/>
+
+        <localInspection
+                language="Compact"
+                groupKey="inspection.group.name.compact"
+                shortName="CompactPureCircuit"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactPureCircuitInspection"
+                key="inspection.compact.pure.circuit.display.name"/>
+
+        <localInspection
+                language="Compact"
+                groupKey="inspection.group.name.compact"
+                shortName="CompactSealedFieldMutation"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactSealedFieldMutationInspection"
+                key="inspection.compact.sealed.field.mutation.display.name"/>
+
+        <localInspection
+                language="Compact"
+                groupKey="inspection.group.name.compact"
+                shortName="CompactRecursiveCircuit"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactRecursiveCircuitInspection"
+                key="inspection.compact.recursive.circuit.display.name"/>
+
+        <localInspection
+                language="Compact"
+                groupKey="inspection.group.name.compact"
+                shortName="CompactConstructorRestriction"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactConstructorRestrictionInspection"
+                key="inspection.compact.constructor.restriction.display.name"/>
+
+        <localInspection
+                language="Compact"
+                groupKey="inspection.group.name.compact"
+                shortName="CompactUndisclosedWitness"
+                enabledByDefault="true"
+                level="WARNING"
+                implementationClass="dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspection"
+                key="inspection.compact.undisclosed.witness.display.name"/>
 
     </extensions>
 

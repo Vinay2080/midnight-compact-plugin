@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * containing module, and navigability.</p>
  */
 public interface CompactSymbol {
-  @Nullable String getName();
+  @Nullable String name();
 
   @Nullable CompactNamedElement getDeclaration();
 
@@ -25,7 +25,7 @@ public interface CompactSymbol {
 
   @NotNull CompactVisibility getVisibility();
 
-  @NotNull CompactType getType();
+  @NotNull CompactType type();
 
   @Nullable CompactSymbol getContainingSymbol();
 

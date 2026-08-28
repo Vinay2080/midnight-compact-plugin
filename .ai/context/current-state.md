@@ -45,18 +45,25 @@ Last Updated: August 2026
   - `CompactStructureViewFactory`, `CompactStructureViewModel`, and `CompactStructureViewElement`.
   - Hierarchy representation for contracts, modules, circuits, witnesses, ledgers, constructors, structs, struct fields, enums, enum members, type aliases, const bindings, pragmas, includes, imports, and exports.
 - **Phase 8: Documentation Provider & Quick Docs**
-  - `CompactDocumentationProvider` rendering quick docs (`Ctrl + Q` / hover tooltips) with type signatures, parameter lists, parent containers, struct fields, enum variants, and doc-comments (`///`, `//`, `/* */`).
+  - `CompactDocumentationProvider` rendering quick docs (`Ctrl + Q` / hover tooltips) with native `DocumentationMarkup` (definitions, markdown description paragraphs, two-column sections table for `Params:`, `Returns:`, `Throws:`, `See also:`, `Since:`, `Deprecated:`, `Notice:`, `Dev:`, `Fields:`, and `Variants:`).
+  - Javadoc block doc comments (`/** ... */`) and line doc comments (`///`) normalization, stripping asterisk line prefixes, and full doc tag parsing.
+  - Inline markdown parsing (inline code `` `code` ``, bold `**text**`, italic `*text*`, links `[text](url)`).
+  - Parameter doc inheritance (hovering on a parameter resolves the `@param` tag from the enclosing circuit/witness/constructor doc comment).
+  - Struct field doc inheritance (hovering on a struct field resolves the `@param` tag from the parent struct doc comment).
+  - Direct doc comment resolution (`getCustomDocumentationElement` on `/** ... */` resolves to the documented declaration).
+  - Rendered documentation for Reader Mode (`generateRenderedDoc`).
+  - `CodeDocumentationAwareCommenter` in `CompactCommenter` for auto-formatting doc comment asterisks and typing ergonomics.
 - **Phase 9: Cross-File Resolution & Import Awareness**
   - Direct and transitive file inclusion resolution via `include "relative/path.compact";`.
   - Selective and module imports via `import { Symbol } from './path';` and `import { square } from Module;`.
   - Cross-file enum definition and enum-variant member navigation (`GameState.PLAYING`).
   - Go To Declaration navigation on `include "..."` and `import ... from '...'` path strings.
   - Cycle-safe recursive include traversal.
-  - Strict preservation of local-over-external shadowing and `VALUE` vs `TYPE` namespaces across files.
+  - Strict preservation of local-over-external shadowing and `VALUE` vs. `TYPE` namespaces across files.
 
 - **Phase 10: PSI Refactoring & Architectural Alignment**
   - Expanded `CompactNamedElementImpl.getUseScope()` to project search scope for top-level/exported declarations and local search scope for parameters and locals, enabling cross-file Find Usages.
-  - Added strongly-typed accessors to PSI interfaces (`CompactCircuitDefinition.getParameters()`, `getBody()`, `getReturnTypeElement()`, `CompactStructDefinition.getFields()`, `CompactEnumDefinition.getMembers()`, `CompactTypeDefinition.getTargetTypeElement()`, `CompactConstructorDeclaration.getParameters()`, `getBody()`, etc.).
+  - Added strongly typed accessors to PSI interfaces (`CompactCircuitDefinition.getParameters()`, `getBody()`, `getReturnTypeElement()`, `CompactStructDefinition.getFields()`, `CompactEnumDefinition.getMembers()`, `CompactTypeDefinition.getTargetTypeElement()`, `CompactConstructorDeclaration.getParameters()`, `getBody()`, etc.).
   - Hardened `CompactIncludeDeclarationImpl.resolveIncludedFile()` and `CompactImportDeclarationImpl.resolveImportedFile()` with deterministic directory / content-root relative resolution and `CachedValuesManager` caching.
   - Implemented `equals()` and `hashCode()` on `CompactReferenceBase` for optimal `ResolveCache` hit rates.
   - Replaced thread-unsafe UserData recursion flags with thread-safe `RecursionManager` in `CompactReferenceExprImpl.getType()`.
@@ -64,7 +71,7 @@ Last Updated: August 2026
 
 - **Phase 11: Syntax & Semantic Highlighting Overhaul**
   - Designed and implemented complete semantic and syntactic color registry (`CompactHighlighterColors`) with 42+ dedicated `TextAttributesKey`s mapped to standard `DefaultLanguageHighlighterColors`.
-  - Fine-grained semantic distinction for declarations vs call sites vs read/write usages: circuits, witnesses, constructors, contracts, modules, structs, enums, enum members, fields, type aliases, type parameters, constants, parameters, local variables, write reassignments (`LOCAL_VARIABLE_WRITE`), ledger states, ledger writes (`LEDGER_WRITE`), and imported symbols.
+  - Fine-grained semantic distinction for declarations vs. call sites vs. read/write usages: circuits, witnesses, constructors, contracts, modules, structs, enums, enum members, fields, type aliases, type parameters, constants, parameters, local variables, write reassignments (`LOCAL_VARIABLE_WRITE`), ledger states, ledger writes (`LEDGER_WRITE`), and imported symbols.
   - Modifiers (`export`, `pure`, `sealed`, `new`, `implements`, `external`) distinguished with `CompactHighlighterColors.MODIFIER`.
   - Built-in primitive types (`Field`, `Boolean`, `Uint<N>`, `Bytes<N>`, `Vector`, `Opaque`, `Cell`, `Void`, `JubjubScalar`, etc.) and standard library types (`Counter`, `Set`, `Map`, `List`, `HistoricMerkleTree`, `MerkleTree`, `Kernel`, `ContractAddress`, `ShieldedCoinInfo`, `Maybe`, `Either`, etc.) distinguished from custom nominal struct/enum/alias type references.
   - Built-in functions (`assert`, `disclose`, `fold`, `slice`, `pad`, `emit`, `map`, `transientHash`, `persistentHash`, `transcribe`, `publicKey`, `degradeToTransient`, `default`, etc.) distinctively highlighted from user-defined circuit/witness calls.
@@ -72,7 +79,7 @@ Last Updated: August 2026
   - String escape sequence highlighting distinguishing valid escapes (`\n`, `\t`, `\xHH`, `\u{...}`) from invalid escape sequences.
   - Doc comments (`///`, `/**`) visually distinguished from standard line and block comments.
   - Pragma directives and semantic version literals (`^0.20.0`) highlighted.
-  - Full IDE Settings -> Editor -> Color Scheme -> Compact configuration page (`CompactColorSettingsPage`) with comprehensive demo code and interactive sample highlighting.
+  - Full IDE Settings → Editor → Color Scheme → Compact configuration page (`CompactColorSettingsPage`) with comprehensive demo code and interactive sample highlighting.
   - Semantic annotator (`CompactHighlightingAnnotator`) registered in `plugin.xml`.
 
 - **Phase 12: Level 1 IntelliJ Platform Integration**
@@ -98,30 +105,51 @@ Last Updated: August 2026
         - Implemented `CompactSurroundDescriptor`, `CompactIfSurrounder`, and `CompactBlockSurrounder` enabling
           `Ctrl + Alt + T` statement wrapping into `if (expr) { ... }` or `{ ... }` blocks.
 
+- **Phase 13: Compiler-Derived Smart Contract Inspections & Quick-Fixes**
+  - `CompactPureCircuitInspection`: Enforces `pure circuit` invariants (rejects ledger reads/writes, witness invocations, event emissions, and impure circuit calls) with `CompactRemovePureModifierFix`.
+  - `CompactSealedFieldMutationInspection`: Prevents mutation of `sealed ledger` fields outside `constructor`.
+  - `CompactRecursiveCircuitInspection`: Rejects direct self-recursion and mutual recursion in ZK circuits.
+  - `CompactConstructorRestrictionInspection`: Rejects event emissions (`emit`) and cross-contract calls inside `constructor`.
+  - `CompactUndisclosedWitnessInspection`: Enforces Witness Protection Program (WPP) rules requiring `disclose(...)` when assigning private witness data to public ledger state with `CompactWrapWithDiscloseFix`.
+
+- **Phase 15: Compact Compiler Run Configuration & Gutter "Play" Buttons**
+  - `CompactConfigurationType`, `CompactConfigurationFactory`, `CompactRunConfiguration`, `CompactRunConfigurationEditor`, `CompactRunProfileState`, `CompactConsoleFilter`, and `CompactRunLineMarkerContributor`.
+  - Enables 1-click execution from the editor gutter, automatic `compactc` CLI execution, fast dev build flag (`--skip-zk`), and clickable console error hyperlinks.
+
+- **Phase 16: Midnight Settings Page (`Languages & Frameworks -> Midnight Compact`)**
+  - `MidnightSettingsState`, `MidnightSettingsComponent`, and `MidnightSettingsConfigurable`.
+  - Application-level persistent settings managing compiler executable path, default output directory, default ZK skip behavior, and Devnet/Node RPC endpoint.
+
+- **Phase 17: External Linter & Background Diagnostics (`ExternalAnnotator`)**
+  - `CompactExternalAnnotator`, `CompactCompilerDiagnostic`, and `CompactCompilerOutputParser`.
+  - Background asynchronous execution of `compactc --vscode --skip-zk` with 100% official compiler diagnostic parsing into editor annotations.
+
+- **Phase 18: Semantic Gutter Line Markers (Privacy & Circuit Visualizer)**
+  - `CompactLineMarkerProvider`: Renders gutter icons for private off-chain queries (`witness`), Zero-Knowledge boundary transitions (`disclose`), public on-chain circuits, and ledger storage fields.
+
 ### Planned (Future Roadmap)
 
-- **Level 2 Integration**: Search Everywhere (`GotoClass`, `GotoSymbol`), Inlay Hints Provider, Intentions & Quick
-  Actions.
-- **Level 3 Integration**: Midnight Settings Page (`compactc` path, Docker runner, Devnet RPC), Standard Library
-  Synthetic Library roots, Semantic Gutter Line Markers.
-- **Level 4 Integration**: Compact Compiler Run Configuration, Gutter Run/Play Buttons, Background External Linter
-  (`compactc check`).
-- **Level 5 Integration**: New Project/DApp Wizard, Interactive Debugger (`XDebugger`, breakpoints, simulator stack
-  frame inspector), Midnight Explorer Tool Window, TypeScript Polyglot Cross-Navigation.
+- **Level 5 Integration**: New Project/DApp Wizard, Interactive Debugger (`XDebugger`, breakpoints, simulator stack frame inspector), Midnight Explorer Tool Window, TypeScript Polyglot Cross-Navigation.
 
 ---
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **282 passing** (0 failures, 0 skipped, 100% success rate across 31 test classes).
+- **Total Unit Tests**: **352 passing** (0 failures, 0 skipped, 100% success rate across forty test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
   - `CompactHighlightingTest`: 16 tests
   - `CompactColorSettingsPageTest`: 1 test
-  - `CompactCrossFileResolveTest`: 17 tests
-  - `CompactResolveTest`: 18 tests
-  - `CompactInspectionTest`: 69 tests
-  - `CompactDocumentationTest`: 9 tests
+  - `CompactResolveTest` + `CompactCrossFileResolveTest`: 38 tests (including forward references, top-level ledger resolution, and local parameter shadowing precedence)
+  - `CompactInspectionTest`: 86 tests
+  - `CompactStandardLibraryTest`: 5 tests (verifying direct element reference resolution and Ctrl+B / Ctrl+Click GotoDeclaration navigation for bundled standard library and ZKIR symbols)
+  - `CompactChooseByNameTest`: 2 tests
+  - `CompactInlayHintsTest`: 3 tests
+  - `CompactRunConfigurationTest` + `CompactRunConfigurationProducerTest` + `CompactToolchainUtilTest`: 13 tests (verifying per-contract deterministic output directory calculation and compiler output compatibility)
+  - `MidnightSettingsTest`: 3 tests
+  - `CompactExternalAnnotatorTest`: 2 tests
+  - `CompactLineMarkerTest`: 4 tests
+  - `CompactDocumentationTest`: 16 tests
   - `CompactStructureViewTest`: 9 tests
   - `CompactFormatterTest`: 39 tests
   - `CompactTypeInferenceTest`: 15 tests
@@ -136,7 +164,7 @@ Last Updated: August 2026
   - `CompactRenameTest`: 9 tests
   - `CompactFindUsagesTest`: 10 tests
   - `CompactReferenceTest`: 6 tests
-  - `CompactCompletionTest`: 5 tests
+  - `CompactCompletionTest`: 12 tests
   - `CompactSymbolTest`: 3 tests
   - PSI Tests (`DeclarationPsiTest`, `ElementFactoryConsistencyTest`): 3 tests
 
@@ -157,11 +185,12 @@ Last Updated: August 2026
 | **Inspections** | `dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection`, `CompactDuplicateDeclarationInspection`, `CompactUnusedLocalVariableInspection`, `CompactTypeMismatchInspection`, `CompactRemoveUnusedVariableFix` |
 | **Formatter** | `dev.verloren.midnight.formatter.CompactFormattingModelBuilder`, `CompactBlock`, `CompactLanguageCodeStyleSettingsProvider` |
 | **Structure View** | `dev.verloren.midnight.structure.CompactStructureViewFactory`, `CompactStructureViewModel`, `CompactStructureViewElement` |
-| **Documentation** | `dev.verloren.midnight.documentation.CompactDocumentationProvider` |
+| **Documentation** | `dev.verloren.midnight.documentation.CompactDocumentationProvider`, `CompactDocComment` |
 
 ---
 
 ## 4. Known Limitations
 
 1. **StubIndex Optimization**: Cross-file symbol resolution currently operates by loading included ASTs into memory; IntelliJ `StubIndex` optimization is planned for massive enterprise-scale projects.
-2. **Standard Library Resolution**: Stdlib symbols (e.g. `JubjubScalar`, `Secp256k1Scalar`, standard library functions) are treated as soft-unresolved until standard library files are bundled.
+2. **Standard Library Resolution**: Stdlib symbols (e.g., `JubjubScalar`, `Secp256k1Scalar`, standard library functions) are treated as soft-unresolved until standard library files are bundled.
+

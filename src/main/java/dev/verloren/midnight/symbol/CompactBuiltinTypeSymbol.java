@@ -6,17 +6,14 @@ import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class CompactBuiltinTypeSymbol implements CompactTypeSymbol {
-  private final String name;
-  private final CompactType type;
-
+public record CompactBuiltinTypeSymbol(String name, CompactType type) implements CompactTypeSymbol {
   public CompactBuiltinTypeSymbol(@NotNull String name, @NotNull CompactType type) {
     this.name = name;
     this.type = type;
   }
 
   @Override
-  public @NotNull String getName() {
+  public @NotNull String name() {
     return name;
   }
 
@@ -46,7 +43,7 @@ public final class CompactBuiltinTypeSymbol implements CompactTypeSymbol {
   }
 
   @Override
-  public @NotNull CompactType getType() {
+  public @NotNull CompactType type() {
     return type;
   }
 

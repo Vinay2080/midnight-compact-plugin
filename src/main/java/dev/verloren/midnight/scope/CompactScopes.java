@@ -74,7 +74,7 @@ public final class CompactScopes {
   private static void addAll(@NotNull Map<String, CompactSymbol> result,
                              @NotNull Collection<? extends CompactSymbol> symbols) {
     for (CompactSymbol symbol : symbols) {
-      String name = symbol.getName();
+      String name = symbol.name();
       if (name != null) {
         result.putIfAbsent(name, symbol);
       }
@@ -89,8 +89,8 @@ public final class CompactScopes {
     }
     for (CompactModuleDefinition module : PsiTreeUtil.findChildrenOfType(file, CompactModuleDefinition.class)) {
       CompactSymbol symbol = CompactSymbols.from(module);
-      if (symbol != null && symbol.getName() != null) {
-        result.putIfAbsent(symbol.getName(), symbol);
+      if (symbol != null && symbol.name() != null) {
+        result.putIfAbsent(symbol.name(), symbol);
       }
     }
     return result.values();
@@ -104,7 +104,7 @@ public final class CompactScopes {
   public static @NotNull List<CompactSymbol> resolveModuleSymbols(@NotNull String name, @NotNull PsiElement place) {
     List<CompactSymbol> result = new ArrayList<>();
     for (CompactSymbol symbol : collectModuleSymbols(place)) {
-      if (name.equals(symbol.getName())) {
+      if (name.equals(symbol.name())) {
         result.add(symbol);
       }
     }

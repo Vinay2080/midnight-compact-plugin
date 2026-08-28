@@ -9,5 +9,8 @@ public interface CompactCircuitDefinition extends CompactNamedElement {
   @NotNull List<CompactNamedElement> getParameters();
   @Nullable CompactBlock getBody();
   @Nullable CompactTypeElement getReturnTypeElement();
+  boolean isPure();
+  boolean isExported();
 }
+
 

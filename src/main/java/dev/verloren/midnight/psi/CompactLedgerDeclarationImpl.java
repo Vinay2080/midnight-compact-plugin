@@ -16,7 +16,27 @@ public class CompactLedgerDeclarationImpl extends CompactNamedElementImpl implem
   }
 
   @Override
+  public @NotNull dev.verloren.midnight.type.CompactType getType() {
+    CompactTypeElement typeElement = getTypeElement();
+    if (typeElement != null) {
+      return typeElement.getType();
+    }
+    return super.getType();
+  }
+
+  @Override
+  public boolean isSealed() {
+    return getNode().findChildByType(dev.verloren.midnight.lexer.CompactTokenTypes.SEALED) != null;
+  }
+
+  @Override
+  public boolean isExported() {
+    return getNode().findChildByType(dev.verloren.midnight.lexer.CompactTokenTypes.EXPORT) != null;
+  }
+
+  @Override
   public void accept(@NotNull CompactVisitor visitor) {
     visitor.visitLedgerDeclaration(this);
   }
-}
+}
+

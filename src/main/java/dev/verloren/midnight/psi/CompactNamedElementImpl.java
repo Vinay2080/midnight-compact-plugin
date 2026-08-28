@@ -8,6 +8,7 @@ import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Base implementation of {@link CompactNamedElement} for all Compact declarations.
@@ -73,5 +74,58 @@ public abstract class CompactNamedElementImpl extends CompactPsiElement implemen
       }
     }
     return null;
+  }
+
+  @Override
+  public com.intellij.navigation.ItemPresentation getPresentation() {
+    return new com.intellij.navigation.ItemPresentation() {
+      @Override
+      public @Nullable String getPresentableText() {
+        return getName();
+      }
+
+      @Override
+      public @Nullable String getLocationString() {
+        com.intellij.psi.PsiFile file = getContainingFile();
+        return file != null ? "(" + file.getName() + ")" : null;
+      }
+
+      @Override
+      public javax.swing.@NonNull Icon getIcon(boolean unused) {
+        if (CompactNamedElementImpl.this instanceof CompactCircuitDefinition) {
+          return com.intellij.icons.AllIcons.Nodes.Method;
+        }
+        if (CompactNamedElementImpl.this instanceof CompactWitnessDeclaration) {
+          return com.intellij.icons.AllIcons.Nodes.Function;
+        }
+        if (CompactNamedElementImpl.this instanceof CompactLedgerDeclaration
+                || CompactNamedElementImpl.this instanceof CompactStructFieldImpl
+                || CompactNamedElementImpl.this instanceof CompactEnumMemberImpl) {
+          return com.intellij.icons.AllIcons.Nodes.Field;
+        }
+        switch (CompactNamedElementImpl.this) {
+          case CompactStructDefinition _ -> {
+            return com.intellij.icons.AllIcons.Nodes.Record;
+          }
+          case CompactEnumDefinition _ -> {
+            return com.intellij.icons.AllIcons.Nodes.Enum;
+          }
+          case CompactModuleDefinition _ -> {
+            return com.intellij.icons.AllIcons.Nodes.Module;
+          }
+          default -> {
+          }
+        }
+
+        if (CompactNamedElementImpl.this instanceof CompactExternalContractDeclaration
+                || CompactNamedElementImpl.this instanceof CompactContractImplementsDeclaration) {
+          return com.intellij.icons.AllIcons.Nodes.Class;
+        }
+        if (CompactNamedElementImpl.this instanceof CompactTypeDefinition) {
+          return com.intellij.icons.AllIcons.Nodes.Type;
+        }
+        return dev.verloren.midnight.icons.MidnightIcons.FILE;
+      }
+    };
   }
 }

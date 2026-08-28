@@ -38,6 +38,31 @@ public class CompactStructFieldReference extends CompactReferenceBase {
     List<CompactNamedElement> fields = new ArrayList<>();
 
     for (CompactNamedElement typeDef : typeDefs) {
+      if (typeDef instanceof dev.verloren.midnight.psi.CompactImportElementImpl importElement) {
+        CompactNamedElement source = CompactResolveUtil.resolveImportElementSource(importElement);
+        if (source != null) {
+          typeDef = source;
+        }
+      }
+      if (typeDef instanceof dev.verloren.midnight.psi.CompactTypeDefinitionImpl typeAlias) {
+        CompactType targetType = typeAlias.getType();
+        List<CompactNamedElement> aliasTargets = CompactResolveUtil.resolveType(targetType.name(), element);
+        for (CompactNamedElement aliasTarget : aliasTargets) {
+          if (aliasTarget instanceof dev.verloren.midnight.psi.CompactImportElementImpl aliasImport) {
+            CompactNamedElement source = CompactResolveUtil.resolveImportElementSource(aliasImport);
+            if (source != null) {
+              aliasTarget = source;
+            }
+          }
+          if (aliasTarget instanceof CompactStructDefinitionImpl) {
+            for (CompactStructFieldImpl field : PsiTreeUtil.findChildrenOfType(aliasTarget, CompactStructFieldImpl.class)) {
+              if (getValue().equals(field.getName())) {
+                fields.add(field);
+              }
+            }
+          }
+        }
+      }
       if (typeDef instanceof CompactStructDefinitionImpl) {
         for (CompactStructFieldImpl field : PsiTreeUtil.findChildrenOfType(typeDef, CompactStructFieldImpl.class)) {
           if (getValue().equals(field.getName())) {

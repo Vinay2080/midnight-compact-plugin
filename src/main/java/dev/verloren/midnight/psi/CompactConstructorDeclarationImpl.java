@@ -34,12 +34,7 @@ public class CompactConstructorDeclarationImpl extends CompactPsiElement impleme
   }
 
   private static boolean hasAncestorOfType(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType type) {
-    for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
-      if (parent.getNode() != null && parent.getNode().getElementType() == type) {
-        return true;
-      }
-    }
-    return false;
+    return CompactPsiUtil.hasAncestorOfType(element, type);
   }
 
   @Override

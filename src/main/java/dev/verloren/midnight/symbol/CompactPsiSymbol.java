@@ -27,7 +27,7 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
       super(declaration, kind, CompactSymbolNamespace.VALUE);
     }
   }  @Override
-  public @Nullable String getName() {
+  public @Nullable String name() {
     return declaration.getName();
   }
 
@@ -69,7 +69,7 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
   }
 
   @Override
-  public @NotNull CompactType getType() {
+  public @NotNull CompactType type() {
     return declaration.isValid() ? declaration.getType() : CompactPrimitiveType.UNKNOWN;
   }
 
@@ -94,7 +94,7 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
 
   @Override
   public @Nullable String getQualifiedName() {
-    String name = getName();
+    String name = name();
     if (name == null) {
       return null;
     }
@@ -105,7 +105,7 @@ public abstract class CompactPsiSymbol implements CompactSymbol {
 
   @Override
   public boolean canBeReferenced() {
-    return namespace != CompactSymbolNamespace.UNKNOWN && getName() != null;
+    return namespace != CompactSymbolNamespace.UNKNOWN && name() != null;
   }
 
   @Override

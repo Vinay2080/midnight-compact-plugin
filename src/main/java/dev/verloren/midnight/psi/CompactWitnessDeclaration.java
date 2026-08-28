@@ -8,5 +8,7 @@ import java.util.List;
 public interface CompactWitnessDeclaration extends CompactNamedElement {
   @NotNull List<CompactNamedElement> getParameters();
   @Nullable CompactTypeElement getReturnTypeElement();
+  boolean isExported();
 }
+
 

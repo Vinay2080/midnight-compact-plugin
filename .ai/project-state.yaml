@@ -29,31 +29,40 @@ phases:
   compiler_integration: planned
 
 tests:
-  last_known_passing: 282
+  last_known_passing: 352
   failures: 0
   skipped: 0
   suites:
     lexer: "15 (LexerTest: 12, PragmaTest: 3)"
     parser: "17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)"
     psi: "3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)"
-    resolve: "35 (CompactResolveTest: 18, CompactCrossFileResolveTest: 17)"
+    resolve: "38 (CompactResolveTest: 21, CompactCrossFileResolveTest: 17)"
     reference: "6 (CompactReferenceTest: 6)"
-    completion: "5 (CompactCompletionTest: 5)"
+    completion: "12 (CompactCompletionTest: 12)"
     rename: "9 (CompactRenameTest: 9)"
     find_usages: "10 (CompactFindUsagesTest: 10)"
     editor: "4 (CompactEditorFeaturesTest: 4)"
     symbol: "3 (CompactSymbolTest: 3)"
     type_inference: "15 (CompactTypeInferenceTest: 15)"
-    inspections: "69 (CompactInspectionTest: 69)"
+    inspections: "86 (CompactInspectionTest: 86)"
     formatter: "39 (CompactFormatterTest: 39)"
     structure_view: "9 (CompactStructureViewTest: 9)"
-    documentation: "9 (CompactDocumentationTest: 9)"
+    documentation: "16 (CompactDocumentationTest: 16)"
     highlighter: "12 (CompactHighlightingTest: 11, CompactColorSettingsPageTest: 1)"
     folding: "4 (CompactFoldingTest: 4)"
     breadcrumbs: "2 (CompactBreadcrumbsTest: 2)"
     live_templates: "3 (CompactLiveTemplateTest: 3)"
     file_templates: "3 (CompactFileTemplateTest: 3)"
     surround_with: "5 (CompactSurroundWithTest: 5)"
+    navigation: "2 (CompactChooseByNameTest: 2)"
+    stdlib: "5 (CompactStandardLibraryTest: 5)"
+    inlay_hints: "3 (CompactInlayHintsTest: 3)"
+    run: "13 (CompactRunConfigurationTest: 5, CompactRunConfigurationProducerTest: 2, CompactToolchainUtilTest: 6)"
+    settings: "3 (MidnightSettingsTest: 3)"
+    annotator: "2 (CompactExternalAnnotatorTest: 2)"
+    line_markers: "4 (CompactLineMarkerTest: 4)"
+
+
 
 architecture:
   lexer:
@@ -86,6 +95,12 @@ architecture:
     duplicate_declaration: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection
     unused_local_variable: dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection
     type_mismatch: dev.verloren.midnight.inspection.CompactTypeMismatchInspection
+    pure_circuit: dev.verloren.midnight.inspection.CompactPureCircuitInspection
+    sealed_field_mutation: dev.verloren.midnight.inspection.CompactSealedFieldMutationInspection
+    recursive_circuit: dev.verloren.midnight.inspection.CompactRecursiveCircuitInspection
+    constructor_restriction: dev.verloren.midnight.inspection.CompactConstructorRestrictionInspection
+    undisclosed_witness: dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspection
+
   formatter:
     model_builder: dev.verloren.midnight.formatter.CompactFormattingModelBuilder
     block: dev.verloren.midnight.formatter.CompactBlock

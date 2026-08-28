@@ -28,9 +28,15 @@ public class CompactInspectionTest extends BasePlatformTestCase {
         CompactUnresolvedReferenceInspection.class,
         CompactDuplicateDeclarationInspection.class,
         CompactUnusedLocalVariableInspection.class,
-        CompactTypeMismatchInspection.class
+        CompactTypeMismatchInspection.class,
+        CompactPureCircuitInspection.class,
+        CompactSealedFieldMutationInspection.class,
+        CompactRecursiveCircuitInspection.class,
+        CompactConstructorRestrictionInspection.class,
+        CompactUndisclosedWitnessInspection.class
     );
   }
+
 
   private List<HighlightInfo> filterInspectionWarnings(List<HighlightInfo> highlights) {
     return highlights.stream()
@@ -201,6 +207,39 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     assertTrue("Nested block referencing outer const should produce no warnings", warnings.isEmpty());
   }
+
+  public void testTopLevelLedgerForwardReferenceNoUnresolvedWarning() {
+    String code = """
+        export circuit clear(): [] {
+          round.increment(1);
+        }
+
+        circuit publicKey(round: Field, sk: Bytes<32>): Field {
+          return round;
+        }
+
+        constructor(sk: Bytes<32>, v: Uint<64>) {
+          authority = disclose(publicKey(round, sk));
+        }
+
+        export ledger round: Counter;
+        """;
+    myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> roundUnresolved = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("round"))
+        .toList();
+    if (!roundUnresolved.isEmpty()) {
+      StringBuilder sb = new StringBuilder("Found unresolved references:");
+      for (HighlightInfo h : roundUnresolved) {
+        sb.append("\n  - ").append(h.getDescription()).append(" at [").append(h.getStartOffset()).append(", ").append(h.getEndOffset()).append("]");
+      }
+      fail(sb.toString());
+    }
+    assertTrue("Forward-referenced top-level ledger 'round' should not produce unresolved reference warnings", true);
+  }
+
 
   // =========================================================================
   // 2. Duplicate Declaration Inspection Tests
@@ -1031,4 +1070,299 @@ public class CompactInspectionTest extends BasePlatformTestCase {
         .toList();
     assertEquals("Should report 1 unresolved enum member error for cross-file enum", 1, unresolved.size());
   }
+
+  // =========================================================================
+  // 5. Pure Circuit Inspection Tests
+  // =========================================================================
+
+  public void testPureCircuitValidMathAllowed() {
+    String code = """
+        pure circuit add(x: Field, y: Field): Field {
+          return x + y;
+        }
+        """;
+    myFixture.enableInspections(CompactPureCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Pure circuit with valid math should have zero warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testPureCircuitCallingWitnessFails() {
+    String code = """
+        witness secretKey(): Field;
+
+        pure circuit deriveKey(): Field {
+          return secretKey();
+        }
+        """;
+    myFixture.enableInspections(CompactPureCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot invoke witness 'secretKey'"))
+        .toList();
+    assertEquals("Pure circuit calling witness should be flagged", 1, matched.size());
+  }
+
+  public void testPureCircuitAccessingLedgerFails() {
+    String code = """
+        ledger count: Field;
+
+        pure circuit getCount(): Field {
+          return count;
+        }
+        """;
+    myFixture.enableInspections(CompactPureCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot access ledger state 'count'"))
+        .toList();
+    assertEquals("Pure circuit reading ledger state should be flagged", 1, matched.size());
+  }
+
+  public void testPureCircuitEmittingEventFails() {
+    String code = """
+        pure circuit trigger(): [] {
+          emit(1);
+        }
+        """;
+    myFixture.enableInspections(CompactPureCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot emit events"))
+        .toList();
+    assertEquals("Pure circuit emitting events should be flagged", 1, matched.size());
+  }
+
+  public void testPureCircuitCallingImpureCircuitFails() {
+    String code = """
+        circuit impureHelper(): Field {
+          return 1;
+        }
+
+        pure circuit compute(): Field {
+          return impureHelper();
+        }
+        """;
+    myFixture.enableInspections(CompactPureCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot invoke non-pure circuit 'impureHelper'"))
+        .toList();
+    assertEquals("Pure circuit calling non-pure circuit should be flagged", 1, matched.size());
+  }
+
+  public void testPureCircuitRemoveModifierQuickFix() {
+    String code = """
+        witness secretKey(): Field;
+
+        pure circuit deriveKey(): Field {
+          return <caret>secretKey();
+        }
+        """;
+    myFixture.enableInspections(CompactPureCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    myFixture.doHighlighting();
+    List<IntentionAction> fixes = myFixture.getAllQuickFixes();
+    IntentionAction fix = fixes.stream()
+        .filter(f -> f.getText().contains("Remove 'pure' modifier"))
+        .findFirst()
+        .orElse(null);
+    assertNotNull("Remove 'pure' modifier quick-fix should be available", fix);
+    myFixture.launchAction(fix);
+    assertFalse("Code should no longer contain 'pure'", myFixture.getFile().getText().contains("pure"));
+  }
+
+
+  // =========================================================================
+  // 6. Sealed Field Mutation Inspection Tests
+  // =========================================================================
+
+  public void testSealedFieldMutationInConstructorAllowed() {
+    String code = """
+        sealed ledger owner: Field;
+
+        constructor(initialOwner: Field) {
+          owner = initialOwner;
+        }
+        """;
+    myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Mutating sealed field in constructor should be allowed: " + warnings, warnings.isEmpty());
+  }
+
+  public void testSealedFieldMutationOutsideConstructorFails() {
+    String code = """
+        sealed ledger owner: Field;
+
+        circuit transfer(newOwner: Field): [] {
+          owner = newOwner;
+        }
+        """;
+    myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot modify sealed ledger field 'owner' outside constructor"))
+        .toList();
+    assertEquals("Mutating sealed field outside constructor should be flagged", 1, matched.size());
+  }
+
+  public void testUnsealedFieldMutationAllowed() {
+    String code = """
+        ledger round: Field;
+
+        circuit step(): [] {
+          round = 2;
+        }
+        """;
+    myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Mutating unsealed field should produce no sealed field warnings", warnings.isEmpty());
+  }
+
+  // =========================================================================
+  // 7. Recursive Circuit Inspection Tests
+  // =========================================================================
+
+  public void testNonRecursiveCircuitAllowed() {
+    String code = """
+        circuit helper(): Field { return 1; }
+        circuit compute(): Field { return helper(); }
+        """;
+    myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Non-recursive calls should produce zero recursion warnings", warnings.isEmpty());
+  }
+
+  public void testDirectRecursiveCircuitFails() {
+    String code = """
+        circuit fib(n: Field): Field {
+          return fib(n);
+        }
+        """;
+    myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot be recursive"))
+        .toList();
+    assertEquals("Directly recursive circuit should be flagged", 1, matched.size());
+  }
+
+  public void testMutualRecursiveCircuitFails() {
+    String code = """
+        circuit ping(): Field {
+          return pong();
+        }
+
+        circuit pong(): Field {
+          return ping();
+        }
+        """;
+    myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("recursion"))
+        .toList();
+    assertFalse("Mutual recursion should be flagged", matched.isEmpty());
+  }
+
+  // =========================================================================
+  // 8. Constructor Restriction Inspection Tests
+  // =========================================================================
+
+  public void testConstructorValidCodeAllowed() {
+    String code = """
+        ledger count: Field;
+
+        constructor(c: Field) {
+          count = c;
+        }
+        """;
+    myFixture.enableInspections(CompactConstructorRestrictionInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Valid constructor should produce zero warnings", warnings.isEmpty());
+  }
+
+  public void testConstructorEmitFails() {
+    String code = """
+        constructor() {
+          emit(1);
+        }
+        """;
+    myFixture.enableInspections(CompactConstructorRestrictionInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Constructor cannot emit events"))
+        .toList();
+    assertEquals("Constructor emitting events should be flagged", 1, matched.size());
+  }
+
+  // =========================================================================
+  // 9. Undisclosed Witness (WPP) Inspection Tests
+  // =========================================================================
+
+  public void testDisclosedWitnessAssignmentAllowed() {
+    String code = """
+        ledger authority: Field;
+        witness secretKey(): Field;
+
+        circuit set(): [] {
+          const sk = secretKey();
+          authority = disclose(sk);
+        }
+        """;
+    myFixture.enableInspections(CompactUndisclosedWitnessInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Disclosed witness assignment should produce zero warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testUndisclosedWitnessDirectAssignmentFails() {
+    String code = """
+        ledger authority: Field;
+        witness secretKey(): Field;
+
+        circuit set(): [] {
+          authority = secretKey();
+        }
+        """;
+    myFixture.enableInspections(CompactUndisclosedWitnessInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("without 'disclose(...)'"))
+        .toList();
+    assertEquals("Direct undisclosed witness assignment should be flagged", 1, matched.size());
+  }
+
+  public void testUndisclosedWitnessVariableAssignmentFails() {
+    String code = """
+        ledger authority: Field;
+        witness secretKey(): Field;
+
+        circuit set(): [] {
+          const sk = secretKey();
+          authority = sk;
+        }
+        """;
+    myFixture.enableInspections(CompactUndisclosedWitnessInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> matched = warnings.stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("without 'disclose(...)'"))
+        .toList();
+    assertEquals("Undisclosed witness assignment via variable should be flagged", 1, matched.size());
+  }
 }
+

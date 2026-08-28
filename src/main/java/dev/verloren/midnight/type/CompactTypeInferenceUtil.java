@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CompactTypeInferenceUtil {
   /**
-   * Infers the resulting type of a binary expression {@code left op right}.
+   * Infers the resulting type of binary expression {@code left op right}.
    *
    * @param left     left operand expression
    * @param operator binary operator token type

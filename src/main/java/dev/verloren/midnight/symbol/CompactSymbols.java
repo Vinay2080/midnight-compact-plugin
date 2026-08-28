@@ -43,7 +43,7 @@ public final class CompactSymbols {
       return null;
     }
     for (CompactBuiltinTypeSymbol symbol : BUILTIN_TYPES) {
-      if (name.equals(symbol.getName())) {
+      if (name.equals(symbol.name())) {
         return symbol;
       }
     }

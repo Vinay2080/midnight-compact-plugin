@@ -4,4 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface CompactLedgerDeclaration extends CompactNamedElement {
   @Nullable CompactTypeElement getTypeElement();
-}
+  boolean isSealed();
+  boolean isExported();
+}
+

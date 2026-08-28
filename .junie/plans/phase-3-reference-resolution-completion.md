@@ -152,15 +152,15 @@ References are attached by **overriding `getReference()` / `getReferences()` on 
 
 ### Reference site summary
 
- Site (PSI) | Reference class | Name element / range | Target | Multi? | Needs future type info |
----|---|---|---|---|---|
- `REFERENCE_EXPR` | `CompactValueReference` | identifier leaf | value decl / param / local / prefixed value | yes | no |
- `TYPE_REFERENCE` | `CompactTypeReference` | leading identifier | type alias/struct/enum/ext-contract/generic param/prefixed type | yes | no |
- `STRUCT_LITERAL_EXPR` (name) | `CompactTypeReference` | leading identifier | struct/type | yes | no |
- `MEMBER_EXPR` (`Enum.m`) | `CompactEnumMemberReference` | trailing identifier | `ENUM_MEMBER` | no | partial |
- `MEMBER_EXPR` (`v.field`) | — (deferred) | — | struct field / ADT method | — | **yes** |
- `IMPORT_ELEMENT` / import name | `CompactImportReference` | identifier | same-file module member/module | no | no |
- `IMPLEMENTS_DECLARATION` (target) | `CompactTypeReference` | type identifier | `CONTRACT_DECLARATION` | no | no |
+| Site (PSI)                        | Reference class              | Name element / range | Target                                                          | Multi? | Needs future type info |
+|-----------------------------------|------------------------------|----------------------|-----------------------------------------------------------------|--------|------------------------|
+| `REFERENCE_EXPR`                  | `CompactValueReference`      | identifier leaf      | value decl / param / local / prefixed value                     | yes    | no                     |
+| `TYPE_REFERENCE`                  | `CompactTypeReference`       | leading identifier   | type alias/struct/enum/ext-contract/generic param/prefixed type | yes    | no                     |
+| `STRUCT_LITERAL_EXPR` (name)      | `CompactTypeReference`       | leading identifier   | struct/type                                                     | yes    | no                     |
+| `MEMBER_EXPR` (`Enum.m`)          | `CompactEnumMemberReference` | trailing identifier  | `ENUM_MEMBER`                                                   | no     | partial                |
+| `MEMBER_EXPR` (`v.field`)         | — (deferred)                 | —                    | struct field / ADT method                                       | —      | **yes**                |
+| `IMPORT_ELEMENT` / import name    | `CompactImportReference`     | identifier           | same-file module member/module                                  | no     | no                     |
+| `IMPLEMENTS_DECLARATION` (target) | `CompactTypeReference`       | type identifier      | `CONTRACT_DECLARATION`                                          | no     | no                     |
 
 ### Go To Declaration / Resolve
 
@@ -190,7 +190,7 @@ Constructor/lambda/arrow parameters are `PATTERN`-based; expose their identifier
 - `findUsages/CompactFindUsagesProvider implements com.intellij.lang.findUsages.FindUsagesProvider`:
   - `getWordsScanner()` → `DefaultWordsScanner` over a fresh `CompactLexer` with identifier tokens, `CompactTokenSets.COMMENTS`, and `CompactTokenSets.LITERALS`.
   - `canFindUsagesFor(e)` → `e instanceof CompactNamedElement`.
-  - `getType`/`getDescriptiveName`/`getNodeText`/`getHelpId` classify declarations (circuit, witness, ledger, struct, enum, type, module, parameter, field, member, local, import). Registered as `lang.findUsagesProvider`.
+  - `type`/`getDescriptiveName`/`getNodeText`/`getHelpId` classify declarations (circuit, witness, ledger, struct, enum, type, module, parameter, field, member, local, import). Registered as `lang.findUsagesProvider`.
 - Relies on the Phase 3 references so `ReferencesSearch` maps words back to targets.
 
 ### Completion

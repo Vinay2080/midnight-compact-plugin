@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Enables inplace renaming for Compact named declarations.
+ * Enables in-place renaming for Compact-named declarations.
  *
  * <p>Allows renaming of circuits, witnesses, structs, enums, parameters, and local constants
  * directly in the editor buffer without opening a modal dialog.</p>

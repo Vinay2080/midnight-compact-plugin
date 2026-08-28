@@ -129,4 +129,66 @@ public class CompactReferenceTest extends BasePlatformTestCase {
     assertNotNull("Struct field reference should resolve to field declaration", target);
     assertEquals("x", ((CompactNamedElement) target).getName());
   }
+
+  public void testStructFieldReferenceFromLedgerDeclaration() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    struct Node { right: Field }
+                    ledger root: Node;
+                    circuit check() {
+                      const r = root.<caret>right;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("Struct field reference should exist on ledger base", ref);
+    assertInstanceOf(ref, CompactStructFieldReference.class);
+    assertEquals("right", ref.getCanonicalText());
+
+    PsiElement target = ref.resolve();
+    assertNotNull("Struct field reference should resolve to right field", target);
+    assertEquals("right", ((CompactNamedElement) target).getName());
+  }
+
+  public void testStructFieldReferenceFromTypeAlias() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    struct Node { right: Field }
+                    type AliasNode = Node;
+                    circuit check(n: AliasNode) {
+                      const r = n.<caret>right;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("Struct field reference should exist on type alias base", ref);
+    assertInstanceOf(ref, CompactStructFieldReference.class);
+    assertEquals("right", ref.getCanonicalText());
+
+    PsiElement target = ref.resolve();
+    assertNotNull("Struct field reference should resolve through type alias", target);
+    assertEquals("right", ((CompactNamedElement) target).getName());
+  }
+
+  public void testStructFieldReferenceIdempotent() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+                    struct Node { right: Field }
+                    circuit test(node: Node) {
+                      const a = node.<caret>right;
+                    }
+                    """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull(ref);
+    assertInstanceOf(ref, CompactStructFieldReference.class);
+    CompactStructFieldReference structRef = (CompactStructFieldReference) ref;
+
+    // Verify multiple sequential calls return identical results (idempotence)
+    var results1 = structRef.multiResolve(false);
+    var results2 = structRef.multiResolve(false);
+    assertEquals(1, results1.length);
+    assertEquals(1, results2.length);
+    assertEquals(results1[0].getElement(), results2[0].getElement());
+  }
 }

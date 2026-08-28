@@ -45,7 +45,7 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
 
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, RESOLVER, false, incompleteCode);
+    return ResolveCache.getInstance(getElement().getProject()).resolveWithCaching(this, RESOLVER, true, incompleteCode);
   }
 
   @Override

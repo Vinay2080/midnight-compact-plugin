@@ -356,4 +356,59 @@ public class CompactResolveTest extends BasePlatformTestCase {
     PsiElement resolved = ref.resolve();
     assertNull("Reference to non-existent variable should return null cleanly", resolved);
   }
+
+  public void testTopLevelLedgerResolutionAfterCircuit() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+            export circuit clear(): [] {
+              <caret>round.increment(1);
+            }
+
+            export ledger round: Counter;
+            """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("Reference should exist at caret", ref);
+    PsiElement resolved = ref.resolve();
+    assertNotNull("Top-level ledger 'round' declared after circuit should resolve", resolved);
+    assertInstanceOf(resolved, CompactLedgerDeclaration.class);
+    assertEquals("round", ((CompactNamedElement) resolved).getName());
+  }
+
+  public void testTopLevelLedgerResolutionAfterConstructor() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+            constructor(sk: Bytes<32>, v: Uint<64>) {
+              authority = disclose(publicKey(<caret>round, sk));
+            }
+
+            export ledger round: Counter;
+            """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("Reference should exist at caret", ref);
+    PsiElement resolved = ref.resolve();
+    assertNotNull("Top-level ledger 'round' declared after constructor should resolve", resolved);
+    assertInstanceOf(resolved, CompactLedgerDeclaration.class);
+    assertEquals("round", ((CompactNamedElement) resolved).getName());
+  }
+
+  public void testParameterPrecedenceOverTopLevelLedger() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+            """
+            circuit publicKey(round: Field, sk: Bytes<32>): Field {
+              return <caret>round;
+            }
+
+            export ledger round: Counter;
+            """
+    );
+    PsiReference ref = myFixture.getReferenceAtCaretPosition();
+    assertNotNull("Reference should exist at caret", ref);
+    PsiElement resolved = ref.resolve();
+    assertNotNull("Parameter 'round' should resolve", resolved);
+    assertFalse("Should resolve to parameter, not ledger", resolved instanceof CompactLedgerDeclaration);
+    assertEquals("round", ((CompactNamedElement) resolved).getName());
+  }
 }
+

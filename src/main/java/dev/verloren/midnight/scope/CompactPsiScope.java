@@ -14,24 +14,21 @@ import java.util.List;
  * PSI-backed implementation of {@link CompactScope}.
  *
  * <p>Wraps an owner {@link PsiElement} and delegates symbol resolution and visibility
- * queries to {@link dev.verloren.midnight.resolve.CompactResolveUtil} and {@link CompactScopes}.</p>
+ * queries to {@link CompactResolveUtil} and {@link CompactScopes}.</p>
  */
-public final class CompactPsiScope implements CompactScope {
-  private final PsiElement owner;
-  private final CompactScopeKind kind;
-
+public record CompactPsiScope(PsiElement owner, CompactScopeKind kind) implements CompactScope {
   public CompactPsiScope(@NotNull PsiElement owner, @NotNull CompactScopeKind kind) {
     this.owner = owner;
     this.kind = kind;
   }
 
   @Override
-  public @NotNull CompactScopeKind getKind() {
+  public @NotNull CompactScopeKind kind() {
     return kind;
   }
 
   @Override
-  public @NotNull PsiElement getOwner() {
+  public @NotNull PsiElement owner() {
     return owner;
   }
 

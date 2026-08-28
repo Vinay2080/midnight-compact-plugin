@@ -1,7 +1,6 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
@@ -12,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CompactPatternImpl extends CompactNamedElementImpl {
-  private static final Key<Boolean> RESOLVING_TYPE = Key.create("COMPACT_PATTERN_RESOLVING_TYPE");
+  private static final com.intellij.openapi.util.RecursionGuard<PsiElement> PATTERN_TYPE_GUARD =
+      com.intellij.openapi.util.RecursionManager.createGuard("CompactPatternType");
 
   public CompactPatternImpl(@NotNull ASTNode node) {
     super(node);
@@ -20,16 +20,8 @@ public class CompactPatternImpl extends CompactNamedElementImpl {
 
   @Override
   public @NotNull CompactType getType() {
-    if (getUserData(RESOLVING_TYPE) != null) {
-      return CompactPrimitiveType.UNKNOWN;
-    }
-
-    putUserData(RESOLVING_TYPE, true);
-    try {
-      return getTypeInner();
-    } finally {
-      putUserData(RESOLVING_TYPE, null);
-    }
+    CompactType type = PATTERN_TYPE_GUARD.doPreventingRecursion(this, false, this::getTypeInner);
+    return type != null ? type : CompactPrimitiveType.UNKNOWN;
   }
 
   private @NotNull CompactType getTypeInner() {
