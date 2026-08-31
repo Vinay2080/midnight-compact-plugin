@@ -70,6 +70,10 @@ public final class CompactTokenSets {
           CompactTokenTypes.SECP256K1_SCALAR_TYPE
   );
 
+  public static final TokenSet STRING_LITERALS = TokenSet.create(
+          CompactTokenTypes.STRING_LITERAL
+  );
+
   public static final TokenSet LITERALS = TokenSet.create(
           CompactTokenTypes.TRUE,
           CompactTokenTypes.FALSE,

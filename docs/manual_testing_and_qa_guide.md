@@ -25,7 +25,8 @@ It provides **exact inputs**, **actions to perform**, **expected visual outputs*
 16. [Subsystem 15: Background Compiler Diagnostics (`compactc`)](#16-subsystem-15-background-compiler-diagnostics-compactc)
 17. [Subsystem 16: Semantic Gutter Line Markers (Privacy & Circuit Visualizer)](#17-subsystem-16-semantic-gutter-line-markers-privacy--circuit-visualizer)
 18. [Subsystem 17: Master End-to-End Test Contract](#18-subsystem-17-master-end-to-end-test-contract)
-19. [QA Manual Test Execution Checklist Table](#19-qa-manual-test-execution-checklist-table)
+19. [Subsystem 18: String Literals, Concurrency & Performance Verifications](#20-subsystem-18-string-literals-concurrency--performance-verifications)
+20. [QA Manual Test Execution Checklist Table](#21-qa-manual-test-execution-checklist-table)
 
 
 
@@ -1063,7 +1064,38 @@ export contract MasterToken {
 
 ---
 
-## 19. QA Manual Test Execution Checklist Table
+## 20. Subsystem 18: String Literals, Concurrency & Performance Verifications
+
+### 20.1 String Literal Recognition & Smart Quotes
+#### **Input Action & Scenario:**
+1. In `test.compact`, type a double quote `"` inside an expression or declaration.
+2. Verify that IntelliJ auto-closes the quote with `"` and places the caret between quotes.
+3. Type an escaped string: `"Hello \"Midnight\" \n"`.
+4. Right-click inside the string $\to$ select **Inject Language or Reference** (e.g. JSON or RegExp).
+
+#### **Expected Visual Output:**
+- IntelliJ recognizes string literal elements via `getStringLiteralElements()`.
+- Language injection and quote handlers function seamlessly without syntax ambiguity.
+
+---
+
+### 20.2 Thread-Safe Standard Library Service
+#### **Verification Scenario:**
+1. Open multiple Compact files simultaneously or trigger rapid keystrokes in a contract referencing stdlib symbols (`Maybe`, `none`, `some`, `transientHash`).
+2. Verify that background inspection and code completion threads do not trigger `UserData` races or duplicate PSI file allocations.
+3. Verify that standard library files have a stable modification timestamp (`0L`) and are loaded once per project.
+
+---
+
+### 20.3 Top-Level Declaration Fast-Resolution
+#### **Verification Scenario:**
+1. Create a project with multiple `.compact` files referencing top-level contracts, circuits, and structs.
+2. Trigger code completion (`Ctrl + Space`) and navigation (`Ctrl + Click`) across files.
+3. Observe instantaneous response times as file-level resolution uses direct `getTopLevelDeclarations()` avoiding deep AST traversals of inner blocks.
+
+---
+
+## 21. QA Manual Test Execution Checklist Table
 
 Use this table during manual QA passes. Mark each feature as **PASS / FAIL** and record observations:
 
@@ -1119,5 +1151,58 @@ Use this table during manual QA passes. Mark each feature as **PASS / FAIL** and
 | **48** | **Line Markers (LMK)**      | Witness Private Query Icon          | View gutter at `witness` declaration                                          | Shows AbstractMethod / Private query icon                |        [ ]         |              |
 | **49** | **Line Markers (LMK)**      | ZK Disclosure Boundary Icon         | View gutter at `disclose(...)`                                                | Shows Keymap / Privacy boundary icon                     |        [ ]         |              |
 | **50** | **Line Markers (LMK)**      | Exported Circuit Lightning Icon     | View gutter at `export circuit`                                               | Shows Lightning / Public entry icon                      |        [ ]         |              |
+| **51** | **Parser / Strings (STR)**  | String literal injection & quotes   | Type `"` or inject language into string                                       | Auto-quotes and allows language injection                |        [ ]         |              |
+| **52** | **Stdlib Service (SRV)**    | Concurrent stdlib symbol access     | Trigger resolve across multiple threads                                       | Zero data races, deterministic `0L` timestamp            |        [ ]         |              |
+| **53** | **Resolver Perf (PRF)**     | Top-level symbol fast path          | `Ctrl + Space` / `Ctrl + Click` on cross-file decl                            | Fast lookup without deep AST recursion                   |        [ ]         |              |
+| **54** | **Inspections (RET)**       | Return-statement type checking      | `return 0;` inside `circuit foo(): Boolean`                                   | Warning/Error: Type mismatch: expected 'Boolean', got 'Field' |   [ ]      |              |
+| **55** | **Completion (PRI)**        | Boolean return value priority       | `return <caret>` in Boolean-returning circuit                                 | `true` and `false` appear at top of completion list      |        [ ]         |              |
+| **56** | **External Linter (EXC)**   | Multi-line compiler exception parse | Trigger compiler exception `Exception: file line N char M:`                   | Squiggle error annotation created at line N, col M       |        [ ]         |              |
+
+---
+
+## 19. Subsystem 19: Return-Type Verification, Completion Priority, and Compiler Diagnostics
+
+### 19.1 Return Statement Type-Mismatch Detection
+#### **Initial Code:**
+```compact
+circuit testZkir(): Boolean {
+    return 0;
+}
+```
+#### **Action to Perform:**
+1. Open file in editor with Compact inspections enabled.
+#### **Expected Output:**
+- `0` is highlighted with an inspection warning/error: `"Type mismatch: expected 'Boolean', got 'Field'"`.
+
+---
+
+### 19.2 Return Statement Boolean Completion Prioritization
+#### **Initial Code:**
+```compact
+circuit isValid(): Boolean {
+    return <caret>
+}
+```
+#### **Action to Perform:**
+1. Place caret after `return `.
+2. Press `Ctrl + Space`.
+#### **Expected Output:**
+- `true` and `false` appear at the very top of the lookup list in bold.
+
+---
+
+### 19.3 Multi-line Compiler Exception Parsing
+#### **Initial Code:**
+```compact
+import CompactStandardLibrary;
+
+circuit testGeneric(): Maybe<Field> {
+    return some(42);
+}
+```
+#### **Action to Perform:**
+1. Run background external annotator or run configuration.
+#### **Expected Output:**
+- When `compactc` outputs `Exception: ... line N char M: no compatible function named some is in scope at this call; ...`, the editor creates an error annotation at the exact line and character offset with the full descriptive message.
 
 

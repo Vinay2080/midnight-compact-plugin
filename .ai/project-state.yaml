@@ -29,22 +29,22 @@ phases:
   compiler_integration: planned
 
 tests:
-  last_known_passing: 352
+  last_known_passing: 367
   failures: 0
   skipped: 0
   suites:
     lexer: "15 (LexerTest: 12, PragmaTest: 3)"
-    parser: "17 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1)"
+    parser: "19 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1, CompactParserDefinitionTest: 2)"
     psi: "3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)"
     resolve: "38 (CompactResolveTest: 21, CompactCrossFileResolveTest: 17)"
     reference: "6 (CompactReferenceTest: 6)"
-    completion: "12 (CompactCompletionTest: 12)"
+    completion: "13 (CompactCompletionTest: 13)"
     rename: "9 (CompactRenameTest: 9)"
     find_usages: "10 (CompactFindUsagesTest: 10)"
     editor: "4 (CompactEditorFeaturesTest: 4)"
     symbol: "3 (CompactSymbolTest: 3)"
     type_inference: "15 (CompactTypeInferenceTest: 15)"
-    inspections: "86 (CompactInspectionTest: 86)"
+    inspections: "91 (CompactInspectionTest: 91)"
     formatter: "39 (CompactFormatterTest: 39)"
     structure_view: "9 (CompactStructureViewTest: 9)"
     documentation: "16 (CompactDocumentationTest: 16)"
@@ -55,11 +55,12 @@ tests:
     file_templates: "3 (CompactFileTemplateTest: 3)"
     surround_with: "5 (CompactSurroundWithTest: 5)"
     navigation: "2 (CompactChooseByNameTest: 2)"
-    stdlib: "5 (CompactStandardLibraryTest: 5)"
+    stdlib: "8 (CompactStandardLibraryTest: 5, CompactStdlibServiceTest: 3)"
     inlay_hints: "3 (CompactInlayHintsTest: 3)"
     run: "13 (CompactRunConfigurationTest: 5, CompactRunConfigurationProducerTest: 2, CompactToolchainUtilTest: 6)"
+    test_utils: "3 (CompactTestUtilsTest: 3)"
     settings: "3 (MidnightSettingsTest: 3)"
-    annotator: "2 (CompactExternalAnnotatorTest: 2)"
+    annotator: "3 (CompactExternalAnnotatorTest: 3)"
     line_markers: "4 (CompactLineMarkerTest: 4)"
 
 

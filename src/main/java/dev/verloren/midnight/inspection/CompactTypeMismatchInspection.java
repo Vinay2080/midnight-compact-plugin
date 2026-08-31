@@ -58,9 +58,61 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
           checkIfStatement(element, holder);
         } else if (element instanceof CompactConstBindingImpl constBinding) {
           checkConstBinding(constBinding, holder);
+        } else if (element.getNode().getElementType() == CompactElementTypes.RETURN_STATEMENT) {
+          checkReturnStatement(element, holder);
         }
       }
     };
+  }
+
+  private static void checkReturnStatement(@NotNull PsiElement returnStatement, @NotNull ProblemsHolder holder) {
+    PsiElement enclosing = PsiTreeUtil.getParentOfType(
+        returnStatement,
+        CompactCircuitDefinition.class,
+        CompactWitnessDeclaration.class,
+        CompactConstructorDeclaration.class
+    );
+    if (enclosing == null) {
+      return;
+    }
+
+    CompactType expectedType = CompactPsiUtil.getCallableReturnType(enclosing);
+    if (CompactPrimitiveType.UNKNOWN.equals(expectedType)) {
+      return;
+    }
+
+    CompactExpression returnExpr = PsiTreeUtil.findChildOfType(returnStatement, CompactExpression.class);
+    boolean isVoidExpected = "Void".equalsIgnoreCase(expectedType.name());
+
+    if (returnExpr == null) {
+      if (!isVoidExpected) {
+        holder.registerProblem(
+            returnStatement,
+            "Missing return value of type '" + expectedType.name() + "'",
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        );
+      }
+      return;
+    }
+
+    CompactType actualType = returnExpr.getType();
+    if (CompactPrimitiveType.UNKNOWN.equals(actualType)) {
+      return;
+    }
+
+    if (isVoidExpected) {
+      holder.registerProblem(
+          returnExpr,
+          "Type mismatch: expected 'Void', got '" + actualType.name() + "'",
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+      );
+    } else if (!actualType.isAssignableTo(expectedType)) {
+      holder.registerProblem(
+          returnExpr,
+          "Type mismatch: expected '" + expectedType.name() + "', got '" + actualType.name() + "'",
+          ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+      );
+    }
   }
 
   private static void checkIfStatement(@NotNull PsiElement ifStatement, @NotNull ProblemsHolder holder) {

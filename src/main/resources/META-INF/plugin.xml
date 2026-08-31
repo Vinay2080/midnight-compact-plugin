@@ -121,10 +121,6 @@
                 id="dev.verloren.midnight.settings.MidnightSettingsConfigurable"
                 displayName="Midnight Compact"/>
 
-
-
-
-
         <fileTemplateGroup
                 implementation="dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory"/>
 
@@ -197,7 +193,7 @@
                 groupKey="inspection.group.name.compact"
                 shortName="CompactTypeMismatch"
                 enabledByDefault="true"
-                level="WARNING"
+                level="ERROR"
                 implementationClass="dev.verloren.midnight.inspection.CompactTypeMismatchInspection"
                 key="inspection.compact.type.mismatch.display.name"/>
 

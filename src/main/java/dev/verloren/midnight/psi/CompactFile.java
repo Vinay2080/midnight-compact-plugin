@@ -10,6 +10,7 @@ import dev.verloren.midnight.CompactLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Root PSI element representing a complete Compact source file ({@code .compact}).
@@ -30,6 +31,24 @@ public class CompactFile extends PsiFileBase {
 
   public @NotNull PsiElement[] getProgramElements() {
     return getChildren();
+  }
+
+  public @NotNull List<CompactNamedElement> getTopLevelDeclarations() {
+    List<CompactNamedElement> result = new java.util.ArrayList<>();
+    for (PsiElement child : getChildren()) {
+      if (child instanceof CompactNamedElement named) {
+        if (dev.verloren.midnight.resolve.CompactResolveUtil.isTopLevelFileDeclaration(named)) {
+          result.add(named);
+        }
+      } else {
+        for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(child, CompactNamedElement.class)) {
+          if (dev.verloren.midnight.resolve.CompactResolveUtil.isTopLevelFileDeclaration(named)) {
+            result.add(named);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   public @NotNull Collection<CompactNamedElement> getDeclarations() {

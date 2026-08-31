@@ -58,7 +58,19 @@ public class CompactHighlightingAnnotator implements Annotator {
       return;
     }
 
-    IElementType tokenType = element.getNode().getElementType();
+    if (element.getFirstChild() == null && element.getNode() != null) {
+      IElementType tt = element.getNode().getElementType();
+      if (tt == com.intellij.psi.TokenType.WHITE_SPACE
+          || tt == CompactTokenTypes.SEMICOLON
+          || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE
+          || tt == CompactTokenTypes.LPAREN || tt == CompactTokenTypes.RPAREN
+          || tt == CompactTokenTypes.LBRACKET || tt == CompactTokenTypes.RBRACKET
+          || tt == CompactTokenTypes.COMMA || tt == CompactTokenTypes.COLON) {
+        return;
+      }
+    }
+
+    IElementType tokenType = element.getNode() != null ? element.getNode().getElementType() : null;
 
     // 1. Comments (Doc comments vs standard comments)
     if (tokenType == CompactTokenTypes.LINE_COMMENT) {

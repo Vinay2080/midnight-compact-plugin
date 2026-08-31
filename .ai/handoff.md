@@ -42,10 +42,23 @@ Phases 15–18: Compiler Run Configurations, Midnight Settings, External Linter 
   - Implemented [`CompactGotoDeclarationHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/navigation/CompactGotoDeclarationHandler.java) registered under `<gotoDeclarationHandler>` for first-class Ctrl+B and Ctrl+Click navigation directly to declarations.
   - Enhanced [`CompactStandardLibraryProvider`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/stdlib/CompactStandardLibraryProvider.java) to ensure bundled `standard-library.compact` and `zkir-v3-library.compact` virtual files are properly registered with the VFS, marked read-only, and fully navigable in editor tabs.
   - Verified resolution and navigation for `Maybe<Field>`, `some(42)`, and `secp256k1EcdsaVerify`, while strictly preserving lexical shadowing over standard library declarations.
-- **352 automated unit tests passing** (0 failures, 0 skipped, 100% success rate across forty test suites).
+- **Phase 19: Architectural Hardening & Concurrency Safety**:
+  - Implemented [`CompactStdlibService`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/stdlib/CompactStdlibService.java) (`@Service(Service.Level.PROJECT)`) providing thread-safe, race-free bundled standard library & ZKIR initialization with deterministic `0L` timestamp and registered in `plugin.xml`.
+  - Configured `CompactParserDefinition.getStringLiteralElements()` returning `CompactTokenSets.STRING_LITERALS` enabling native IntelliJ string literal language injection and quote handlers.
+  - Removed dead `BOOLEAN_LITERALS` lookup map in [`CompactLexer`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/lexer/CompactLexer.java).
+  - Added non-annotated leaf punctuation and whitespace fast-exit check in [`CompactHighlightingAnnotator`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/highlighter/CompactHighlightingAnnotator.java).
+  - Added `CompactFile.getTopLevelDeclarations()` avoiding deep AST recursive tree walks in `CompactResolveUtil`.
+  - Created [`CompactTestUtils`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/CompactTestUtils.java) DSL test helpers (`doCheckResolve` / `doCheckNoResolve`) with marker DSL.
+- **Phase 20: Return-Type Verification, Compiler Exception Diagnostics & Completion Prioritization**:
+  - Implemented return statement type-checking in [`CompactTypeMismatchInspection`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/inspection/CompactTypeMismatchInspection.java) verifying `return <expr>` against enclosing `circuit`, `witness`, or constructor return types using `CompactType.isAssignableTo()` and `CompactPsiUtil.getCallableReturnType()`.
+  - Added multi-line compiler exception diagnostic parsing in [`CompactCompilerOutputParser`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactCompilerOutputParser.java) to parse `Exception: <file> line <line> char <col>:\n<details>` emitted by `compactc`.
+  - Prioritized `true` and `false` literals (`PrioritizedLookupElement.withPriority(..., 100.0)`) in [`CompactCompletionContributor`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactCompletionContributor.java) for Boolean return contexts.
+  - Added test cases in `CompactInspectionTest`, `CompactExternalAnnotatorTest`, and `CompactCompletionTest`.
+  - Updated [`manual_testing_and_qa_guide.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/docs/manual_testing_and_qa_guide.md) with Subsystem 19 and checklist rows 54-56.
+- **367 automated unit tests passing** (0 failures, 0 skipped, 100% success rate across forty-four test suites).
 
 ## Tests
-- **352/352 tests passing** (0 failures, 0 skipped, 100% success rate across forty test suites).
+- **367/367 tests passing** (0 failures, 0 skipped, 100% success rate across forty-four test suites).
 - Verified via `./gradlew test`.
 
 ## Next Feature Options

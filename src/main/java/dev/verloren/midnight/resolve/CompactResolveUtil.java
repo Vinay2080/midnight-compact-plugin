@@ -291,9 +291,9 @@ public final class CompactResolveUtil {
       @NotNull PsiElement place
   ) {
     List<CompactNamedElement> result = new ArrayList<>();
-    for (CompactFile stdFile : dev.verloren.midnight.stdlib.CompactStandardLibraryProvider.getStandardLibraryFiles(project)) {
-      for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(stdFile, CompactNamedElement.class)) {
-        if (isTopLevelFileDeclaration(decl) && isInNamespace(decl, namespace, place)) {
+    for (CompactFile stdFile : dev.verloren.midnight.stdlib.CompactStdlibService.getInstance(project).getStandardLibraryFiles()) {
+      for (CompactNamedElement decl : stdFile.getTopLevelDeclarations()) {
+        if (isInNamespace(decl, namespace, place)) {
           result.add(decl);
         }
       }
@@ -328,8 +328,8 @@ public final class CompactResolveUtil {
     collectIncludedFiles(file, visited, includedFiles);
 
     for (CompactFile incFile : includedFiles) {
-      for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(incFile, CompactNamedElement.class)) {
-        if (isTopLevelFileDeclaration(declaration) && isInNamespace(declaration, namespace, place)) {
+      for (CompactNamedElement declaration : incFile.getTopLevelDeclarations()) {
+        if (isInNamespace(declaration, namespace, place)) {
           result.add(declaration);
         }
       }
@@ -433,8 +433,8 @@ public final class CompactResolveUtil {
 
   private static @NotNull List<CompactNamedElement> collectFileDeclarations(@NotNull CompactFile file, @NotNull Namespace namespace, @NotNull PsiElement place) {
     List<CompactNamedElement> result = new ArrayList<>();
-    for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(file, CompactNamedElement.class)) {
-      if (isTopLevelFileDeclaration(declaration) && isInNamespace(declaration, namespace, place)) {
+    for (CompactNamedElement declaration : file.getTopLevelDeclarations()) {
+      if (isInNamespace(declaration, namespace, place)) {
         result.add(declaration);
       }
     }

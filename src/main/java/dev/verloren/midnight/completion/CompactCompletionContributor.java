@@ -200,14 +200,18 @@ public class CompactCompletionContributor extends CompletionContributor {
         }
       }
 
-      // Add compatible expression keywords
+      // Add compatible expression keywords with high priority
       if (isTypeCompatible(CompactPrimitiveType.BOOLEAN, expectedType)) {
-        result.addElement(LookupElementBuilder.create("true"));
-        result.addElement(LookupElementBuilder.create("false"));
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("true").bold(), 100.0));
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("false").bold(), 100.0));
       }
       if (!"Void".equalsIgnoreCase(expectedType.name()) && !"void".equalsIgnoreCase(expectedType.name())) {
-        result.addElement(LookupElementBuilder.create("default"));
-        result.addElement(LookupElementBuilder.create("disclose"));
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("default"), 50.0));
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("disclose"), 50.0));
       }
       return;
     }

@@ -945,6 +945,72 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     assertEquals("Should report 2 cannot compare warnings for Field relational comparisons", 2, mismatches.size());
   }
 
+  public void testReturnTypeMismatchNumericIntoBoolean() {
+    String code = """
+        circuit testZkir(): Boolean {
+          return 0;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Boolean', got 'Field'"))
+        .toList();
+    assertEquals("Should report 1 type mismatch for return 0 in Boolean circuit", 1, mismatches.size());
+  }
+
+  public void testReturnTypeMismatchBooleanIntoField() {
+    String code = """
+        circuit test(): Field {
+          return true;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Field', got 'Boolean'"))
+        .toList();
+    assertEquals("Should report 1 type mismatch for return true in Field circuit", 1, mismatches.size());
+  }
+
+  public void testReturnTypeMatchValidBoolean() {
+    String code = """
+        circuit test(): Boolean {
+          return true;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Valid boolean return should produce zero warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testReturnTypeMismatchVoidWithValue() {
+    String code = """
+        circuit test(): [] {
+          return 10;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Void', got 'Field'"))
+        .toList();
+    assertEquals("Should report 1 type mismatch for non-empty return in Void callable", 1, mismatches.size());
+  }
+
+  public void testReturnTypeValidVoidEmptyReturn() {
+    String code = """
+        circuit test(): [] {
+          return;
+        }
+        """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Valid empty return in void callable should produce zero warnings: " + warnings, warnings.isEmpty());
+  }
+
   // =========================================================================
   // 5. Cross-Cutting & Malformed Code Tests
   // =========================================================================

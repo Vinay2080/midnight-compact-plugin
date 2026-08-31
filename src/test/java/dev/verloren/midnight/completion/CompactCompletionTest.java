@@ -222,6 +222,23 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertFalse("Should NOT suggest 'secretKey'", lookupStrings.contains("secretKey"));
   }
 
+  public void testReturnCompletionBooleanKeywordsPrioritized() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit isValid(secretKey: Field, isActive: Boolean): Boolean {
+            return <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    int trueIdx = lookupStrings.indexOf("true");
+    int falseIdx = lookupStrings.indexOf("false");
+    assertTrue("'true' should be suggested", trueIdx >= 0);
+    assertTrue("'false' should be suggested", falseIdx >= 0);
+  }
+
   public void testReturnCompletionStructTypeAwareness() {
     myFixture.configureByText(CompactFileType.INSTANCE,
         """

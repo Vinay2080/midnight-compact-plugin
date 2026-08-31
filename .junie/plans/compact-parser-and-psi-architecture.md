@@ -246,17 +246,17 @@ Approach: `BasePlatformTestCase`/`ParsingTestCase` building PSI and asserting st
  `lexer/CompactTokenSets.java` | Java | final class | shared `TokenSet`s (keywords/operators/builtin-types/literals) |
 
 #### Modified files
- Path | Reason |
----|---|
- `parser/CompactParser.java` | replace pragma-only body with full recursive-descent + precedence-climbing parser and recovery |
- `parser/CompactElementTypes.java` | add all composite element types listed in Stage 1/2 (keep existing `PRAGMA_FORM`) |
- `parser/CompactParserDefinition.java` | delegate `createElement` to `CompactElementFactory` |
- `psi/CompactPsiElement.java` | add `accept(CompactVisitor)`; remains the generic default node |
- `psi/CompactFile.java` | add `getProgramElements()`/`getDeclarations()` accessors |
- `src/test/java/.../parser/*` , `src/test/java/.../psi/*` | new parser + PSI test classes and `testData` fixtures |
+| Path                                                     | Reason                                                                                         |
+|----------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `parser/CompactParser.java`                              | replace pragma-only body with full recursive-descent + precedence-climbing parser and recovery |
+| `parser/CompactElementTypes.java`                        | add all composite element types listed in Stage 1/2 (keep existing `PRAGMA_FORM`)              |
+| `parser/CompactParserDefinition.java`                    | delegate `createElement` to `CompactElementFactory`                                            |
+| `psi/CompactPsiElement.java`                             | add `accept(CompactVisitor)`; remains the generic default node                                 |
+| `psi/CompactFile.java`                                   | add `getProgramElements()`/`getDeclarations()` accessors                                       |
+| `src/test/java/.../parser/*` , `src/test/java/.../psi/*` | new parser + PSI test classes and `testData` fixtures                                          |
 
 #### Explicitly NOT touched
-`CompactLexer.java`/`CompactTokenTypes.java` (lexer complete), `src/main/grammar/*` (reference-only per AGENTS.md), `build/**`, `.idea/**`, `references/**`, empty `compact/`,`intellij-rust/`,`intellij-elixir/`. `plugin.xml` needs no change (parser/lexer already registered).
+`CompactLexer.java`/`CompactTokenTypes.java` (lexer complete), `../../grammar/*` (reference-only per AGENTS.md), `build/**`, `.idea/**`, `references/**`, empty `compact/`,`intellij-rust/`,`intellij-elixir/`. `plugin.xml` needs no change (parser/lexer already registered).
 
 # Risks & Open Questions
 

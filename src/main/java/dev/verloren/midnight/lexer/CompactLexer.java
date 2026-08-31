@@ -78,10 +78,6 @@ public final class CompactLexer extends LexerBase {
           Map.entry("Secp256k1Base", CompactTokenTypes.SECP256K1_BASE_TYPE),
           Map.entry("Secp256k1Scalar", CompactTokenTypes.SECP256K1_SCALAR_TYPE)
   );
-  private static final Map<String, IElementType> BOOLEAN_LITERALS = Map.ofEntries(
-          Map.entry("true", CompactTokenTypes.TRUE),
-          Map.entry("false", CompactTokenTypes.FALSE)
-  );
   private CharSequence buffer = "";
   private int endOffset;
   private int position;
@@ -249,11 +245,6 @@ public final class CompactLexer extends LexerBase {
     }
 
     token = BUILTIN_TYPES.get(text);
-    if (token != null) {
-      finish(token);
-      return;
-    }
-    token = BOOLEAN_LITERALS.get(text);
     if (token != null) {
       finish(token);
       return;

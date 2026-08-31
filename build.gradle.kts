@@ -22,3 +22,12 @@ sourceSets {
         java.srcDir("src/main/gen")
     }
 }
+
+tasks {
+    instrumentCode {
+        enabled = false
+    }
+    instrumentTestCode {
+        enabled = false
+    }
+}

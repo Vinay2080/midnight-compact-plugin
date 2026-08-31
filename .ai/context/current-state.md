@@ -127,6 +127,14 @@ Last Updated: August 2026
 - **Phase 18: Semantic Gutter Line Markers (Privacy & Circuit Visualizer)**
   - `CompactLineMarkerProvider`: Renders gutter icons for private off-chain queries (`witness`), Zero-Knowledge boundary transitions (`disclose`), public on-chain circuits, and ledger storage fields.
 
+- **Phase 19: Architectural Hardening & Concurrency Safety**
+  - Configured `CompactParserDefinition.getStringLiteralElements()` returning `CompactTokenSets.STRING_LITERALS` enabling native IntelliJ string literal language injection and quote handlers.
+  - Implemented `CompactStdlibService` (`@Service(Service.Level.PROJECT)`) providing thread-safe, race-free bundled standard library & ZKIR initialization with deterministic `0L` timestamp.
+  - Removed dead `BOOLEAN_LITERALS` lookup map in `CompactLexer`.
+  - Added non-annotated leaf punctuation and whitespace fast-exit check in `CompactHighlightingAnnotator`.
+  - Added `CompactFile.getTopLevelDeclarations()` avoiding deep AST recursive tree walks in `CompactResolveUtil`.
+  - Created `CompactTestUtils` DSL test helpers (`doCheckResolve` / `doCheckNoResolve`) with marker DSL.
+
 ### Planned (Future Roadmap)
 
 - **Level 5 Integration**: New Project/DApp Wizard, Interactive Debugger (`XDebugger`, breakpoints, simulator stack frame inspector), Midnight Explorer Tool Window, TypeScript Polyglot Cross-Navigation.
@@ -135,19 +143,19 @@ Last Updated: August 2026
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **352 passing** (0 failures, 0 skipped, 100% success rate across forty test classes).
+- **Total Unit Tests**: **360 passing** (0 failures, 0 skipped, 100% success rate across forty-three test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
   - `CompactHighlightingTest`: 16 tests
   - `CompactColorSettingsPageTest`: 1 test
   - `CompactResolveTest` + `CompactCrossFileResolveTest`: 38 tests (including forward references, top-level ledger resolution, and local parameter shadowing precedence)
-  - `CompactInspectionTest`: 86 tests
+  - `CompactInspectionTest`: 91 tests (including return-statement type mismatch validation, condition checking, and relational/arithmetic operators)
   - `CompactStandardLibraryTest`: 5 tests (verifying direct element reference resolution and Ctrl+B / Ctrl+Click GotoDeclaration navigation for bundled standard library and ZKIR symbols)
   - `CompactChooseByNameTest`: 2 tests
   - `CompactInlayHintsTest`: 3 tests
   - `CompactRunConfigurationTest` + `CompactRunConfigurationProducerTest` + `CompactToolchainUtilTest`: 13 tests (verifying per-contract deterministic output directory calculation and compiler output compatibility)
   - `MidnightSettingsTest`: 3 tests
-  - `CompactExternalAnnotatorTest`: 2 tests
+  - `CompactExternalAnnotatorTest`: 3 tests (verifying standard colon-separated and multi-line compiler exception diagnostic parsing)
   - `CompactLineMarkerTest`: 4 tests
   - `CompactDocumentationTest`: 16 tests
   - `CompactStructureViewTest`: 9 tests
@@ -160,11 +168,11 @@ Last Updated: August 2026
   - `CompactSurroundWithTest`: 5 tests
   - `CompactEditorFeaturesTest`: 4 tests
   - `LexerTest` + `PragmaTest`: 15 tests
-  - Parser Tests (`DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`): 17 tests
+  - Parser Tests (`DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`, `CompactParserDefinitionTest`): 19 tests
   - `CompactRenameTest`: 9 tests
   - `CompactFindUsagesTest`: 10 tests
   - `CompactReferenceTest`: 6 tests
-  - `CompactCompletionTest`: 12 tests
+  - `CompactCompletionTest`: 13 tests (including prioritized Boolean return value completion)
   - `CompactSymbolTest`: 3 tests
   - PSI Tests (`DeclarationPsiTest`, `ElementFactoryConsistencyTest`): 3 tests
 
