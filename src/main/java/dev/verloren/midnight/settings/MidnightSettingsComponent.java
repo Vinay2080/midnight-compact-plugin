@@ -1,6 +1,7 @@
 package dev.verloren.midnight.settings;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -19,10 +20,11 @@ public class MidnightSettingsComponent {
 
   public MidnightSettingsComponent() {
     compilerPathField.addBrowseFolderListener(
-        null,
-        FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
-            .withTitle("Select Compact Compiler Executable")
-            .withDescription("Path to compact / compactc binary or WSL wrapper (e.g. /home/<user>/.local/bin/compact or \\\\wsl$\\Ubuntu\\...)")
+        new TextBrowseFolderListener(
+            FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
+                .withTitle("Select Compact Compiler Executable")
+                .withDescription("Path to compact / compactc binary or WSL wrapper (e.g. /home/<user>/.local/bin/compact or \\\\wsl$\\Ubuntu\\...)")
+        )
     );
 
     JButton autoDetectButton = new JButton("Auto-Detect");

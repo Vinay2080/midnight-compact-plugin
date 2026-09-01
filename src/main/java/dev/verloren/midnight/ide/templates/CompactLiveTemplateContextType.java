@@ -11,9 +11,9 @@ import org.jetbrains.annotations.NotNull;
  * Defines the execution context for Compact live templates.
  */
 public class CompactLiveTemplateContextType extends TemplateContextType {
-  @SuppressWarnings("deprecation")
+
   public CompactLiveTemplateContextType() {
-    super("COMPACT_CODE", "Compact");
+    super("COMPACT_CODE");
   }
 
   @Override

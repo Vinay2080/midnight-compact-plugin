@@ -53,6 +53,12 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+    prepareJarSearchableOptions {
+        enabled = false
+    }
+    jarSearchableOptions {
+        enabled = false
+    }
     instrumentCode {
         enabled = false
     }

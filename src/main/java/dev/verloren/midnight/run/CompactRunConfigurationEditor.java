@@ -2,6 +2,7 @@ package dev.verloren.midnight.run;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
@@ -18,16 +19,18 @@ public class CompactRunConfigurationEditor extends SettingsEditor<CompactRunConf
 
   public CompactRunConfigurationEditor() {
     compactFilePathField.addBrowseFolderListener(
-        null,
-        FileChooserDescriptorFactory.createSingleFileDescriptor("compact")
-            .withTitle("Select Compact Contract File")
-            .withDescription("Choose the .compact smart contract source file to compile")
+        new TextBrowseFolderListener(
+            FileChooserDescriptorFactory.createSingleFileDescriptor("compact")
+                .withTitle("Select Compact Contract File")
+                .withDescription("Choose the .compact smart contract source file to compile")
+        )
     );
     outputDirectoryField.addBrowseFolderListener(
-        null,
-        FileChooserDescriptorFactory.createSingleFolderDescriptor()
-            .withTitle("Select Output Directory")
-            .withDescription("Choose the target directory for generated TypeScript and ZKIR artifacts")
+        new TextBrowseFolderListener(
+            FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                .withTitle("Select Output Directory")
+                .withDescription("Choose the target directory for generated TypeScript and ZKIR artifacts")
+        )
     );
 
     compactFilePathField.getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {

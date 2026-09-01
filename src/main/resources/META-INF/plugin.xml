@@ -179,6 +179,7 @@
 
         <liveTemplateContext
                 contextId="COMPACT_CODE"
+                presentableName="Compact"
                 implementation="dev.verloren.midnight.ide.templates.CompactLiveTemplateContextType"/>
 
         <lang.foldingBuilder
@@ -196,9 +197,15 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.editor.CompactSurroundDescriptor"/>
 
-        <codeInsight.parameterNameHints
+        <codeInsight.declarativeInlayProvider
                 language="Compact"
-                implementationClass="dev.verloren.midnight.editor.CompactInlayParameterHintsProvider"/>
+                implementationClass="dev.verloren.midnight.editor.CompactInlayHintsProvider"
+                isEnabledByDefault="true"
+                group="PARAMETERS_GROUP"
+                providerId="dev.verloren.midnight.parameterHints"
+                bundle="messages.MyMessageBundle"
+                nameKey="inlay.compact.parameter.hints.name"
+                descriptionKey="inlay.compact.parameter.hints.description"/>
 
         <externalAnnotator
                 language="Compact"

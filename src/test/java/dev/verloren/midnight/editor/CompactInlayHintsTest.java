@@ -1,6 +1,5 @@
 package dev.verloren.midnight.editor;
 
-import com.intellij.codeInsight.hints.InlayInfo;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -11,7 +10,6 @@ import dev.verloren.midnight.psi.CompactCallExprImpl;
 
 import java.util.List;
 
-@SuppressWarnings("UnstableApiUsage")
 public class CompactInlayHintsTest extends BasePlatformTestCase {
 
   @Override
@@ -38,12 +36,11 @@ public class CompactInlayHintsTest extends BasePlatformTestCase {
     CompactCallExprImpl call = PsiTreeUtil.findChildOfType(myFixture.getFile(), CompactCallExprImpl.class);
     assertNotNull("Call expression should exist", call);
 
-    CompactInlayParameterHintsProvider provider = new CompactInlayParameterHintsProvider();
-    List<InlayInfo> hints = provider.getParameterHints(call);
+    List<CompactInlayHintsProvider.HintInfo> hints = CompactInlayHintsProvider.computeHints(call);
 
     assertEquals("Should generate 2 parameter hints", 2, hints.size());
-    assertEquals("round", hints.get(0).getText());
-    assertEquals("sk", hints.get(1).getText());
+    assertEquals("round", hints.get(0).label());
+    assertEquals("sk", hints.get(1).label());
   }
 
   public void testWitnessCallParameterHints() {
@@ -59,12 +56,11 @@ public class CompactInlayHintsTest extends BasePlatformTestCase {
     CompactCallExprImpl call = PsiTreeUtil.findChildOfType(myFixture.getFile(), CompactCallExprImpl.class);
     assertNotNull("Call expression should exist", call);
 
-    CompactInlayParameterHintsProvider provider = new CompactInlayParameterHintsProvider();
-    List<InlayInfo> hints = provider.getParameterHints(call);
+    List<CompactInlayHintsProvider.HintInfo> hints = CompactInlayHintsProvider.computeHints(call);
 
     assertEquals("Should generate 2 parameter hints for witness call", 2, hints.size());
-    assertEquals("user", hints.get(0).getText());
-    assertEquals("nonce", hints.get(1).getText());
+    assertEquals("user", hints.get(0).label());
+    assertEquals("nonce", hints.get(1).label());
   }
 
   public void testMatchingArgumentNameSuppressesHint() {
@@ -82,10 +78,9 @@ public class CompactInlayHintsTest extends BasePlatformTestCase {
     CompactCallExprImpl call = PsiTreeUtil.findChildOfType(myFixture.getFile(), CompactCallExprImpl.class);
     assertNotNull("Call expression should exist", call);
 
-    CompactInlayParameterHintsProvider provider = new CompactInlayParameterHintsProvider();
-    List<InlayInfo> hints = provider.getParameterHints(call);
+    List<CompactInlayHintsProvider.HintInfo> hints = CompactInlayHintsProvider.computeHints(call);
 
     assertEquals("Should only generate 1 hint since first argument name matches param name", 1, hints.size());
-    assertEquals("sk", hints.getFirst().getText());
+    assertEquals("sk", hints.getFirst().label());
   }
 }
