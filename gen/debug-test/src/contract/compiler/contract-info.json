@@ -1,0 +1,182 @@
+{
+  "compiler-version": "0.31.1",
+  "language-version": "0.23.0",
+  "runtime-version": "0.16.0",
+  "circuits": [
+    {
+      "name": "ledgerCalls",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "guess",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 4095
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "nestedCall",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "fst",
+          "type": {
+            "type-name": "Boolean"
+          }
+        },
+        {
+          "name": "snd",
+          "type": {
+            "type-name": "Boolean"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Struct",
+        "name": "Maybe",
+        "elements": [
+          {
+            "name": "is_some",
+            "type": {
+              "type-name": "Boolean"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 4095
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "privateCall",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+        {
+          "name": "fst",
+          "type": {
+            "type-name": "Boolean"
+          }
+        },
+        {
+          "name": "snd",
+          "type": {
+            "type-name": "Boolean"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Struct",
+        "name": "Maybe",
+        "elements": [
+          {
+            "name": "is_some",
+            "type": {
+              "type-name": "Boolean"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Uint",
+              "maxval": 4095
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "stdLibCall",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "fst",
+          "type": {
+            "type-name": "Boolean"
+          }
+        },
+        {
+          "name": "snd",
+          "type": {
+            "type-name": "Boolean"
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Struct",
+        "name": "Maybe",
+        "elements": [
+          {
+            "name": "is_some",
+            "type": {
+              "type-name": "Boolean"
+            }
+          },
+          {
+            "name": "value",
+            "type": {
+              "type-name": "Bytes",
+              "length": 32
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "compute",
+      "arguments": [
+        {
+          "name": "fst",
+          "type": {
+            "type-name": "Boolean"
+          }
+        },
+        {
+          "name": "snd",
+          "type": {
+            "type-name": "Boolean"
+          }
+        }
+      ],
+      "result type": {
+        "type-name": "Boolean"
+      }
+    }
+  ],
+  "contracts": [
+  ],
+  "ledger": [
+    {
+      "name": "attempts",
+      "index": 0,
+      "exported": true,
+      "storage": "Counter"
+    },
+    {
+      "name": "maxAttempts",
+      "index": 1,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Uint",
+        "maxval": 4095
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+
+pragma language_version >= 0.20.0;
+
+export module module {
+ledger {
+  counter: Field;
+}
+
+constructor() {
+  counter = 0;
+}
+
+export circuit increment(): Void {
+  counter = counter + 1;
+}
+}
+
+

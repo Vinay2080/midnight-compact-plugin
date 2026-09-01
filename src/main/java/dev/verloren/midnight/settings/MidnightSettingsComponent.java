@@ -26,7 +26,7 @@ public class MidnightSettingsComponent {
     );
 
     JButton autoDetectButton = new JButton("Auto-Detect");
-    autoDetectButton.addActionListener(_ -> {
+    autoDetectButton.addActionListener(e -> {
       String detected = dev.verloren.midnight.run.CompactToolchainUtil.getCompilerExecutablePath(null);
       if (detected != null) {
         compilerPathField.setText(detected);

@@ -16,6 +16,12 @@ Last Updated: August 2026
   - `CompactNamedElement` wrapper for all declared symbols.
   - `CompactElementFactory` for PSI snippet creation.
 - **Phase 3: References, Scope Resolution & Completion**
+  - **Build & Distribution Compatibility**:
+    - Open-ended IntelliJ IDEA build compatibility: `sinceBuild = "242"`, `untilBuild = null` (compatible with 2024.2, 2024.3, 2025.1, 2025.2, etc.).
+    - Java 21 LTS bytecode targeting (`sourceCompatibility = 21`, `targetCompatibility = 21`).
+    - Explicit `extensions="compact"` and `fieldName="INSTANCE"` added to `<fileType>` in `plugin.xml` ensuring `.compact` files bind to `CompactFileType`, `CompactParserDefinition`, and syntax highlighters.
+    - Windows & WSL Toolchain: prioritized WSL discovery on Windows (`/home/<user>/.local/bin/compact`, `.cargo/bin/compact`, etc.), filtered out Windows NTFS `C:\Windows\System32\compact.exe`, and auto-associated distro in `parseConfiguredPath`.
+    - Package distribution verified at `build/distributions/midnight-plugin-1.0.0-SNAPSHOT.zip`.
   - Scope walker in `CompactResolveUtil` with split `VALUE` and `TYPE` namespaces.
   - Local lexical shadowing (innermost first).
   - Navigation for identifiers, struct literals, enum members, and struct fields.

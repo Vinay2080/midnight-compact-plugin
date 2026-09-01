@@ -20,14 +20,14 @@ public class CompactRunLineMarkerContributor extends RunLineMarkerContributor {
         return new Info(
             AllIcons.Actions.Execute,
             ExecutorAction.getActions(0),
-            _ -> "Compile Contract '" + element.getText() + "'"
+            ignored -> "Compile Contract '" + element.getText() + "'"
         );
       }
       if (parent instanceof CompactCircuitDefinition) {
         return new Info(
             AllIcons.Actions.Execute,
             ExecutorAction.getActions(0),
-            _ -> "Compile File for Circuit '" + element.getText() + "'"
+            ignored -> "Compile File for Circuit '" + element.getText() + "'"
         );
       }
     }

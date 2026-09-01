@@ -211,18 +211,14 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
 
     // Otherwise walk up to nearest declaration element
     for (PsiElement p = contextElement; p != null && p != file; p = p.getParent()) {
-      switch (p) {
-        case CompactStructFieldImpl _, CompactEnumMemberImpl _ -> {
-          return p;
-        }
-        case CompactParameterImpl param when param.getParent() instanceof CompactStructFieldImpl -> {
-          return param.getParent();
-        }
-        case CompactPatternImpl _, CompactPragmaForm _, CompactNamedElement _ -> {
-          return p;
-        }
-        default -> {
-        }
+        if (p instanceof CompactStructFieldImpl || p instanceof CompactEnumMemberImpl) {
+        return p;
+      }
+      if (p instanceof CompactParameterImpl param && param.getParent() instanceof CompactStructFieldImpl) {
+        return param.getParent();
+      }
+      if (p instanceof CompactPatternImpl || p instanceof CompactPragmaForm || p instanceof CompactNamedElement) {
+        return p;
       }
     }
     return super.getCustomDocumentationElement(editor, file, contextElement, targetOffset);

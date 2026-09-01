@@ -73,7 +73,15 @@ public final class CompactToolchainUtil {
       }
     }
 
-    // 3. System PATH lookup
+    // 3. On Windows, check WSL first before checking Windows system PATH
+    if (SystemInfo.isWindows) {
+      ToolchainInfo wslInfo = findInWsl();
+      if (wslInfo != null) {
+        return wslInfo;
+      }
+    }
+
+    // 4. System PATH lookup (excluding Windows system/compression executables)
     File pathCompactc = findExecutableInPath("compactc");
     if (pathCompactc != null) {
       return new ToolchainInfo(pathCompactc.getAbsolutePath(), false, null, false);
@@ -83,7 +91,7 @@ public final class CompactToolchainUtil {
       return new ToolchainInfo(pathCompact.getAbsolutePath(), false, null, true);
     }
 
-    // 4. Common package manager locations
+    // 5. Common package manager locations
     File commonCompactc = findInCommonLocations("compactc");
     if (commonCompactc != null) {
       return new ToolchainInfo(commonCompactc.getAbsolutePath(), false, null, false);
@@ -93,7 +101,7 @@ public final class CompactToolchainUtil {
       return new ToolchainInfo(commonCompact.getAbsolutePath(), false, null, true);
     }
 
-    // 5. Automatic WSL discovery (on Windows)
+    // 6. Automatic WSL discovery fallback
     if (SystemInfo.isWindows) {
       return findInWsl();
     }
@@ -207,7 +215,7 @@ public final class CompactToolchainUtil {
       }
     }
 
-    // Direct Linux / WSL path: /home/... or /usr/... or wsl:...
+    // Direct Linux / WSL path: /home/... or /usr/... or /root/... or wsl:...
     if (normalized.startsWith("/home/") || normalized.startsWith("/usr/") || normalized.startsWith("/root/") || normalized.startsWith("wsl:")) {
       String linuxPath = normalized.startsWith("wsl:") ? normalized.substring(4) : normalized;
       String distro = null;
@@ -216,18 +224,54 @@ public final class CompactToolchainUtil {
         distro = linuxPath.substring(0, colon);
         linuxPath = linuxPath.substring(colon + 1);
       }
+      if (distro == null && SystemInfo.isWindows) {
+        distro = findWslDistroForPath(linuxPath);
+      }
       boolean isCli = isCompactCliName(linuxPath);
       return new ToolchainInfo(linuxPath, true, distro, isCli);
     }
 
-    // Direct host file check
+    // Direct host file check (excluding Windows system executables)
     File resolved = findExecutableFile(customPath);
-    if (resolved != null) {
+    if (resolved != null && !isWindowsSystemExecutable(resolved)) {
       boolean isCli = isCompactCliName(resolved.getName());
       return new ToolchainInfo(resolved.getAbsolutePath(), false, null, isCli);
     }
 
     return null;
+  }
+
+  public static @Nullable String findWslDistroForPath(@NotNull String linuxPath) {
+    String pathWithoutLeadingSlash = linuxPath.startsWith("/") ? linuxPath.substring(1) : linuxPath;
+    for (String distro : COMMON_WSL_DISTROS) {
+      File fileWsl = new File("\\\\wsl$\\" + distro + "\\" + pathWithoutLeadingSlash.replace('/', '\\'));
+      if (fileWsl.exists()) {
+        return distro;
+      }
+      File fileWslLocalhost = new File("\\\\wsl.localhost\\" + distro + "\\" + pathWithoutLeadingSlash.replace('/', '\\'));
+      if (fileWslLocalhost.exists()) {
+        return distro;
+      }
+    }
+    return null;
+  }
+
+  public static boolean isWindowsSystemExecutable(@NotNull File file) {
+    if (!SystemInfo.isWindows) {
+      return false;
+    }
+    String path = file.getAbsolutePath().toLowerCase();
+    String winDir = System.getenv("WINDIR");
+    if (winDir != null && path.startsWith(winDir.toLowerCase())) {
+      return true;
+    }
+    String systemRoot = System.getenv("SystemRoot");
+    if (systemRoot != null && path.startsWith(systemRoot.toLowerCase())) {
+      return true;
+    }
+    return path.contains("\\windows\\system32\\")
+        || path.contains("\\windows\\syswow64\\")
+        || path.contains("\\windows\\winsxs\\");
   }
 
   private static boolean isCompactCliName(@NotNull String path) {
@@ -298,14 +342,14 @@ public final class CompactToolchainUtil {
 
   public static @Nullable File findExecutableFile(@NotNull String path) {
     File direct = new File(path);
-    if (direct.exists() && direct.isFile()) {
+    if (direct.exists() && direct.isFile() && !isWindowsSystemExecutable(direct)) {
       return direct;
     }
     if (SystemInfo.isWindows) {
       String[] exts = {".cmd", ".bat", ".exe", ".ps1"};
       for (String ext : exts) {
         File file = new File(path + ext);
-        if (file.exists() && file.isFile()) {
+        if (file.exists() && file.isFile() && !isWindowsSystemExecutable(file)) {
           return file;
         }
       }
@@ -321,7 +365,7 @@ public final class CompactToolchainUtil {
       String[] exts = {".cmd", ".bat", ".exe", ""};
       for (String ext : exts) {
         File file = new File(dir, baseName + ext);
-        if (file.isFile()) {
+        if (file.isFile() && !isWindowsSystemExecutable(file)) {
           return file;
         }
       }
@@ -339,7 +383,7 @@ public final class CompactToolchainUtil {
       String[] names = {baseName + ".cmd", baseName + ".bat", baseName + ".exe", baseName};
       for (String name : names) {
         File found = PathEnvironmentVariableUtil.findInPath(name);
-        if (found != null && found.isFile()) {
+        if (found != null && found.isFile() && !isWindowsSystemExecutable(found)) {
           return found;
         }
       }

@@ -70,6 +70,11 @@ public class CompactToolchainUtilTest extends BasePlatformTestCase {
     assertEquals("Ubuntu", info3.wslDistribution());
     assertEquals("/usr/local/bin/compactc", info3.executablePath());
     assertFalse("Direct compactc is not compact CLI wrapper", info3.isCompactCli());
+
+    // Test Windows system binary exclusion
+    File system32Compact = new File("C:\\Windows\\System32\\compact.exe");
+    assertTrue("C:\\Windows\\System32\\compact.exe should be identified as system binary on Windows",
+        !com.intellij.openapi.util.SystemInfo.isWindows || CompactToolchainUtil.isWindowsSystemExecutable(system32Compact));
   }
 
   public void testCreateCommandLineWslCompactCli() throws ExecutionException {

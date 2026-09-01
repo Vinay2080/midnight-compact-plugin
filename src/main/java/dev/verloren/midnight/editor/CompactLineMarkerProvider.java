@@ -32,7 +32,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
           element,
           element.getTextRange(),
           AllIcons.Nodes.KeymapEditor,
-          _ -> "Zero-Knowledge boundary: disclosing private witness data into circuit",
+          ignored -> "Zero-Knowledge boundary: disclosing private witness data into circuit",
           null,
           GutterIconRenderer.Alignment.RIGHT,
           () -> "ZK Disclosure Boundary"
@@ -47,7 +47,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
             element,
             element.getTextRange(),
             AllIcons.Nodes.AbstractMethod,
-            _ -> "Private off-chain witness query '" + element.getText() + "'",
+            ignored -> "Private off-chain witness query '" + element.getText() + "'",
             null,
             GutterIconRenderer.Alignment.RIGHT,
             () -> "Private Witness Query"
@@ -58,7 +58,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
             element,
             element.getTextRange(),
             AllIcons.Actions.Lightning,
-            _ -> "Exported on-chain ZK circuit '" + element.getText() + "'",
+            ignored -> "Exported on-chain ZK circuit '" + element.getText() + "'",
             null,
             GutterIconRenderer.Alignment.RIGHT,
             () -> "Exported ZK Circuit"
@@ -70,7 +70,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
             element,
             element.getTextRange(),
             AllIcons.Nodes.DataTables,
-            _ -> typeDesc + " '" + element.getText() + "'",
+            ignored -> typeDesc + " '" + element.getText() + "'",
             null,
             GutterIconRenderer.Alignment.RIGHT,
             () -> "Ledger State"

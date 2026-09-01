@@ -42,40 +42,16 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
 
   @Override
   public @NotNull String getType(@NotNull PsiElement element) {
-    switch (element) {
-      case CompactCircuitDefinition _-> {
-        return "circuit";
-      }
-      case CompactWitnessDeclaration _ -> {
-        return "witness";
-      }
-      case CompactLedgerDeclaration _ -> {
-        return "ledger";
-      }
-      case CompactStructDefinition _ -> {
-        return "struct";
-      }
-      case CompactStructFieldImpl _ -> {
-        return "struct field";
-      }
-      case CompactEnumDefinition _ -> {
-        return "enum";
-      }
-      case CompactEnumMemberImpl _ -> {
-        return "enum member";
-      }
-      case CompactTypeDefinition _ -> {
-        return "type";
-      }
-      case CompactModuleDefinition _ -> {
-        return "module";
-      }
-      case CompactParameterImpl _ -> {
-        return "parameter";
-      }
-      default -> {
-      }
-    }
+    if (element instanceof CompactCircuitDefinition) return "circuit";
+    if (element instanceof CompactWitnessDeclaration) return "witness";
+    if (element instanceof CompactLedgerDeclaration) return "ledger";
+    if (element instanceof CompactStructDefinition) return "struct";
+    if (element instanceof CompactStructFieldImpl) return "struct field";
+    if (element instanceof CompactEnumDefinition) return "enum";
+    if (element instanceof CompactEnumMemberImpl) return "enum member";
+    if (element instanceof CompactTypeDefinition) return "type";
+    if (element instanceof CompactModuleDefinition) return "module";
+    if (element instanceof CompactParameterImpl) return "parameter";
     if (element instanceof CompactConstBindingImpl || element instanceof CompactPatternImpl) return "local";
     if (element instanceof CompactImportElementImpl) return "import";
     return "declaration";

@@ -1,5 +1,5 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
-<idea-plugin>
+<idea-plugin url="https://github.com/Vinay2080/midnight-plugin">
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>dev.verloren.midnight</id>
 
@@ -8,15 +8,63 @@
     <name>Midnight Compact Language</name>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-    <vendor url="https://github.com/Vinay2080">Verloren</vendor>
+    <vendor email="shaking.121@gmail.com" url="https://github.com/Vinay2080">Verloren</vendor>
 
     <!-- A description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
-    <description>Midnight IntelliJ Plugin is an open-source IntelliJ IDEA plugin that brings first-class development
-        support for the Compact programming language used by the Midnight blockchain. The plugin aims to provide syntax
-        highlighting, code completion, inspections, formatting, navigation, compiler integration, and other IDE features
-        to improve the developer experience for building Midnight smart contracts.
-    </description>
+    <description><![CDATA[
+        <p>First-class development support for the <b>Compact</b> smart contract language on the <b>Midnight</b> blockchain.</p>
+
+        <p>This plugin equips IntelliJ IDEA with a comprehensive developer environment for writing, analyzing, navigating, and compiling zero-knowledge (ZK) smart contracts in Compact.</p>
+
+        <h3>✨ Features</h3>
+        <ul>
+            <li><b>Syntax Highlighting &amp; Formatting:</b> Rich semantic token coloring, code formatting, smart indentation, brace matching, and code folding.</li>
+            <li><b>Intelligent Code Completion:</b> Context-aware completion for keywords, built-in types, circuits, witnesses, exports, ledger state, and local bindings.</li>
+            <li><b>Code Navigation &amp; Find Usages:</b> Go to Declaration (<code>Ctrl+B</code> / <code>Cmd+B</code>), Go to Symbol, and Find Usages across files with split VALUE/TYPE namespaces.</li>
+            <li><b>Real-Time Inspections &amp; Quick-Fixes:</b>
+                <ul>
+                    <li>Type mismatch detection</li>
+                    <li>Unresolved reference &amp; duplicate declaration checks</li>
+                    <li>Pure circuit mutation &amp; sealed field validations</li>
+                    <li>Recursive circuit detection &amp; undisclosed witness warnings</li>
+                    <li>Unused local variable highlighting with quick-fixes</li>
+                </ul>
+            </li>
+            <li><b>Structure View &amp; Breadcrumbs:</b> Visual outline view of contracts, circuits, witnesses, and type definitions.</li>
+            <li><b>Quick Documentation &amp; Inlay Hints:</b> Hover documentation with inferred signatures and inline parameter name hints.</li>
+            <li><b>Compiler &amp; Toolchain Integration:</b> Dedicated Run Configurations and gutter icons to build and verify Compact files using the <code>compact</code> compiler.</li>
+            <li><b>Live Templates &amp; File Templates:</b> Pre-built templates for new Compact files and common smart contract patterns.</li>
+        </ul>
+
+        <h3>🚀 Getting Started</h3>
+        <ol>
+            <li>Install the plugin from the JetBrains Marketplace.</li>
+            <li>Open or create any <code>.compact</code> file in your project.</li>
+            <li>Configure your Compact compiler path under <b>Settings/Preferences &rarr; Languages &amp; Frameworks &rarr; Midnight Compact</b>.</li>
+        </ol>
+
+        <h3>🔗 Resources &amp; Links</h3>
+        <ul>
+            <li><a href="https://github.com/Vinay2080/midnight-plugin">GitHub Repository</a></li>
+            <li><a href="https://github.com/Vinay2080/midnight-plugin/issues">Issue Tracker &amp; Bug Reports</a></li>
+            <li><a href="https://docs.midnight.network/">Midnight Network Documentation</a></li>
+        </ul>
+    ]]></description>
+
+    <!-- Change notes displayed in the IDE Plugin Manager "What's New" and Marketplace release history -->
+    <change-notes><![CDATA[
+        <h3>1.0.0</h3>
+        <ul>
+            <li>Initial release of Midnight Compact Language support for IntelliJ IDEA.</li>
+            <li>Handwritten Lexer, Parser, and PSI support for Compact syntax.</li>
+            <li>Code completion, reference resolution, and cross-file <code>include</code> resolution.</li>
+            <li>9 semantic inspections with automated quick-fixes.</li>
+            <li>Code formatting, smart indentation, structure view, and inlay parameter hints.</li>
+            <li>Toolchain run configurations and gutter execution for the Compact compiler.</li>
+            <li>File templates, live templates, breadcrumbs, and hover documentation.</li>
+        </ul>
+    ]]></change-notes>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -29,6 +77,8 @@
         <fileType
                 name="Compact"
                 language="Compact"
+                extensions="compact"
+                fieldName="INSTANCE"
                 implementationClass="dev.verloren.midnight.CompactFileType"
         />
         <lang.parserDefinition

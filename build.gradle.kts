@@ -17,6 +17,28 @@ dependencies {
     }
 }
 
+intellijPlatform {
+    pluginConfiguration {
+        version = providers.gradleProperty("version")
+        ideaVersion {
+            sinceBuild = "242"
+            untilBuild = provider { null }
+        }
+        changeNotes = provider {
+            changelog.renderItem(
+                (changelog.getOrNull(providers.gradleProperty("version").get())
+                    ?: changelog.getUnreleased()),
+                org.jetbrains.changelog.Changelog.OutputType.HTML
+            )
+        }
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
 sourceSets {
     main {
         java.srcDir("src/main/gen")
@@ -24,6 +46,13 @@ sourceSets {
 }
 
 tasks {
+    withType<JavaCompile> {
+        sourceCompatibility = "21"
+        targetCompatibility = "21"
+    }
+    buildSearchableOptions {
+        enabled = false
+    }
     instrumentCode {
         enabled = false
     }
@@ -31,3 +60,5 @@ tasks {
         enabled = false
     }
 }
+
+

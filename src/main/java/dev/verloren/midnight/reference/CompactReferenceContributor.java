@@ -48,14 +48,16 @@ public class CompactReferenceContributor extends PsiReferenceContributor {
             if (parent instanceof CompactReferenceExprImpl || parent instanceof CompactCallExprImpl) {
               return new PsiReference[]{new CompactValueReference(element, range)};
             }
-            return switch (parent) {
-              case CompactMemberExprImpl memberExpr ->
-                      new PsiReference[]{new CompactStructFieldReference(memberExpr, range)};
-              case CompactImportElementImpl _ ->
-                      new PsiReference[]{new CompactImportReference(parent, range, CompactImportReference.Kind.IMPORT_ELEMENT)};
-              case CompactExpression _ -> new PsiReference[]{new CompactValueReference(element, range)};
-              default -> PsiReference.EMPTY_ARRAY;
-            };
+            if (parent instanceof CompactMemberExprImpl memberExpr) {
+              return new PsiReference[]{new CompactStructFieldReference(memberExpr, range)};
+            }
+            if (parent instanceof CompactImportElementImpl) {
+              return new PsiReference[]{new CompactImportReference(parent, range, CompactImportReference.Kind.IMPORT_ELEMENT)};
+            }
+            if (parent instanceof CompactExpression) {
+              return new PsiReference[]{new CompactValueReference(element, range)};
+            }
+            return PsiReference.EMPTY_ARRAY;
 
           }
         }
