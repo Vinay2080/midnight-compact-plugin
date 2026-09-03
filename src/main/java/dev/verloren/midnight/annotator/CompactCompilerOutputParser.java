@@ -1,5 +1,6 @@
 package dev.verloren.midnight.annotator;
 
+import com.intellij.lang.annotation.HighlightSeverity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -9,10 +10,10 @@ import java.util.regex.Pattern;
 
 public final class CompactCompilerOutputParser {
   private static final Pattern DIAGNOSTIC_PATTERN =
-      Pattern.compile("([a-zA-Z0-9_./\\\\-]+?\\.compact):(\\d+):(\\d+):?\\s*(?:(warning|error):\\s*)?(.*)", Pattern.CASE_INSENSITIVE);
+      Pattern.compile("(?:^|(?<=[\\s\\[]))([a-zA-Z]:[\\\\/][^:\r\n]+?\\.compact|[^:\r\n\\s][^:\r\n]*?\\.compact):(\\d+):(\\d+):?\\s*(?:(warning|error|info):\\s*)?(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final Pattern EXCEPTION_PATTERN =
-      Pattern.compile("(?:Exception:\\s*)?([a-zA-Z0-9_./\\\\-]+?\\.compact)\\s+line\\s+(\\d+)\\s+char\\s+(\\d+):?\\s*(.*)", Pattern.CASE_INSENSITIVE);
+      Pattern.compile("(?:Exception(?:\\s+in\\s+[^:]+)?:\\s*)?([a-zA-Z]:[\\\\/][^:\r\n]+?\\.compact|[^:\r\n\\s][^:\r\n]*?\\.compact)\\s+line\\s+(\\d+),?\\s+char\\s+(\\d+):?\\s*(.*)", Pattern.CASE_INSENSITIVE);
 
   private CompactCompilerOutputParser() {
   }
@@ -35,9 +36,29 @@ public final class CompactCompilerOutputParser {
         int colNum = Math.max(1, Integer.parseInt(diagMatcher.group(3)));
         String severity = diagMatcher.group(4);
         String message = diagMatcher.group(5).trim();
-        boolean isError = severity == null || !severity.equalsIgnoreCase("warning");
 
-        diagnostics.add(new CompactCompilerDiagnostic(filePath, lineNum, colNum, message, isError));
+        HighlightSeverity highlightSeverity = HighlightSeverity.ERROR;
+        boolean isError = true;
+        if (severity != null) {
+          if (severity.equalsIgnoreCase("warning")) {
+            highlightSeverity = HighlightSeverity.WARNING;
+            isError = false;
+          } else if (severity.equalsIgnoreCase("info")) {
+            highlightSeverity = HighlightSeverity.INFORMATION;
+            isError = false;
+          }
+        }
+
+        diagnostics.add(new CompactCompilerDiagnostic(
+            filePath,
+            lineNum,
+            colNum,
+            lineNum,
+            colNum + 1,
+            message,
+            isError,
+            highlightSeverity
+        ));
         i++;
         continue;
       }
@@ -56,16 +77,19 @@ public final class CompactCompilerOutputParser {
         i++;
         while (i < lines.length) {
           String nextLine = lines[i].trim();
-          if (nextLine.isEmpty()
-              || DIAGNOSTIC_PATTERN.matcher(nextLine).find()
+          if (DIAGNOSTIC_PATTERN.matcher(nextLine).find()
               || EXCEPTION_PATTERN.matcher(nextLine).find()
-              || nextLine.startsWith("[compactc]")) {
+              || nextLine.startsWith("[compactc]")
+              || nextLine.startsWith("Exception in")
+              || nextLine.startsWith("Exception:")) {
             break;
           }
-          if (!messageBuilder.isEmpty()) {
-            messageBuilder.append(" ");
+          if (!nextLine.isEmpty()) {
+            if (!messageBuilder.isEmpty()) {
+              messageBuilder.append(" ");
+            }
+            messageBuilder.append(nextLine);
           }
-          messageBuilder.append(nextLine);
           i++;
         }
 
@@ -74,7 +98,16 @@ public final class CompactCompilerOutputParser {
           fullMessage = "Compiler error at " + filePath + ":" + lineNum + ":" + colNum;
         }
 
-        diagnostics.add(new CompactCompilerDiagnostic(filePath, lineNum, colNum, fullMessage, true));
+        diagnostics.add(new CompactCompilerDiagnostic(
+            filePath,
+            lineNum,
+            colNum,
+            lineNum,
+            colNum + 1,
+            fullMessage,
+            true,
+            HighlightSeverity.ERROR
+        ));
         continue;
       }
 
