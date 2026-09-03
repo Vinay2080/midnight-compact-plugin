@@ -141,22 +141,40 @@ Last Updated: August 2026
   - Added `CompactFile.getTopLevelDeclarations()` avoiding deep AST recursive tree walks in `CompactResolveUtil`.
   - Created `CompactTestUtils` DSL test helpers (`doCheckResolve` / `doCheckNoResolve`) with marker DSL.
 
+- **Phase 20: Return-Type Verification, Compiler Exception Diagnostics & Completion Prioritization**
+  - Implemented return statement type-checking in `CompactTypeMismatchInspection` verifying `return <expr>` against enclosing `circuit`, `witness`, or constructor return types using `CompactType.isAssignableTo()` and `CompactPsiUtil.getCallableReturnType()`.
+  - Added multi-line compiler exception diagnostic parsing in `CompactCompilerOutputParser` to parse `Exception: <file> line <line> char <col>:\n<details>` emitted by `compactc`.
+  - Prioritized `true` and `false` literals (`PrioritizedLookupElement.withPriority(..., 100.0)`) in `CompactCompletionContributor` for Boolean return contexts.
+
+- **Phase 21: File Templates & CompactCreateFileAction Optimization**
+- **Phase 21: File Templates & Creation Action Modernization**
+  - Re-authored all 4 file templates in `src/main/resources/fileTemplates/internal/` aligning with official Midnight Compact specifications (`Compact Contract`, `Compact Module`, `Compact Interface`, `Compact File`).
+  - Registered templates under `<internalFileTemplate>` in `plugin.xml`.
+
+- **Phase 22: Hardened File Creation Action (`CompactCreateFileAction`)**
+  - Implemented nested subdirectory creation via `CreateFileAction.MkDirs` (e.g. `contracts/tokens/MyContract`).
+  - Pure identifier extraction (`extractSimpleName`) preventing Velocity `${NAME}` pollution.
+  - Contextual `InputValidatorEx` using `CompactNamesValidator` to reject invalid filesystem characters, path errors, and language keywords (`circuit`, `witness`, `ledger`, `contract`).
+  - Integrated platform lifecycle (`createFileFromTemplate`) with automated editor opening, FUS logging, code reformatting via `CodeStyleManager`, and caret positioning after identifiers.
+  - Persisted user's last chosen template via `getDefaultTemplateProperty()`.
+  - Expanded `CompactFileTemplateTest` to 12 tests verifying nested directories, suffix stripping, name extraction, and validation logic.
+
 ### Planned (Future Roadmap)
 
-- **Level 5 Integration**: New Project/DApp Wizard, Interactive Debugger (`XDebugger`, breakpoints, simulator stack frame inspector), Midnight Explorer Tool Window, TypeScript Polyglot Cross-Navigation.
+- **Level 5 Integration**: New Project/DApp Wizard (`DirectoryProjectGenerator`), Interactive Debugger (`XDebugger`, breakpoints, simulator stack frame inspector), Midnight Explorer Tool Window, TypeScript Polyglot Cross-Navigation.
 
 ---
 
 ## 2. Test Verification Status
 
-- **Total Unit Tests**: **360 passing** (0 failures, 0 skipped, 100% success rate across forty-three test classes).
+- **Total Unit Tests**: **376 passing** (0 failures, 0 skipped, 100% success rate across forty-four test classes).
 - **Execution Command**: `./gradlew test`
 - **Breakdown**:
-  - `CompactHighlightingTest`: 16 tests
+  - `CompactHighlightingTest`: 11 tests
   - `CompactColorSettingsPageTest`: 1 test
   - `CompactResolveTest` + `CompactCrossFileResolveTest`: 38 tests (including forward references, top-level ledger resolution, and local parameter shadowing precedence)
   - `CompactInspectionTest`: 91 tests (including return-statement type mismatch validation, condition checking, and relational/arithmetic operators)
-  - `CompactStandardLibraryTest`: 5 tests (verifying direct element reference resolution and Ctrl+B / Ctrl+Click GotoDeclaration navigation for bundled standard library and ZKIR symbols)
+  - `CompactStandardLibraryTest` + `CompactStdlibServiceTest`: 8 tests (verifying direct element reference resolution and Ctrl+B / Ctrl+Click GotoDeclaration navigation for bundled standard library and ZKIR symbols)
   - `CompactChooseByNameTest`: 2 tests
   - `CompactInlayHintsTest`: 3 tests
   - `CompactRunConfigurationTest` + `CompactRunConfigurationProducerTest` + `CompactToolchainUtilTest`: 13 tests (verifying per-contract deterministic output directory calculation and compiler output compatibility)
@@ -170,7 +188,7 @@ Last Updated: August 2026
   - `CompactFoldingTest`: 4 tests
   - `CompactBreadcrumbsTest`: 2 tests
   - `CompactLiveTemplateTest`: 3 tests
-  - `CompactFileTemplateTest`: 3 tests
+  - `CompactFileTemplateTest`: 12 tests
   - `CompactSurroundWithTest`: 5 tests
   - `CompactEditorFeaturesTest`: 4 tests
   - `LexerTest` + `PragmaTest`: 15 tests
@@ -180,6 +198,7 @@ Last Updated: August 2026
   - `CompactReferenceTest`: 6 tests
   - `CompactCompletionTest`: 13 tests (including prioritized Boolean return value completion)
   - `CompactSymbolTest`: 3 tests
+  - `CompactTestUtilsTest`: 3 tests
   - PSI Tests (`DeclarationPsiTest`, `ElementFactoryConsistencyTest`): 3 tests
 
 ---
@@ -190,21 +209,38 @@ Last Updated: August 2026
 | :--- | :--- |
 | **Lexer** | `dev.verloren.midnight.lexer.CompactLexer`, `CompactTokenTypes` |
 | **Parser** | `dev.verloren.midnight.parser.CompactParser`, `CompactParserDefinition`, `CompactElementTypes` |
-| **PSI** | `dev.verloren.midnight.psi.impl.CompactPsiElement`, `CompactNamedElementImpl`, `CompactElementFactory`, `CompactFile`, `CompactIncludeDeclarationImpl` |
-| **Resolve & Scope** | `dev.verloren.midnight.resolve.CompactResolveUtil`, `CompactScopeProcessor`, `CompactReferenceExprImpl`, `CompactStructFieldReference`, `CompactEnumMemberReference`, `CompactIncludeReference` |
+| **PSI** | `dev.verloren.midnight.psi.impl.CompactPsiElement`, `CompactNamedElementImpl`, `CompactElementFactory`, `CompactFile`, `CompactIncludeDeclarationImpl`, `CompactImportDeclarationImpl` |
+| **Resolve & Scope** | `dev.verloren.midnight.resolve.CompactResolveUtil`, `CompactScopeProcessor`, `CompactReferenceExprImpl`, `CompactStructFieldReference`, `CompactEnumMemberReference`, `CompactIncludeReference`, `CompactImportReference`, `CompactReferenceContributor`, `CompactGotoDeclarationHandler` |
 | **Completion** | `dev.verloren.midnight.completion.CompactCompletionContributor` |
 | **Refactoring** | `dev.verloren.midnight.refactoring.CompactRefactoringSupportProvider`, `CompactNamesValidator` |
 | **Find Usages** | `dev.verloren.midnight.findUsages.CompactFindUsagesProvider` |
-| **Type System** | `dev.verloren.midnight.type.CompactType`, `CompactPrimitiveType`, `CompactNamedType`, `CompactTypeInferenceUtil` |
-| **Inspections** | `dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection`, `CompactDuplicateDeclarationInspection`, `CompactUnusedLocalVariableInspection`, `CompactTypeMismatchInspection`, `CompactRemoveUnusedVariableFix` |
+| **Type System** | `dev.verloren.midnight.type.CompactType`, `CompactPrimitiveType`, `CompactUintType`, `CompactNumericLiteralType`, `CompactNamedType`, `CompactTypeInferenceUtil` |
+| **Inspections** | `dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection`, `CompactDuplicateDeclarationInspection`, `CompactUnusedLocalVariableInspection`, `CompactTypeMismatchInspection`, `CompactPureCircuitInspection`, `CompactSealedFieldMutationInspection`, `CompactRecursiveCircuitInspection`, `CompactConstructorRestrictionInspection`, `CompactUndisclosedWitnessInspection` |
 | **Formatter** | `dev.verloren.midnight.formatter.CompactFormattingModelBuilder`, `CompactBlock`, `CompactLanguageCodeStyleSettingsProvider` |
 | **Structure View** | `dev.verloren.midnight.structure.CompactStructureViewFactory`, `CompactStructureViewModel`, `CompactStructureViewElement` |
 | **Documentation** | `dev.verloren.midnight.documentation.CompactDocumentationProvider`, `CompactDocComment` |
+| **Toolchain & Run** | `dev.verloren.midnight.run.CompactToolchainUtil`, `CompactConfigurationType`, `CompactRunConfiguration`, `CompactRunConfigurationProducer` |
+| **Diagnostics & Markers**| `dev.verloren.midnight.annotator.CompactExternalAnnotator`, `CompactCompilerOutputParser`, `dev.verloren.midnight.editor.CompactLineMarkerProvider` |
+| **Standard Library** | `dev.verloren.midnight.stdlib.CompactStdlibService`, `CompactStandardLibraryProvider` |
 
 ---
 
 ## 4. Known Limitations
 
-1. **StubIndex Optimization**: Cross-file symbol resolution currently operates by loading included ASTs into memory; IntelliJ `StubIndex` optimization is planned for massive enterprise-scale projects.
-2. **Standard Library Resolution**: Stdlib symbols (e.g., `JubjubScalar`, `Secp256k1Scalar`, standard library functions) are treated as soft-unresolved until standard library files are bundled.
+1. **StubIndex Optimization**: Cross-file symbol resolution currently operates by traversing included ASTs; IntelliJ `StubIndex` optimization is planned for large-scale enterprise monorepos.
+2. **Standard Library Resolution**: Bundled standard library symbols (`standard-library.compact`, `zkir-v3-library.compact`) are fully resolvable in-memory via `CompactStdlibService` and navigable with `CompactGotoDeclarationHandler`.
+
+---
+
+## 5. Reference Repositories Map
+
+| Reference Repository | Purpose | Key Subsystems & Locations |
+| :--- | :--- | :--- |
+| **`compact/` & `references/`** | Official Midnight Compact compiler | Grammar (`parser.ss`), Type Checker (`check-types-Lnodca.ss`), Type Inference (`infer-types.ss`), Stdlib (`standard-library.compact`, `zkir-v3-library.compact`), Examples (`examples/`) |
+| **`intellij-rust/`** | IntelliJ Platform Kotlin architecture | Stub indices (`lang/core/stubs/`), Type inference pipeline (`lang/core/types/infer/`), Formatter spacing rules (`ide/formatter/`), Inspections (`ide/inspections/`) |
+| **`intellij-elixir/`** | Custom handwritten parsing & quick docs | Handwritten lexer/parser integration (`lexer/`, `parser/`), Quick doc provider (`templates/`, `reference/`), Names validator (`refactoring/quote/NamesValidator.java`) |
+| **`intellij-scala/`** | Advanced compilation, REPL & build tools | External compile server / daemons (`compile-server/`, `compiler-integration/`), Interactive REPL console (`repl/`, `worksheet/`), Complex type systems (`scala-impl/.../lang/psi/types/`), Structure view (`structure-view/`) |
+| **`Rplugin/`** | Toolchain discovery, run configs & visualizers | Interpreter & WSL auto-detection (`psi/.../interpreter/`), Run configurations & execution profile (`src/.../run/`), New Project Wizard (`src/.../projectGenerator/`), Interactive console & tool windows (`src/.../console/`, `src/.../visualization/`) |
+| **`../midnight-local-dev/`** | Local blockchain testnet environment | Docker compose stack (`standalone.yml`), Dev accounts (`accounts.json`), Smart contract compilation and deployment scripts (`private-identity-wallet/contracts/compile.ps1`), Endpoints (`http://localhost:9944`, `http://localhost:6300`) |
+
 

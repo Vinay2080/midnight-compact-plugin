@@ -1,5 +1,7 @@
 #* @vtlvariable name="NAME" type="java.lang.String" *#
 pragma language_version >= 0.20.0;
 
-export contract implements ${NAME};
-
+export contract ${NAME} {
+  circuit ping(): [];
+  circuit getValue(id: Bytes<32>): Uint<64>;
+}

@@ -1,2 +1,4 @@
 pragma language_version >= 0.20.0;
 
+import CompactStandardLibrary;
+

@@ -55,7 +55,7 @@ This guide maps all external and reference materials present in the repository.
 
 ---
 
-## 2. IntelliJ Platform Architecture References (`intellij-rust/` & `intellij-elixir/`)
+## 2. IntelliJ Platform Architecture References (`intellij-rust/`, `intellij-elixir/`, `intellij-scala/`, `Rplugin/`)
 
 ### 2.1 IntelliJ Rust (`intellij-rust/`)
 - **Location**: `intellij-rust/src/main/kotlin/org/rust/`
@@ -73,9 +73,56 @@ This guide maps all external and reference materials present in the repository.
   - **Documentation Provider**: `templates/`, `reference/` (hover documentation rendering).
   - **Names Validator**: `refactoring/quote/NamesValidator.java`.
 
+### 2.3 IntelliJ Scala (`intellij-scala/`)
+- **Location**: `intellij-scala/scala/`
+- **Sub-modules**:
+  - `scala-impl/src/org/jetbrains/plugins/scala/`: Core language plugin implementation.
+  - `compile-server/`, `compiler-integration/`, `compiler-jps/`: External compiler process integration.
+  - `repl/`, `worksheet/`: Interactive console and worksheet scratchpad execution.
+  - `structure-view/`: Structure view outline provider.
+  - `debugger/`: Debugger configuration, breakpoints, and frame presentation.
+- **Use when**:
+  - **External Compiler Integration & Build Server**: `scala/compile-server/`, `scala/compiler-integration/`, `scala-impl/.../compiler/` (managing long-running external compiler daemons, background compilation pipelines, process exit monitoring, and process filters).
+  - **Interactive REPL & Worksheet Execution**: `scala/repl/`, `scala/worksheet/`, `scala-impl/.../console/` (interactive scratchpad and evaluation loop with output folding and line execution).
+  - **Type System & Recursive Resolution**: `scala-impl/.../lang/resolve/`, `scala-impl/.../lang/psi/types/` (advanced typing models, recursive type resolution, type bounds, and presentation).
+  - **Auto-Import & Symbol Indexing**: `scala-impl/.../autoImport/`, `scala-impl/.../caches/` (smart import optimizers and PSI cache invalidation).
+  - **Refactoring & Conversion**: `scala-impl/.../lang/refactoring/`, `scala-impl/.../conversion/` (complex AST refactorings and code transformations).
+
+### 2.4 IntelliJ R (`Rplugin/`)
+- **Location**: `Rplugin/`
+- **Sub-modules**:
+  - `psi/src/com/intellij/r/psi/`: PSI definitions, element generator, interpreter discovery, and execution profiles.
+  - `src/org/jetbrains/r/`: UI actions, console, documentation, inspections, project generator, visualization.
+  - `psi/grammars/`: `r.bnf`, `Roxygen.bnf`, and lexer skeletons.
+- **Use when**:
+  - **Interpreter & Toolchain Discovery**: `psi/.../interpreter/`, `src/.../interpreter/` (automatic detection of system, WSL, conda, and custom environment CLI binaries and paths).
+  - **Run Configurations & Process Runners**: `psi/.../run/`, `src/.../run/` (command-line building, script runners, environment variable propagation, and console output parsers).
+  - **Project Generators & DApp Wizards**: `src/.../projectGenerator/` (`DirectoryProjectGenerator`, `ProjectTemplatesFactory`, step UI for project scaffolds).
+  - **Interactive Tool Windows & Visualizers**: `src/.../visualization/`, `src/.../console/` (custom tool windows, data visualizers, graphics window, interactive REPL console).
+  - **Doc Comments & Help Rendering**: `psi/.../roxygen/`, `src/.../documentation/` (structured doc comment parsing, markdown doc rendering, and parameter tables).
+  - **Programmatic PSI Generation**: `psi/.../RElementGenerator.java` (generating synthetic AST nodes via string snippets).
+
 ---
 
-## 3. Targeted Retrieval Guide for AI Agents
+## 3. Local Blockchain Testnet Reference (`../midnight-local-dev/`)
+
+- **Location**: `../midnight-local-dev/` (sibling directory)
+- **Key Resources**:
+  - `standalone.yml`: Docker Compose stack definition running local Midnight proof server, node, and indexer.
+  - `accounts.json` / `accounts.example.json`: Pre-funded testnet dev accounts and seed configurations.
+  - `private-identity-wallet/contracts/compile.ps1`: Reference compilation and deployment workflow for Midnight smart contracts.
+- **Default Endpoints**:
+  - Node RPC: `http://localhost:9944`
+  - Proof Server: `http://localhost:6300`
+  - Indexer: `http://localhost:8088`
+- **Use when**:
+  - Designing Level 5 Midnight Explorer Tool Window (connecting to localnet / testnet nodes).
+  - Verifying contract compilation artifacts against real local proof-server and node requirements.
+  - Testing run configurations against active local testnet services.
+
+---
+
+## 4. Targeted Retrieval Guide for AI Agents
 
 | Task | Target Reference File(s) | Do NOT Load |
 | :--- | :--- | :--- |
@@ -83,4 +130,9 @@ This guide maps all external and reference materials present in the repository.
 | **Type compatibility** | `references/infer-types.ss` | Entire Scheme compiler |
 | **Stdlib builtins** | `compact/compiler/standard-library.compact` | Test suites or build scripts |
 | **IntelliJ Stub Indexing** | `intellij-rust/.../stubs/` | Rust compiler or unrelated plugin files |
-| **IntelliJ Doc Provider** | `intellij-rust/.../ide/docs/` | Entire `intellij-rust` repo |
+| **IntelliJ Doc Provider** | `intellij-rust/.../ide/docs/` or `Rplugin/.../documentation/` | Entire `intellij-rust` / `Rplugin` repo |
+| **Toolchain & WSL Discovery** | `Rplugin/psi/.../interpreter/` or `CompactToolchainUtil.java` | Entire R plugin tree |
+| **Compiler Daemon / Runner** | `intellij-scala/scala/compile-server/` or `scala-impl/.../compiler/` | Entire Scala plugin tree |
+| **Project Wizard / DApp Scaffold**| `Rplugin/.../projectGenerator/` | Unrelated R packages or UI code |
+| **Interactive Console / REPL**| `intellij-scala/scala/repl/` or `Rplugin/.../console/` | Entire repl module |
+| **Local Testnet & RPC Endpoints**| `../midnight-local-dev/standalone.yml` | `node_modules` or Docker layers |

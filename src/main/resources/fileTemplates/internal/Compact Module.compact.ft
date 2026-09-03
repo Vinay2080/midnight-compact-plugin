@@ -2,17 +2,12 @@
 pragma language_version >= 0.20.0;
 
 export module ${NAME} {
-ledger {
-  counter: Field;
-}
+  export struct Config {
+    enabled: Boolean,
+    threshold: Uint<32>
+  }
 
-constructor() {
-  counter = 0;
+  export pure circuit isValid(threshold: Uint<32>, value: Uint<32>): Boolean {
+    return value >= threshold;
+  }
 }
-
-export circuit increment(): Void {
-  counter = counter + 1;
-}
-}
-
-

@@ -25,11 +25,17 @@ phases:
   breadcrumbs: complete
   spellchecker: complete
   surround_with: complete
-  standard_library_indexing: planned
-  compiler_integration: planned
+  standard_library_indexing: complete
+  compiler_integration: complete
+  run_configurations: complete
+  external_annotator: complete
+  line_markers: complete
+  project_wizard: planned
+  interactive_debugger: planned
+  explorer_tool_window: planned
 
 tests:
-  last_known_passing: 367
+  last_known_passing: 376
   failures: 0
   skipped: 0
   suites:
@@ -52,7 +58,7 @@ tests:
     folding: "4 (CompactFoldingTest: 4)"
     breadcrumbs: "2 (CompactBreadcrumbsTest: 2)"
     live_templates: "3 (CompactLiveTemplateTest: 3)"
-    file_templates: "3 (CompactFileTemplateTest: 3)"
+    file_templates: "12 (CompactFileTemplateTest: 12)"
     surround_with: "5 (CompactSurroundWithTest: 5)"
     navigation: "2 (CompactChooseByNameTest: 2)"
     stdlib: "8 (CompactStandardLibraryTest: 5, CompactStdlibServiceTest: 3)"
@@ -112,3 +118,30 @@ architecture:
     tree_element: dev.verloren.midnight.structure.CompactStructureViewElement
   documentation_provider:
     implementation: dev.verloren.midnight.documentation.CompactDocumentationProvider
+  toolchain:
+    util: dev.verloren.midnight.run.CompactToolchainUtil
+    run_configuration: dev.verloren.midnight.run.CompactRunConfiguration
+    producer: dev.verloren.midnight.run.CompactRunConfigurationProducer
+    external_annotator: dev.verloren.midnight.annotator.CompactExternalAnnotator
+    line_markers: dev.verloren.midnight.editor.CompactLineMarkerProvider
+
+references:
+  compiler:
+    repo: compact/
+    curated: references/
+    description: Official Midnight Compact Chez Scheme compiler and AST specifications
+  ide_rust:
+    repo: intellij-rust/
+    description: IntelliJ Rust plugin (Kotlin) - stub indexes, type inference engine, formatting
+  ide_elixir:
+    repo: intellij-elixir/
+    description: IntelliJ Elixir plugin (Java/Kotlin) - handwritten lexer/parser, doc provider
+  ide_scala:
+    repo: intellij-scala/
+    description: JetBrains Scala plugin - external compile daemon/build servers, REPL console, advanced type systems
+  ide_r:
+    repo: Rplugin/
+    description: JetBrains R plugin - toolchain & WSL interpreter discovery, run configs, project wizard generator, interactive visualizers
+  local_devnet:
+    repo: ../midnight-local-dev/
+    description: Local Docker Compose Midnight network stack, proof server, dev accounts, RPC endpoints

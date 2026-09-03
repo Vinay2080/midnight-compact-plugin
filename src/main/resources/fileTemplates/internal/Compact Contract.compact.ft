@@ -1,7 +1,14 @@
 #* @vtlvariable name="NAME" type="java.lang.String" *#
 pragma language_version >= 0.20.0;
 
-export contract ${NAME} {
-  circuit hello(): Void;
+import CompactStandardLibrary;
+
+export ledger counter: Counter;
+
+constructor() {
+  counter.increment(1);
 }
 
+export circuit increment(): [] {
+  counter.increment(1);
+}

@@ -54,22 +54,42 @@ Phases 15–18: Compiler Run Configurations, Midnight Settings, External Linter 
   - Added multi-line compiler exception diagnostic parsing in [`CompactCompilerOutputParser`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactCompilerOutputParser.java) to parse `Exception: <file> line <line> char <col>:\n<details>` emitted by `compactc`.
   - Prioritized `true` and `false` literals (`PrioritizedLookupElement.withPriority(..., 100.0)`) in [`CompactCompletionContributor`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactCompletionContributor.java) for Boolean return contexts.
   - Added test cases in `CompactInspectionTest`, `CompactExternalAnnotatorTest`, and `CompactCompletionTest`.
-  - Updated [`manual_testing_and_qa_guide.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/docs/manual_testing_and_qa_guide.md) with Subsystem 19 and checklist rows 54-56.
-- **367 automated unit tests passing** (0 failures, 0 skipped, 100% success rate across forty-four test suites).
+- **Phase 21: File Templates & CompactCreateFileAction Optimization**:
+  - Rewrote [`CompactCreateFileAction`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/actions/CompactCreateFileAction.java) with `findInternalTemplate()` template customization fallback, non-empty `InputValidatorEx`, and public testability methods.
+  - Re-authored all 4 file templates in `src/main/resources/fileTemplates/internal/` to align with official Midnight Compact specifications:
+    - `Compact Contract.compact.ft`: Complete smart contract scaffold with `import CompactStandardLibrary;`, `export ledger counter: Counter;`, `constructor()`, and `export circuit increment(): []`.
+    - `Compact Module.compact.ft`: Valid modular library with `struct Config` and `pure circuit isValid(): Boolean`, removing illegal constructor and invalid `ledger { ... }` block.
+    - `Compact Interface.compact.ft`: Valid external contract type declaration `export contract ${NAME} { circuit ...: []; }`, replacing illegal `export contract implements`.
+    - `Compact File.compact.ft`: Clean pragma with standard library import.
+  - Expanded [`CompactFileTemplateTest`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/ide/fileTemplates/CompactFileTemplateTest.java) to 7 comprehensive tests evaluating Velocity properties and verifying zero PSI parse errors across all templates and end-to-end file creation.
+- **Phase 22: Hardened File Creation Action (`CompactCreateFileAction`)**:
+  - Implemented nested subdirectory creation via `CreateFileAction.MkDirs` (e.g. `contracts/tokens/MyContract`).
+  - Extracted pure base identifiers (`extractSimpleName`) to prevent Velocity `${NAME}` pollution.
+  - Contextual `InputValidatorEx` using `CompactNamesValidator` to reject invalid filesystem characters, path errors, and language keywords (`circuit`, `witness`, `ledger`, `contract`).
+  - Integrated platform lifecycle (`createFileFromTemplate`) with automated editor opening, FUS logging, code reformatting via `CodeStyleManager`, and caret positioning after identifiers.
+  - Persisted user's last chosen template via `getDefaultTemplateProperty()`.
+  - Registered all four file templates under `<internalFileTemplate>` in `plugin.xml`.
+  - Expanded `CompactFileTemplateTest` to 12 tests verifying nested directories, suffix stripping, name extraction, and validation logic.
+- **376 automated unit tests passing** (0 failures, 0 skipped, 100% success rate across forty-four test suites).
 
 ## Tests
-- **367/367 tests passing** (0 failures, 0 skipped, 100% success rate across forty-four test suites).
+- **376/376 tests passing** (0 failures, 0 skipped, 100% success rate across forty-four test suites).
 - Verified via `./gradlew test`.
 
+## Reference Repositories Integrated
+- **`intellij-scala/`**: Referenced for external build servers / compiler daemons (`scala/compile-server/`), interactive REPL console (`scala/repl/`), structure view, and advanced type systems.
+- **`Rplugin/`**: Referenced for dynamic interpreter and WSL discovery (`psi/.../interpreter/`), script run configurations (`src/.../run/`), New Project Wizard (`src/.../projectGenerator/`), and interactive tool windows (`src/.../visualization/`).
+- **`../midnight-local-dev/`**: Referenced for local Docker Compose stack (`standalone.yml`), pre-funded accounts (`accounts.json`), contract build scripts (`private-identity-wallet/contracts/compile.ps1`), and default endpoints (node `9944`, proof server `6300`).
+
 ## Next Feature Options
-1. **New Project & DApp Wizard (`CompactProjectTemplateFactory`)**: Full project creation wizard with boilerplate contract and TypeScript integration.
-2. **Interactive Debugger Framework (`XDebugger` & Breakpoints)**: Compact breakpoint types and execution trace viewer.
-
-
-
+1. **New Project & DApp Wizard (`CompactProjectTemplateFactory` / `CompactProjectGenerator`)**: Full project creation wizard with boilerplate contract, tsconfig, and wallet scaffolding (referencing `Rplugin/.../projectGenerator/` and `intellij-scala/.../project/template/`).
+2. **Interactive Console & REPL Runner**: Interactive Compact execution scratchpad and terminal evaluator (referencing `intellij-scala/scala/repl/` and `Rplugin/.../console/`).
+3. **Midnight Explorer Tool Window**: Tool window displaying connected Devnet / Localnet node status, block height, and account balances (referencing `../midnight-local-dev/` and `Rplugin/.../visualization/`).
+4. **Interactive Debugger Framework (`XDebugger` & Breakpoints)**: Compact breakpoint types and execution trace viewer (referencing `intellij-scala/scala/debugger/`).
 
 ## Relevant Context
 - Architecture details: [architecture.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md)
 - Current state: [current-state.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md)
+- Reference map: [reference-map.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/reference-map.md)
 - Compact semantics: [compact-semantics.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md)
 - IntelliJ patterns: [intellij-patterns.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/intellij-patterns.md)

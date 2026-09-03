@@ -174,6 +174,11 @@
         <fileTemplateGroup
                 implementation="dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory"/>
 
+        <internalFileTemplate name="Compact Contract"/>
+        <internalFileTemplate name="Compact Module"/>
+        <internalFileTemplate name="Compact Interface"/>
+        <internalFileTemplate name="Compact File"/>
+
         <defaultLiveTemplates
                 file="/liveTemplates/Compact.xml"/>
 
