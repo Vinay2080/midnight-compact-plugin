@@ -37,12 +37,44 @@
             <li><b>Live Templates &amp; File Templates:</b> Pre-built templates for new Compact files and common smart contract patterns.</li>
         </ul>
 
-        <h3>🚀 Getting Started</h3>
+        <h3>🚀 Getting Started: Configuring the Midnight Compact Compiler</h3>
+        <p>To enable on-the-fly error detection, syntax validation, and the editor Run/Compile button, configure the Compact compiler toolchain in IntelliJ IDEA:</p>
+
+        <h4>Step 1: Open the Plugin Settings</h4>
+        <ul>
+            <li><b>Windows / Linux:</b> Go to <b>File &rarr; Settings &rarr; Languages &amp; Frameworks &rarr; Midnight Compact</b></li>
+            <li><b>macOS:</b> Go to <b>IntelliJ IDEA &rarr; Settings (or Preferences) &rarr; Languages &amp; Frameworks &rarr; Midnight Compact</b></li>
+        </ul>
+
+        <h4>Step 2: Configure the Compiler Executable Path</h4>
+        <p><b>Option A: Auto-Detection (Recommended)</b></p>
         <ol>
-            <li>Install the plugin from the JetBrains Marketplace.</li>
-            <li>Open or create any <code>.compact</code> file in your project.</li>
-            <li>Configure your Compact compiler path under <b>Settings/Preferences &rarr; Languages &amp; Frameworks &rarr; Midnight Compact</b>.</li>
+            <li>When you open the settings page, the plugin automatically inspects standard locations (system <code>PATH</code>, WSL environments on Windows, and standard installation directories).</li>
+            <li>If the compiler is detected, the path is populated automatically with a version confirmation (e.g. <code>compact v0.x.x</code>).</li>
+            <li>Click <b>Apply</b> or <b>OK</b>.</li>
         </ol>
+
+        <p><b>Option B: Manual Selection (If Auto-Detection Fails)</b></p>
+        <p>If the compiler was not found automatically:</p>
+        <ol>
+            <li>Click the <b>Browse (<code>...</code>)</b> button next to <b>Compact Compiler Path</b>.</li>
+            <li>Select the location of your <code>compact</code> executable:
+                <ul>
+                    <li><b>Linux / macOS:</b> Typically <code>/usr/local/bin/compact</code>, <code>~/.cargo/bin/compact</code>, or your local installation path.</li>
+                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\wsl$\Ubuntu\usr\bin\compact</code>).</li>
+                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\Windows\System32\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
+                </ul>
+            </li>
+            <li>Click <b>Test / Validate</b> to verify that IntelliJ successfully communicates with the compiler.</li>
+            <li>Click <b>Apply</b> and <b>OK</b>.</li>
+        </ol>
+
+        <h4>Step 3: Verify in the Editor</h4>
+        <ul>
+            <li><b>Open a Contract:</b> Open any <code>.compact</code> smart contract file.</li>
+            <li><b>Background Error Checking:</b> Compiler diagnostics (errors and warnings) will automatically highlight in the code and appear in the <b>Problems</b> tab.</li>
+            <li><b>Run / Compile:</b> Click the green <b>Run (▶)</b> icon in the top toolbar or editor gutter to build your contract.</li>
+        </ul>
 
         <h3>🔗 Resources &amp; Links</h3>
         <ul>
@@ -215,6 +247,9 @@
         <externalAnnotator
                 language="Compact"
                 implementationClass="dev.verloren.midnight.annotator.CompactExternalAnnotator"/>
+
+        <errorHandler
+                implementation="com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter"/>
 
         <codeInsight.lineMarkerProvider
                 language="Compact"
