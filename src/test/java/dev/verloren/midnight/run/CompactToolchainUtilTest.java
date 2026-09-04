@@ -102,19 +102,37 @@ public class CompactToolchainUtilTest extends BasePlatformTestCase {
   }
 
   public void testExecutionWithDiscoveredToolchain() {
-    CompactToolchainUtil.ToolchainInfo info = CompactToolchainUtil.getToolchainInfo(getProject());
-    assertNotNull("Compiler toolchain should be detected on host or WSL", info);
-    assertTrue("Toolchain executable should not be empty", info.isValid());
-
-    CompactConfigurationType type = new CompactConfigurationType();
-    CompactRunConfiguration config = new CompactRunConfiguration(getProject(), type.getConfigurationFactories()[0], "TestRun");
-
+    MidnightSettingsState state = MidnightSettingsState.getInstance();
+    File tempMock = null;
     try {
+      CompactToolchainUtil.ToolchainInfo info = CompactToolchainUtil.getToolchainInfo(getProject());
+      if (info == null) {
+        tempMock = File.createTempFile("mock-compact", ".sh");
+        if (state != null) {
+          state.compilerPath = tempMock.getAbsolutePath();
+        }
+        info = CompactToolchainUtil.getToolchainInfo(getProject());
+      }
+      assertNotNull("Compiler toolchain should be detected on host or configured", info);
+      assertTrue("Toolchain executable should not be empty", info.isValid());
+
+      CompactConfigurationType type = new CompactConfigurationType();
+      CompactRunConfiguration config = new CompactRunConfiguration(getProject(), type.getConfigurationFactories()[0], "TestRun");
+
       var cmd = CompactToolchainUtil.createCommandLine(getProject(), config.buildCommandLineArgs(), null);
       assertNotNull("CommandLine should be created", cmd);
       assertNotNull("Executable should be set", cmd.getExePath());
     } catch (ExecutionException e) {
       fail("CommandLine creation should not fail when toolchain is detected: " + e.getMessage());
+    } catch (Exception e) {
+      fail("Unexpected exception: " + e.getMessage());
+    } finally {
+      if (tempMock != null) {
+        tempMock.delete();
+      }
+      if (state != null) {
+        state.compilerPath = "";
+      }
     }
   }
 

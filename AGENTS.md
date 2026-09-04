@@ -129,3 +129,31 @@ Deconstructive context files are located in `.ai/`:
 3. **No duplicate documentation**: Update existing `.ai/` context files rather than creating overlapping notes.
 4. **Summaries over raw code**: Extract verified rules into `compact-semantics.md` rather than pasting raw Scheme/Rust/Scala snippets.
 5. **Exact references**: Use precise symbol and class names (`dev.verloren.midnight.psi.impl.CompactReferenceExprImpl`).
+
+---
+
+## 10. Code Review & Improvement Bar (Zero Improvement Hallucinations)
+
+When the user asks open-ended, casual, or vague questions such as *"Does this file need improvements?"*, *"Can this be improved?"*, or *"Review this file"*:
+
+1. **Default Verdict is "No Changes Needed"**:
+   - The default and expected outcome for tested, working code is: **"No improvements required; this code is solid and production-ready."**
+   - Do NOT treat review questions as an obligation or challenge to invent diffs or find something to modify.
+
+2. **Strict Invariant Benchmark**:
+   Only propose an improvement if there is a concrete, verifiable failure against one of these 4 criteria:
+   - **Threading & Concurrency (Section 4)**: e.g., PSI read off ReadAction, PSI mutation off EDT/WriteCommandAction, or blocking `process.waitFor()` on the EDT.
+   - **Critical Invariants (Section 3)**: e.g., Merged value/type namespaces, missing null/`PsiErrorElement` guards, or memory leaks via static PSI references.
+   - **Language / Compiler Semantics**: Direct deviation from official compiler rules (`compact/compiler/` or `.ai/context/compact-semantics.md`).
+   - **Correctness / Regression**: A tangible bug, broken test, or resource leak.
+
+3. **Strictly Prohibited Proposals (Anti-Bikeshedding)**:
+   - **NO cosmetic rewrites**: Do not convert working loops to streams, reformat working code, or swap functional vs imperative style.
+   - **NO speculative abstractions**: Do not invent interfaces, factories, or builder patterns where direct implementations already work.
+   - **NO subjective renames**: Do not suggest renaming local variables or methods that already follow repository conventions.
+   - **NO rewriting working architecture**: The parser, lexer, resolver, annotator, and PSI wrappers are verified with 376 passing tests.
+
+4. **Output Format when Clean**:
+   If none of the 4 criteria are violated, state concisely:
+   > **"No improvements required."** Followed by a 1–2 bullet summary confirming compliance with the relevant invariants (e.g., threading model, null-safety, test coverage).
+
