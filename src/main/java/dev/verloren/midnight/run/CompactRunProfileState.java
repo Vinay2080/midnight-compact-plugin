@@ -9,10 +9,10 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.NotNull;
 
-
 public class CompactRunProfileState extends CommandLineState {
   private final CompactRunConfiguration configuration;
 
+  @SuppressWarnings("this-escape")
   public CompactRunProfileState(@NotNull ExecutionEnvironment environment, @NotNull CompactRunConfiguration configuration) {
     super(environment);
     this.configuration = configuration;

@@ -6,4 +6,13 @@ import org.jetbrains.annotations.Nullable;
 public interface CompactPragmaForm extends PsiElement {
   @Nullable
   PsiElement getPragmaIdentifier();
+
+  @Nullable
+  String getPragmaName();
+
+  @Nullable
+  String getConstraintText();
+
+  @Nullable
+  String getRequiredVersion();
 }

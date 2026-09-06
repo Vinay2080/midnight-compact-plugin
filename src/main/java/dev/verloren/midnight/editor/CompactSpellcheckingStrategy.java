@@ -34,4 +34,9 @@ public class CompactSpellcheckingStrategy extends SpellcheckingStrategy {
     }
     return super.getTokenizer(element);
   }
+
+  @Override
+  public boolean useTextLevelSpellchecking() {
+    return true;
+  }
 }

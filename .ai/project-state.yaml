@@ -30,12 +30,14 @@ phases:
   run_configurations: complete
   external_annotator: complete
   line_markers: complete
+  multi_version_compiler: complete
+  compiler_tool_window: complete
   project_wizard: planned
   interactive_debugger: planned
   explorer_tool_window: planned
 
 tests:
-  last_known_passing: 376
+  last_known_passing: 389
   failures: 0
   skipped: 0
   suites:
@@ -66,10 +68,11 @@ tests:
     run: "13 (CompactRunConfigurationTest: 5, CompactRunConfigurationProducerTest: 2, CompactToolchainUtilTest: 6)"
     test_utils: "3 (CompactTestUtilsTest: 3)"
     settings: "3 (MidnightSettingsTest: 3)"
+    project_settings: "3 (MidnightProjectSettingsTest: 3)"
     annotator: "3 (CompactExternalAnnotatorTest: 3)"
     line_markers: "4 (CompactLineMarkerTest: 4)"
-
-
+    version: "7 (CompactSemVerUtilTest: 4, CompactVersionManagerTest: 3)"
+    intentions: "2 (CompactPragmaIntentionTest: 2)"
 
 architecture:
   lexer:
@@ -124,6 +127,9 @@ architecture:
     producer: dev.verloren.midnight.run.CompactRunConfigurationProducer
     external_annotator: dev.verloren.midnight.annotator.CompactExternalAnnotator
     line_markers: dev.verloren.midnight.editor.CompactLineMarkerProvider
+    version_manager: dev.verloren.midnight.version.CompactVersionManager
+    project_settings: dev.verloren.midnight.settings.MidnightProjectSettings
+    tool_window: dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory
 
 references:
   compiler:

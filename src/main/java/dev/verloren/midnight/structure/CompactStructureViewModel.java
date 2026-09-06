@@ -45,23 +45,24 @@ public class CompactStructureViewModel extends StructureViewModelBase implements
 
   @Override
   public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
-    Object value = element.getValue();
-    return value instanceof CompactFile;
+    return element.getValue() instanceof CompactFile;
   }
 
   @Override
   public boolean isAlwaysLeaf(StructureViewTreeElement element) {
-    Object value = element.getValue();
-    return value instanceof CompactStructFieldImpl
-        || value instanceof CompactEnumMemberImpl
-        || value instanceof CompactConstBindingImpl
-        || value instanceof CompactTypeDefinition
-        || value instanceof CompactPragmaForm
-        || value instanceof CompactIncludeDeclaration
-        || value instanceof CompactImportDeclaration
-        || value instanceof CompactExportDeclaration
-        || value instanceof CompactCircuitDefinition
-        || value instanceof CompactWitnessDeclaration
-        || value instanceof CompactConstructorDeclaration;
+    return switch (element.getValue()) {
+      case CompactStructFieldImpl _,
+           CompactEnumMemberImpl _,
+           CompactConstBindingImpl _,
+           CompactTypeDefinition _,
+           CompactPragmaForm _,
+           CompactIncludeDeclaration _,
+           CompactImportDeclaration _,
+           CompactExportDeclaration _,
+           CompactCircuitDefinition _,
+           CompactWitnessDeclaration _,
+           CompactConstructorDeclaration _ -> true;
+      default -> false;
+    };
   }
 }

@@ -209,16 +209,19 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       }
     }
 
-    // Otherwise walk up to nearest declaration element
+    // Otherwise walk up to nearest declaration element using modernized pattern switch
     for (PsiElement p = contextElement; p != null && p != file; p = p.getParent()) {
-        if (p instanceof CompactStructFieldImpl || p instanceof CompactEnumMemberImpl) {
-        return p;
-      }
-      if (p instanceof CompactParameterImpl param && param.getParent() instanceof CompactStructFieldImpl) {
-        return param.getParent();
-      }
-      if (p instanceof CompactPatternImpl || p instanceof CompactPragmaForm || p instanceof CompactNamedElement) {
-        return p;
+      switch (p) {
+        case CompactStructFieldImpl _, CompactEnumMemberImpl _ -> {
+          return p;
+        }
+        case CompactParameterImpl param when param.getParent() instanceof CompactStructFieldImpl -> {
+          return param.getParent();
+        }
+        case CompactPatternImpl _, CompactPragmaForm _, CompactNamedElement _ -> {
+          return p;
+        }
+        default -> {}
       }
     }
     return super.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
@@ -232,24 +235,22 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
     while (next instanceof PsiWhiteSpace || next instanceof PsiComment) {
       next = next.getNextSibling();
     }
-    if (next instanceof CompactNamedElement
-        || next instanceof CompactConstructorDeclaration
-        || next instanceof CompactContractImplementsDeclaration
-        || next instanceof CompactPragmaForm) {
-      return next;
-    }
-    if (next instanceof CompactExportDeclaration exportDecl) {
-      for (PsiElement child : exportDecl.getChildren()) {
-        if (child instanceof CompactNamedElement) {
-          return child;
+    return switch (next) {
+      case CompactNamedElement _,
+           CompactConstructorDeclaration _,
+           CompactContractImplementsDeclaration _,
+           CompactPragmaForm _ -> next;
+      case CompactExportDeclaration exportDecl -> {
+        for (PsiElement child : exportDecl.getChildren()) {
+          if (child instanceof CompactNamedElement) {
+            yield child;
+          }
         }
+        yield exportDecl;
       }
-      return exportDecl;
-    }
-    if (next != null) {
-      return PsiTreeUtil.findChildOfType(next, CompactNamedElement.class);
-    }
-    return null;
+      case null -> null;
+      default -> PsiTreeUtil.findChildOfType(next, CompactNamedElement.class);
+    };
   }
 
   public static @Nullable String getDefinitionHeader(@NotNull PsiElement element) {
@@ -772,14 +773,19 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
 
   private static PsiElement getPrev(@NonNull PsiElement element) {
     PsiElement target = element;
-    while (target.getParent() != null
-        && !(target.getParent() instanceof PsiFile)
-        && !(target.getParent() instanceof CompactBlock)
-        && !(target.getParent() instanceof CompactStructDefinition)
-        && !(target.getParent() instanceof CompactEnumDefinition)
-        && !(target.getParent() instanceof CompactExternalContractDeclaration)
-        && !(target.getParent() instanceof CompactModuleDefinition)) {
-      target = target.getParent();
+    while (target.getParent() != null) {
+      PsiElement parent = target.getParent();
+      switch (parent) {
+        case PsiFile _,
+             CompactBlock _,
+             CompactStructDefinition _,
+             CompactEnumDefinition _,
+             CompactExternalContractDeclaration _,
+             CompactModuleDefinition _ -> {
+          return target.getPrevSibling();
+        }
+        default -> target = parent;
+      }
     }
 
     return target.getPrevSibling();
@@ -847,4 +853,3 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
 
   public record DocTag(@NotNull String name, @Nullable String target, @NotNull String description) {}
 }
-

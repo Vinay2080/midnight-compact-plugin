@@ -62,7 +62,7 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
       PsiElement resolved = call.resolveCallee();
       if (resolved instanceof CompactCircuitDefinition targetCircuit) {
         // Direct self-recursion
-        if (targetCircuit.isEquivalentTo(circuit) || (targetCircuit.getName() != null && targetCircuit.getName().equals(circuit.getName()))) {
+        if (targetCircuit.isEquivalentTo(circuit)) {
           holder.registerProblem(
               call,
               "Circuit '" + circuitName + "' cannot be recursive; recursion is forbidden in ZK circuits",
@@ -80,7 +80,7 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
             );
           }
         }
-      } else {
+      } else if (resolved == null) {
         CompactReferenceExprImpl ref = PsiTreeUtil.findChildOfType(call, CompactReferenceExprImpl.class);
         if (ref != null && circuit.getName() != null && circuit.getName().equals(ref.getText())) {
           holder.registerProblem(
@@ -112,7 +112,7 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
     for (CompactCallExprImpl call : PsiTreeUtil.findChildrenOfType(body, CompactCallExprImpl.class)) {
       PsiElement resolved = call.resolveCallee();
       if (resolved instanceof CompactCircuitDefinition nextCircuit) {
-        if (nextCircuit.isEquivalentTo(target) || (nextCircuit.getName() != null && nextCircuit.getName().equals(target.getName()))) {
+        if (nextCircuit.isEquivalentTo(target)) {
           return true;
         }
         if (canReachTarget(nextCircuit, target, visited, depth + 1)) {

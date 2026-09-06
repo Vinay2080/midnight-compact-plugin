@@ -73,11 +73,14 @@ public class CompactGotoClassContributor implements ChooseByNameContributorEx {
   }
 
   public static boolean isClassLike(@NotNull CompactNamedElement element) {
-    return element instanceof CompactExternalContractDeclaration
-        || element instanceof CompactContractImplementsDeclaration
-        || element instanceof CompactModuleDefinition
-        || element instanceof CompactStructDefinition
-        || element instanceof CompactEnumDefinition
-        || element instanceof CompactTypeDefinition;
+    return switch (element) {
+      case CompactExternalContractDeclaration _,
+           CompactContractImplementsDeclaration _,
+           CompactModuleDefinition _,
+           CompactStructDefinition _,
+           CompactEnumDefinition _,
+           CompactTypeDefinition _ -> true;
+      default -> false;
+    };
   }
 }

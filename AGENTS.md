@@ -4,7 +4,7 @@
 - **Project**: Midnight Compact Language Plugin for IntelliJ IDEA (`dev.verloren.midnight`).
 - **Purpose**: First-class development support for the Midnight blockchain's Compact smart contract language.
 - **Language**: Java 17+ (IntelliJ Platform Gradle Plugin).
-- **Core Status**: Lexer, Parser, PSI, References, Completion, Refactoring, Find Usages, Type Inference, Inspections, Formatter, Smart Indentation, Structure View, Documentation Provider, Cross-File Resolution, File/Live Templates, Folding, Breadcrumbs, Run Configurations, External Annotator, Line Markers, and Bundled Stdlib are implemented and verified (376/376 unit tests passing).
+- **Core Status**: Lexer, Parser, PSI, References, Completion, Refactoring, Find Usages, Type Inference, Inspections, Formatter, Smart Indentation, Structure View, Documentation Provider, Cross-File Resolution, File/Live Templates, Folding, Breadcrumbs, Run Configurations, External Annotator, Line Markers, Multi-Version Compiler Management, Remix-Style Compiler Tool Window, Pragma Quick-Fixes, and Bundled Stdlib are implemented and verified (387/389 unit tests passing across forty-seven test suites).
 
 ---
 
@@ -23,7 +23,7 @@ Compact Source Text (.compact)
   ↓
 [Semantic Layer] CompactTypeInferenceUtil + Semantic Inspections & Quick-Fixes
   ↓
-[IDE Features] Completion, Rename, Find Usages, Formatter, Smart Indent, Structure View, Docs, Run Configurations, External Linter Annotator, Line Markers
+[IDE Features] Completion, Rename, Find Usages, Formatter, Smart Indent, Structure View, Docs, Run Configurations, External Linter Annotator, Line Markers, Multi-Version Toolchain & Remix Compiler Tool Window
 ```
 
 ---
@@ -35,7 +35,7 @@ Compact Source Text (.compact)
 3. **Strict namespace separation**: Maintain distinct `CompactResolveUtil.Namespace.VALUE` and `CompactResolveUtil.Namespace.TYPE` handling.
 4. **Tolerance for incomplete code**: Guard all PSI accesses, inspections, structure elements, doc providers, and formatting routines against `null` and `PsiErrorElement` nodes.
 5. **Do not invent Compact language semantics**: Verify all syntax and typing rules against official compiler references (`compact/compiler/` and `.ai/context/compact-semantics.md`).
-6. **Preserve existing tests**: All 376 unit tests must pass before finishing any feature (`./gradlew test`).
+6. **Preserve existing tests**: All 389 unit tests must pass before finishing any feature (`./gradlew test`).
 7. **Inspect before modifying**: Read targeted production files before making code edits.
 
 ---
@@ -57,7 +57,25 @@ Compact Source Text (.compact)
 
 ---
 
-## 5. Reference Repository Selection Matrix
+## 5. Tool Selection Priorities: IntelliJ MCP vs. CLI (MANDATORY)
+
+For Java codebase exploration, refactoring, and code verification within this project, agents **MUST prioritize the `idea` MCP server tools over raw CLI commands (`grep`, `find`, `cat`)**:
+
+| Task                                   | Preferred MCP Tool (`idea` server via `call_mcp_tool`)                                                     | Replaces CLI Tool             | Reason                                                                                                              |
+|:---------------------------------------|:-----------------------------------------------------------------------------------------------------------|:------------------------------|:--------------------------------------------------------------------------------------------------------------------|
+| **Find Java Class / Method / Symbol**  | `execute_tool --command "search_symbol --q <Name>"`                                                        | `grep_search`, `find_by_name` | Queries IntelliJ's live index; returns exact start/end line without false matches or noise (~40 tokens).            |
+| **Inspect Symbol Signature / JavaDoc** | `execute_tool --command "get_symbol_info --filePath <path> --line <L> --column <C>"`                       | `client_view_file`, `cat`     | Returns exact signature, inheritance (`extends`, `implements`), and JavaDoc without dumping hundreds of file lines. |
+| **Check Compilation & Errors**         | `execute_tool --command "get_file_problems --filePath <path>"`                                             | `./gradlew compileJava`       | Instant (0s) check against IntelliJ's live error highlighter.                                                       |
+| **Run Static Inspections**             | `execute_tool --command "lint_files --files [\"<path>\"]"`                                                 | CLI checkstyle                | Evaluates project inspections across target files.                                                                  |
+| **Cross-File Renaming**                | `execute_tool --command "rename_refactoring --pathInProject <p> --symbolName <old> --newName <new>"`       | Manual search & replace       | True AST refactoring updating declarations, calls, imports, and overrides safely.                                   |
+| **Code Formatting**                    | `execute_tool --command "reformat_file --files [\"<path>\"]"`                                              | Manual formatting             | Applies IntelliJ's exact code style settings.                                                                       |
+| **Discovered Run Configurations**      | `execute_tool --command "get_run_configurations"` / `execute_run_configuration --configurationName <name>` | CLI command guessing          | Leverages configured IntelliJ run targets directly.                                                                 |
+
+*Note: Use CLI/native tools (`client_view_file`, `run_command`) only for non-Java files (e.g. `.compact`, Markdown, YAML, Gradle configs) or if the IDE MCP server is unavailable or busy.*
+
+---
+
+## 6. Reference Repository Selection Matrix
 
 | Subsystem                           | Best Reference Repository | Key Reference Directory / File                           | What to Inspect                                             |
 |:------------------------------------|:--------------------------|:---------------------------------------------------------|:------------------------------------------------------------|
@@ -72,7 +90,7 @@ Compact Source Text (.compact)
 
 ---
 
-## 6. Critical Pitfalls & Anti-Patterns to Avoid
+## 7. Critical Pitfalls & Anti-Patterns to Avoid
 
 1. **The Windows `compact.exe` Trap**: Windows has a native NTFS compression utility at `C:\Windows\System32\compact.exe`. Never execute `findExecutableInPath("compact")` on Windows without prioritizing WSL and filtering out Windows system directories. Use [`CompactToolchainUtil`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/run/CompactToolchainUtil.java).
 2. **Velocity `${NAME}` Pollution**: In file templates, the `${NAME}` property must be the pure simple identifier (e.g. `Token`), not a file path (`sub/Token`) or file name (`Token.compact`).
@@ -84,7 +102,7 @@ Compact Source Text (.compact)
 
 ---
 
-## 7. Layered Context System
+## 8. Layered Context System
 
 Deconstructive context files are located in `.ai/`:
 
@@ -101,17 +119,18 @@ Deconstructive context files are located in `.ai/`:
 
 ---
 
-## 8. Context Loading Workflows
+## 9. Context Loading Workflows
 
 - **For planning a new feature**:
   1. Read `AGENTS.md` + `.ai/project-state.yaml` + `.ai/context/current-state.md`.
   2. Consult `.ai/context/architecture.md` for existing subsystem boundaries.
   3. Load targeted entries from `.ai/context/compact-semantics.md` and `.ai/context/reference-map.md`.
 - **For implementing a planned feature**:
-  1. Inspect only the relevant production and test packages in `src/`.
+  1. Inspect only the relevant production and test packages in `src/` using MCP `search_symbol` and `get_symbol_info`.
   2. Implement code adhering to `.ai/context/intellij-patterns.md`.
-  3. Run `./gradlew test` to verify zero regressions.
-  4. Update `.ai/context/current-state.md` and `.ai/handoff.md`.
+  3. Verify file health via MCP `get_file_problems`.
+  4. Run `./gradlew test` to verify zero regressions.
+  5. Update `.ai/context/current-state.md` and `.ai/handoff.md`.
 - **For language-semantic questions**:
   1. Check `.ai/context/compact-semantics.md`.
   2. If unknown, use `.ai/context/reference-map.md` to pinpoint 1–2 reference files in `compact/compiler/` and inspect targeted lines.
@@ -122,17 +141,18 @@ Deconstructive context files are located in `.ai/`:
 
 ---
 
-## 9. Context Efficiency & Token Rules
+## 10. Context Efficiency & Token Rules
 
-1. **Targeted lookups**: Search before opening large files; use line-range slices for large sources.
-2. **No bulk loading**: Never read entire reference repositories (`compact/`, `intellij-rust/`, `intellij-elixir/`, `intellij-scala/`, `Rplugin/`, `midnight-local-dev/`) into context.
-3. **No duplicate documentation**: Update existing `.ai/` context files rather than creating overlapping notes.
-4. **Summaries over raw code**: Extract verified rules into `compact-semantics.md` rather than pasting raw Scheme/Rust/Scala snippets.
-5. **Exact references**: Use precise symbol and class names (`dev.verloren.midnight.psi.impl.CompactReferenceExprImpl`).
+1. **Semantic lookups first**: Prefer MCP `search_symbol` and `get_symbol_info` for Java navigation.
+2. **Targeted lookups**: Search before opening large non-Java files; use line-range slices for large sources.
+3. **No bulk loading**: Never read entire reference repositories (`compact/`, `intellij-rust/`, `intellij-elixir/`, `intellij-scala/`, `Rplugin/`, `midnight-local-dev/`) into context.
+4. **No duplicate documentation**: Update existing `.ai/` context files rather than creating overlapping notes.
+5. **Summaries over raw code**: Extract verified rules into `compact-semantics.md` rather than pasting raw Scheme/Rust/Scala snippets.
+6. **Exact references**: Use precise symbol and class names (`dev.verloren.midnight.psi.impl.CompactReferenceExprImpl`).
 
 ---
 
-## 10. Code Review & Improvement Bar (Zero Improvement Hallucinations)
+## 11. Code Review & Improvement Bar (Zero Improvement Hallucinations)
 
 When the user asks open-ended, casual, or vague questions such as *"Does this file need improvements?"*, *"Can this be improved?"*, or *"Review this file"*:
 
@@ -141,19 +161,49 @@ When the user asks open-ended, casual, or vague questions such as *"Does this fi
    - Do NOT treat review questions as an obligation or challenge to invent diffs or find something to modify.
 
 2. **Strict Invariant Benchmark**:
-   Only propose an improvement if there is a concrete, verifiable failure against one of these 4 criteria:
+   Only propose an improvement if there is a concrete, verifiable failure against one of these four criteria:
    - **Threading & Concurrency (Section 4)**: e.g., PSI read off ReadAction, PSI mutation off EDT/WriteCommandAction, or blocking `process.waitFor()` on the EDT.
    - **Critical Invariants (Section 3)**: e.g., Merged value/type namespaces, missing null/`PsiErrorElement` guards, or memory leaks via static PSI references.
    - **Language / Compiler Semantics**: Direct deviation from official compiler rules (`compact/compiler/` or `.ai/context/compact-semantics.md`).
    - **Correctness / Regression**: A tangible bug, broken test, or resource leak.
 
 3. **Strictly Prohibited Proposals (Anti-Bikeshedding)**:
-   - **NO cosmetic rewrites**: Do not convert working loops to streams, reformat working code, or swap functional vs imperative style.
+   - **NO cosmetic rewrites**: Do not convert working loops to streams, reformat working code, or swap functional vs. imperative style.
    - **NO speculative abstractions**: Do not invent interfaces, factories, or builder patterns where direct implementations already work.
    - **NO subjective renames**: Do not suggest renaming local variables or methods that already follow repository conventions.
-   - **NO rewriting working architecture**: The parser, lexer, resolver, annotator, and PSI wrappers are verified with 376 passing tests.
+   - **NO rewriting working architecture**: The parser, lexer, resolver, annotator, and PSI wrappers are verified with 387 passing tests.
 
 4. **Output Format when Clean**:
-   If none of the 4 criteria are violated, state concisely:
+   If none of the four criteria are violated, state concisely:
    > **"No improvements required."** Followed by a 1–2 bullet summary confirming compliance with the relevant invariants (e.g., threading model, null-safety, test coverage).
 
+---
+
+## 12. Code Update & Release Protocol (What to Update on Every Change)
+
+To ensure consistency, documentation integrity, and smooth JetBrains Marketplace releases, follow this checklist whenever modifying code:
+
+### 1. On Every Feature, Fix, or Code Update
+- **Code & Threading Safety**:
+  - Strictly adhere to Threading Rules (Section 4) and Critical Invariants (Section 3).
+  - Run `./gradlew test` and confirm all unit tests pass with zero regressions (current baseline: 387 tests across forty-seven test suites).
+- **Changelog ([`CHANGELOG.md`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md))**:
+  - Always record changes under `## [Unreleased]` using Keep a Changelog categories:
+    - `### Added` for new IDE features, inspections, templates, or compiler support.
+    - `### Changed` for modified behaviors or API migrations.
+    - `### Fixed` for bug fixes, test corrections, or edge-case handling.
+- **AI Context Files (`.ai/`)**:
+  - Update [`.ai/context/current-state.md`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md) with updated phase descriptions and test metrics.
+  - Update [`.ai/handoff.md`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/.ai/handoff.md) with current status, implementation notes, and next priorities.
+  - Update [`.ai/project-state.yaml`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml) if feature phase status or test suite counts change.
+
+### 2. When User-Facing Features or Setup Instructions Change
+- **Plugin Description ([`plugin.xml`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/resources/META-INF/plugin.xml))**:
+  - If new inspections, toolchain configurations, settings, or major capabilities are added, update the `<description>` CDATA block so the Marketplace page and IDE **Settings → Plugins** details tab stay accurate.
+
+### 3. When Releasing / Cutting a New Version
+- **Bump Version**: Update `version` in [`gradle.properties`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/gradle.properties) (e.g. `1.2.0`).
+- **Version the Changelog**: In [`CHANGELOG.md`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md), move the completed bullets from `## [Unreleased]` into a new version header (e.g. `## [1.2.0]`).
+- **Sync XML Change Notes**: Update the static fallback `<change-notes>` block in [`src/main/resources/META-INF/plugin.xml`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/resources/META-INF/plugin.xml) to mirror the new version's changelog.
+- **Build & Verify Distribution**:
+  - Run `./gradlew buildPlugin` to verify compilation, test passes, and distribution zip packaging in `build/distributions/`.

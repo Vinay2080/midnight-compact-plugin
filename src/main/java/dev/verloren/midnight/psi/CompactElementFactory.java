@@ -55,6 +55,9 @@ public final class CompactElementFactory {
     if (elementType == CompactElementTypes.IMPLEMENTS_DECLARATION) {
       return new CompactContractImplementsDeclarationImpl(node);
     }
+    if (elementType == CompactElementTypes.EXTERNAL_CIRCUIT) {
+      return new CompactExternalCircuitImpl(node);
+    }
     if (elementType == CompactElementTypes.TYPE_ALIAS_DECLARATION) {
       return new CompactTypeDefinitionImpl(node);
     }
@@ -154,6 +157,7 @@ public final class CompactElementFactory {
             || elementType == CompactElementTypes.ENUM_DECLARATION
             || elementType == CompactElementTypes.CONTRACT_DECLARATION
             || elementType == CompactElementTypes.IMPLEMENTS_DECLARATION
+            || elementType == CompactElementTypes.EXTERNAL_CIRCUIT
             || elementType == CompactElementTypes.TYPE_ALIAS_DECLARATION
             || elementType == CompactElementTypes.LEDGER_DECLARATION
             || elementType == CompactElementTypes.WITNESS_DECLARATION

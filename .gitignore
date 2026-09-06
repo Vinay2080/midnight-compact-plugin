@@ -7,3 +7,9 @@ build
 /test.pptx
 !/gen/
 /bin
+/compact-contracts/
+/compact/
+/Rplugin/
+/intellij-elixir/
+/intellij-rust/
+/intellij-scala/

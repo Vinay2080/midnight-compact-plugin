@@ -73,9 +73,10 @@ public class CompactGotoSymbolContributor implements ChooseByNameContributorEx {
   }
 
   public static boolean isSymbol(@NotNull CompactNamedElement element) {
-    return !(element instanceof CompactParameterImpl)
-            && !(element instanceof CompactGenericParameterImpl)
-            && (!(element instanceof CompactPatternImpl) || PsiTreeUtil.getParentOfType(element, CompactBlock.class) == null)
-            && (!(element instanceof CompactConstBindingImpl) || PsiTreeUtil.getParentOfType(element, CompactBlock.class) == null);
+    return switch (element) {
+      case CompactParameterImpl _, CompactGenericParameterImpl _ -> false;
+      case CompactPatternImpl _, CompactConstBindingImpl _ -> PsiTreeUtil.getParentOfType(element, CompactBlock.class) == null;
+      default -> true;
+    };
   }
 }

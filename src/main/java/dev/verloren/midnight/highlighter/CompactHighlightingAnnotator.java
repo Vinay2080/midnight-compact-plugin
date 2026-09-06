@@ -138,7 +138,6 @@ public class CompactHighlightingAnnotator implements Annotator {
         return;
       }
 
-
       // 7. Direct call expressions (e.g., fetchEntropy(), compute(...))
       case CompactCallExprImpl callExpr -> {
         ASTNode idNode = callExpr.getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
@@ -161,7 +160,6 @@ public class CompactHighlightingAnnotator implements Annotator {
         }
         return;
       }
-
 
       // 8. Struct literal expressions (e.g., Point { x: 1, y: 2 })
       case CompactStructLiteralExprImpl structLiteral -> {
@@ -212,28 +210,21 @@ public class CompactHighlightingAnnotator implements Annotator {
             highlight(holder, nameIdentifier, declKey);
           }
         }
-
       }
-
-
       // 11. Type references (e.g., x: Point, state: GameState)
       case CompactTypeReferenceImpl typeRef -> annotateTypeReference(holder, typeRef);
-
 
       // 12. Member access expressions (e.g., p.x or GameState.PLAYING)
       case CompactMemberExprImpl memberExpr -> annotateMemberExpr(holder, memberExpr);
 
-
       // 13. Reference expressions & calls (e.g., foo, MAX, x)
       case CompactReferenceExprImpl refExpr -> annotateReferenceExpr(holder, refExpr);
-
 
       // 14. Pragma declarations
       case CompactPragmaFormImpl pragmaForm -> annotatePragma(holder, pragmaForm);
       default -> {
       }
     }
-
   }
 
   // =========================================================================
@@ -241,42 +232,41 @@ public class CompactHighlightingAnnotator implements Annotator {
   // =========================================================================
 
   private static @Nullable TextAttributesKey getDeclarationKey(@NotNull CompactNamedElement declaration) {
-    if (declaration instanceof CompactCircuitDefinition) return CompactHighlighterColors.CIRCUIT_DECLARATION;
-    if (declaration instanceof CompactWitnessDeclaration) return CompactHighlighterColors.WITNESS_DECLARATION;
-    if (declaration instanceof CompactConstructorDeclaration) return CompactHighlighterColors.CONSTRUCTOR_DECLARATION;
-    if (declaration instanceof CompactExternalContractDeclaration) return CompactHighlighterColors.CONTRACT_DECLARATION;
-    if (declaration instanceof CompactModuleDefinition) return CompactHighlighterColors.MODULE_DECLARATION;
-    if (declaration instanceof CompactStructDefinition) return CompactHighlighterColors.STRUCT_DECLARATION;
-    if (declaration instanceof CompactEnumDefinition) return CompactHighlighterColors.ENUM_DECLARATION;
-    if (declaration instanceof CompactEnumMemberImpl) return CompactHighlighterColors.ENUM_MEMBER_DECLARATION;
-    if (declaration instanceof CompactStructFieldImpl) return CompactHighlighterColors.FIELD_DECLARATION;
-    if (declaration instanceof CompactTypeDefinition) return CompactHighlighterColors.TYPE_ALIAS_DECLARATION;
-    if (declaration instanceof CompactGenericParameterImpl) return CompactHighlighterColors.TYPE_PARAMETER;
-    if (declaration instanceof CompactLedgerDeclaration) return CompactHighlighterColors.LEDGER_DECLARATION;
-    if (declaration instanceof CompactPatternImpl pattern) {
-      if (PsiTreeUtil.getParentOfType(pattern, CompactParameterImpl.class) != null
-              || PsiTreeUtil.getParentOfType(pattern, CompactTypedPatternImpl.class) != null
-              || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.PATTERN_PARAMETER_LIST)
-              || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.SIMPLE_PARAMETER_LIST)
-              || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.ARROW_PARAMETER_LIST)) {
-        return CompactHighlighterColors.PARAMETER_DECLARATION;
-      }
-      if (PsiTreeUtil.getParentOfType(pattern, CompactConstBindingImpl.class) != null) {
-        if (PsiTreeUtil.getParentOfType(pattern, CompactBlock.class) != null) {
-          return CompactHighlighterColors.LOCAL_VARIABLE_DECLARATION;
+    return switch (declaration) {
+      case CompactCircuitDefinition _ -> CompactHighlighterColors.CIRCUIT_DECLARATION;
+      case CompactWitnessDeclaration _ -> CompactHighlighterColors.WITNESS_DECLARATION;
+      case CompactConstructorDeclaration _ -> CompactHighlighterColors.CONSTRUCTOR_DECLARATION;
+      case CompactExternalContractDeclaration _ -> CompactHighlighterColors.CONTRACT_DECLARATION;
+      case CompactModuleDefinition _ -> CompactHighlighterColors.MODULE_DECLARATION;
+      case CompactStructDefinition _ -> CompactHighlighterColors.STRUCT_DECLARATION;
+      case CompactEnumDefinition _ -> CompactHighlighterColors.ENUM_DECLARATION;
+      case CompactEnumMemberImpl _ -> CompactHighlighterColors.ENUM_MEMBER_DECLARATION;
+      case CompactStructFieldImpl _ -> CompactHighlighterColors.FIELD_DECLARATION;
+      case CompactTypeDefinition _ -> CompactHighlighterColors.TYPE_ALIAS_DECLARATION;
+      case CompactGenericParameterImpl _ -> CompactHighlighterColors.TYPE_PARAMETER;
+      case CompactLedgerDeclaration _ -> CompactHighlighterColors.LEDGER_DECLARATION;
+      case CompactPatternImpl pattern -> {
+        if (PsiTreeUtil.getParentOfType(pattern, CompactParameterImpl.class) != null
+            || PsiTreeUtil.getParentOfType(pattern, CompactTypedPatternImpl.class) != null
+            || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.PATTERN_PARAMETER_LIST)
+            || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.SIMPLE_PARAMETER_LIST)
+            || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.ARROW_PARAMETER_LIST)) {
+          yield CompactHighlighterColors.PARAMETER_DECLARATION;
         }
-        return CompactHighlighterColors.CONSTANT_DECLARATION;
+        if (PsiTreeUtil.getParentOfType(pattern, CompactConstBindingImpl.class) != null) {
+          yield PsiTreeUtil.getParentOfType(pattern, CompactBlock.class) != null
+              ? CompactHighlighterColors.LOCAL_VARIABLE_DECLARATION
+              : CompactHighlighterColors.CONSTANT_DECLARATION;
+        }
+        yield null;
       }
-    }
-    if (declaration instanceof CompactParameterImpl) return CompactHighlighterColors.PARAMETER_DECLARATION;
-    if (declaration instanceof CompactConstBindingImpl constBinding) {
-      if (PsiTreeUtil.getParentOfType(constBinding, CompactBlock.class) != null) {
-        return CompactHighlighterColors.LOCAL_VARIABLE_DECLARATION;
-      }
-      return CompactHighlighterColors.CONSTANT_DECLARATION;
-    }
-    if (declaration instanceof CompactImportElementImpl) return CompactHighlighterColors.IMPORTED_SYMBOL;
-    return null;
+      case CompactParameterImpl _ -> CompactHighlighterColors.PARAMETER_DECLARATION;
+      case CompactConstBindingImpl constBinding -> PsiTreeUtil.getParentOfType(constBinding, CompactBlock.class) != null
+          ? CompactHighlighterColors.LOCAL_VARIABLE_DECLARATION
+          : CompactHighlighterColors.CONSTANT_DECLARATION;
+      case CompactImportElementImpl _ -> CompactHighlighterColors.IMPORTED_SYMBOL;
+      default -> null;
+    };
   }
 
   // =========================================================================
@@ -307,16 +297,12 @@ public class CompactHighlightingAnnotator implements Annotator {
       target = CompactResolveUtil.resolveImportElementSource(importElement);
     }
 
-    if (target instanceof CompactStructDefinition) {
-      highlight(holder, idElement, CompactHighlighterColors.STRUCT_DECLARATION);
-    } else if (target instanceof CompactEnumDefinition) {
-      highlight(holder, idElement, CompactHighlighterColors.ENUM_DECLARATION);
-    } else if (target instanceof CompactTypeDefinition) {
-      highlight(holder, idElement, CompactHighlighterColors.TYPE_ALIAS_DECLARATION);
-    } else if (target instanceof CompactGenericParameterImpl) {
-      highlight(holder, idElement, CompactHighlighterColors.TYPE_PARAMETER);
-    } else {
-      highlight(holder, idElement, CompactHighlighterColors.TYPE_REFERENCE);
+    switch (target) {
+      case CompactStructDefinition _ -> highlight(holder, idElement, CompactHighlighterColors.STRUCT_DECLARATION);
+      case CompactEnumDefinition _ -> highlight(holder, idElement, CompactHighlighterColors.ENUM_DECLARATION);
+      case CompactTypeDefinition _ -> highlight(holder, idElement, CompactHighlighterColors.TYPE_ALIAS_DECLARATION);
+      case CompactGenericParameterImpl _ -> highlight(holder, idElement, CompactHighlighterColors.TYPE_PARAMETER);
+      case null, default -> highlight(holder, idElement, CompactHighlighterColors.TYPE_REFERENCE);
     }
   }
 
@@ -392,48 +378,40 @@ public class CompactHighlightingAnnotator implements Annotator {
       }
     }
 
-    if (target instanceof CompactCircuitDefinition) {
-      highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
-    } else if (target instanceof CompactWitnessDeclaration) {
-      highlight(holder, refExpr, CompactHighlighterColors.WITNESS_CALL);
-    } else if (target instanceof CompactEnumMemberImpl) {
-      highlight(holder, refExpr, CompactHighlighterColors.ENUM_MEMBER_ACCESS);
-    } else if (target instanceof CompactEnumDefinition) {
-      highlight(holder, refExpr, CompactHighlighterColors.ENUM_DECLARATION);
-    } else if (target instanceof CompactStructDefinition) {
-      highlight(holder, refExpr, CompactHighlighterColors.STRUCT_DECLARATION);
-    } else if (target instanceof CompactTypeDefinition) {
-      highlight(holder, refExpr, CompactHighlighterColors.TYPE_ALIAS_DECLARATION);
-    } else if (target instanceof CompactLedgerDeclaration) {
-      if (isWriteAccess(refExpr)) {
-        highlight(holder, refExpr, CompactHighlighterColors.LEDGER_WRITE);
-      } else {
-        highlight(holder, refExpr, CompactHighlighterColors.LEDGER_USAGE);
-      }
-    } else if (target instanceof CompactParameterImpl || (target instanceof CompactPatternImpl && (
-        PsiTreeUtil.getParentOfType(target, CompactParameterImpl.class) != null
-        || PsiTreeUtil.getParentOfType(target, CompactTypedPatternImpl.class) != null
-        || hasAncestorOfType(target, dev.verloren.midnight.parser.CompactElementTypes.PATTERN_PARAMETER_LIST)
-        || hasAncestorOfType(target, dev.verloren.midnight.parser.CompactElementTypes.SIMPLE_PARAMETER_LIST)
-        || hasAncestorOfType(target, dev.verloren.midnight.parser.CompactElementTypes.ARROW_PARAMETER_LIST)
-    ))) {
-      highlight(holder, refExpr, CompactHighlighterColors.PARAMETER_USAGE);
-    } else if (target instanceof CompactConstBindingImpl || (target instanceof CompactPatternImpl && PsiTreeUtil.getParentOfType(target, CompactConstBindingImpl.class) != null)) {
-      if (PsiTreeUtil.getParentOfType(target, CompactBlock.class) != null) {
-        if (isWriteAccess(refExpr)) {
-          highlight(holder, refExpr, CompactHighlighterColors.LOCAL_VARIABLE_WRITE);
-        } else {
-          highlight(holder, refExpr, CompactHighlighterColors.LOCAL_VARIABLE_USAGE);
+    switch (target) {
+      case CompactCircuitDefinition _ -> highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
+      case CompactWitnessDeclaration _ -> highlight(holder, refExpr, CompactHighlighterColors.WITNESS_CALL);
+      case CompactEnumMemberImpl _ -> highlight(holder, refExpr, CompactHighlighterColors.ENUM_MEMBER_ACCESS);
+      case CompactEnumDefinition _ -> highlight(holder, refExpr, CompactHighlighterColors.ENUM_DECLARATION);
+      case CompactStructDefinition _ -> highlight(holder, refExpr, CompactHighlighterColors.STRUCT_DECLARATION);
+      case CompactTypeDefinition _ -> highlight(holder, refExpr, CompactHighlighterColors.TYPE_ALIAS_DECLARATION);
+      case CompactLedgerDeclaration _ -> highlight(holder, refExpr, isWriteAccess(refExpr)
+          ? CompactHighlighterColors.LEDGER_WRITE
+          : CompactHighlighterColors.LEDGER_USAGE);
+      case CompactParameterImpl _ -> highlight(holder, refExpr, CompactHighlighterColors.PARAMETER_USAGE);
+      case CompactPatternImpl pattern when (
+          PsiTreeUtil.getParentOfType(pattern, CompactParameterImpl.class) != null
+          || PsiTreeUtil.getParentOfType(pattern, CompactTypedPatternImpl.class) != null
+          || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.PATTERN_PARAMETER_LIST)
+          || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.SIMPLE_PARAMETER_LIST)
+          || hasAncestorOfType(pattern, dev.verloren.midnight.parser.CompactElementTypes.ARROW_PARAMETER_LIST)
+      ) -> highlight(holder, refExpr, CompactHighlighterColors.PARAMETER_USAGE);
+      case CompactConstBindingImpl constBinding -> highlight(holder, refExpr,
+          PsiTreeUtil.getParentOfType(constBinding, CompactBlock.class) != null
+              ? (isWriteAccess(refExpr) ? CompactHighlighterColors.LOCAL_VARIABLE_WRITE : CompactHighlighterColors.LOCAL_VARIABLE_USAGE)
+              : CompactHighlighterColors.CONSTANT_USAGE);
+      case CompactPatternImpl pattern when PsiTreeUtil.getParentOfType(pattern, CompactConstBindingImpl.class) != null -> highlight(holder, refExpr,
+          PsiTreeUtil.getParentOfType(pattern, CompactBlock.class) != null
+              ? (isWriteAccess(refExpr) ? CompactHighlighterColors.LOCAL_VARIABLE_WRITE : CompactHighlighterColors.LOCAL_VARIABLE_USAGE)
+              : CompactHighlighterColors.CONSTANT_USAGE);
+      case CompactGenericParameterImpl _ -> highlight(holder, refExpr, CompactHighlighterColors.TYPE_PARAMETER);
+      case null, default -> {
+        if (isCall) {
+          highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
+        } else if (isConstantIdentifier(name)) {
+          highlight(holder, refExpr, CompactHighlighterColors.CONSTANT_USAGE);
         }
-      } else {
-        highlight(holder, refExpr, CompactHighlighterColors.CONSTANT_USAGE);
       }
-    } else if (target instanceof CompactGenericParameterImpl) {
-      highlight(holder, refExpr, CompactHighlighterColors.TYPE_PARAMETER);
-    } else if (isCall) {
-      highlight(holder, refExpr, CompactHighlighterColors.CIRCUIT_CALL);
-    } else if (isConstantIdentifier(name)) {
-      highlight(holder, refExpr, CompactHighlighterColors.CONSTANT_USAGE);
     }
   }
 

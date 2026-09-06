@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompactLiveTemplateContextType extends TemplateContextType {
 
   public CompactLiveTemplateContextType() {
-    super("COMPACT_CODE");
+    super("Compact");
   }
 
   @Override

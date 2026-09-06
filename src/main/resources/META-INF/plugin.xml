@@ -19,6 +19,10 @@
 
         <h3>✨ Features</h3>
         <ul>
+            <li><b>Remix-Style Compact Compiler Tool Window:</b> Sidebar panel to switch compiler versions, auto-download versions into isolated directories, view real-time pragma compatibility, and compile contracts with one click.</li>
+            <li><b>Multi-Version Compiler Management:</b> Isolated compiler version storage under <code>~/.compact/versions/&lt;version&gt;/</code> with automatic installer support and project-level compiler selection in <code>.idea/midnight.xml</code>.</li>
+            <li><b>In-Editor Pragma Quick-Fixes:</b> <code>Alt + Enter</code> context actions on <code>pragma language_version</code> to switch project compiler or download required versions on demand, plus quick-fixes for compiler version mismatch errors.</li>
+            <li><b>Bidirectional Interface &amp; Implementation Navigation:</b> Gutter line markers jumping between interface declarations, circuit definitions, and concrete contract implementations.</li>
             <li><b>Syntax Highlighting &amp; Formatting:</b> Rich semantic token coloring, code formatting, smart indentation, brace matching, and code folding.</li>
             <li><b>Intelligent Code Completion:</b> Context-aware completion for keywords, built-in types, circuits, witnesses, exports, ledger state, and local bindings.</li>
             <li><b>Code Navigation &amp; Find Usages:</b> Go to Declaration (<code>Ctrl+B</code> / <code>Cmd+B</code>), Go to Symbol, and Find Usages across files with split VALUE/TYPE namespaces.</li>
@@ -61,8 +65,8 @@
             <li>Select the location of your <code>compact</code> executable:
                 <ul>
                     <li><b>Linux / macOS:</b> Typically <code>/usr/local/bin/compact</code>, <code>~/.cargo/bin/compact</code>, or your local installation path.</li>
-                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\wsl$\Ubuntu\usr\bin\compact</code>).</li>
-                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\Windows\System32\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
+                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\\\\\\\\\\\\\wsl$\\\\\\\\Ubuntu\\\\\\\\usr\\\\\\\\bin\\\\\\\\compact</code>).</li>
+                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
                 </ul>
             </li>
             <li>Click <b>Test / Validate</b> to verify that IntelliJ successfully communicates with the compiler.</li>
@@ -86,12 +90,36 @@
 
     <!-- Change notes displayed in the IDE Plugin Manager "What's New" and Marketplace release history -->
     <change-notes><![CDATA[
+        <h3>1.2.0</h3>
+        <ul>
+            <li><b>Remix-Style Sidebar Tool Window ("Compact Compiler"):</b> Live contract pragma status, compiler version switcher dropdown, one-click version downloader/manager, and quick contract compile action on the right stripe.</li>
+            <li><b>Multi-Version Compiler Management:</b> Isolated compiler version storage under <code>~/.compact/versions/&lt;version&gt;/</code> preventing cross-project compiler collisions with automatic installer support.</li>
+            <li><b>Per-Project Compiler Selection:</b> Configurable compiler version per project (<code>.idea/midnight.xml</code>) allowing different projects to target different Compact versions independently.</li>
+            <li><b>Pragma Quick-Fixes &amp; Context Actions:</b> In-editor <code>Alt + Enter</code> context actions on <code>pragma language_version</code> to switch project compiler or download a matching version on demand, plus quick-fixes for compiler version mismatch errors.</li>
+            <li><b>Semantic Versioning Engine:</b> SemVer parser and constraint evaluator supporting <code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code>, <code>^</code>, <code>~</code>, and <code>==</code>.</li>
+            <li><b>Bidirectional Interface &amp; Implementation Navigation:</b> Gutter line markers jumping between interface declarations, circuit definitions, and concrete contract implementations.</li>
+        </ul>
+        <h3>1.1.1</h3>
+        <ul>
+            <li>Eliminated scheduled-for-removal API usage (<code>PathEnvironmentVariableUtil.findInPath</code>) in compiler toolchain discovery to guarantee compatibility with IntelliJ 2026.3+ EAP.</li>
+            <li>Updated project group identifier to <code>dev.verloren</code>.</li>
+        </ul>
+        <h3>1.1.0</h3>
+        <ul>
+            <li>Background external annotator pipeline with cancellation support and cross-file diagnostic filtering.</li>
+            <li>Declarative Inlay Hints API migration for inline parameter hints.</li>
+            <li>Hardened Compact file creation action with nested directory support and template sanitization.</li>
+            <li>Midnight Compact compiler toolchain setup guides and auto-detection improvements.</li>
+            <li>Enhanced WSL distribution discovery and path translation.</li>
+            <li>Official Midnight SVG branding assets and file icons.</li>
+            <li>Automated Marketplace CI/CD publication pipeline.</li>
+        </ul>
         <h3>1.0.0</h3>
         <ul>
             <li>Initial release of Midnight Compact Language support for IntelliJ IDEA.</li>
             <li>Handwritten Lexer, Parser, and PSI support for Compact syntax.</li>
             <li>Code completion, reference resolution, and cross-file <code>include</code> resolution.</li>
-            <li>9 semantic inspections with automated quick-fixes.</li>
+            <li>Nine semantic inspections with automated quick-fixes.</li>
             <li>Code formatting, smart indentation, structure view, and inlay parameter hints.</li>
             <li>Toolchain run configurations and gutter execution for the Compact compiler.</li>
             <li>File templates, live templates, breadcrumbs, and hover documentation.</li>
@@ -201,7 +229,30 @@
                 parentId="language"
                 instance="dev.verloren.midnight.settings.MidnightSettingsConfigurable"
                 id="dev.verloren.midnight.settings.MidnightSettingsConfigurable"
-                displayName="Midnight Compact"/>
+                key="settings.compact.display.name"/>
+
+        <toolWindow
+                id="Compact Compiler"
+                anchor="right"
+                factoryClass="dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory"
+                icon="/icons/verloren.svg"/>
+
+        <notificationGroup
+                id="Midnight Notifications"
+                displayType="BALLOON"
+                key="notification.group.midnight"/>
+
+        <intentionAction>
+            <language>Compact</language>
+            <className>dev.verloren.midnight.intention.CompactSwitchCompilerVersionIntention</className>
+            <categoryKey>intention.category.compact</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>Compact</language>
+            <className>dev.verloren.midnight.intention.CompactUpdatePragmaVersionIntention</className>
+            <categoryKey>intention.category.compact</categoryKey>
+        </intentionAction>
 
         <fileTemplateGroup
                 implementation="dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory"/>
@@ -216,7 +267,6 @@
 
         <liveTemplateContext
                 contextId="COMPACT_CODE"
-                presentableName="Compact"
                 implementation="dev.verloren.midnight.ide.templates.CompactLiveTemplateContextType"/>
 
         <lang.foldingBuilder
@@ -338,6 +388,15 @@
                 level="WARNING"
                 implementationClass="dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspection"
                 key="inspection.compact.undisclosed.witness.display.name"/>
+
+        <localInspection
+                language="Compact"
+                groupKey="inspection.group.name.compact"
+                shortName="CompactPragmaVersion"
+                enabledByDefault="true"
+                level="ERROR"
+                implementationClass="dev.verloren.midnight.inspection.CompactPragmaVersionInspection"
+                key="inspection.compact.pragma.version.display.name"/>
 
     </extensions>
 

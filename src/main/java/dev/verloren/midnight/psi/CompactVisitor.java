@@ -46,6 +46,10 @@ public class CompactVisitor extends PsiElementVisitor {
     visitElement(implementsDeclaration);
   }
 
+  public void visitExternalCircuit(@NotNull CompactExternalCircuit externalCircuit) {
+    visitElement(externalCircuit);
+  }
+
   public void visitTypeDefinition(@NotNull CompactTypeDefinition typeDefinition) {
     visitElement(typeDefinition);
   }

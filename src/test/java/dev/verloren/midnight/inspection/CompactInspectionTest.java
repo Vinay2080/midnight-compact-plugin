@@ -1341,6 +1341,28 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     assertFalse("Mutual recursion should be flagged", matched.isEmpty());
   }
 
+  public void testWrapperCircuitCallingImportedCircuitWithSameNameNotFlagged() {
+    myFixture.addFileToProject(
+        "Base.compact",
+        """
+        export circuit grantRole(): Void {}
+        """
+    );
+    String code = """
+        import "./Base" prefix Base_;
+
+        export circuit grantRole(): Void {
+          Base_grantRole();
+        }
+        """;
+    myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    List<HighlightInfo> recursionWarnings = warnings.stream()
+        .filter(h -> h.getDescription() != null && (h.getDescription().contains("cannot be recursive") || h.getDescription().contains("recursion")))
+        .toList();
+    assertTrue("Forwarding wrapper circuit calling imported circuit with same name should not be flagged as recursive: " + recursionWarnings, recursionWarnings.isEmpty());
+  }
   // =========================================================================
   // 8. Constructor Restriction Inspection Tests
   // =========================================================================

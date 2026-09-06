@@ -22,17 +22,21 @@ public class CompactBreadcrumbsProvider implements BreadcrumbsProvider {
 
   @Override
   public boolean acceptElement(@NotNull PsiElement element) {
-    return element instanceof CompactExternalContractDeclaration ||
-            element instanceof CompactContractImplementsDeclaration ||
-            element instanceof CompactModuleDefinition ||
-            element instanceof CompactCircuitDefinition ||
-            element instanceof CompactWitnessDeclaration ||
-            element instanceof CompactConstructorDeclaration ||
-            element instanceof CompactLedgerDeclaration ||
-            element instanceof CompactStructDefinition ||
-            element instanceof CompactEnumDefinition ||
-            element.getNode().getElementType() == CompactElementTypes.IF_STATEMENT ||
-            element.getNode().getElementType() == CompactElementTypes.FOR_STATEMENT;
+    return switch (element) {
+      case CompactExternalContractDeclaration _,
+           CompactContractImplementsDeclaration _,
+           CompactModuleDefinition _,
+           CompactCircuitDefinition _,
+           CompactWitnessDeclaration _,
+           CompactConstructorDeclaration _,
+           CompactLedgerDeclaration _,
+           CompactStructDefinition _,
+           CompactEnumDefinition _ -> true;
+      default -> element.getNode() != null && (
+          element.getNode().getElementType() == CompactElementTypes.IF_STATEMENT ||
+          element.getNode().getElementType() == CompactElementTypes.FOR_STATEMENT
+      );
+    };
   }
 
   @Override
@@ -42,7 +46,7 @@ public class CompactBreadcrumbsProvider implements BreadcrumbsProvider {
         String name = contract.getName();
         yield name != null ? "contract " + name : "contract";
       }
-      case CompactContractImplementsDeclaration ignored -> "contract";
+      case CompactContractImplementsDeclaration _ -> "contract";
       case CompactModuleDefinition module -> {
         String name = module.getName();
         yield name != null ? "module " + name : "module";
@@ -55,8 +59,8 @@ public class CompactBreadcrumbsProvider implements BreadcrumbsProvider {
         String name = witness.getName();
         yield name != null ? "witness " + name : "witness";
       }
-      case CompactConstructorDeclaration ignored -> "constructor";
-      case CompactLedgerDeclaration ignored -> "ledger";
+      case CompactConstructorDeclaration _ -> "constructor";
+      case CompactLedgerDeclaration _ -> "ledger";
       case CompactStructDefinition struct -> {
         String name = struct.getName();
         yield name != null ? "struct " + name : "struct";

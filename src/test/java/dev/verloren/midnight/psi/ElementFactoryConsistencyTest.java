@@ -15,6 +15,7 @@ public class ElementFactoryConsistencyTest extends BasePlatformTestCase {
     assertDedicated(CompactElementTypes.ENUM_DECLARATION);
     assertDedicated(CompactElementTypes.CONTRACT_DECLARATION);
     assertDedicated(CompactElementTypes.IMPLEMENTS_DECLARATION);
+    assertDedicated(CompactElementTypes.EXTERNAL_CIRCUIT);
     assertDedicated(CompactElementTypes.TYPE_ALIAS_DECLARATION);
     assertDedicated(CompactElementTypes.LEDGER_DECLARATION);
     assertDedicated(CompactElementTypes.WITNESS_DECLARATION);

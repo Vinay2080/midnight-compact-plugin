@@ -43,6 +43,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar"
   };
 
+  @SuppressWarnings("this-escape")
   public CompactCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().withLanguage(CompactLanguage.INSTANCE), new CompletionProvider<>() {
       @Override
@@ -54,22 +55,17 @@ public class CompactCompletionContributor extends CompletionContributor {
 
   private static void addCompactCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
     switch (CompactCompletionContext.classify(position)) {
-      case KEYWORD:
+      case KEYWORD -> {
         addAll(result, DECLARATION_KEYWORDS);
         addAll(result, STATEMENT_KEYWORDS);
-        break;
-      case TYPE:
+      }
+      case TYPE -> {
         addAll(result, BUILTIN_TYPES);
         addNamed(result, CompactResolveUtil.collectTypeDeclarations(position));
         addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.TYPE));
-        break;
-      case MEMBER:
-        addMemberCompletions(position, result);
-        break;
-      case VALUE:
-      default:
-        addValueCompletions(position, result);
-        break;
+      }
+      case MEMBER -> addMemberCompletions(position, result);
+      case VALUE -> addValueCompletions(position, result);
     }
   }
 
@@ -100,18 +96,22 @@ public class CompactCompletionContributor extends CompletionContributor {
 
     if (memberExpr != null) {
       // 1. Check existing references (Enum / Struct field)
-      if (memberExpr.getReference() instanceof CompactEnumMemberReference enumRef) {
-        for (ResolveResult resolveResult : enumRef.multiResolve(false)) {
-          if (resolveResult.getElement() instanceof CompactNamedElement named) {
-            addNamed(result, named);
+      switch (memberExpr.getReference()) {
+        case CompactEnumMemberReference enumRef -> {
+          for (ResolveResult resolveResult : enumRef.multiResolve(false)) {
+            if (resolveResult.getElement() instanceof CompactNamedElement named) {
+              addNamed(result, named);
+            }
           }
         }
-      } else if (memberExpr.getReference() instanceof CompactStructFieldReference structRef) {
-        for (ResolveResult resolveResult : structRef.multiResolve(false)) {
-          if (resolveResult.getElement() instanceof CompactNamedElement named) {
-            addNamed(result, named);
+        case CompactStructFieldReference structRef -> {
+          for (ResolveResult resolveResult : structRef.multiResolve(false)) {
+            if (resolveResult.getElement() instanceof CompactNamedElement named) {
+              addNamed(result, named);
+            }
           }
         }
+        default -> {}
       }
 
       CompactExpression baseExpr = memberExpr.getBaseExpression();
@@ -171,14 +171,13 @@ public class CompactCompletionContributor extends CompletionContributor {
       @NotNull CompletionResultSet result
   ) {
     for (CompactNamedElement target : CompactResolveUtil.resolveType(typeName, context)) {
-      if (target instanceof CompactImportElementImpl importElem) {
-        target = CompactResolveUtil.resolveImportElementSource(importElem);
-      }
-      if (target instanceof CompactStructDefinition structDef) {
-        addNamed(result, structDef.getFields());
-      }
-      if (target instanceof CompactEnumDefinition enumDef) {
-        addNamed(result, enumDef.getMembers());
+      CompactNamedElement unwrapped = (target instanceof CompactImportElementImpl importElem)
+          ? CompactResolveUtil.resolveImportElementSource(importElem)
+          : target;
+      switch (unwrapped) {
+        case CompactStructDefinition structDef -> addNamed(result, structDef.getFields());
+        case CompactEnumDefinition enumDef -> addNamed(result, enumDef.getMembers());
+        default -> {}
       }
     }
   }
@@ -301,7 +300,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       case CompactEnumMemberImpl member -> member.getType();
       case CompactEnumDefinition enumDef ->
               new CompactPrimitiveType(enumDef.getName() != null ? enumDef.getName() : "Enum");
-      default -> (element).getType();
+      default -> element.getType();
     };
   }
 

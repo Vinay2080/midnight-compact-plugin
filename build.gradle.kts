@@ -6,6 +6,12 @@ plugins {
     id("org.jetbrains.intellij.platform")
 }
 
+val enableMtui = providers.environmentVariable("MTUI")
+    .orElse(providers.environmentVariable("ENABLE_MTUI"))
+    .orElse(providers.gradleProperty("mtui"))
+    .map { it.isBlank() || it.equals("true", ignoreCase = true) || it == "1" }
+    .getOrElse(false)
+
 dependencies {
     testImplementation(libs.junit)
 
@@ -13,7 +19,9 @@ dependencies {
         intellijIdea("2026.2.0.1")
         testFramework(TestFrameworkType.Platform)
         bundledModule("intellij.spellchecker")
-        compatiblePlugin("com.chrisrm.idea.MaterialThemeUI")
+        if (enableMtui) {
+            compatiblePlugin("com.chrisrm.idea.MaterialThemeUI")
+        }
     }
 }
 
@@ -21,7 +29,7 @@ intellijPlatform {
     pluginConfiguration {
         version = providers.gradleProperty("version")
         ideaVersion {
-            sinceBuild = "242"
+            sinceBuild = "262"
             untilBuild = provider { null }
         }
         changeNotes = provider {
@@ -44,9 +52,14 @@ intellijPlatform {
     }
 }
 
+kotlin {
+    jvmToolchain(25)
+}
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
 }
 
 sourceSets {
@@ -57,8 +70,7 @@ sourceSets {
 
 tasks {
     withType<JavaCompile> {
-        sourceCompatibility = "21"
-        targetCompatibility = "21"
+        options.compilerArgs.addAll(listOf("-Xlint:all", "-Xlint:-processing", "-Xlint:-serial"))
     }
     buildSearchableOptions {
         enabled = false
@@ -76,5 +88,3 @@ tasks {
         enabled = false
     }
 }
-
-

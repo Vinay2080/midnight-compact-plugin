@@ -3,6 +3,7 @@ package dev.verloren.midnight.annotator;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -24,6 +25,7 @@ import com.intellij.util.PathUtil;
 import dev.verloren.midnight.psi.CompactFile;
 import dev.verloren.midnight.run.CompactToolchainUtil;
 import dev.verloren.midnight.settings.MidnightSettingsState;
+import dev.verloren.midnight.version.CompactSemVerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
@@ -59,9 +61,12 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
     }
 
     MidnightSettingsState state = MidnightSettingsState.getInstance();
-    String compilerPath = state != null && state.compilerPath != null && !state.compilerPath.isEmpty()
-        ? state.compilerPath
-        : "compactc";
+    String compilerPath = CompactToolchainUtil.getCompilerExecutablePath(file.getProject());
+    if (compilerPath == null || compilerPath.isEmpty()) {
+      compilerPath = state != null && state.compilerPath != null && !state.compilerPath.isEmpty()
+          ? state.compilerPath
+          : "compactc";
+    }
 
     boolean skipZk = state == null || state.skipZkDefault;
     return new InitialInfo(file.getProject(), vFile, compilerPath, skipZk, file.getModificationStamp());
@@ -141,9 +146,23 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
       TextRange range = getRange(diagnostic, document, file);
       HighlightSeverity severity = diagnostic.severity();
 
-      holder.newAnnotation(severity, diagnostic.message())
-          .range(range)
-          .create();
+      AnnotationBuilder builder = holder.newAnnotation(severity, diagnostic.message())
+          .range(range);
+
+      String msg = diagnostic.message().toLowerCase();
+      if ((msg.contains("pragma") || msg.contains("language version") || msg.contains("language_version")) &&
+          (msg.contains("mismatch") || msg.contains("version") || msg.contains("expected"))) {
+        String targetVer = CompactSemVerUtil.extractVersion(diagnostic.message());
+        if (targetVer != null) {
+          builder = builder.withFix(new CompactSwitchCompilerQuickFix(targetVer));
+        }
+        String activeVer = CompactToolchainUtil.getActiveCompilerVersion(file.getProject());
+        if (activeVer != null) {
+          builder = builder.withFix(new CompactUpdatePragmaQuickFix(activeVer));
+        }
+      }
+
+      builder.create();
     }
   }
 
