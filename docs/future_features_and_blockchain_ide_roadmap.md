@@ -37,6 +37,7 @@ This document outlines the **Next Generation Features and Architecture Roadmap**
    - 2.8 Execution Framework & Run Configurations
    - 2.9 External Annotators & Asynchronous Toolchain Interop
    - 2.10 SDK Management & Project Configurable
+   - 2.11 Module Types, Project Wizards & Directory Project Generators
 3. [Blockchain & Zero-Knowledge Specific Features for Midnight Compact](#3-blockchain--zero-knowledge-specific-features-for-midnight-compact)
    - 3.1 ZK Circuit Constraint Cost Estimator & Metrics
    - 3.2 Privacy Boundary & Private Witness Taint Analysis
@@ -58,6 +59,7 @@ This document outlines the **Next Generation Features and Architecture Roadmap**
    - 5.2 Line Marker & Gutter Runner Architecture
    - 5.3 SDK Settings & External Annotator Pipeline
    - 5.4 Run Configuration & Test Console Flow
+   - 5.5 Module Type & Project Wizard Blueprint
 6. [Summary Comparison: Current State vs Future State](#6-summary-comparison-current-state-vs-future-state)
 7. [Conclusion & Next Steps](#7-conclusion--next-steps)
 
@@ -134,16 +136,16 @@ To ensure the Midnight Compact plugin meets and exceeds industry standards, we b
 The IntelliJ Platform offers an extensive suite of extension points (`<extensions defaultExtensionNs="com.intellij">`) that can be integrated into the Midnight plugin:
 
 ```
-+---------------------------------------------------------------------------------------------------------------+
-|                                    INTELLIJ PLATFORM EXTENSION SPECTRUM                                       |
-+-------------------------------+-------------------------------+-----------------------------------------------+
-|       EDITOR & INLINE         |     GUTTER & NAVIGATION       |            TOOLING & EXECUTION                |
-| - InlayHintsProvider          | - LineMarkerProvider          | - ConfigurationType & RunConfiguration        |
-| - InlayParameterHintsProvider | - RelatedItemLineMarker       | - ToolWindowFactory (State / ZKIR / DevNet)   |
-| - IntentionAction             | - CallHierarchyProvider       | - ExternalAnnotator (compactc background check)|
-| - PostfixTemplateProvider     | - TypeHierarchyProvider       | - Configurable & ProjectSdksModel             |
-| - CodeVisionProvider          | - GotoSymbolContributor       | - ExecutionConsole / ProcessHandler           |
-+-------------------------------+-------------------------------+-----------------------------------------------+
++-------------------------------------------------------------------------------------------------------------------+
+|                                       INTELLIJ PLATFORM EXTENSION SPECTRUM                                         |
++-------------------------------+-------------------------------+---------------------------------------------------+
+|       EDITOR & INLINE         |     GUTTER & NAVIGATION       |               TOOLING & EXECUTION                 |
+| - InlayHintsProvider          | - LineMarkerProvider          | - ConfigurationType & RunConfiguration            |
+| - InlayParameterHintsProvider | - RelatedItemLineMarker       | - ToolWindowFactory (State / ZKIR / DevNet)       |
+| - IntentionAction             | - CallHierarchyProvider       | - ExternalAnnotator (compactc background check)   |
+| - PostfixTemplateProvider     | - TypeHierarchyProvider       | - Configurable & ProjectSdksModel                 |
+| - CodeVisionProvider          | - GotoSymbolContributor       | - ModuleType & ModuleBuilder (New Project Wizard) |
++-------------------------------+-------------------------------+---------------------------------------------------+
 ```
 
 ### 2.1 Inlay Hints & Parameter Name Annotations
@@ -218,8 +220,8 @@ The IntelliJ Platform offers an extensive suite of extension points (`<extension
 *   **Extension Points**: `com.intellij.configurationType`, `com.intellij.runConfigurationProducer`
 *   **Purpose**: Allow running, debugging, and simulating smart contracts from the standard IntelliJ Run toolbar.
 *   **Capabilities for Compact**:
-    *   "Midnight Compact Contract Test" run configuration type.
-    *   "Midnight Transaction Simulator" run configuration type.
+    *   \"Midnight Compact Contract Test\" run configuration type.
+    *   \"Midnight Transaction Simulator\" run configuration type.
     *   Integrated test tree runner reporting pass/fail status, proof generation time, and execution traces.
 
 ### 2.9 External Annotators (Compiler Interop)
@@ -236,6 +238,23 @@ The IntelliJ Platform offers an extensive suite of extension points (`<extension
     *   Configures path to `compactc` executable and Midnight SDK home directory.
     *   Detects compiler version and automatically checks compatibility against file `pragma` directives.
     *   Provides download/update links for the Midnight toolchain.
+
+### 2.11 Module Types, Project Wizards & Directory Project Generators (`ModuleType`, `ModuleBuilder`, `DirectoryProjectGenerator`)
+*   **Extension Points**: `com.intellij.moduleType`, `com.intellij.directoryProjectGenerator`
+*   **Purpose**: Enable IntelliJ's "New Project" and "New Module" wizards to discover, generate, and scaffold Midnight Compact smart contract projects.
+*   **Marketplace Recommendation**: Statically analyzed by JetBrains Feature Extractor via `ModuleType.getId()` to recommend the Midnight plugin when users create or import Compact projects.
+*   **Capabilities for Compact**:
+    *   *Scaffolded Project Structure*: Generates standard contract directory hierarchies matching official Midnight standards:
+        ```text
+        my-compact-project/
+        ├── contracts/
+        │   └── src/
+        │       └── Contract.compact
+        ├── package.json
+        └── .idea/midnight.xml
+        ```
+    *   *Template Selector*: Choose between Starter Contract, OpenZeppelin Access Control (`ShieldedAccessControl.compact`), Token Contract, or State Machine templates.
+    *   *Toolchain Auto-Configuration*: Automatically associates the project with the active or downloaded `compact` compiler toolchain.
 
 ---
 
@@ -267,7 +286,7 @@ Smart contracts in Compact operate under unique constraints unlike general-purpo
 *   **The Solution**:
     *   **Taint Analysis Engine**: Tracks data flow originating from `witness` outputs.
     *   Flags any direct assignment from private witness variables to public `ledger` fields unless explicitly wrapped in `disclose(...)` and sanitized.
-    *   Provides an instant Quick-Fix (`Alt + Enter`): *"Wrap with disclose()"* or *"Isolate witness computation"*.
+    *   Provides an instant Quick-Fix (`Alt + Enter`): *\"Wrap with disclose()\"* or *\"Isolate witness computation\"*.
 
 ### 3.3 Ledger State Machine & State Transition Diagram Generator
 *   **The Problem**: Understanding how multiple circuits modify shared contract state is difficult in large contracts.
@@ -340,14 +359,15 @@ stateDiagram-v2
 |                                    FIVE-PHASE IMPLEMENTATION ROADMAP                                          |
 +------------------+------------------+------------------+--------------------+---------------------------------+
 |     PHASE 2A     |     PHASE 2B     |     PHASE 2C     |      PHASE 2D      |            PHASE 2E             |
-| Editor Polish &  | Compiler & SDK   | Transaction Run  | ZK & Privacy       | Visual Tooling &                |
-| Inlay Hints      | Toolchain        | & Test Runner    | Specialization     | Security Suite                  |
+| Editor Polish &  | Compiler, SDK &  | Transaction Run  | ZK & Privacy       | Visual Tooling &                |
+| Inlay Hints      | Project Wizard   | & Test Runner    | Specialization     | Security Suite                  |
 | (Sprint 1)       | (Sprint 2)       | (Sprint 3)       | (Sprint 4)         | (Sprint 5)                      |
 +------------------+------------------+------------------+--------------------+---------------------------------+
 | - Parameter Hints| - SDK Settings   | - Run Configs    | - ZK Cost Metrics  | - Ledger State Diagram          |
 | - Inferred Types | - compactc Annot | - Gutter Runner  | - Privacy Taint    | - DevNet Tool Window            |
 | - Postfix Compl. | - Pragma Matcher | - Test Console   | - ZKIR Disassembler| - Slither Security Inspections  |
 | - Intentions     | - stdlib Bundler | - Navigation Link| - TS Binding Gen   | - Formal Verification Export    |
+| - Code Vision    | - Module Wizard  |                  |                    |                                 |
 +------------------+------------------+------------------+--------------------+---------------------------------+
 ```
 
@@ -361,12 +381,13 @@ stateDiagram-v2
     5.  `CompactCodeVisionProvider`: Reference counts and usage telemetry above symbols.
 
 ### Phase 2B: Compiler & Toolchain Integration (Sprint 2)
-*   **Goal**: Connect the IDE to the official `compactc` compiler binary and bundled standard library.
+*   **Goal**: Connect the IDE to the official `compactc` compiler binary, bundled standard library, and project structure wizards.
 *   **Deliverables**:
     1.  `CompactSdkConfigurable`: Settings page for configuring the `compactc` toolchain path and network targets.
     2.  `CompactExternalAnnotator`: Background asynchronous compiler checker reporting compiler errors/warnings.
     3.  `CompactPragmaVersionChecker`: Real-time inspection comparing contract `pragma` with configured SDK version.
     4.  `CompactStandardLibraryProvider`: Bundled `compact-std` libraries for instant cryptographic resolution.
+    5.  `CompactModuleType` & `CompactModuleBuilder`: Dedicated project structure and module scaffolding in New Project wizard.
 
 ### Phase 2C: Transaction Execution & Test Runner (Sprint 3)
 *   **Goal**: Execute and test Compact smart contracts directly from the IDE.
@@ -510,6 +531,41 @@ classDiagram
     CompactRunConfiguration --> CompactCommandLineState
 ```
 
+### 5.5 Module Type & Project Wizard Blueprint
+
+```mermaid
+classDiagram
+    class ModuleType~CompactModuleBuilder~ {
+        <<abstract>>
+    }
+    class CompactModuleType {
+        +ID: "MIDNIGHT_COMPACT_MODULE"
+        +createModuleBuilder() CompactModuleBuilder
+        +getName() "Midnight Compact"
+        +getDescription() "Create a new Midnight Compact smart contract project"
+        +getNodeIcon(isOpened: boolean) Icon
+    }
+    class ModuleBuilder {
+        <<abstract>>
+    }
+    class CompactModuleBuilder {
+        +getModuleType() ModuleType
+        +setupRootModel(rootModel: ModifiableRootModel)
+        +createProjectSkeleton(contentEntry: ContentEntry)
+    }
+
+    ModuleType <|-- CompactModuleType
+    ModuleBuilder <|-- CompactModuleBuilder
+    CompactModuleType --> CompactModuleBuilder : creates
+```
+
+*   **Registration in `plugin.xml`**:
+    ```xml
+    <moduleType
+            id="MIDNIGHT_COMPACT_MODULE"
+            implementationClass="dev.verloren.midnight.ide.project.CompactModuleType"/>
+    ```
+
 ---
 
 ## 6. Summary Comparison: Current State vs Future State
@@ -517,6 +573,7 @@ classDiagram
 | IDE Subsystem | Phase 1 (Completed & QA Verified) | Phases 2A–2E (Roadmap) |
 | :--- | :--- | :--- |
 | **Lexer & Parser** | Full Compact grammar, Pratt expressions, error recovery. | Incremental re-parsing, performance optimizations for huge monorepos. |
+| **Project & Module Structure** | New Compact File templates only. | `CompactModuleType` & `CompactModuleBuilder` project wizard, automated contract directory scaffolding, and JetBrains Feature Extractor module recommendations. |
 | **Inlay Hints** | Not implemented. | Inline parameter names, inferred variable types, bit-width annotations. |
 | **Gutter Actions** | Not implemented. | Run/test gutter buttons ($\blacktriangleright$), privacy indicators (🔒/🌐), import navigation. |
 | **Intentions & Postfix** | Surround-with (`Ctrl+Alt+T`), Unused variable fix. | Postfix templates (`.const`, `.assert`, `.disclose`, `.if`), Auto-constructor, Stub generators. |

@@ -65,8 +65,8 @@
             <li>Select the location of your <code>compact</code> executable:
                 <ul>
                     <li><b>Linux / macOS:</b> Typically <code>/usr/local/bin/compact</code>, <code>~/.cargo/bin/compact</code>, or your local installation path.</li>
-                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\\\\\\\\\\\\\wsl$\\\\\\\\Ubuntu\\\\\\\\usr\\\\\\\\bin\\\\\\\\compact</code>).</li>
-                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\\\\\\\\Windows\\\\\\\\System32\\\\\\\\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
+                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\\\\\wsl$\\Ubuntu\\usr\\bin\\compact</code>).</li>
+                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\\Windows\\System32\\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
                 </ul>
             </li>
             <li>Click <b>Test / Validate</b> to verify that IntelliJ successfully communicates with the compiler.</li>
@@ -133,6 +133,27 @@
     <resource-bundle>messages.MyMessageBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
+
+        <!-- Marketplace Recommendation: Dependency Support -->
+        <dependencySupport
+                kind="javascript"
+                coordinate="@midnight-ntwrk/compact-runtime"
+                displayName="Midnight Compact"/>
+
+        <dependencySupport
+                kind="javascript"
+                coordinate="@midnight-ntwrk/compact-js"
+                displayName="Midnight Compact"/>
+
+        <dependencySupport
+                kind="javascript"
+                coordinate="@midnight-ntwrk/midnight-js-contracts"
+                displayName="Midnight JS Contracts"/>
+
+        <dependencySupport
+                kind="javascript"
+                coordinate="@openzeppelin/compact-contracts"
+                displayName="OpenZeppelin Compact Contracts"/>
 
         <fileType
                 name="Compact"
