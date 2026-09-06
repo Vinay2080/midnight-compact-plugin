@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-09-06
+### Fixed
+- **DaemonCodeAnalyzer Deprecated API & IDE Stability**:
+  - Replaced deprecated `DaemonCodeAnalyzer.restart()` and `restart(PsiFile)` calls with diagnostic reason-aware APIs (`restart(reason)` and `restart(psi, reason)`).
+  - Fixed cascading analysis restart storms: updating a single pragma/file now selectively restarts highlighting only for the target file instead of rescheduling the daemon across all open and project files.
+
 ## [1.2.0] - 2026-09-06
 ### Added
 - **Compact Toolchain vs. Language Version Alignment**:
