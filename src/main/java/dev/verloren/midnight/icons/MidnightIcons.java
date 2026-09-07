@@ -9,6 +9,7 @@ import javax.swing.*;
  */
 public final class MidnightIcons {
   public static final Icon FILE = IconLoader.getIcon("/icons/verloren.svg", MidnightIcons.class);
+  public static final Icon SIDEBAR_TOOLWINDOW = FILE;
 
   private MidnightIcons() {
   }

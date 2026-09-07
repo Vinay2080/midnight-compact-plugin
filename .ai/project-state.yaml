@@ -1,105 +1,93 @@
-project: midnight-plugin
-language: Java
-platform: IntelliJ Platform (Gradle IntelliJ Plugin / 2026.2.0.1 SDK)
-language_supported: Compact (Midnight Smart Contracts)
+# Machine-readable project state tracking
+version: 1
+project:
+  name: midnight-compact-plugin
+  platform_version: "2026.2"
+  java_version: "25"
+  gradle_version: "8.13"
 
 phases:
   lexer: complete
   parser: complete
   psi: complete
-  syntax_highlighting: complete
   references: complete
   completion: complete
-  rename: complete
-  find_usages: complete
-  type_inference: complete
   inspections: complete
   formatter: complete
-  smart_indentation: complete
   structure_view: complete
-  documentation_provider: complete
-  cross_file_resolution: complete
-  level_1_integration: complete
-  file_and_live_templates: complete
-  code_folding: complete
-  breadcrumbs: complete
-  spellchecker: complete
-  surround_with: complete
-  standard_library_indexing: complete
-  compiler_integration: complete
+  documentation: complete
   run_configurations: complete
   external_annotator: complete
+  stdlib: complete
   line_markers: complete
   multi_version_compiler: complete
   compiler_tool_window: complete
-  project_wizard: planned
-  interactive_debugger: planned
-  explorer_tool_window: planned
+  java25_strict_lint: complete
+  status_bar_widget: complete (Phase 27)
+  project_wizard: planned (Phase 28)
+  stub_indexing: planned (Phase 29)
+  advanced_refactorings: planned (Phase 30)
+  remix_blockchain_explorer: planned (Phase 31)
+  ledger_storage_zk_profiler: planned (Phase 32)
+  psi_mcp_server: planned (Phase 33)
+  polyglot_ts_test_framework: planned (Phase 34)
 
 tests:
-  last_known_passing: 389
+  last_known_passing: 441
   failures: 0
   skipped: 0
   suites:
-    lexer: "15 (LexerTest: 12, PragmaTest: 3)"
-    parser: "19 (DeclarationParserTest: 1, EndToEndParserTest: 2, ErrorRecoveryParserTest: 6, ExpressionParserTest: 1, PragmaParserTest: 3, StatementParserTest: 3, TypePatternParserTest: 1, CompactParserDefinitionTest: 2)"
-    psi: "3 (DeclarationPsiTest: 2, ElementFactoryConsistencyTest: 1)"
-    resolve: "38 (CompactResolveTest: 21, CompactCrossFileResolveTest: 17)"
-    reference: "6 (CompactReferenceTest: 6)"
-    completion: "13 (CompactCompletionTest: 13)"
-    rename: "9 (CompactRenameTest: 9)"
-    find_usages: "10 (CompactFindUsagesTest: 10)"
-    editor: "4 (CompactEditorFeaturesTest: 4)"
-    symbol: "3 (CompactSymbolTest: 3)"
-    type_inference: "15 (CompactTypeInferenceTest: 15)"
-    inspections: "91 (CompactInspectionTest: 91)"
-    formatter: "39 (CompactFormatterTest: 39)"
-    structure_view: "9 (CompactStructureViewTest: 9)"
-    documentation: "16 (CompactDocumentationTest: 16)"
-    highlighter: "12 (CompactHighlightingTest: 11, CompactColorSettingsPageTest: 1)"
-    folding: "4 (CompactFoldingTest: 4)"
-    breadcrumbs: "2 (CompactBreadcrumbsTest: 2)"
-    live_templates: "3 (CompactLiveTemplateTest: 3)"
-    file_templates: "12 (CompactFileTemplateTest: 12)"
-    surround_with: "5 (CompactSurroundWithTest: 5)"
-    navigation: "2 (CompactChooseByNameTest: 2)"
-    stdlib: "8 (CompactStandardLibraryTest: 5, CompactStdlibServiceTest: 3)"
-    inlay_hints: "3 (CompactInlayHintsTest: 3)"
-    run: "13 (CompactRunConfigurationTest: 5, CompactRunConfigurationProducerTest: 2, CompactToolchainUtilTest: 6)"
-    test_utils: "3 (CompactTestUtilsTest: 3)"
-    settings: "3 (MidnightSettingsTest: 3)"
-    project_settings: "3 (MidnightProjectSettingsTest: 3)"
-    annotator: "3 (CompactExternalAnnotatorTest: 3)"
-    line_markers: "4 (CompactLineMarkerTest: 4)"
-    version: "7 (CompactSemVerUtilTest: 4, CompactVersionManagerTest: 3)"
-    intentions: "2 (CompactPragmaIntentionTest: 2)"
+    lexer: dev.verloren.midnight.lexer.CompactLexerTest
+    parser: dev.verloren.midnight.parser.CompactParserTest
+    reference: dev.verloren.midnight.reference.CompactReferenceTest
+    completion: dev.verloren.midnight.completion.CompactCompletionTest
+    inspection_unresolved: dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspectionTest
+    inspection_duplicate: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspectionTest
+    inspection_unused: dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspectionTest
+    inspection_type_mismatch: dev.verloren.midnight.inspection.CompactTypeMismatchInspectionTest
+    inspection_pure_circuit: dev.verloren.midnight.inspection.CompactPureCircuitInspectionTest
+    inspection_sealed_field: dev.verloren.midnight.inspection.CompactSealedFieldMutationInspectionTest
+    inspection_recursive_circuit: dev.verloren.midnight.inspection.CompactRecursiveCircuitInspectionTest
+    inspection_constructor: dev.verloren.midnight.inspection.CompactConstructorRestrictionInspectionTest
+    inspection_undisclosed_witness: dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspectionTest
+    inspection_pragma_version: dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest
+    formatter: dev.verloren.midnight.formatter.CompactFormatterTest
+    structure: dev.verloren.midnight.structure.CompactStructureViewTest
+    documentation: dev.verloren.midnight.documentation.CompactDocumentationProviderTest
+    run_config: dev.verloren.midnight.run.CompactRunConfigurationTest
+    annotator: dev.verloren.midnight.annotator.CompactExternalAnnotatorTest
+    stdlib: dev.verloren.midnight.stdlib.CompactStdlibTest
+    find_usages: dev.verloren.midnight.findUsages.CompactFindUsagesTest
+    folding: dev.verloren.midnight.editor.CompactFoldingBuilderTest
+    breadcrumbs: dev.verloren.midnight.editor.CompactBreadcrumbsProviderTest
+    inlay_hints: dev.verloren.midnight.editor.CompactInlayHintsProviderTest
+    line_markers: dev.verloren.midnight.editor.CompactLineMarkerProviderTest
+    parameter_info: dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest
+    file_templates: dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest
+    live_templates: dev.verloren.midnight.ide.templates.CompactLiveTemplateTest
+    semver: dev.verloren.midnight.version.CompactSemVerUtilTest
+    version_manager: dev.verloren.midnight.version.CompactVersionManagerTest
+    compiler_panel: dev.verloren.midnight.toolwindow.CompactCompilerPanelTest
+    pragma_switch_intention: dev.verloren.midnight.intention.CompactSwitchCompilerVersionIntentionTest
+    pragma_update_intention: dev.verloren.midnight.intention.CompactUpdatePragmaVersionIntentionTest
+    status_bar_widget: dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest
 
 architecture:
-  lexer:
-    implementation: dev.verloren.midnight.lexer.CompactLexer
-    base_class: com.intellij.lexer.LexerBase
-    token_types: dev.verloren.midnight.lexer.CompactTokenTypes
-  parser:
-    implementation: dev.verloren.midnight.parser.CompactParser
-    base_interface: com.intellij.lang.PsiParser
-    definition: dev.verloren.midnight.parser.CompactParserDefinition
-    element_types: dev.verloren.midnight.psi.CompactElementTypes
-  psi:
-    base_element: dev.verloren.midnight.psi.impl.CompactPsiElement
-    named_element: dev.verloren.midnight.psi.impl.CompactNamedElementImpl
-    factory: dev.verloren.midnight.psi.impl.CompactElementFactory
-  references_and_resolve:
-    resolver: dev.verloren.midnight.resolve.CompactResolveUtil
-    scope_processor: dev.verloren.midnight.resolve.CompactScopeProcessor
-    cross_file_resolution: include relative/project path resolution with cycle-guarded recursive layers
-    namespace_model: Split TYPE and VALUE namespaces with innermost lexical shadowing
-  type_system:
-    interface: dev.verloren.midnight.type.CompactType
-    primitives: dev.verloren.midnight.type.CompactPrimitiveType
-    uint_types: dev.verloren.midnight.type.CompactUintType
-    numeric_literals: dev.verloren.midnight.type.CompactNumericLiteralType
-    nominal_types: dev.verloren.midnight.type.CompactNamedType
-    inference_util: dev.verloren.midnight.type.CompactTypeInferenceUtil
+  language: dev.verloren.midnight.CompactLanguage
+  file_type: dev.verloren.midnight.CompactFileType
+  parser_definition: dev.verloren.midnight.parser.CompactParserDefinition
+  lexer: dev.verloren.midnight.lexer.CompactLexer
+  parser: dev.verloren.midnight.parser.CompactParser
+  psi_package: dev.verloren.midnight.psi
+  psi_types: dev.verloren.midnight.psi.CompactElementTypes
+  psi_tokens: dev.verloren.midnight.psi.CompactTokenTypes
+  highlighter: dev.verloren.midnight.highlighter.CompactSyntaxHighlighter
+  annotator: dev.verloren.midnight.highlighter.CompactHighlightingAnnotator
+  color_settings: dev.verloren.midnight.highlighter.CompactColorSettingsPage
+  find_usages: dev.verloren.midnight.findUsages.CompactFindUsagesProvider
+  names_validator: dev.verloren.midnight.refactoring.CompactNamesValidator
+  refactoring_support: dev.verloren.midnight.refactoring.CompactRefactoringSupportProvider
+  completion: dev.verloren.midnight.completion.CompactCompletionContributor
   inspections:
     unresolved_reference: dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection
     duplicate_declaration: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection
@@ -110,44 +98,63 @@ architecture:
     recursive_circuit: dev.verloren.midnight.inspection.CompactRecursiveCircuitInspection
     constructor_restriction: dev.verloren.midnight.inspection.CompactConstructorRestrictionInspection
     undisclosed_witness: dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspection
-
+    pragma_version: dev.verloren.midnight.inspection.CompactPragmaVersionInspection
   formatter:
     model_builder: dev.verloren.midnight.formatter.CompactFormattingModelBuilder
     block: dev.verloren.midnight.formatter.CompactBlock
-    settings_provider: dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
-  structure_view:
+    spacing: dev.verloren.midnight.formatter.CompactSpacingBuilder
+    code_style_settings: dev.verloren.midnight.formatter.CompactCodeStyleSettings
+    language_code_style: dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
+  structure:
     factory: dev.verloren.midnight.structure.CompactStructureViewFactory
-    view_model: dev.verloren.midnight.structure.CompactStructureViewModel
-    tree_element: dev.verloren.midnight.structure.CompactStructureViewElement
-  documentation_provider:
-    implementation: dev.verloren.midnight.documentation.CompactDocumentationProvider
-  toolchain:
-    util: dev.verloren.midnight.run.CompactToolchainUtil
-    run_configuration: dev.verloren.midnight.run.CompactRunConfiguration
+    model: dev.verloren.midnight.structure.CompactStructureViewModel
+    element: dev.verloren.midnight.structure.CompactStructureViewElement
+  documentation: dev.verloren.midnight.documentation.CompactDocumentationProvider
+  editor:
+    commenter: dev.verloren.midnight.editor.CompactCommenter
+    brace_matcher: dev.verloren.midnight.editor.CompactPairedBraceMatcher
+    quote_handler: dev.verloren.midnight.editor.CompactQuoteHandler
+    folding: dev.verloren.midnight.editor.CompactFoldingBuilder
+    breadcrumbs: dev.verloren.midnight.editor.CompactBreadcrumbsProvider
+    spellchecking: dev.verloren.midnight.editor.CompactSpellcheckingStrategy
+    surround_descriptor: dev.verloren.midnight.editor.CompactSurroundDescriptor
+    inlay_hints: dev.verloren.midnight.editor.CompactInlayHintsProvider
+    line_marker: dev.verloren.midnight.editor.CompactLineMarkerProvider
+  navigation:
+    goto_class: dev.verloren.midnight.navigation.CompactGotoClassContributor
+    goto_symbol: dev.verloren.midnight.navigation.CompactGotoSymbolContributor
+    goto_declaration: dev.verloren.midnight.navigation.CompactGotoDeclarationHandler
+    type_declaration: dev.verloren.midnight.navigation.CompactTypeDeclarationProvider
+  resolve:
+    reference_contributor: dev.verloren.midnight.reference.CompactReferenceContributor
+    element_factory: dev.verloren.midnight.psi.CompactElementFactory
+  run:
+    config_type: dev.verloren.midnight.run.CompactConfigurationType
     producer: dev.verloren.midnight.run.CompactRunConfigurationProducer
-    external_annotator: dev.verloren.midnight.annotator.CompactExternalAnnotator
-    line_markers: dev.verloren.midnight.editor.CompactLineMarkerProvider
+    line_marker: dev.verloren.midnight.run.CompactRunLineMarkerContributor
+  external_annotator: dev.verloren.midnight.annotator.CompactExternalAnnotator
+  stdlib:
+    service: dev.verloren.midnight.stdlib.CompactStdlibService
+    provider: dev.verloren.midnight.stdlib.CompactStandardLibraryProvider
+  version:
+    semver: dev.verloren.midnight.version.CompactSemVerUtil
     version_manager: dev.verloren.midnight.version.CompactVersionManager
-    project_settings: dev.verloren.midnight.settings.MidnightProjectSettings
-    tool_window: dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory
+  toolwindow:
+    factory: dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory
+    panel: dev.verloren.midnight.toolwindow.CompactCompilerPanel
+  statusbar:
+    factory: dev.verloren.midnight.statusbar.CompactStatusBarWidgetFactory
+    widget: dev.verloren.midnight.statusbar.CompactStatusBarWidget
+    popup: dev.verloren.midnight.statusbar.CompactStatusBarPopup
 
 references:
-  compiler:
+  compiler_source:
     repo: compact/
-    curated: references/
-    description: Official Midnight Compact Chez Scheme compiler and AST specifications
-  ide_rust:
-    repo: intellij-rust/
-    description: IntelliJ Rust plugin (Kotlin) - stub indexes, type inference engine, formatting
-  ide_elixir:
-    repo: intellij-elixir/
-    description: IntelliJ Elixir plugin (Java/Kotlin) - handwritten lexer/parser, doc provider
-  ide_scala:
-    repo: intellij-scala/
-    description: JetBrains Scala plugin - external compile daemon/build servers, REPL console, advanced type systems
-  ide_r:
-    repo: Rplugin/
-    description: JetBrains R plugin - toolchain & WSL interpreter discovery, run configs, project wizard generator, interactive visualizers
+    path: compact/compiler/
+    description: Official Compact language compiler implementation (Chez Scheme)
   local_devnet:
     repo: ../midnight-local-dev/
     description: Local Docker Compose Midnight network stack, proof server, dev accounts, RPC endpoints
+  docs_future_plan:
+    path: docs/FUTURE_PLAN.md
+    description: Comprehensive roadmap, comparative XML audit, Remix IDE spec, and PSI MCP Server architecture

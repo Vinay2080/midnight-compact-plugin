@@ -65,6 +65,7 @@ This guide maps all external and reference materials present in the repository.
   - **Formatter & Code Style**: `ide/formatter/` (spacing builders, block hierarchies, wrap rules).
   - **Inspections & Quick Fixes**: `ide/inspections/` (best practices for `LocalInspectionTool` and `LocalQuickFix`).
   - **Structure View**: `ide/structure/` (`StructureViewModel`, `StructureViewTreeElement`).
+  - **Code Vision**: `ide/codeVision/` (inline usage counters and metric providers).
 
 ### 2.2 IntelliJ Elixir (`intellij-elixir/`)
 - **Location**: `intellij-elixir/src/org/elixir_lang/`
@@ -72,6 +73,7 @@ This guide maps all external and reference materials present in the repository.
   - **Handwritten Lexer/Parser Integration**: `lexer/`, `parser/` (techniques for integrating custom non-GrammarKit parsers with IntelliJ PSI).
   - **Documentation Provider**: `templates/`, `reference/` (hover documentation rendering).
   - **Names Validator**: `refactoring/quote/NamesValidator.java`.
+  - **Modern Symbol API**: `reference/` (resolving symbols in modern IntelliJ APIs).
 
 ### 2.3 IntelliJ Scala (`intellij-scala/`)
 - **Location**: `intellij-scala/scala/`
@@ -116,23 +118,49 @@ This guide maps all external and reference materials present in the repository.
   - Proof Server: `http://localhost:6300`
   - Indexer: `http://localhost:8088`
 - **Use when**:
-  - Designing Level 5 Midnight Explorer Tool Window (connecting to localnet / testnet nodes).
+  - Designing Phase 31 Midnight Explorer Tool Window (connecting to localnet / testnet nodes).
   - Verifying contract compilation artifacts against real local proof-server and node requirements.
   - Testing run configurations against active local testnet services.
 
 ---
 
-## 4. Targeted Retrieval Guide for AI Agents
+## 4. Future Use Case Reference Repositories
 
-| Task | Target Reference File(s) | Do NOT Load |
+For future phases, reference these specialized patterns:
+
+### 4.1 Web3 / Smart Contract IDE Patterns (`intellij-solidity` / Foundry / Remix)
+- **Use when**: Implementing **Phase 31 (Remix-Style Explorer)** & **Phase 32 (Ledger/UTXO Storage Inspector)**.
+- **Patterns to extract**:
+  - Dynamic Swing/JComponent contract interaction forms generated from ABI / constructor parameters.
+  - State variable tree view (public vs private/sealed slots, mapping lookups).
+  - Gas/fee estimation and local wallet selector UI.
+
+### 4.2 Midnight TypeScript Client SDKs (`@midnight-ntwrk/*`)
+- **Use when**: Implementing **Phase 34 (Polyglot TypeScript Bridge)**.
+- **Packages**:
+  - `@midnight-ntwrk/compact-runtime`: Contract interface bindings and ABI representations.
+  - `@midnight-ntwrk/ledger`: UTXO note schemas and ledger state structures.
+  - `@midnight-ntwrk/wallet-api`: Key management and transaction submission signatures.
+- **Patterns to extract**:
+  - Mapping TypeScript method calls (`contract.transfer(...)`) to Compact `@export circuit transfer(...)`.
+
+### 4.3 Model Context Protocol (MCP) Standards & SDKs
+- **Use when**: Implementing **Phase 33 (PSI-Powered MCP Server)**.
+- **Standards**:
+  - Anthropic Model Context Protocol specification (JSON-RPC 2.0 over Stdio and HTTP/SSE).
+  - `ReadAction.nonBlocking()` and `WriteCommandAction` threading dispatchers for safe in-memory AST queries.
+
+---
+
+## 5. Targeted Retrieval Guide for AI Agents
+
+| Task / Phase | Target Reference File(s) | Do NOT Load |
 | :--- | :--- | :--- |
-| **New expression parsing** | `compact/compiler/parser.ss` (around `(define-grammar ...)`) | Entire `compact/` tree |
-| **Type compatibility** | `references/infer-types.ss` | Entire Scheme compiler |
-| **Stdlib builtins** | `compact/compiler/standard-library.compact` | Test suites or build scripts |
-| **IntelliJ Stub Indexing** | `intellij-rust/.../stubs/` | Rust compiler or unrelated plugin files |
-| **IntelliJ Doc Provider** | `intellij-rust/.../ide/docs/` or `Rplugin/.../documentation/` | Entire `intellij-rust` / `Rplugin` repo |
-| **Toolchain & WSL Discovery** | `Rplugin/psi/.../interpreter/` or `CompactToolchainUtil.java` | Entire R plugin tree |
-| **Compiler Daemon / Runner** | `intellij-scala/scala/compile-server/` or `scala-impl/.../compiler/` | Entire Scala plugin tree |
-| **Project Wizard / DApp Scaffold**| `Rplugin/.../projectGenerator/` | Unrelated R packages or UI code |
-| **Interactive Console / REPL**| `intellij-scala/scala/repl/` or `Rplugin/.../console/` | Entire repl module |
-| **Local Testnet & RPC Endpoints**| `../midnight-local-dev/standalone.yml` | `node_modules` or Docker layers |
+| **Phase 27: Status Bar Widget** | `intellij-scala/.../compile-server/` or `Rplugin/.../interpreter/` | Unrelated UI packages |
+| **Phase 28: Project Wizard / Scaffold** | `Rplugin/.../projectGenerator/` | Unrelated R packages or UI code |
+| **Phase 29: Stub Indexing** | `intellij-rust/.../stubs/` & `intellij-elixir/.../psi/stub/` | Rust compiler or unrelated plugin files |
+| **Phase 30: Advanced Refactorings** | `intellij-rust/.../ide/refactoring/` | Entire compiler tree |
+| **Phase 31: Blockchain Explorer & RPC** | `../midnight-local-dev/standalone.yml` & `accounts.json` | `node_modules` or Docker layers |
+| **Phase 32: Visualizer & Table View** | `Rplugin/src/org/jetbrains/r/visualization/` | Entire graphics pipeline |
+| **Phase 33: PSI-Powered MCP Server** | `docs/MCP_SERVER_SPEC.md` & `CompactElementFactory.java` | Entire platform SDK |
+| **Phase 34: Polyglot TS Bridge** | `@midnight-ntwrk/compact-runtime` & `CompactLineMarkerProvider.java` | Entire node_modules |

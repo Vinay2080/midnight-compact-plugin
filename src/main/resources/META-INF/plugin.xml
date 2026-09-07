@@ -262,6 +262,11 @@
                 factoryClass="dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory"
                 icon="/icons/verloren.svg"/>
 
+
+        <statusBarWidgetFactory
+                id="CompactStatusBarWidget"
+                implementation="dev.verloren.midnight.statusbar.CompactStatusBarWidgetFactory"
+                order="after CodeStyleStatusBarWidget, before git, before Notifications"/>
         <notificationGroup
                 id="Midnight Notifications"
                 displayType="BALLOON"

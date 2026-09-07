@@ -2,8 +2,20 @@
 
 # Midnight-plugin Changelog
 
-## [Unreleased]
+## [1.2.2] - 2026-09-08
 ### Added
+- **Status Bar Toolchain & Environment Monitor (Phase 27)**:
+  - Registered `CompactStatusBarWidgetFactory` (`CompactStatusBarWidget`) in `plugin.xml` on the editor status bar (`order="after CodeStyleStatusBarWidget, before git, before Notifications"`).
+  - Lightweight, non-blocking widget displaying active Compact compiler version along with its corresponding language version mapping (e.g. `Compact: v0.34.0 (0.26.0)`).
+  - Native speed-search popup menu (`CompactStatusBarPopup`) providing:
+    - Active compiler toolchain header.
+    - 1-click installed version switcher with checkmark indicators.
+    - Reset to auto-detected system/WSL toolchain.
+    - Background compiler downloader with non-blocking progress dialog.
+    - Quick link to open the right-stripe **Compact Compiler** (Remix-style) tool window.
+    - Quick link to open Midnight plugin configuration settings (`ShowSettingsUtil`).
+  - Strict $O(1)$ in-memory evaluation on UI threads: widget never invokes external processes or probes disk synchronously on the Event Dispatch Thread (EDT).
+  - Comprehensive unit test suite `CompactStatusBarWidgetTest` covering widget lifecycle, presentation text, file enablement, and popup actions (raising total suite to 441 passing tests).
 - **Go to Type Declaration (`Ctrl+Shift+B` / `Cmd+Shift+B`)**:
   - Implemented `CompactTypeDeclarationProvider` (`com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider`) to navigate directly from variables, parameters, expressions, and ledger fields to the underlying struct, enum, or type declaration.
   - Recursion-safe unwrapping of generic parameters (e.g. `Cell<T>`, `Vector<T, N>`) and type aliases down to nominal declarations.
@@ -17,8 +29,6 @@
 - **Marketplace Plugin Recommendations (`dependencySupport`)**:
   - Registered `dependencySupport` extension points in `plugin.xml` for JavaScript/TypeScript projects referencing `@midnight-ntwrk/compact-runtime`, `@midnight-ntwrk/compact-js`, `@midnight-ntwrk/midnight-js-contracts`, and `@openzeppelin/compact-contracts`.
   - Enables IntelliJ Platform IDEs (IntelliJ IDEA, WebStorm) to automatically recommend the Midnight Compact plugin when opening projects with Midnight and Compact dependencies.
-- **Project Structure & Module Scaffolding Roadmap**:
-  - Outlined `CompactModuleType`, `CompactModuleBuilder`, and `DirectoryProjectGenerator` architecture in `docs/future_features_and_blockchain_ide_roadmap.md` for dedicated "New Project" wizard scaffolding and JetBrains Feature Extractor module-type recommendation scanning.
 
 ### Fixed
 - **Compiler Version Switching Code Duplication & Toolchain Sync**:
@@ -43,14 +53,16 @@
   - In-editor pragma validation and quick-fixes accurately map `pragma language_version >= 0.26.0;` to toolchain `0.34.0`.
 - **Enhanced Compiler Path Discovery & Sync**:
   - Dynamically auto-detects installed compilers under `~/.compact/versions/*/compactc` (both on host OS and inside WSL).
-  - Automatically synchronizes `MidnightSettingsState.compilerPath` upon selecting any compiler version card, updating editor annotations and run configurations immediately without requiring an IDE restart.\n  - Corrected official GitHub release download URLs to use `compactc-v<version>` tag patterns with automatic cleanup on download failure.
+  - Automatically synchronizes `MidnightSettingsState.compilerPath` upon selecting any compiler version card, updating editor annotations and run configurations immediately without requiring an IDE restart.
+  - Corrected official GitHub release download URLs to use `compactc-v<version>` tag patterns with automatic cleanup on download failure.
 - **Native In-Process Pragma Inspection (`CompactPragmaVersionInspection`)**:
   - Registered a native `LocalInspectionTool` (level `ERROR`) that directly evaluates contract `pragma language_version` constraints against the active toolchain.
   - Immediately updates inline red error squiggly underlines and the editor's top-right traffic light upon compiler changes or file edits without waiting for background external processes.
 - **Instant Error & Traffic Light Synchronization**:
   - Switching or deleting compiler versions immediately triggers daemon code analysis, providing instantaneous feedback in the editor and Problems tool window.
 - **Interactive Run Button with Green Outline**:
-  - Redesigned the \"Run Contract\" button in the Compact Compiler tool window with an emerald green outline, execution icon, and responsive hover/press styling.\n  - Automatically resolves the target `.compact` file from the focused editor, open tabs, or indexed project files, executing compilation and streaming live output to the Run console.
+  - Redesigned the \"Run Contract\" button in the Compact Compiler tool window with an emerald green outline, execution icon, and responsive hover/press styling.
+  - Automatically resolves the target `.compact` file from the focused editor, open tabs, or indexed project files, executing compilation and streaming live output to the Run console.
 - **Uniform Version Cards & Action Controls**:
   - Standardized all version cards to a fixed height (`JBUI.scale(42)`) with clean single-action icons (Download for uninstalled, Delete for installed).
   - Added a download confirmation dialog to prevent accidental triggers.
