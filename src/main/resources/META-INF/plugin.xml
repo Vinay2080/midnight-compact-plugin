@@ -326,6 +326,10 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.editor.CompactLineMarkerProvider"/>
 
+        <codeInsight.parameterInfo
+                language="Compact"
+                implementationClass="dev.verloren.midnight.parameterInfo.CompactParameterInfoHandler"/>
+
 
 
 
