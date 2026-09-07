@@ -1,7 +1,7 @@
 package dev.verloren.midnight.scope;
 
 /**
- * Enumerates all distinct types of scope boundaries recognized in Compact code.
+ * Enumerates all distinct types of scope boundaries recognised in Compact code.
  */
 public enum CompactScopeKind {
   FILE,

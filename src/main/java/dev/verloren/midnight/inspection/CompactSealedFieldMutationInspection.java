@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * Inspection flagging mutations to {@code sealed ledger} fields outside {@code constructor}.
  *
  * <p>In the Compact compiler ({@code check-sealed-fields.ss}), sealed ledger fields
- * can only be initialized and mutated during contract deployment within the {@code constructor}.
+ * can only be initialised and mutated during contract deployment within the {@code constructor}.
  * Modifying sealed fields in circuits is strictly prohibited.</p>
  */
 public class CompactSealedFieldMutationInspection extends LocalInspectionTool {

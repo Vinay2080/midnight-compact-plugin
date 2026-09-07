@@ -115,7 +115,7 @@ public final class CompactVersionManager {
 
   /**
    * Resolves the official compiler toolchain version for a given Compact language version.
-   * e.g. language version 0.26.0 maps to toolchain 0.34.0.
+   * E.g. language version 0.26.0 maps to toolchain 0.34.0.
    */
   public static @NotNull String resolveToolchainVersionForLanguage(@NotNull String languageVersion) {
     String clean = cleanVersion(languageVersion);
@@ -177,7 +177,7 @@ public final class CompactVersionManager {
   /**
    * Discovers all locally installed Compact compiler versions.
    *
-   * @return SequencedMap of cleaned version string to executable path.
+   * @return SequencedMap of cleaned version string to an executable path.
    */
   public static @NotNull SequencedMap<String, String> getInstalledVersions() {
     SequencedMap<String, String> versions = new TreeMap<>(Comparator.reverseOrder());
@@ -331,7 +331,7 @@ public final class CompactVersionManager {
       indicator.setText("Downloading Compact compiler v" + cleanVer + "...");
     }
 
-    // 1. Try downloading official GitHub release binary
+    // 1. Try downloading the official GitHub release binary
     boolean downloaded = downloadOfficialRelease(cleanVer, targetDir, indicator);
     if (downloaded) {
       recordInstalledExecutable(targetDir, cleanVer);
@@ -547,7 +547,7 @@ public final class CompactVersionManager {
    * Detects the version string from an executable by executing it with {@code --version}.
    *
    * <p>Thread-safe and EDT-safe: Never runs external OS processes synchronously on the Event Dispatch Thread (EDT)
-   * or while holding a Read Action. If not cached, triggers background detection and returns null or the path-extracted version.</p>
+   * or while holding a Read Action. If not cached, it triggers background detection and returns null or the path-extracted version.</p>
    */
   public static @Nullable String detectVersionFromExecutable(@NotNull String executablePath) {
     if (executablePath.isBlank()) {
@@ -574,7 +574,7 @@ public final class CompactVersionManager {
       return EXECUTABLE_VERSION_CACHE.get(executablePath);
     }
 
-    // 4. Background execution (safe for synchronous process)
+    // 4. Background execution (safe for a synchronous process)
     String detected = runVersionDetectionProcess(executablePath);
     if (detected != null) {
       EXECUTABLE_VERSION_CACHE.put(executablePath, detected);

@@ -219,7 +219,7 @@ public class CompactCompilerPanel extends JPanel {
     compileButton.setBorder(JBUI.Borders.empty(4, 12));
     compileButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     HelpTooltipKt.setToolTipText(compileButton, HtmlChunk.text("Run Compact compiler on contract"));
-    compileButton.addActionListener(e -> onCompileContract());
+    compileButton.addActionListener(_ -> onCompileContract());
     actionRow.add(compileButton, BorderLayout.EAST);
 
     card.add(actionRow, BorderLayout.SOUTH);
@@ -295,7 +295,7 @@ public class CompactCompilerPanel extends JPanel {
 
   /**
    * Instantly updates UI selection on EDT with zero perceived latency,
-   * then updates settings, and triggers background reparsing.
+   * then updates settings and triggers background reparsing.
    */
   private void selectVersionImmediately(@NotNull String version) {
     MidnightProjectSettings.getInstance(project).selectedCompilerVersion = version;

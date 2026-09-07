@@ -250,7 +250,7 @@ public class CompactParameterInfoHandler implements ParameterInfoHandler<PsiElem
       }
     }
 
-    // Check parent (e.g. CompactOptionallyTypedPattern or CompactTypedPattern)
+    // Check parent (e.g., CompactOptionallyTypedPattern or CompactTypedPattern)
     PsiElement parent = param.getParent();
     if (parent != null) {
       for (PsiElement child : parent.getChildren()) {
