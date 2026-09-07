@@ -255,4 +255,72 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertTrue("Should suggest 'p'", lookupStrings.contains("p"));
     assertFalse("Should NOT suggest 'c'", lookupStrings.contains("c"));
   }
+
+  public void testStatementContextClassification() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test() {
+          <caret>
+        }
+        """
+    );
+    PsiElement pos = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(pos);
+    assertEquals(CompactCompletionContext.Kind.STATEMENT, CompactCompletionContext.classify(pos));
+  }
+
+  public void testStatementCompletionSeparation() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(amount: Uint<64>) {
+          <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest statement keyword 'const'", lookupStrings.contains("const"));
+    assertTrue("Should suggest statement keyword 'return'", lookupStrings.contains("return"));
+    assertTrue("Should suggest statement keyword 'if'", lookupStrings.contains("if"));
+    assertTrue("Should suggest in-scope parameter 'amount'", lookupStrings.contains("amount"));
+    assertFalse("Should NOT suggest top-level keyword 'import'", lookupStrings.contains("import"));
+    assertFalse("Should NOT suggest top-level keyword 'pragma'", lookupStrings.contains("pragma"));
+    assertFalse("Should NOT suggest top-level keyword 'circuit'", lookupStrings.contains("circuit"));
+    assertFalse("Should NOT suggest top-level keyword 'ledger'", lookupStrings.contains("ledger"));
+  }
+
+  public void testTopLevelCompletionSeparation() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        pragma language_version >= 0.26.0;
+        <caret>
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest declaration keyword 'import'", lookupStrings.contains("import"));
+    assertTrue("Should suggest declaration keyword 'circuit'", lookupStrings.contains("circuit"));
+    assertTrue("Should suggest declaration keyword 'struct'", lookupStrings.contains("struct"));
+    assertFalse("Should NOT suggest statement keyword 'return'", lookupStrings.contains("return"));
+    assertFalse("Should NOT suggest statement keyword 'for'", lookupStrings.contains("for"));
+  }
+
+  public void testStructBodyCompletionDoesNotSuggestKeywords() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Config {
+          <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    if (lookupStrings != null) {
+      assertFalse("Should NOT suggest 'import' inside struct body", lookupStrings.contains("import"));
+      assertFalse("Should NOT suggest 'return' inside struct body", lookupStrings.contains("return"));
+      assertFalse("Should NOT suggest 'circuit' inside struct body", lookupStrings.contains("circuit"));
+    }
+  }
 }

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -30,15 +31,19 @@ import java.util.Set;
  * or members, populating the {@link CompletionResultSet} with contextually valid lookup items.</p>
  */
 public class CompactCompletionContributor extends CompletionContributor {
+
   private static final String[] DECLARATION_KEYWORDS = {
       "pragma", "include", "import", "export", "module", "contract", "struct", "enum", "type", "ledger", "witness", "constructor", "circuit"
   };
+
   private static final String[] STATEMENT_KEYWORDS = {
       "const", "if", "for", "return", "assert", "emit"
   };
+
   private static final String[] VALUE_KEYWORDS = {
       "true", "false", "default", "disclose", "map", "fold", "pad", "slice", "assert", "emit"
   };
+
   private static final String[] BUILTIN_TYPES = {
       "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar"
   };
@@ -55,9 +60,10 @@ public class CompactCompletionContributor extends CompletionContributor {
 
   private static void addCompactCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
     switch (CompactCompletionContext.classify(position)) {
-      case KEYWORD -> {
-        addAll(result, DECLARATION_KEYWORDS);
+      case KEYWORD -> addAll(result, DECLARATION_KEYWORDS);
+      case STATEMENT -> {
         addAll(result, STATEMENT_KEYWORDS);
+        addValueCompletions(position, result);
       }
       case TYPE -> {
         addAll(result, BUILTIN_TYPES);
@@ -66,6 +72,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       }
       case MEMBER -> addMemberCompletions(position, result);
       case VALUE -> addValueCompletions(position, result);
+      case NONE -> {}
     }
   }
 
@@ -91,26 +98,22 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
   }
 
+  private static void addResolvedNamed(@NotNull CompletionResultSet result, ResolveResult @NotNull [] resolveResults) {
+    for (ResolveResult resolveResult : resolveResults) {
+      if (resolveResult.getElement() instanceof CompactNamedElement named) {
+        addNamed(result, named);
+      }
+    }
+  }
+
   private static void addMemberCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
     CompactMemberExprImpl memberExpr = PsiTreeUtil.getParentOfType(position, CompactMemberExprImpl.class, false);
 
     if (memberExpr != null) {
       // 1. Check existing references (Enum / Struct field)
-      switch (memberExpr.getReference()) {
-        case CompactEnumMemberReference enumRef -> {
-          for (ResolveResult resolveResult : enumRef.multiResolve(false)) {
-            if (resolveResult.getElement() instanceof CompactNamedElement named) {
-              addNamed(result, named);
-            }
-          }
-        }
-        case CompactStructFieldReference structRef -> {
-          for (ResolveResult resolveResult : structRef.multiResolve(false)) {
-            if (resolveResult.getElement() instanceof CompactNamedElement named) {
-              addNamed(result, named);
-            }
-          }
-        }
+      switch (Objects.requireNonNull(memberExpr.getReference())) {
+        case CompactEnumMemberReference enumRef -> addResolvedNamed(result, enumRef.multiResolve(false));
+        case CompactStructFieldReference structRef -> addResolvedNamed(result, structRef.multiResolve(false));
         default -> {}
       }
 
@@ -174,7 +177,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       CompactNamedElement unwrapped = (target instanceof CompactImportElementImpl importElem)
           ? CompactResolveUtil.resolveImportElementSource(importElem)
           : target;
-      switch (unwrapped) {
+      switch (Objects.requireNonNull(unwrapped)) {
         case CompactStructDefinition structDef -> addNamed(result, structDef.getFields());
         case CompactEnumDefinition enumDef -> addNamed(result, enumDef.getMembers());
         default -> {}
@@ -206,7 +209,7 @@ public class CompactCompletionContributor extends CompletionContributor {
         result.addElement(PrioritizedLookupElement.withPriority(
             LookupElementBuilder.create("false").bold(), 100.0));
       }
-      if (!"Void".equalsIgnoreCase(expectedType.name()) && !"void".equalsIgnoreCase(expectedType.name())) {
+      if (!"Void".equalsIgnoreCase(expectedType.name())) {
         result.addElement(PrioritizedLookupElement.withPriority(
             LookupElementBuilder.create("default"), 50.0));
         result.addElement(PrioritizedLookupElement.withPriority(
@@ -243,7 +246,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       }
     }
 
-    // 3. Check if in is (<caret>) or assert(<caret>) condition context
+    // 3. Check if in the "is (<caret>)" or "assert(<caret>)" condition context
     PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
     if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.LPAREN) {
       PsiElement beforeParen = PsiTreeUtil.prevVisibleLeaf(prev);
@@ -299,7 +302,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       case CompactStructFieldImpl field -> field.getType();
       case CompactEnumMemberImpl member -> member.getType();
       case CompactEnumDefinition enumDef ->
-              new CompactPrimitiveType(enumDef.getName() != null ? enumDef.getName() : "Enum");
+          new CompactPrimitiveType(enumDef.getName() != null ? enumDef.getName() : "Enum");
       default -> element.getType();
     };
   }
@@ -316,47 +319,49 @@ public class CompactCompletionContributor extends CompletionContributor {
     String candidateName = candidateType.name();
 
     // Void handling
-    if ("Void".equalsIgnoreCase(expectedName) || "void".equalsIgnoreCase(expectedName)) {
-      return "Void".equalsIgnoreCase(candidateName) || "void".equalsIgnoreCase(candidateName);
+    if ("Void".equalsIgnoreCase(expectedName)) {
+      return "Void".equalsIgnoreCase(candidateName);
     }
-    if ("Void".equalsIgnoreCase(candidateName) || "void".equalsIgnoreCase(candidateName)) {
+    if ("Void".equalsIgnoreCase(candidateName)) {
       return false;
     }
 
-    // Direct equality
-    if (expectedName.equals(candidateName)) {
+    if (candidateType.isAssignableTo(expectedType) || expectedType.isAssignableTo(candidateType)) {
       return true;
     }
 
-    // Assignability method on candidate type
-    if (candidateType.isAssignableTo(expectedType)) {
+    if (expectedName.equalsIgnoreCase(candidateName)) {
       return true;
     }
 
-    // Numeric literal assignability
-    if (candidateType instanceof dev.verloren.midnight.type.CompactNumericLiteralType) {
-      return candidateType.isAssignableTo(expectedType);
+    // Number literals / Field interoperability
+    if ("Field".equalsIgnoreCase(expectedName) && ("Field".equalsIgnoreCase(candidateName) || "Uint".equalsIgnoreCase(candidateName))) {
+      return true;
     }
 
-    // Uint bit-width subtyping (e.g., Uint <8> -> Uint <32>)
-    dev.verloren.midnight.type.CompactUintType candidateUint = dev.verloren.midnight.type.CompactUintType.parse(candidateName);
-    dev.verloren.midnight.type.CompactUintType expectedUint = dev.verloren.midnight.type.CompactUintType.parse(expectedName);
-    if (candidateUint != null && expectedUint != null) {
-      return candidateUint.isAssignableTo(expectedUint);
-    }
-
-    return false;
+    // Prefix matching for parameterized types (e.g., Uint<64> matches Uint)
+    return (expectedName.startsWith("Uint") && candidateName.startsWith("Uint"))
+        || (expectedName.startsWith("Vector") && candidateName.startsWith("Vector"));
   }
 
   private static void addNamed(@NotNull CompletionResultSet result, @NotNull CompactNamedElement element) {
     String name = element.getName();
-    if (name != null) {
-      LookupElementBuilder builder = LookupElementBuilder.create(name);
-      String typeName = element.getType().name();
-      if (!"Unknown".equalsIgnoreCase(typeName) && !name.equals(typeName) && !"struct".equalsIgnoreCase(typeName) && !"enum".equalsIgnoreCase(typeName)) {
-        builder = builder.withTypeText(typeName);
-      }
-      result.addElement(builder);
+    if (name == null || name.isEmpty()) {
+      return;
     }
+
+    LookupElementBuilder builder = LookupElementBuilder.create(element, name);
+    builder = switch (element) {
+      case CompactCircuitDefinition _ -> builder.withTypeText("circuit").withBoldness(true);
+      case CompactStructDefinition _ -> builder.withTypeText("struct");
+      case CompactEnumDefinition _ -> builder.withTypeText("enum");
+      case CompactTypeDefinition _ -> builder.withTypeText("type");
+      case CompactLedgerDeclaration _ -> builder.withTypeText("ledger");
+      case CompactWitnessDeclaration _ -> builder.withTypeText("witness");
+      case CompactParameterImpl _ -> builder.withTypeText("param");
+      case CompactConstBindingImpl _ -> builder.withTypeText("const");
+      default -> builder;
+    };
+    result.addElement(builder);
   }
 }
