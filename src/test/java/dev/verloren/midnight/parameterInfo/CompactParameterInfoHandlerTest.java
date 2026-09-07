@@ -16,7 +16,7 @@ import dev.verloren.midnight.psi.CompactCallExprImpl;
 import dev.verloren.midnight.psi.CompactStructLiteralExprImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Color;
+import java.awt.*;
 
 public class CompactParameterInfoHandlerTest extends BasePlatformTestCase {
 

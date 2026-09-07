@@ -10,11 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.actions.CompactCreateFileAction;
-import dev.verloren.midnight.psi.CompactCircuitDefinition;
-import dev.verloren.midnight.psi.CompactConstructorDeclaration;
-import dev.verloren.midnight.psi.CompactExternalContractDeclaration;
-import dev.verloren.midnight.psi.CompactLedgerDeclaration;
-import dev.verloren.midnight.psi.CompactModuleDefinition;
+import dev.verloren.midnight.psi.*;
 
 import java.io.IOException;
 import java.util.Objects;

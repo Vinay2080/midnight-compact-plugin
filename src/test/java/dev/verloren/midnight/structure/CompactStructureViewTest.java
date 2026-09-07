@@ -17,7 +17,6 @@ import dev.verloren.midnight.parser.CompactParserDefinition;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
 public class CompactStructureViewTest extends BasePlatformTestCase {
