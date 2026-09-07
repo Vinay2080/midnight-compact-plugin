@@ -4,11 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
-import dev.verloren.midnight.psi.CompactBlock;
-import dev.verloren.midnight.psi.CompactEnumDefinition;
-import dev.verloren.midnight.psi.CompactMemberExprImpl;
-import dev.verloren.midnight.psi.CompactStructDefinition;
-import dev.verloren.midnight.psi.CompactTypeReferenceImpl;
+import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**

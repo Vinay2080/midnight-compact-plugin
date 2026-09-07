@@ -9,15 +9,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.vfs.VirtualFile;
-import dev.verloren.midnight.settings.MidnightProjectSettings;
-import dev.verloren.midnight.settings.MidnightSettingsState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import dev.verloren.midnight.annotator.CompactProblemUtil;
 import dev.verloren.midnight.run.CompactToolchainUtil;
+import dev.verloren.midnight.settings.MidnightProjectSettings;
+import dev.verloren.midnight.settings.MidnightSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
