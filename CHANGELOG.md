@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 ### Added
+- **Go to Type Declaration (`Ctrl+Shift+B` / `Cmd+Shift+B`)**:
+  - Implemented `CompactTypeDeclarationProvider` (`com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider`) to navigate directly from variables, parameters, expressions, and ledger fields to the underlying struct, enum, or type declaration.
+  - Recursion-safe unwrapping of generic parameters (e.g. `Cell<T>`, `Vector<T, N>`) and type aliases down to nominal declarations.
+  - Seamless navigation across cross-file includes and module exports via `CompactResolveUtil`.
+  - Zero interference or side effects on the code completion engine (`CompactCompletionContext`).
 - **Parameter Info & Signature Help (Ctrl+P / Cmd+P)**:
   - Implemented CompactParameterInfoHandler for in-editor parameter hint tooltips during invocation of functions, circuits, and constructor declarations.
   - Highlights active parameter indices dynamically based on caret location within comma-separated argument lists.

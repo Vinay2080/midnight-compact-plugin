@@ -250,7 +250,7 @@ public class CompactParameterInfoHandler implements ParameterInfoHandler<PsiElem
       }
     }
 
-    // Check parent (e.g., CompactOptionallyTypedPattern or CompactTypedPattern)
+    // Check parent (e.g. CompactOptionallyTypedPattern or CompactTypedPattern)
     PsiElement parent = param.getParent();
     if (parent != null) {
       for (PsiElement child : parent.getChildren()) {
@@ -340,7 +340,7 @@ public class CompactParameterInfoHandler implements ParameterInfoHandler<PsiElem
     if (desc != null && desc.isStructLiteral() && !desc.getFieldNames().isEmpty()) {
       List<String> declaredFields = desc.getFieldNames();
 
-      // 1. Check if caret is inside a specific struct argument field
+      // 1. Check if the caret is inside a specific struct argument field
       String currentField = findCurrentFieldName(structLiteral, offset);
       if (currentField != null) {
         int idx = declaredFields.indexOf(currentField);

@@ -92,6 +92,7 @@
     <change-notes><![CDATA[
         <h3>1.2.0</h3>
         <ul>
+            <li><b>Go to Type Declaration (<code>Ctrl+Shift+B</code> / <code>Cmd+Shift+B</code>):</b> Direct navigation from variables, parameters, expressions, and ledger fields to the underlying struct, enum, or type declaration.</li>
             <li><b>Remix-Style Sidebar Tool Window ("Compact Compiler"):</b> Live contract pragma status, compiler version switcher dropdown, one-click version downloader/manager, and quick contract compile action on the right stripe.</li>
             <li><b>Multi-Version Compiler Management:</b> Isolated compiler version storage under <code>~/.compact/versions/&lt;version&gt;/</code> preventing cross-project compiler collisions with automatic installer support.</li>
             <li><b>Per-Project Compiler Selection:</b> Configurable compiler version per project (<code>.idea/midnight.xml</code>) allowing different projects to target different Compact versions independently.</li>
@@ -228,6 +229,9 @@
 
         <gotoDeclarationHandler
                 implementation="dev.verloren.midnight.navigation.CompactGotoDeclarationHandler"/>
+
+        <typeDeclarationProvider
+                implementation="dev.verloren.midnight.navigation.CompactTypeDeclarationProvider"/>
 
         <psi.referenceContributor
                 language="Compact"
