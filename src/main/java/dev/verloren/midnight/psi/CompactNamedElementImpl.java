@@ -103,14 +103,18 @@ public abstract class CompactNamedElementImpl extends CompactPsiElement implemen
                 || CompactNamedElementImpl.this instanceof CompactEnumMemberImpl) {
           return com.intellij.icons.AllIcons.Nodes.Field;
         }
-        if (CompactNamedElementImpl.this instanceof CompactStructDefinition) {
-          return com.intellij.icons.AllIcons.Nodes.Record;
-        }
-        if (CompactNamedElementImpl.this instanceof CompactEnumDefinition) {
-          return com.intellij.icons.AllIcons.Nodes.Enum;
-        }
-        if (CompactNamedElementImpl.this instanceof CompactModuleDefinition) {
-          return com.intellij.icons.AllIcons.Nodes.Module;
+        switch (CompactNamedElementImpl.this) {
+          case CompactStructDefinition _ -> {
+            return com.intellij.icons.AllIcons.Nodes.Record;
+          }
+          case CompactEnumDefinition _ -> {
+            return com.intellij.icons.AllIcons.Nodes.Enum;
+          }
+          case CompactModuleDefinition _ -> {
+            return com.intellij.icons.AllIcons.Nodes.Module;
+          }
+          default -> {
+          }
         }
 
         if (CompactNamedElementImpl.this instanceof CompactExternalContractDeclaration

@@ -43,7 +43,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
       return null;
     }
 
-    // 1. Check for a disclose keyword token (ZK boundary)
+    // 1. Check for a disclosed keyword token (ZK boundary)
     if (element.getNode().getElementType() == CompactTokenTypes.DISCLOSE) {
       return new LineMarkerInfo<>(
           element,
@@ -56,7 +56,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
       );
     }
 
-    // 2. Check for 'implements' keyword inside 'contract implements InterfaceName;'
+    // 2. Check for 'implements' keyword inside 'contract implements InterfaceName';
     if (element.getNode().getElementType() == CompactTokenTypes.IMPLEMENTS) {
       PsiElement parent = element.getParent();
       if (parent instanceof CompactContractImplementsDeclaration impl) {
@@ -76,7 +76,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
     if (element.getNode().getElementType() == CompactTokenTypes.IDENTIFIER) {
       PsiElement parent = element.getParent();
 
-      // 3a. Interface declaration name: navigate DOWN to all implementations across project
+      // 3a. Interface declaration name: navigate DOWN to all implementations across the project
       if (parent instanceof CompactExternalContractDeclaration contractDecl && element.equals(contractDecl.getNameIdentifier())) {
         List<PsiElement> implementations = findContractImplementations(contractDecl);
         if (!implementations.isEmpty()) {
