@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Quick-fix to update pragma expression to match the active compiler.
+ * Quick-fix to update the pragma expression to match the active compiler.
  */
 public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements LocalQuickFix {
   private final String activeVersion;

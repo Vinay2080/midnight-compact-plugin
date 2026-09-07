@@ -401,7 +401,7 @@ public final class CompactToolchainUtil {
                 return new ToolchainInfo("/home/" + user.getName() + "/.compact/bin/compact", true, distro, true);
               }
 
-              // 2. Check ~/.compact/versions/*/compactc (newest installed version)
+              // 2. Check ~/.compact/versions/*/compactc (the newest installed version)
               File versionsDir = new File(user, ".compact/versions");
               if (versionsDir.isDirectory()) {
                 File[] verDirs = versionsDir.listFiles(File::isDirectory);

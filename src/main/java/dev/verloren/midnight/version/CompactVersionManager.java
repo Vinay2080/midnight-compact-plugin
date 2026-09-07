@@ -7,6 +7,11 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.vfs.VirtualFile;
+import dev.verloren.midnight.settings.MidnightProjectSettings;
+import dev.verloren.midnight.settings.MidnightSettingsState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -329,14 +334,7 @@ public final class CompactVersionManager {
     // 1. Try downloading official GitHub release binary
     boolean downloaded = downloadOfficialRelease(cleanVer, targetDir, indicator);
     if (downloaded) {
-      chmodWslDirectory();
-      File exe = findExecutableInVersionDir(targetDir);
-      if (exe != null) {
-        cacheExecutableVersion(exe.getAbsolutePath(), cleanVer);
-        if (SystemInfo.isWindows && exe.getAbsolutePath().startsWith("\\\\wsl")) {
-          cacheExecutableVersion(CompactToolchainUtil.toWslPath(exe.getAbsolutePath()), cleanVer);
-        }
-      }
+      recordInstalledExecutable(targetDir, cleanVer);
       return true;
     }
 
@@ -346,14 +344,7 @@ public final class CompactVersionManager {
     }
     boolean fetched = fetchViaYarnCli(cleanVer, targetDir, projectBasePath, indicator);
     if (fetched) {
-      chmodWslDirectory();
-      File exe = findExecutableInVersionDir(targetDir);
-      if (exe != null) {
-        cacheExecutableVersion(exe.getAbsolutePath(), cleanVer);
-        if (SystemInfo.isWindows && exe.getAbsolutePath().startsWith("\\\\wsl")) {
-          cacheExecutableVersion(CompactToolchainUtil.toWslPath(exe.getAbsolutePath()), cleanVer);
-        }
-      }
+      recordInstalledExecutable(targetDir, cleanVer);
       return true;
     }
 
@@ -697,7 +688,7 @@ public final class CompactVersionManager {
   }
 
   /**
-   * Checks if legacy compiler versions were saved to Windows host disk (e.g. C:\Users\<user>\.compact\versions)
+   * Checks if legacy compiler versions were saved to Windows host disk (e.g., C:\Users\<user>\.compact\versions)
    * and automatically migrates them into WSL.
    */
   public static void migrateWindowsVersionsToWslIfNeeded(@NotNull File wslVersionsDir) {
@@ -757,6 +748,44 @@ public final class CompactVersionManager {
         app.executeOnPooledThread(r);
       } else {
         r.run();
+      }
+    }
+  }
+  public static void ensureAndSwitchVersion(@NotNull Project project, @NotNull String toolchainVer, @Nullable VirtualFile vFile) {
+    if (isVersionInstalled(toolchainVer)) {
+      switchAndApplyVersion(project, toolchainVer, vFile);
+    } else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Compact Compiler v" + toolchainVer, true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          boolean success = installVersion(toolchainVer, project.getBasePath(), indicator);
+          if (success) {
+            switchAndApplyVersion(project, toolchainVer, vFile);
+          }
+        }
+      });
+    }
+  }
+
+  public static void switchAndApplyVersion(@NotNull Project project, @NotNull String toolchainVer, @Nullable VirtualFile vFile) {
+    MidnightProjectSettings.getInstance(project).selectedCompilerVersion = toolchainVer;
+    String installedExe = CompactVersionManager.getInstalledExecutable(toolchainVer);
+    if (installedExe != null) {
+      MidnightSettingsState state = MidnightSettingsState.getInstance();
+      if (state != null) {
+        state.compilerPath = installedExe;
+      }
+    }
+    CompactProblemUtil.clearProblemsAndRestart(project, vFile);
+  }
+
+  private static void recordInstalledExecutable(@NotNull File targetDir, @NotNull String cleanVer) {
+    chmodWslDirectory();
+    File exe = findExecutableInVersionDir(targetDir);
+    if (exe != null) {
+      cacheExecutableVersion(exe.getAbsolutePath(), cleanVer);
+      if (SystemInfo.isWindows && exe.getAbsolutePath().startsWith("\\\\wsl")) {
+        cacheExecutableVersion(CompactToolchainUtil.toWslPath(exe.getAbsolutePath()), cleanVer);
       }
     }
   }

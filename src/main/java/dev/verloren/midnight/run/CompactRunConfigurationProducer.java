@@ -10,9 +10,10 @@ import com.intellij.psi.PsiFile;
 import dev.verloren.midnight.psi.CompactFile;
 import dev.verloren.midnight.settings.MidnightSettingsState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Automatically creates and matches {@link CompactRunConfiguration} instances from context (e.g. current file, gutter run icon, top run bar).
+ * Automatically creates and matches {@link CompactRunConfiguration} instances from context (e.g., current file, gutter run icon, top run bar).
  */
 public class CompactRunConfigurationProducer extends LazyRunConfigurationProducer<CompactRunConfiguration> {
 
@@ -27,31 +28,21 @@ public class CompactRunConfigurationProducer extends LazyRunConfigurationProduce
       @NotNull ConfigurationContext context,
       @NotNull Ref<PsiElement> sourceElement
   ) {
-    PsiElement location = context.getPsiLocation();
-    if (location == null) {
+    CompactFileInfo info = findCompactFileInfo(context);
+    if (info == null) {
       return false;
     }
 
-    PsiFile psiFile = location instanceof PsiFile ? (PsiFile) location : location.getContainingFile();
-    if (psiFile == null || !(psiFile instanceof CompactFile || psiFile.getFileType() instanceof dev.verloren.midnight.CompactFileType || psiFile.getName().endsWith(".compact"))) {
-      return false;
-    }
+    sourceElement.set(info.location());
 
-    VirtualFile vFile = psiFile.getVirtualFile() != null ? psiFile.getVirtualFile() : psiFile.getViewProvider().getVirtualFile();
-    if (vFile == null) {
-      return false;
-    }
-
-    sourceElement.set(location);
-
-    configuration.setName("Compile " + vFile.getName());
-    configuration.setCompactFilePath(vFile.getPath());
+    configuration.setName("Compile " + info.vFile().getName());
+    configuration.setCompactFilePath(info.vFile().getPath());
 
     MidnightSettingsState state = MidnightSettingsState.getInstance();
     String baseOutputDir = (state != null && state.defaultOutputDir != null && !state.defaultOutputDir.trim().isEmpty())
         ? state.defaultOutputDir.trim()
         : "gen";
-    String outputDir = CompactToolchainUtil.deriveOutputDirectory(psiFile.getProject(), vFile.getPath(), baseOutputDir);
+    String outputDir = CompactToolchainUtil.deriveOutputDirectory(info.psiFile().getProject(), info.vFile().getPath(), baseOutputDir);
     configuration.setOutputDirectory(outputDir);
 
     boolean skipZk = state == null || state.skipZkDefault;
@@ -65,24 +56,35 @@ public class CompactRunConfigurationProducer extends LazyRunConfigurationProduce
       @NotNull CompactRunConfiguration configuration,
       @NotNull ConfigurationContext context
   ) {
-    PsiElement location = context.getPsiLocation();
-    if (location == null) {
+    CompactFileInfo info = findCompactFileInfo(context);
+    if (info == null) {
       return false;
     }
 
-    PsiFile psiFile = location instanceof PsiFile ? (PsiFile) location : location.getContainingFile();
+    String currentPath = info.vFile().getPath().replace('\\', '/');
+    String configPath = configuration.getCompactFilePath().replace('\\', '/');
+
+    return currentPath.equals(configPath);
+  }
+
+  private record CompactFileInfo(@NotNull PsiElement location, @NotNull PsiFile psiFile, @NotNull VirtualFile vFile) {}
+
+  private static @Nullable CompactFileInfo findCompactFileInfo(@NotNull ConfigurationContext context) {
+    PsiElement location = context.getPsiLocation();
+    if (location == null) {
+      return null;
+    }
+
+    PsiFile psiFile = location instanceof PsiFile f ? f : location.getContainingFile();
     if (psiFile == null || !(psiFile instanceof CompactFile || psiFile.getFileType() instanceof dev.verloren.midnight.CompactFileType || psiFile.getName().endsWith(".compact"))) {
-      return false;
+      return null;
     }
 
     VirtualFile vFile = psiFile.getVirtualFile() != null ? psiFile.getVirtualFile() : psiFile.getViewProvider().getVirtualFile();
     if (vFile == null) {
-      return false;
+      return null;
     }
 
-    String currentPath = vFile.getPath().replace('\\', '/');
-    String configPath = configuration.getCompactFilePath().replace('\\', '/');
-
-    return currentPath.equals(configPath);
+    return new CompactFileInfo(location, psiFile, vFile);
   }
 }
