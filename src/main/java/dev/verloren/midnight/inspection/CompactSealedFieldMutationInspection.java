@@ -8,7 +8,9 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.parser.CompactElementTypes;
-import dev.verloren.midnight.psi.*;
+import dev.verloren.midnight.psi.CompactConstructorDeclaration;
+import dev.verloren.midnight.psi.CompactLedgerDeclaration;
+import dev.verloren.midnight.psi.CompactReferenceExprImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**

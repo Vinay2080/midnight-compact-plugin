@@ -10,7 +10,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Inspection reporting duplicate declaration identifiers declared in the same lexical scope.
