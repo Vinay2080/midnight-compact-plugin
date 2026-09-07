@@ -4,7 +4,7 @@
 
 With **Phase 1** of the **Midnight Compact Language Plugin** (`dev.verloren.midnight`) fully implemented, tested (296 automated unit tests passing), and verified against the manual QA checklist, the foundational language infrastructure is solid:
 - Handwritten Lexer & Pratt Parser with syntax error recovery
-- Strongly-typed Program Structure Interface (PSI) tree
+- Strongly typed Program Structure Interface (PSI) tree
 - Syntax Highlighting with 42 customizable token/color categories
 - Dual-namespace Reference Resolution (`VALUE` vs `TYPE`) & Innermost Lexical Shadowing
 - Cross-file module and recursive include resolution with circular dependency guards
@@ -23,7 +23,7 @@ This document outlines the **Next Generation Features and Architecture Roadmap**
    - 1.1 Ethereum & EVM (Solidity: Remix, IntelliJ Solidity, Hardhat, Foundry, Slither)
    - 1.2 Aptos / Sui (Move: Move IntelliJ Plugin, Move Analyzer, Move Prover)
    - 1.3 Starknet (Cairo: Scarb, Cairo Language Server, Sierra IR)
-   - 1.4 Solana (Rust / Anchor: CLion, RustRover, Sealevel runtime)
+   - 1.4 Solana (Rust / Anchor: CLion, RustRover, Sea level runtime)
    - 1.5 Stacks (Clarity: Clarinet REPL, Decidable state inspector)
    - 1.6 Zero-Knowledge DSLs (Noir, Circom, Leo: Constraint cost analyzers, R1CS/Plonk visualizers)
 2. [IntelliJ Platform Extension Capabilities & APIs](#2-intellij-platform-extension-capabilities--apis)
@@ -49,7 +49,7 @@ This document outlines the **Next Generation Features and Architecture Roadmap**
    - 3.8 Transaction Simulation & Interactive Circuit Test Runner
    - 3.9 Specialized Smart Contract Security Inspections (Slither-style for Compact)
 4. [Phased Implementation Roadmap](#4-phased-implementation-roadmap)
-   - Phase 2A: Editor Polish & Inlay Intelligence (Sprint 1)
+   - Phase 2 A: Editor Polish & Inlay Intelligence (Sprint 1)
    - Phase 2B: Compiler & Toolchain Integration (Sprint 2)
    - Phase 2C: Transaction Execution & Test Runner (Sprint 3)
    - Phase 2D: ZK & Privacy Specialization (Sprint 4)
@@ -60,7 +60,7 @@ This document outlines the **Next Generation Features and Architecture Roadmap**
    - 5.3 SDK Settings & External Annotator Pipeline
    - 5.4 Run Configuration & Test Console Flow
    - 5.5 Module Type & Project Wizard Blueprint
-6. [Summary Comparison: Current State vs Future State](#6-summary-comparison-current-state-vs-future-state)
+6. [Summary Comparison: Current State vs. Future State](#6-summary-comparison-current-state-vs-future-state)
 7. [Conclusion & Next Steps](#7-conclusion--next-steps)
 
 ---
@@ -94,8 +94,8 @@ To ensure the Midnight Compact plugin meets and exceeds industry standards, we b
 
 ### 1.2 Move (Aptos / Sui)
 *   **Key Features**:
-    *   *Move IntelliJ Plugin (Pontem)* & *Move Analyzer*: First-class module resolution, struct unpacking completion, linear resource tracking.
-    *   *Move Prover*: Formal verification integration running in background, providing mathematical proofs of contract correctness.
+    *   *Move IntelliJ Plugin (Pont em)* & *Move Analyzer*: First-class module resolution, struct unpacking completion, linear resource tracking.
+    *   *Move Prover*: Formal verification integration running in the background, providing mathematical proofs of contract correctness.
     *   *Resource Safety Visualizer*: Highlighting capabilities (`copy`, `drop`, `store`, `key`).
 *   **Takeaway for Midnight**:
     *   Compact uses bounded types (`Uint<N>`, `Bytes<N>`) and sealed ledger variables (`sealed ledger`). Visual status indicators and type bounds checking should mimic Move's high assurance standards.
@@ -124,10 +124,10 @@ To ensure the Midnight Compact plugin meets and exceeds industry standards, we b
 ### 1.6 Zero-Knowledge DSLs (Noir, Circom, Leo)
 *   **Key Features**:
     *   *Noir*: Distinction between `pub` (public) and private inputs enforced at type-check time.
-    *   *Circom*: Arithmetic circuit constraint counters ($R1CS$ gate count), signal flow graphs, static bug finders (*Circomspect*).
+    *   *Circom*: Arithmetic circuit constraint counters ($R1CS$ gate count), signal flow graphs, static bug finders (*Circumspect*).
     *   *Leo (Aleo)*: Integrated proof runner, circuit constraint visualizer, private transaction debugger.
 *   **Takeaway for Midnight**:
-    *   Compact is specifically designed for dual-state execution (private `witness` vs public `circuit` and `ledger`). The IDE must provide first-class visual separation of private vs public realms and estimate circuit constraint complexity.
+    *   Compact is specifically designed for dual-state execution (private `witness` vs public `circuit` and `ledger`). The IDE must provide first-class visual separation of private vs. public realms and estimate circuit constraint complexity.
 
 ---
 
@@ -196,7 +196,7 @@ The IntelliJ Platform offers an extensive suite of extension points (`<extension
 
 ### 2.5 Code Vision & Usage Telemetry
 *   **Extension Point**: `com.intellij.codeInsight.codeVisionProvider`
-*   **Purpose**: Display metadata lines directly above declaration headers (e.g. "4 usages | 2 tests").
+*   **Purpose**: Display metadata lines directly above declaration headers (e.g. "4 usages | two tests").
 *   **Capabilities for Compact**:
     *   Displays reference counts above contracts, circuits, witnesses, structs, and enums.
     *   Clicking opens the "Find Usages" popup or navigates to call sites.
@@ -235,8 +235,8 @@ The IntelliJ Platform offers an extensive suite of extension points (`<extension
 *   **Extension Points**: `com.intellij.projectConfigurable`, `com.intellij.sdkType`
 *   **Purpose**: Native IntelliJ Settings page under `Languages & Frameworks -> Midnight Compact`.
 *   **Capabilities for Compact**:
-    *   Configures path to `compactc` executable and Midnight SDK home directory.
-    *   Detects compiler version and automatically checks compatibility against file `pragma` directives.
+    *   Configures a path to `compactc` executable and Midnight SDK home directory.
+    *   Detects a compiler version and automatically checks compatibility against file `pragma` directives.
     *   Provides download/update links for the Midnight toolchain.
 
 ### 2.11 Module Types, Project Wizards & Directory Project Generators (`ModuleType`, `ModuleBuilder`, `DirectoryProjectGenerator`)
@@ -279,17 +279,17 @@ Smart contracts in Compact operate under unique constraints unlike general-purpo
 *   **The Solution**:
     *   Static analysis inspection estimating circuit constraint weight.
     *   Editor Inlay Metric (e.g. `/* ~450 constraints */`) displayed on `circuit` headers.
-    *   Warning inspection for expensive patterns (e.g. nested loops inside circuits, non-native arithmetic, or unoptimized hashing).
+    *   Warning inspection for expensive patterns (e.g., nested loops inside circuits, non-native arithmetic, or unoptimized hashing).
 
 ### 3.2 Privacy Boundary & Private Witness Taint Analysis
 *   **The Problem**: Accidentally exposing secret user data in public ledger storage is the most severe vulnerability in privacy DApps.
 *   **The Solution**:
     *   **Taint Analysis Engine**: Tracks data flow originating from `witness` outputs.
     *   Flags any direct assignment from private witness variables to public `ledger` fields unless explicitly wrapped in `disclose(...)` and sanitized.
-    *   Provides an instant Quick-Fix (`Alt + Enter`): *\"Wrap with disclose()\"* or *\"Isolate witness computation\"*.
+    *   Provides an instant Quick-Fix (`Alt + Enter`): *\"Wrap with disclose()\ "*or *\"Isolate witness computation\"*.
 
 ### 3.3 Ledger State Machine & State Transition Diagram Generator
-*   **The Problem**: Understanding how multiple circuits modify shared contract state is difficult in large contracts.
+*   **The Problem**: Understanding how multiple circuits modify a shared contract state is challenging in large contracts.
 *   **The Solution**:
     *   An interactive visual diagram generator (accessible via right-click $\to$ **Show Contract State Machine**).
     *   Generates a PlantUML / Mermaid state transition diagram showing:
@@ -332,18 +332,18 @@ stateDiagram-v2
         *   Start / Stop / Restart local DevNet Docker containers.
         *   Live block height and transaction streaming log.
         *   Faucet button to fund test accounts with local tokens.
-        *   Clear ledger state / Reset network button.
+        *   Clear the ledger state / Reset network button.
 
 ### 3.8 Transaction Simulation & Interactive Circuit Test Runner
-*   **The Problem**: Testing private witness generation and public circuit verification requires executing both client-side and ledger-side steps.
+*   **The Problem**: Testing private witness generation and public circuit verification require executing both client-side and ledger-side steps.
 *   **The Solution**:
     *   Integrated Test Runner executing `.compact` test files against a local simulation engine.
-    *   Visual test tree in IntelliJ Run window with green checkmarks, failure stack traces with clickable source file links, and detailed execution timings (Proof time vs Verification time).
+    *   Visual test tree in the IntelliJ Run window with green checkmarks, failure stack traces with clickable source file links, and detailed execution timings (Proof time vs. Verification time).
 
 ### 3.9 Specialized Smart Contract Security Inspections (Slither-Style)
-*   **The Problem**: Common smart contract vulnerabilities (reentrancy, uninitialized state, integer truncation, dead code) cause multi-million dollar exploits.
+*   **The Problem**: Common smart contract vulnerabilities (reentrancy, uninitialized state, integer truncation, dead code) cause multi-million-dollar exploits.
 *   **The Solution**: Dedicated static inspections specifically designed for Compact:
-    1.  *Unsealed Ledger Mutation*: Warns when unsealed ledger state is modified across untrusted circuit calls.
+    1.  *Unsealed Ledger Mutation*: Warns when the unsealed ledger state is modified across untrusted circuit calls.
     2.  *Uninitialized Ledger Fields*: Flags ledger variables declared without initialization in the constructor.
     3.  *Unused Return Value in Circuit Call*: Warns when the return value of a pure or export circuit invocation is discarded.
     4.  *Integer Bound Truncation*: Flags implicit conversions or operations between mismatching `Uint<N>` widths (e.g. `Uint<64>` into `Uint<32>`) without explicit bounds checks.
@@ -371,7 +371,7 @@ stateDiagram-v2
 +------------------+------------------+------------------+--------------------+---------------------------------+
 ```
 
-### Phase 2A: Editor Polish & Inlay Intelligence (Sprint 1)
+### Phase 2 A: Editor Polish & Inlay Intelligence (Sprint 1)
 *   **Goal**: Maximize daily editing productivity with inline feedback and rapid code generation.
 *   **Deliverables**:
     1.  `CompactInlayParameterHintsProvider`: Parameter name hints for circuit/witness calls.
@@ -385,9 +385,9 @@ stateDiagram-v2
 *   **Deliverables**:
     1.  `CompactSdkConfigurable`: Settings page for configuring the `compactc` toolchain path and network targets.
     2.  `CompactExternalAnnotator`: Background asynchronous compiler checker reporting compiler errors/warnings.
-    3.  `CompactPragmaVersionChecker`: Real-time inspection comparing contract `pragma` with configured SDK version.
+    3.  `CompactPragmaVersionChecker`: Real-time inspection comparing contract `pragma` with a configured SDK version.
     4.  `CompactStandardLibraryProvider`: Bundled `compact-std` libraries for instant cryptographic resolution.
-    5.  `CompactModuleType` & `CompactModuleBuilder`: Dedicated project structure and module scaffolding in New Project wizard.
+    5.  `CompactModuleType` & `CompactModuleBuilder`: Dedicated project structure and module scaffolding in the New Project wizard.
 
 ### Phase 2C: Transaction Execution & Test Runner (Sprint 3)
 *   **Goal**: Execute and test Compact smart contracts directly from the IDE.
@@ -568,20 +568,20 @@ classDiagram
 
 ---
 
-## 6. Summary Comparison: Current State vs Future State
+## 6. Summary Comparison: Current State vs. Future State
 
-| IDE Subsystem | Phase 1 (Completed & QA Verified) | Phases 2A–2E (Roadmap) |
-| :--- | :--- | :--- |
-| **Lexer & Parser** | Full Compact grammar, Pratt expressions, error recovery. | Incremental re-parsing, performance optimizations for huge monorepos. |
-| **Project & Module Structure** | New Compact File templates only. | `CompactModuleType` & `CompactModuleBuilder` project wizard, automated contract directory scaffolding, and JetBrains Feature Extractor module recommendations. |
-| **Inlay Hints** | Not implemented. | Inline parameter names, inferred variable types, bit-width annotations. |
-| **Gutter Actions** | Not implemented. | Run/test gutter buttons ($\blacktriangleright$), privacy indicators (🔒/🌐), import navigation. |
-| **Intentions & Postfix** | Surround-with (`Ctrl+Alt+T`), Unused variable fix. | Postfix templates (`.const`, `.assert`, `.disclose`, `.if`), Auto-constructor, Stub generators. |
-| **Compiler Interop** | Internal AST checks & type inference. | Background `compactc` External Annotator, pragma SDK version validator. |
-| **Execution & Testing** | Manual test files in test suite. | IntelliJ Run Configurations, interactive execution console, transaction simulator. |
-| **ZK & Privacy Intelligence**| Lexer/Parser support for `witness` and `disclose`. | ZK constraint cost estimation, privacy taint analysis, ZKIR disassembler. |
-| **Ecosystem & Bindings** | Single and multi-file Compact resolution. | TypeScript `.d.ts` generator, bundled `compact-std` library indexer, DevNet tool window. |
-| **Security Auditing** | Unresolved refs, duplicate decls, unused vars, type mismatches. | 6+ specialized ZK/Smart Contract security inspections (unsealed writes, uninit state, truncation). |
+| IDE Subsystem                  | Phase 1 (Completed & QA Verified)                               | Phases 2A–2E (Roadmap)                                                                                                                                         |
+|:-------------------------------|:----------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Lexer & Parser**             | Full Compact grammar, Pratt expressions, error recovery.        | Incremental re-parsing, performance optimizations for huge monorepos.                                                                                          |
+| **Project & Module Structure** | New Compact File templates only.                                | `CompactModuleType` & `CompactModuleBuilder` project wizard, automated contract directory scaffolding, and JetBrains Feature Extractor module recommendations. |
+| **Inlay Hints**                | Not implemented.                                                | Inline parameter names, inferred variable types, bit-width annotations.                                                                                        |
+| **Gutter Actions**             | Not implemented.                                                | Run/test gutter buttons ($\blacktriangleright$), privacy indicators (🔒/🌐), import navigation.                                                                |
+| **Intentions & Postfix**       | Surround-with (`Ctrl+Alt+T`), Unused variable fix.              | Postfix templates (`.const`, `.assert`, `.disclose`, `.if`), Auto-constructor, Stub generators.                                                                |
+| **Compiler Interop**           | Internal AST checks & type inference.                           | Background `compactc` External Annotator, pragma SDK version validator.                                                                                        |
+| **Execution & Testing**        | Manual test files in test suite.                                | IntelliJ Run Configurations, interactive execution console, transaction simulator.                                                                             |
+| **ZK & Privacy Intelligence**  | Lexer/Parser support for `witness` and `disclose`.              | ZK constraint cost estimation, privacy taint analysis, ZKIR disassembler.                                                                                      |
+| **Ecosystem & Bindings**       | Single and multi-file Compact resolution.                       | TypeScript `.d.ts` generator, bundled `compact-std` library indexer, DevNet tool window.                                                                       |
+| **Security Auditing**          | Unresolved refs, duplicate decls, unused vars, type mismatches. | 6+ specialized ZK/Smart Contract security inspections (unsealed writes, uninit state, truncation).                                                             |
 
 ---
 

@@ -4,11 +4,25 @@
 
 ## [Unreleased]
 ### Added
+- **Parameter Info & Signature Help (Ctrl+P / Cmd+P)**:
+  - Implemented CompactParameterInfoHandler for in-editor parameter hint tooltips during invocation of functions, circuits, and constructor declarations.
+  - Highlights active parameter indices dynamically based on caret location within comma-separated argument lists.
+  - Provides full parameter descriptions and types modeled via CompactParametersDescription.
+  - Tolerant of trailing commas, whitespace, and incomplete syntax trees without throwing PSI exceptions.
 - **Marketplace Plugin Recommendations (`dependencySupport`)**:
   - Registered `dependencySupport` extension points in `plugin.xml` for JavaScript/TypeScript projects referencing `@midnight-ntwrk/compact-runtime`, `@midnight-ntwrk/compact-js`, `@midnight-ntwrk/midnight-js-contracts`, and `@openzeppelin/compact-contracts`.
   - Enables IntelliJ Platform IDEs (IntelliJ IDEA, WebStorm) to automatically recommend the Midnight Compact plugin when opening projects with Midnight and Compact dependencies.
 - **Project Structure & Module Scaffolding Roadmap**:
   - Outlined `CompactModuleType`, `CompactModuleBuilder`, and `DirectoryProjectGenerator` architecture in `docs/future_features_and_blockchain_ide_roadmap.md` for dedicated "New Project" wizard scaffolding and JetBrains Feature Extractor module-type recommendation scanning.
+
+### Fixed
+- **Compiler Version Switching Code Duplication & Toolchain Sync**:
+  - Unified duplicate background task and executable resolution logic between CompactSwitchCompilerQuickFix and CompactSwitchCompilerVersionIntention into CompactVersionManager.ensureAndSwitchVersion.
+  - Deduplicated executable discovery and WSL path caching across compiler installation pathways in CompactVersionManager.
+- **Run Configuration Producer Stability**:
+  - Extracted shared context inspection in CompactRunConfigurationProducer to unify setupConfigurationFromContext and isConfigurationFromContext.
+- **Enum and Struct Member Completion Resolution**:
+  - Deduplicated PSI reference resolution loops for dot-access member completion in CompactCompletionContributor.
 
 ## [1.2.1] - 2026-09-06
 ### Fixed
