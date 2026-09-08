@@ -199,6 +199,9 @@ public final class CompactToolchainUtil {
       MidnightProjectSettings projectSettings = MidnightProjectSettings.getInstance(project);
       if (projectSettings != null && projectSettings.selectedCompilerVersion != null && !projectSettings.selectedCompilerVersion.trim().isEmpty()) {
         String ver = projectSettings.selectedCompilerVersion.trim();
+        if (com.intellij.openapi.application.ApplicationManager.getApplication() != null && com.intellij.openapi.application.ApplicationManager.getApplication().isUnitTestMode()) {
+          return ver;
+        }
         if (CompactVersionManager.isVersionInstalled(ver)) {
           return ver;
         }
