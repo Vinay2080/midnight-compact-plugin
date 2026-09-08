@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.0)
+Last Updated: September 2026 (v1.2.3-dev)
 
 ---
 
@@ -21,7 +21,7 @@ Last Updated: September 2026 (v1.2.0)
   - Recursive circuit detection (`CompactRecursiveCircuitInspection`)
   - Constructor restrictions (`CompactConstructorRestrictionInspection`)
   - Undisclosed witness usage (`CompactUndisclosedWitnessInspection`)
-  - Pragma compiler version mismatch (`CompactPragmaVersionInspection`)
+  - Pragma compiler version mismatch (`CompactPragmaVersionInspection`) with bare version `>=` interpretation and two-part semver normalization
 - **Code Style & Formatting**: Spacing rules, smart indentation, brace matching, quote handling, and commenter.
 - **IDE Features**: Structure view, syntax color settings page, breadcrumbs, code folding, hover documentation provider, live templates, and file templates.
 - **Run Configurations & Toolchain Integration**: Compiler run configuration, gutter run line markers, toolchain discovery for Linux, macOS, Windows native, and WSL.
@@ -31,18 +31,20 @@ Last Updated: September 2026 (v1.2.0)
   - Automated binary download and installation with progress indicators and platform archive unpacking.
   - Per-project compiler version persistence in `.idea/midnight.xml` (`MidnightProjectSettings`).
   - Active version resolution chain: per-project setting -> global settings -> system PATH / WSL.
+  - Two-digit SemVer parsing (`0.23` -> `0.23.0` -> toolchain `0.31.1`, `0.26` -> `0.26.0` -> toolchain `0.34.0`).
 - **Remix-Style Tool Window**:
   - Right-hand stripe tool window ("Compact Compiler") with SVG branding icon.
   - Interactive compiler version switcher dropdown.
-  - Real-time pragma version compatibility indicator with color-coded status badges.
+  - Real-time pragma version compatibility indicator with color-coded status badges and dynamic file tracking.
+  - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.
   - "Download More..." compiler version management dialog.
   - "Compile Current Contract" action triggering background compilation and problem reporting.
 - **Pragma Quick-Fixes & Context Actions**:
-  - `Alt + Enter` context action to switch project compiler version to match contract pragma.
-  - `Alt + Enter` context action to download a missing required compiler version.
-  - `Alt + Enter` context action to update pragma version in file to match active compiler.
+  - `Alt + Enter` / `Ctrl + .` context action to switch project compiler version to match contract pragma.
+  - `Alt + Enter` / `Ctrl + .` context action to download a missing required compiler version.
+  - `Alt + Enter` / `Ctrl + .` context action to update pragma version in file to match active compiler.
   - Quick-fixes attached directly to compiler version mismatch warnings.
-- **Phase 27: Status Bar Toolchain & Environment Widget**:
+- **Phase 27: Status Bar Toolchain & Environment Widget (Released in v1.2.2)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
   - `CompactStatusBarPopup`: Native speed-search popup menu to switch installed compiler versions, download new versions, jump to the Remix Compiler panel, or open Midnight settings.
@@ -57,23 +59,14 @@ Last Updated: September 2026 (v1.2.0)
     - Sequenced collections (`SequencedMap`, `firstEntry()`, `lastEntry()`, `getFirst()`, `getLast()`).
     - Handled null selectors in pattern switch expressions (`case null, default ->`) to prevent JVM `NullPointerException`s.
     - Resolved constructor `[this-escape]` warnings with `@SuppressWarnings("this-escape")`.
-  - Executed `./gradlew test` with 441 passing unit tests across 52 test classes.
+  - Executed `./gradlew test` with 444 passing unit tests across 52 test classes.
 
-### Roadmap & Evolution (Phases 27–34)
-- **Phase 27: Status Bar Toolchain & Environment Monitor** (`CompactStatusBarWidgetFactory`) - **COMPLETE**.
-- **Phase 28: New Project & DApp Scaffolding Wizard** (`CompactNewProjectWizard`, `DirectoryProjectGenerator`).
-- **Phase 29: Persistent Stub Indexing Engine** (`CompactNamedElementIndex`, `CompactCircuitIndex`).
-- **Phase 30: Modern Symbol API & Advanced Refactoring Processors** (`CompactRenameProcessor`, `CompactInlineConstantHandler`).
-- **Phase 31: Blockchain IDE (Remix-Style) Explorer & Dynamic Circuit Invocation** (`MidnightExplorerToolWindowFactory`, `CompactDeployAndRunPanel`, witness drawer).
-- **Phase 32: Ledger Storage Inspector & ZK Constraint Profiler** (TreeTable privacy visualizer, constraint metrics).
-- **Phase 33: Embedded IntelliJ PSI-Powered MCP Server** (`CompactMcpServerService`, 11 semantic tools).
-- **Phase 34: Polyglot TypeScript Bridge & Smart Contract Testing Framework** (`CompactTestFinder`, TS cross-navigation).
+### Production Testing Strategy (Multi-Tier Standard)
+- **Tier 1 (Golden Tree Conformance)**: Full AST assertions verifying PSI hierarchy against golden test files without errors.
+- **Tier 2 (Partial Parsing & Error Recovery)**: Deliberately broken syntax assertions verifying error elements without crashing or dropping subsequent declarations.
+- **Tier 3 (Precedence & Associativity Matrix)**: Binary, unary, boolean, and bitwise operator precedence assertions.
+- **Tier 4 (Stress & Stack Resilience)**: Deep nesting assertions verifying no `StackOverflowError` on large syntax depths.
+- **Tier 5 (Zero-Latency Concurrency)**: Guarded non-blocking read actions and cancellation responsiveness checks.
 
----
-
-## 2. Test Verification Status
-
-- **Total Unit Tests**: **441 passing** across 52 test classes (zero failures, zero skipped, 100% success rate).
-- **Execution Command**: `./gradlew test`
-- **Compiler Warnings**: **0 warnings** with `-Xlint:all`.
-- **Architectural Documentation**: Full plan documented in `docs/FUTURE_PLAN.md`, `docs/XML_GAP_ANALYSIS.md`, `docs/REMIX_IDE_FEATURES.md`, `docs/MCP_SERVER_SPEC.md`.
+### Roadmap & Evolution (Phases 28–37)
+- **Phase 28: Smart Enter & In-Editor Intentions** (`CompactSmartEnterProcessor`, `Alt+Enter` actions).

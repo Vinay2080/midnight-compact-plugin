@@ -36,6 +36,7 @@ public class CompactVersionCard extends JPanel {
 
   private static final int CARD_HEIGHT = 42;
 
+  @SuppressWarnings("this-escape")
   public CompactVersionCard(
       @NotNull String version,
       @NotNull String title,
@@ -223,37 +224,6 @@ public class CompactVersionCard extends JPanel {
     menu.show(this, e.getX(), e.getY());
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    Graphics2D g2 = (Graphics2D) g.create();
-    try {
-      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      int arc = JBUI.scale(8);
-      int width = getWidth();
-      int height = getHeight();
-
-      if (isActive) {
-        g2.setColor(new JBColor(new Color(0, 120, 215, 26), new Color(40, 90, 140, 50)));
-        g2.fillRoundRect(1, 1, width - 2, height - 2, arc, arc);
-
-        g2.setColor(JBUI.CurrentTheme.Link.Foreground.ENABLED);
-        g2.drawRoundRect(1, 1, width - 3, height - 3, arc, arc);
-      } else if (isHovered) {
-        g2.setColor(new JBColor(new Color(0, 0, 0, 10), new Color(255, 255, 255, 12)));
-        g2.fillRoundRect(1, 1, width - 2, height - 2, arc, arc);
-
-        g2.setColor(JBColor.border());
-        g2.drawRoundRect(1, 1, width - 3, height - 3, arc, arc);
-      } else {
-        g2.setColor(new JBColor(new Color(0, 0, 0, 18), new Color(255, 255, 255, 20)));
-        g2.drawRoundRect(1, 1, width - 3, height - 3, arc, arc);
-      }
-    } finally {
-      g2.dispose();
-    }
-    super.paintComponent(g);
-  }
-
   public String getVersion() {
     return version;
   }
@@ -268,5 +238,43 @@ public class CompactVersionCard extends JPanel {
 
   public @Nullable String getInstalledPath() {
     return installedPath;
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    super.paintComponent(g);
+
+    Graphics2D g2 = (Graphics2D) g.create();
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+    int arc = JBUI.scale(8);
+    int width = getWidth() - 1;
+    int height = getHeight() - 1;
+
+    // Background color: active > hovered > default
+    Color bgColor;
+    if (isActive) {
+      bgColor = JBColor.namedColor("VersionCard.activeBackground", new JBColor(new Color(230, 242, 255), new Color(38, 55, 75)));
+    } else if (isHovered) {
+      bgColor = JBColor.namedColor("VersionCard.hoverBackground", new JBColor(new Color(245, 247, 250), new Color(48, 50, 52)));
+    } else {
+      bgColor = JBColor.namedColor("VersionCard.background", new JBColor(new Color(250, 250, 250), new Color(40, 42, 44)));
+    }
+
+    g2.setColor(bgColor);
+    g2.fillRoundRect(0, 0, width, height, arc, arc);
+
+    // Border color: active > default subtle
+    Color borderColor;
+    if (isActive) {
+      borderColor = JBUI.CurrentTheme.Link.Foreground.ENABLED;
+    } else {
+      borderColor = JBColor.namedColor("VersionCard.borderColor", new JBColor(new Color(220, 224, 230), new Color(55, 57, 60)));
+    }
+
+    g2.setColor(borderColor);
+    g2.drawRoundRect(0, 0, width, height, arc, arc);
+
+    g2.dispose();
   }
 }

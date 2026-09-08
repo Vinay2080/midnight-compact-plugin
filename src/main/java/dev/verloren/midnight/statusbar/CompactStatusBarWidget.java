@@ -4,13 +4,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.run.CompactToolchainUtil;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
+import dev.verloren.midnight.toolwindow.CompactCompilerEventListener;
 import dev.verloren.midnight.version.CompactVersionManager;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
@@ -25,8 +24,10 @@ public class CompactStatusBarWidget extends EditorBasedStatusBarPopup {
 
   public record CompactWidgetInfo(@NotNull String text, @NotNull String tooltip) {}
 
+  @SuppressWarnings("this-escape")
   public CompactStatusBarWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
     super(project, false, scope);
+    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, this::update);
   }
 
   @Override
@@ -66,7 +67,7 @@ public class CompactStatusBarWidget extends EditorBasedStatusBarPopup {
   }
 
   @Override
-  protected @NotNull ListPopup createPopup(@NotNull DataContext context) {
+  protected @Nullable ListPopup createPopup(@NotNull DataContext context) {
     return CompactStatusBarPopup.createPopup(getProject(), context);
   }
 

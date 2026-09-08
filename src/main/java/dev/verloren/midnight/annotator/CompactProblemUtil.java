@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import dev.verloren.midnight.toolwindow.CompactCompilerEventListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +28,14 @@ public final class CompactProblemUtil {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;
 
+      try {
+        project.getMessageBus().syncPublisher(CompactCompilerEventListener.TOPIC).onCompilerStateChanged();
+      } catch (Exception _) {
+      }
+
       DaemonCodeAnalyzer daemon = DaemonCodeAnalyzer.getInstance(project);
 
-      // 1. If a specific target file is modified (e.g., pragma updated), only restart that file
+      // 1. If a specific target file is modified (e.g., pragma updated), restart that file
       if (targetFile != null && targetFile.isValid()) {
         PsiFile psi = PsiManager.getInstance(project).findFile(targetFile);
         if (psi != null && psi.isValid()) {

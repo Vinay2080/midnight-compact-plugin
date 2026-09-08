@@ -16,14 +16,23 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implements LocalQuickFix {
   private final String targetVersion;
+  private final boolean isCompilerPragma;
 
   public CompactSwitchCompilerQuickFix(@NotNull String targetVersion) {
+    this(targetVersion, false);
+  }
+
+  public CompactSwitchCompilerQuickFix(@NotNull String targetVersion, boolean isCompilerPragma) {
     this.targetVersion = targetVersion;
+    this.isCompilerPragma = isCompilerPragma;
   }
 
   @Override
   public @NotNull String getText() {
-    String toolchainVer = CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
+    String toolchainVer = isCompilerPragma
+        ? CompactVersionManager.cleanVersion(targetVersion)
+        : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
+
     if (CompactVersionManager.isVersionInstalled(toolchainVer)) {
       if (toolchainVer.equals(targetVersion)) {
         return "Switch project compiler to Compact " + targetVersion;
@@ -59,7 +68,9 @@ public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implement
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) throws IncorrectOperationException {
-    String toolchainVer = CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
+    String toolchainVer = isCompilerPragma
+        ? CompactVersionManager.cleanVersion(targetVersion)
+        : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
     CompactVersionManager.ensureAndSwitchVersion(project, toolchainVer, file != null ? file.getVirtualFile() : null);
   }
 }

@@ -2,6 +2,24 @@
 
 # Midnight-plugin Changelog
 
+## [1.2.3] - 2026-09-09
+### Added
+- **Dynamic Real-Time Compact Compiler Tool Window Updates**:
+  - Wired `CompactCompilerEventListener` across project message buses to broadcast toolchain switches, installation changes, and pragma updates immediately to the UI.
+  - Connected `FileEditorManagerListener` and `DocumentListener` to `CompactCompilerPanel`, ensuring active contract cards, pragma constraints, compatibility badges (`✔ pragma match`), and download/run actions dynamically refresh as soon as any `.compact` file is opened, selected, or edited.
+  - Connected `CompactStatusBarWidget` to `CompactCompilerEventListener` for instantaneous status bar version and compatibility updates.
+
+### Fixed
+- **SemVer Pragma Constraint Handling for Bare Versions (`0.23` vs `0.26`)**:
+  - Fixed constraint evaluation in `CompactSemVerUtil`: bare versions without operators (e.g. `pragma language_version 0.23;`) are now interpreted as `>= 0.23` instead of strict equality `==`, allowing higher compliant compilers (such as language `0.26` / toolchain `0.34.0`) to satisfy contracts without false-positive compiler mismatch warnings.
+  - Added support for compound clauses with logical OR (`||`) and logical AND in `CompactSemVerUtil`.
+- **Two-Digit SemVer Normalization & Proper Toolchain Resolution**:
+  - Enhanced `CompactVersionManager.cleanVersion` to normalize two-part versions (e.g. `0.23` -> `0.23.0` and `0.26` -> `0.26.0`).
+  - Corrected language-to-toolchain mapping so `0.23` maps to official toolchain `0.31.1` (Language `0.23.0`, Ledger 8) and `0.26` maps to `0.34.0` (Language `0.26.0`, Ledger 9), eliminating inaccurate fallback downloads of legacy toolchain `0.23.0` (which only implemented Language `0.15.0`).
+- **Pragma Underline & Quick-Fix Synchronization**:
+  - Differentiated `pragma compiler_version` from `pragma language_version` in `CompactPragmaVersionInspection`, `CompactSwitchCompilerQuickFix`, and `CompactUpdatePragmaQuickFix`.
+  - Ensured that updating pragma or switching compilers re-evaluates inspections and restarts code analysis cleanly without leaving stale error underlines under the `pragma` keyword.
+
 ## [1.2.2] - 2026-09-08
 ### Added
 - **Status Bar Toolchain & Environment Monitor (Phase 27)**:
@@ -38,60 +56,3 @@
   - Extracted shared context inspection in CompactRunConfigurationProducer to unify setupConfigurationFromContext and isConfigurationFromContext.
 - **Enum and Struct Member Completion Resolution**:
   - Deduplicated PSI reference resolution loops for dot-access member completion in CompactCompletionContributor.
-
-## [1.2.1] - 2026-09-06
-### Fixed
-- **DaemonCodeAnalyzer Deprecated API & IDE Stability**:
-  - Replaced deprecated `DaemonCodeAnalyzer.restart()` and `restart(PsiFile)` calls with diagnostic reason-aware APIs (`restart(reason)` and `restart(psi, reason)`).
-  - Fixed cascading analysis restart storms: updating a single pragma/file now selectively restarts highlighting only for the target file instead of rescheduling the daemon across all open and project files.
-
-## [1.2.0] - 2026-09-06
-### Added
-- **Compact Toolchain vs. Language Version Alignment**:
-  - Distinguishes Compact Compiler Toolchain releases from Compact Language specification versions (`0.34.0` implements Language `0.26.0`, `0.31.1`/`0.31.0` implements Language `0.23.0`, `0.30.0` implements Language `0.22.0`, and `0.26.0` implements Language `0.18.0`).
-  - Version cards in the tool window explicitly display both toolchain and language versions: `Compact v<toolchain> (Language v<langVer>)`.
-  - In-editor pragma validation and quick-fixes accurately map `pragma language_version >= 0.26.0;` to toolchain `0.34.0`.
-- **Enhanced Compiler Path Discovery & Sync**:
-  - Dynamically auto-detects installed compilers under `~/.compact/versions/*/compactc` (both on host OS and inside WSL).
-  - Automatically synchronizes `MidnightSettingsState.compilerPath` upon selecting any compiler version card, updating editor annotations and run configurations immediately without requiring an IDE restart.
-  - Corrected official GitHub release download URLs to use `compactc-v<version>` tag patterns with automatic cleanup on download failure.
-- **Native In-Process Pragma Inspection (`CompactPragmaVersionInspection`)**:
-  - Registered a native `LocalInspectionTool` (level `ERROR`) that directly evaluates contract `pragma language_version` constraints against the active toolchain.
-  - Immediately updates inline red error squiggly underlines and the editor's top-right traffic light upon compiler changes or file edits without waiting for background external processes.
-- **Instant Error & Traffic Light Synchronization**:
-  - Switching or deleting compiler versions immediately triggers daemon code analysis, providing instantaneous feedback in the editor and Problems tool window.
-- **Interactive Run Button with Green Outline**:
-  - Redesigned the \"Run Contract\" button in the Compact Compiler tool window with an emerald green outline, execution icon, and responsive hover/press styling.
-  - Automatically resolves the target `.compact` file from the focused editor, open tabs, or indexed project files, executing compilation and streaming live output to the Run console.
-- **Uniform Version Cards & Action Controls**:
-  - Standardized all version cards to a fixed height (`JBUI.scale(42)`) with clean single-action icons (Download for uninstalled, Delete for installed).
-  - Added a download confirmation dialog to prevent accidental triggers.
-- **Windows / WSL Detection & Binary Architecture**:
-  - Automatically detects Windows environments and directs Compact compiler operations into WSL (`/home/<user>/.compact/versions/<version>/`).
-  - Auto-migrates legacy Windows compiler versions into WSL and automatically sets Linux executable permissions (`chmod -R +x`).
-  - Supports native execution on Linux and macOS hosts.
-- **Contract Implementation Gutter Markers**:
-  - Added navigation gutter icons for `contract ... implements <Interface>` declarations to jump directly to implemented interfaces.
-
-### Fixed
-- **Synchronous Execution on EDT / ReadAction Assertion (`OSProcessHandler.checkEdtAndReadAction`)**:
-  - Introduced memory-cached version registry (`EXECUTABLE_VERSION_CACHE`), path-based SemVer extraction, and asynchronous background scheduling for external binaries, strictly preventing EDT/ReadAction freezes.
-- **WSL IJENT Communication Failures (`IjentUnavailableException$CommunicationFailure`)**:
-  - Replaced speculative distro probing with native `WslDistributionManager.getInstance().getInstalledDistributions()`.
-- **Missing Error Indicator on Deleted Compiler**:
-  - Fixed problem indicator clearing when deleting the active compiler; native pragma inspection flags missing or incompatible compilers immediately.
-- **WSL Binary Execution for Configured Version**:
-  - Ensured WSL binary paths (`/home/...`) set `isWsl = true` on Windows, preventing native process spawning failures.
-- Wrapped PSI queries in safe `ReadAction` blocks in `CompactCompilerPanel` to prevent threading assertions.
-- Fixed `NullPointerException` from `NotificationGroupManager.getNotificationGroup(\"Compact Compiler\")`.
-- Migrated `CompactSpellcheckingStrategy` to text-level spellchecking for IntelliJ 2024.2+ platform compatibility.
-- Fixed false-positive recursive circuit warnings in `CompactRecursiveCircuitInspection` when wrapper circuits call external imported circuits sharing the same base name.
-
-## [1.1.0] - 2026-03-24
-### Fixed
-- Updated CI/CD pipeline with marketplace token and gradlew executable permissions.
-
-## [1.0.0] - 2026-03-20
-### Added
-- Initial release of Midnight Compact IntelliJ plugin.
-- Syntax highlighting, lexer/parser, code completion, and external annotator support for Compact contracts.

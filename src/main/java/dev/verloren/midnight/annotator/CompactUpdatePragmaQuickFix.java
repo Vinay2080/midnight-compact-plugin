@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -50,15 +51,24 @@ public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiFile file = descriptor.getPsiElement() != null ? descriptor.getPsiElement().getContainingFile() : null;
-    invoke(project, null, file);
+    CompactPragmaForm pragma = descriptor.getPsiElement() != null
+        ? PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), CompactPragmaForm.class, false)
+        : null;
+    invokeWithPragma(project, file, pragma);
   }
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) throws IncorrectOperationException {
+    invokeWithPragma(project, file, null);
+  }
+
+  private void invokeWithPragma(@NotNull Project project, @Nullable PsiFile file, @Nullable CompactPragmaForm explicitPragma) {
     if (file == null) {
       return;
     }
-    CompactPragmaForm pragma = PsiTreeUtil.findChildOfType(file, CompactPragmaForm.class);
+    CompactPragmaForm pragma = explicitPragma != null
+        ? explicitPragma
+        : PsiTreeUtil.findChildOfType(file, CompactPragmaForm.class);
     if (pragma == null) {
       return;
     }
@@ -66,8 +76,13 @@ public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements 
     if (document == null) {
       return;
     }
-    String langVer = CompactVersionManager.getLanguageVersionForToolchain(activeVersion);
-    String newPragma = "pragma language_version >= " + langVer + ";";
+
+    PsiElement id = pragma.getPragmaIdentifier();
+    String idText = id != null ? id.getText() : "language_version";
+    boolean isCompilerPragma = "compiler_version".equals(idText);
+    String versionToSet = isCompilerPragma ? activeVersion : CompactVersionManager.getLanguageVersionForToolchain(activeVersion);
+    String newPragma = "pragma " + idText + " >= " + versionToSet + ";";
+
     WriteCommandAction.runWriteCommandAction(project, () -> {
       document.replaceString(pragma.getTextRange().getStartOffset(), pragma.getTextRange().getEndOffset(), newPragma);
       PsiDocumentManager.getInstance(project).commitDocument(document);

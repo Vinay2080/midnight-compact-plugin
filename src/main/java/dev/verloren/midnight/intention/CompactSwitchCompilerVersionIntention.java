@@ -41,6 +41,10 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
       return false;
     }
 
+    PsiElement id = pragma.getPragmaIdentifier();
+    String idText = id != null ? id.getText() : "language_version";
+    boolean isCompilerPragma = "compiler_version".equals(idText);
+
     // Check if the currently active compiler already satisfies pragma
     String activeVer = CompactToolchainUtil.getActiveCompilerVersion(project);
     if (activeVer != null) {
@@ -48,13 +52,16 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
       if (constraint == null || constraint.isEmpty()) {
         constraint = reqVer;
       }
-      String langVer = CompactVersionManager.getLanguageVersionForToolchain(activeVer);
-      if (CompactSemVerUtil.satisfiesConstraint(langVer, constraint)) {
+      String targetVer = isCompilerPragma ? activeVer : CompactVersionManager.getLanguageVersionForToolchain(activeVer);
+      if (CompactSemVerUtil.satisfiesConstraint(targetVer, constraint)) {
         return false;
       }
     }
 
-    String toolchainVer = CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
+    String toolchainVer = isCompilerPragma
+        ? CompactVersionManager.cleanVersion(reqVer)
+        : CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
+
     if (CompactVersionManager.isVersionInstalled(toolchainVer)) {
       if (toolchainVer.equals(reqVer)) {
         setText("Switch project compiler to Compact " + reqVer);
@@ -82,7 +89,14 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
       return;
     }
 
-    String toolchainVer = CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
+    PsiElement id = pragma.getPragmaIdentifier();
+    String idText = id != null ? id.getText() : "language_version";
+    boolean isCompilerPragma = "compiler_version".equals(idText);
+
+    String toolchainVer = isCompilerPragma
+        ? CompactVersionManager.cleanVersion(reqVer)
+        : CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
+
     VirtualFile vFile = element.getContainingFile() != null ? element.getContainingFile().getVirtualFile() : null;
     CompactVersionManager.ensureAndSwitchVersion(project, toolchainVer, vFile);
   }

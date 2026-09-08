@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Inspection validating that the project's configured Compact compiler satisfies
- * the contract's {@code pragma language_version} directive.
+ * the contract's {@code pragma language_version} (or {@code pragma compiler_version}) directive.
  */
 public class CompactPragmaVersionInspection extends LocalInspectionTool {
 
@@ -49,13 +49,17 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
       return;
     }
 
+    PsiElement id = pragma.getPragmaIdentifier();
+    String idText = id != null ? id.getText() : "language_version";
+    boolean isCompilerPragma = "compiler_version".equals(idText);
+
     String activeVer = CompactToolchainUtil.getActiveCompilerVersion(holder.getProject());
     String reqVer = pragma.getRequiredVersion();
 
     if (activeVer == null || activeVer.trim().isEmpty()) {
       List<LocalQuickFix> fixes = new ArrayList<>();
       if (reqVer != null && !reqVer.isEmpty()) {
-        fixes.add(new CompactSwitchCompilerQuickFix(reqVer));
+        fixes.add(new CompactSwitchCompilerQuickFix(reqVer, isCompilerPragma));
       }
       holder.registerProblem(
           pragma,
@@ -66,19 +70,23 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
       return;
     }
 
-    String langVer = CompactVersionManager.getLanguageVersionForToolchain(activeVer);
-    boolean satisfies = CompactSemVerUtil.satisfiesConstraint(langVer, constraint);
+    String effectiveActiveVer = isCompilerPragma ? activeVer : CompactVersionManager.getLanguageVersionForToolchain(activeVer);
+    boolean satisfies = CompactSemVerUtil.satisfiesConstraint(effectiveActiveVer, constraint);
 
     if (!satisfies) {
       List<LocalQuickFix> fixes = new ArrayList<>();
       if (reqVer != null && !reqVer.isEmpty()) {
-        fixes.add(new CompactSwitchCompilerQuickFix(reqVer));
+        fixes.add(new CompactSwitchCompilerQuickFix(reqVer, isCompilerPragma));
       }
       fixes.add(new CompactUpdatePragmaQuickFix(activeVer));
 
+      String desc = isCompilerPragma
+          ? "Compact compiler (v" + activeVer + ") does not satisfy pragma constraint '" + constraint + "'"
+          : "Compact compiler (v" + activeVer + ", Language v" + effectiveActiveVer + ") does not satisfy pragma constraint '" + constraint + "'";
+
       holder.registerProblem(
           pragma,
-          "Compact compiler (v" + activeVer + ", Language v" + langVer + ") does not satisfy pragma constraint '" + constraint + "'",
+          desc,
           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
           fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
       );

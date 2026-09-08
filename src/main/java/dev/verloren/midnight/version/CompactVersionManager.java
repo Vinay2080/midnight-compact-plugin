@@ -103,14 +103,20 @@ public final class CompactVersionManager {
   }
 
   /**
-   * Cleans a version string, removing prefixes like 'v' or whitespace.
+   * Cleans a version string, removing prefixes like 'v' or whitespace,
+   * and normalizing 2-part versions to 3-part SemVer (e.g. "0.23" -> "0.23.0").
    */
   public static @NotNull String cleanVersion(@NotNull String version) {
-    Matcher m = VERSION_PATTERN.matcher(version.trim());
+    String trimmed = version.trim();
+    CompactSemVerUtil.SemVer semVer = CompactSemVerUtil.parse(trimmed);
+    if (semVer != null) {
+      return semVer.major() + "." + semVer.minor() + "." + semVer.patch();
+    }
+    Matcher m = VERSION_PATTERN.matcher(trimmed);
     if (m.find()) {
       return m.group(1);
     }
-    return version.trim().replaceAll("^v", "");
+    return trimmed.replaceAll("^v", "");
   }
 
   /**
@@ -751,16 +757,18 @@ public final class CompactVersionManager {
       }
     }
   }
+
   public static void ensureAndSwitchVersion(@NotNull Project project, @NotNull String toolchainVer, @Nullable VirtualFile vFile) {
-    if (isVersionInstalled(toolchainVer)) {
-      switchAndApplyVersion(project, toolchainVer, vFile);
+    String cleanToolchain = cleanVersion(toolchainVer);
+    if (isVersionInstalled(cleanToolchain)) {
+      switchAndApplyVersion(project, cleanToolchain, vFile);
     } else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Compact Compiler v" + toolchainVer, true) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Downloading Compact Compiler v" + cleanToolchain, true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          boolean success = installVersion(toolchainVer, project.getBasePath(), indicator);
+          boolean success = installVersion(cleanToolchain, project.getBasePath(), indicator);
           if (success) {
-            switchAndApplyVersion(project, toolchainVer, vFile);
+            switchAndApplyVersion(project, cleanToolchain, vFile);
           }
         }
       });
@@ -768,8 +776,9 @@ public final class CompactVersionManager {
   }
 
   public static void switchAndApplyVersion(@NotNull Project project, @NotNull String toolchainVer, @Nullable VirtualFile vFile) {
-    MidnightProjectSettings.getInstance(project).selectedCompilerVersion = toolchainVer;
-    String installedExe = CompactVersionManager.getInstalledExecutable(toolchainVer);
+    String cleanToolchain = cleanVersion(toolchainVer);
+    MidnightProjectSettings.getInstance(project).selectedCompilerVersion = cleanToolchain;
+    String installedExe = CompactVersionManager.getInstalledExecutable(cleanToolchain);
     if (installedExe != null) {
       MidnightSettingsState state = MidnightSettingsState.getInstance();
       if (state != null) {

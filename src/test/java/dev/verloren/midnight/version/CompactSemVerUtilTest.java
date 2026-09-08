@@ -22,6 +22,12 @@ public class CompactSemVerUtilTest {
     Assert.assertEquals(2, v2.minor());
     Assert.assertEquals(3, v2.patch());
     Assert.assertEquals("beta.1", v2.preRelease());
+
+    CompactSemVerUtil.SemVer vTwoDigit = CompactSemVerUtil.parse("0.23");
+    Assert.assertNotNull(vTwoDigit);
+    Assert.assertEquals(0, vTwoDigit.major());
+    Assert.assertEquals(23, vTwoDigit.minor());
+    Assert.assertEquals(0, vTwoDigit.patch());
   }
 
   @Test
@@ -47,6 +53,12 @@ public class CompactSemVerUtilTest {
     Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.26.2", ">= 0.26.0"));
     Assert.assertFalse(CompactSemVerUtil.satisfiesConstraint("0.23.0", ">= 0.26.0"));
 
+    // Bare versions (e.g. pragma language_version 0.23; means >= 0.23)
+    Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.26.0", "0.23"));
+    Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.23.0", "0.23"));
+    Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.26.0", "0.26"));
+    Assert.assertFalse(CompactSemVerUtil.satisfiesConstraint("0.18.0", "0.23"));
+
     // Caret (compatible minor for 0.x)
     Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.26.2", "^0.26.0"));
     Assert.assertFalse(CompactSemVerUtil.satisfiesConstraint("0.27.0", "^0.26.0"));
@@ -55,6 +67,11 @@ public class CompactSemVerUtilTest {
     // Exact match
     Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.26.0", "== 0.26.0"));
     Assert.assertFalse(CompactSemVerUtil.satisfiesConstraint("0.26.1", "== 0.26.0"));
+
+    // Compound / logical OR
+    Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.26.0", "0.23 || 0.26"));
+    Assert.assertTrue(CompactSemVerUtil.satisfiesConstraint("0.23.0", ">= 0.20 && < 0.25"));
+    Assert.assertFalse(CompactSemVerUtil.satisfiesConstraint("0.26.0", ">= 0.20 && < 0.25"));
   }
 
   @Test
@@ -64,5 +81,6 @@ public class CompactSemVerUtilTest {
     Assert.assertEquals("0.23.0", CompactSemVerUtil.extractVersion("^0.23.0"));
     Assert.assertEquals("0.26.1", CompactSemVerUtil.extractVersion("== 0.26.1"));
     Assert.assertEquals("0.25.0", CompactSemVerUtil.extractVersion("0.25.0"));
+    Assert.assertEquals("0.23", CompactSemVerUtil.extractVersion("0.23"));
   }
 }

@@ -2,6 +2,7 @@ package dev.verloren.midnight.toolwindow;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.content.Content;
@@ -16,6 +17,7 @@ public class CompactCompilerToolWindowFactory implements ToolWindowFactory, Dumb
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     CompactCompilerPanel panel = new CompactCompilerPanel(project);
     Content content = ContentFactory.getInstance().createContent(panel, "", false);
+    Disposer.register(content, panel);
     toolWindow.getContentManager().addContent(content);
   }
 }

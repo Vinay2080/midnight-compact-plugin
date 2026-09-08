@@ -14,10 +14,16 @@ import com.intellij.ide.HelpTooltipKt;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -28,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
@@ -63,7 +70,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Modern Compact Compiler management and execution tool window panel.
  */
-public class CompactCompilerPanel extends JPanel {
+public class CompactCompilerPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(CompactCompilerPanel.class);
 
   private final Project project;
@@ -110,6 +117,7 @@ public class CompactCompilerPanel extends JPanel {
 
   private final Set<String> downloadingVersions = ConcurrentHashMap.newKeySet();
   private String currentPragmaConstraint = null;
+  private boolean currentPragmaIsCompilerVersion = false;
 
   @SuppressWarnings("this-escape")
   public CompactCompilerPanel(@NotNull Project project) {
@@ -144,27 +152,49 @@ public class CompactCompilerPanel extends JPanel {
 
     add(versionsContainer, BorderLayout.CENTER);
 
-    // Initial population of cards and status
-    refreshCards();
+    // Initial update of active file and compiler cards
     updateActiveFileInfo();
 
-    // Listen to active editor changes to keep pragma and file info in sync
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    // Listen to active editor changes to keep pragma and file info in sync immediately
+    project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        updateActiveFileInfo();
+        updateActiveFileInfo(event.getNewFile());
       }
 
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        updateActiveFileInfo();
+        updateActiveFileInfo(file);
       }
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        updateActiveFileInfo();
+        updateActiveFileInfo(null);
       }
     });
+
+    // Listen to compiler version changes or project-level switches
+    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, () -> {
+      updateActiveFileInfo(null);
+    });
+
+    // Listen to document edits in open .compact files so pragma changes update live
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        VirtualFile target = findTargetCompactFile();
+        if (target != null) {
+          Document doc = FileDocumentManager.getInstance().getDocument(target);
+          if (doc == event.getDocument()) {
+            updateActiveFileInfo(target);
+          }
+        }
+      }
+    }, this);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private JPanel createTopPanel() {
@@ -263,8 +293,9 @@ public class CompactCompilerPanel extends JPanel {
         String langVer = CompactVersionManager.getLanguageVersionForToolchain(v);
         String cardTitle = v.equals(langVer) ? "Compact v" + v : "Compact v" + v + " (Language v" + langVer + ")";
 
+        String versionToCheck = currentPragmaIsCompilerVersion ? v : langVer;
         boolean isPragmaMatch = currentPragmaConstraint != null &&
-            CompactSemVerUtil.satisfiesConstraint(langVer, currentPragmaConstraint);
+            CompactSemVerUtil.satisfiesConstraint(versionToCheck, currentPragmaConstraint);
 
         CompactVersionCard card = new CompactVersionCard(
             v,
@@ -385,7 +416,7 @@ public class CompactCompilerPanel extends JPanel {
 
   /**
    * Intelligently resolves the target .compact file:
-   * 1. Currently, focused editor if it's a .compact file.
+   * 1. Currently focused editor if it's a .compact file.
    * 2. Any currently open editor tabs containing a .compact file.
    * 3. Any indexed .compact file within the project directory.
    */
@@ -419,17 +450,26 @@ public class CompactCompilerPanel extends JPanel {
   }
 
   public void updateActiveFileInfo() {
+    updateActiveFileInfo(null);
+  }
+
+  public void updateActiveFileInfo(@Nullable VirtualFile preferredFile) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;
 
-      VirtualFile file = findTargetCompactFile();
+      VirtualFile file = (preferredFile != null && preferredFile.isValid() && "compact".equalsIgnoreCase(preferredFile.getExtension()))
+          ? preferredFile
+          : findTargetCompactFile();
+
       if (file == null) {
         activeFileNameLabel.setText("No Compact contract");
         pragmaBadge.setText("Open or create .compact");
         compilerStatusLabel.setText("Active Compiler: " + getActiveCompilerDisplay());
         compilerStatusLabel.setForeground(JBColor.GRAY);
         currentPragmaConstraint = null;
+        currentPragmaIsCompilerVersion = false;
         compileButton.setEnabled(true);
+        refreshCards();
         return;
       }
 
@@ -440,8 +480,8 @@ public class CompactCompilerPanel extends JPanel {
       CompactPragmaForm pragma = ReadAction.computeBlocking(() -> {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         return (psiFile instanceof CompactFile)
-                ? PsiTreeUtil.findChildOfType(psiFile, CompactPragmaForm.class)
-                : null;
+            ? PsiTreeUtil.findChildOfType(psiFile, CompactPragmaForm.class)
+            : null;
       });
 
       if (pragma != null) {
@@ -453,16 +493,28 @@ public class CompactCompilerPanel extends JPanel {
           currentPragmaConstraint = constraint;
           pragmaBadge.setText("pragma " + constraint);
 
+          PsiElement id = pragma.getPragmaIdentifier();
+          String idText = id != null ? id.getText() : "language_version";
+          currentPragmaIsCompilerVersion = "compiler_version".equals(idText);
+
           String activeVer = CompactToolchainUtil.getActiveCompilerVersion(project);
           if (activeVer != null) {
-            String langVer = CompactVersionManager.getLanguageVersionForToolchain(activeVer);
-            boolean satisfies = CompactSemVerUtil.satisfiesConstraint(langVer, constraint);
+            String targetVer = currentPragmaIsCompilerVersion
+                ? activeVer
+                : CompactVersionManager.getLanguageVersionForToolchain(activeVer);
+            boolean satisfies = CompactSemVerUtil.satisfiesConstraint(targetVer, constraint);
 
             if (satisfies) {
-              compilerStatusLabel.setText("Compiler v" + activeVer + " (Language v" + langVer + ") satisfies pragma (" + constraint + ")");
+              String labelText = currentPragmaIsCompilerVersion
+                  ? "Compiler v" + activeVer + " satisfies pragma (" + constraint + ")"
+                  : "Compiler v" + activeVer + " (Language v" + targetVer + ") satisfies pragma (" + constraint + ")";
+              compilerStatusLabel.setText(labelText);
               compilerStatusLabel.setForeground(new JBColor(new Color(36, 138, 61), new Color(63, 185, 80)));
             } else {
-              compilerStatusLabel.setText("Compiler v" + activeVer + " (Language v" + langVer + ") does not satisfy pragma (" + constraint + ")");
+              String labelText = currentPragmaIsCompilerVersion
+                  ? "Compiler v" + activeVer + " does not satisfy pragma (" + constraint + ")"
+                  : "Compiler v" + activeVer + " (Language v" + targetVer + ") does not satisfy pragma (" + constraint + ")";
+              compilerStatusLabel.setText(labelText);
               compilerStatusLabel.setForeground(JBColor.RED);
             }
           } else {
@@ -471,16 +523,21 @@ public class CompactCompilerPanel extends JPanel {
           }
         } else {
           currentPragmaConstraint = null;
+          currentPragmaIsCompilerVersion = false;
           pragmaBadge.setText("No pragma declared");
           compilerStatusLabel.setText("Active Compiler: " + getActiveCompilerDisplay());
           compilerStatusLabel.setForeground(JBColor.GRAY);
         }
       } else {
         currentPragmaConstraint = null;
+        currentPragmaIsCompilerVersion = false;
         pragmaBadge.setText("No pragma declared");
         compilerStatusLabel.setText("Active Compiler: " + getActiveCompilerDisplay());
         compilerStatusLabel.setForeground(JBColor.GRAY);
       }
+
+      // Refresh cards dynamically so pragma match badge and download action show immediately
+      refreshCards();
     }, ModalityState.any());
   }
 

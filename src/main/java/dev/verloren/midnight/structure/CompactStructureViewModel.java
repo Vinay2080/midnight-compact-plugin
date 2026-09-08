@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CompactStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
 
+  @SuppressWarnings("this-escape")
   public CompactStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     super(psiFile, editor, new CompactStructureViewElement(psiFile));
     withSuitableClasses(

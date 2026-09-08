@@ -15,6 +15,8 @@ public class CompactVersionManagerTest {
     Assert.assertEquals("0.26.0", CompactVersionManager.cleanVersion("v0.26.0"));
     Assert.assertEquals("0.23.1", CompactVersionManager.cleanVersion("  v0.23.1-rc1  "));
     Assert.assertEquals("1.0.0", CompactVersionManager.cleanVersion("1.0.0"));
+    Assert.assertEquals("0.23.0", CompactVersionManager.cleanVersion("0.23"));
+    Assert.assertEquals("0.26.0", CompactVersionManager.cleanVersion("0.26"));
   }
 
   @Test
@@ -47,7 +49,9 @@ public class CompactVersionManagerTest {
   @Test
   public void testResolveToolchainVersionForLanguage() {
     Assert.assertEquals("0.34.0", CompactVersionManager.resolveToolchainVersionForLanguage("0.26.0"));
+    Assert.assertEquals("0.34.0", CompactVersionManager.resolveToolchainVersionForLanguage("0.26"));
     Assert.assertEquals("0.31.1", CompactVersionManager.resolveToolchainVersionForLanguage("0.23.0"));
+    Assert.assertEquals("0.31.1", CompactVersionManager.resolveToolchainVersionForLanguage("0.23"));
     Assert.assertEquals("0.30.0", CompactVersionManager.resolveToolchainVersionForLanguage("0.22.0"));
     Assert.assertEquals("0.29.0", CompactVersionManager.resolveToolchainVersionForLanguage("0.21.0"));
     Assert.assertEquals("0.26.0", CompactVersionManager.resolveToolchainVersionForLanguage("0.18.0"));

@@ -45,18 +45,22 @@ public class CompactUpdatePragmaVersionIntention extends PsiElementBaseIntention
       return false;
     }
 
-    String langVer = CompactVersionManager.getLanguageVersionForToolchain(activeVer);
+    PsiElement id = pragma.getPragmaIdentifier();
+    String idText = id != null ? id.getText() : "language_version";
+    boolean isCompilerPragma = "compiler_version".equals(idText);
+
+    String targetVer = isCompilerPragma ? activeVer : CompactVersionManager.getLanguageVersionForToolchain(activeVer);
     String constraint = pragma.getConstraintText();
     if (constraint == null || constraint.isEmpty()) {
       constraint = pragma.getRequiredVersion();
     }
     if (constraint != null) {
-      if (CompactSemVerUtil.satisfiesConstraint(langVer, constraint)) {
+      if (CompactSemVerUtil.satisfiesConstraint(targetVer, constraint)) {
         return false;
       }
     }
 
-    setText("Update pragma to match active compiler (>= " + langVer + ")");
+    setText("Update pragma to match active compiler (>= " + targetVer + ")");
     return true;
   }
 
@@ -71,9 +75,13 @@ public class CompactUpdatePragmaVersionIntention extends PsiElementBaseIntention
       return;
     }
 
-    String langVer = CompactVersionManager.getLanguageVersionForToolchain(activeVer);
+    PsiElement id = pragma.getPragmaIdentifier();
+    String idText = id != null ? id.getText() : "language_version";
+    boolean isCompilerPragma = "compiler_version".equals(idText);
+
+    String targetVer = isCompilerPragma ? activeVer : CompactVersionManager.getLanguageVersionForToolchain(activeVer);
     Document document = editor.getDocument();
-    String newPragma = "pragma language_version >= " + langVer + ";";
+    String newPragma = "pragma " + idText + " >= " + targetVer + ";";
     WriteCommandAction.runWriteCommandAction(project, () -> {
       document.replaceString(pragma.getTextRange().getStartOffset(), pragma.getTextRange().getEndOffset(), newPragma);
       PsiDocumentManager.getInstance(project).commitDocument(document);
