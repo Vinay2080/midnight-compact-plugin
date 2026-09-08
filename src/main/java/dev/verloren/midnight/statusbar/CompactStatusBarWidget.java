@@ -27,7 +27,12 @@ public class CompactStatusBarWidget extends EditorBasedStatusBarPopup {
   @SuppressWarnings("this-escape")
   public CompactStatusBarWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
     super(project, false, scope);
-    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, this::update);
+    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, new CompactCompilerEventListener() {
+      @Override
+      public void onCompilerStateChanged() {
+        update();
+      }
+    });
   }
 
   @Override
