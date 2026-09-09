@@ -1,6 +1,6 @@
 <templateSet group="Compact">
     <template name="cct"
-              value="export contract $NAME$ {&#10;  circuit $CIRCUIT$(): Void;&#10;}&#10;&#10;ledger {&#10;  $STATE$&#10;}&#10;&#10;constructor() {&#10;  $INIT$&#10;}&#10;&#10;export circuit $CIRCUIT$(): Void {&#10;  $END$&#10;}"
+              value="contract $NAME$ {&#10;  circuit $CIRCUIT$(): Void;&#10;}&#10;&#10;ledger {&#10;  $STATE$&#10;}&#10;&#10;constructor() {&#10;  $INIT$&#10;}&#10;&#10;export circuit $CIRCUIT$(): Void {&#10;  $END$&#10;}"
               toReformat="true"
               toShortenFQNames="true" key="live.template.cct.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="" defaultValue="&quot;Contract&quot;" alwaysStopAt="true"/>
@@ -13,7 +13,7 @@
     </template>
 
     <template name="ccti"
-              value="export contract implements $NAME$;&#10;&#10;export circuit $CIRCUIT$(): Void {&#10;  $END$&#10;}"
+              value="contract implements $NAME$;&#10;&#10;export circuit $CIRCUIT$(): Void {&#10;  $END$&#10;}"
               toReformat="true"
               toShortenFQNames="true" key="live.template.ccti.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="" defaultValue="&quot;Interface&quot;" alwaysStopAt="true"/>

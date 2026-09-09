@@ -157,8 +157,9 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertNotNull(created);
     assertEquals("TokenSuffix.compact", created.getName());
     assertFalse("Suffix stripped file should not have parse errors: " + getErrors(created), hasErrorElement(created));
-    assertTrue("Content should declare TokenSuffix contract interface", created.getText().contains("export contract TokenSuffix"));
-    assertFalse("Content should not contain .compact in contract identifier", created.getText().contains("export contract TokenSuffix.compact"));
+    assertTrue("Content should declare TokenSuffix contract interface", created.getText().contains("contract TokenSuffix"));
+    assertFalse("Content should not export top-level contract", created.getText().contains("export contract"));
+    assertFalse("Content should not contain .compact in contract identifier", created.getText().contains("contract TokenSuffix.compact"));
   }
 
   public void testExtractSimpleName() {
