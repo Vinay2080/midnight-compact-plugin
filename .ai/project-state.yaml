@@ -24,16 +24,17 @@ phases:
   compiler_tool_window: complete
   java25_strict_lint: complete
   status_bar_widget: complete (Phase 27)
-  project_wizard: planned (Phase 28)
-  stub_indexing: planned (Phase 29)
-  advanced_refactorings: planned (Phase 30)
-  remix_blockchain_explorer: planned (Phase 31)
-  ledger_storage_zk_profiler: planned (Phase 32)
-  psi_mcp_server: planned (Phase 33)
-  polyglot_ts_test_framework: planned (Phase 34)
+  smart_enter_and_intentions: complete (Phase 28 / v1.2.4)
+  project_wizard: planned (Phase 29)
+  stub_indexing: planned (Phase 30)
+  advanced_refactorings: planned (Phase 31)
+  remix_blockchain_explorer: planned (Phase 32)
+  ledger_storage_zk_profiler: planned (Phase 33)
+  psi_mcp_server: planned (Phase 34)
+  polyglot_ts_test_framework: planned (Phase 35)
 
 tests:
-  last_known_passing: 441
+  last_known_passing: 472
   failures: 0
   skipped: 0
   suites:
@@ -71,6 +72,9 @@ tests:
     pragma_switch_intention: dev.verloren.midnight.intention.CompactSwitchCompilerVersionIntentionTest
     pragma_update_intention: dev.verloren.midnight.intention.CompactUpdatePragmaVersionIntentionTest
     status_bar_widget: dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest
+    smart_enter: dev.verloren.midnight.editor.CompactSmartEnterTest
+    doc_comment_enter: dev.verloren.midnight.editor.CompactDocCommentEnterTest
+    intentions_suite: dev.verloren.midnight.editor.CompactPhase28IntentionsTest
 
 architecture:
   language: dev.verloren.midnight.CompactLanguage
@@ -88,73 +92,32 @@ architecture:
   names_validator: dev.verloren.midnight.refactoring.CompactNamesValidator
   refactoring_support: dev.verloren.midnight.refactoring.CompactRefactoringSupportProvider
   completion: dev.verloren.midnight.completion.CompactCompletionContributor
-  inspections:
-    unresolved_reference: dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection
-    duplicate_declaration: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection
-    unused_local_variable: dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection
-    type_mismatch: dev.verloren.midnight.inspection.CompactTypeMismatchInspection
-    pure_circuit: dev.verloren.midnight.inspection.CompactPureCircuitInspection
-    sealed_field_mutation: dev.verloren.midnight.inspection.CompactSealedFieldMutationInspection
-    recursive_circuit: dev.verloren.midnight.inspection.CompactRecursiveCircuitInspection
-    constructor_restriction: dev.verloren.midnight.inspection.CompactConstructorRestrictionInspection
-    undisclosed_witness: dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspection
-    pragma_version: dev.verloren.midnight.inspection.CompactPragmaVersionInspection
-  formatter:
-    model_builder: dev.verloren.midnight.formatter.CompactFormattingModelBuilder
-    block: dev.verloren.midnight.formatter.CompactBlock
-    spacing: dev.verloren.midnight.formatter.CompactSpacingBuilder
-    code_style_settings: dev.verloren.midnight.formatter.CompactCodeStyleSettings
-    language_code_style: dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
-  structure:
-    factory: dev.verloren.midnight.structure.CompactStructureViewFactory
-    model: dev.verloren.midnight.structure.CompactStructureViewModel
-    element: dev.verloren.midnight.structure.CompactStructureViewElement
-  documentation: dev.verloren.midnight.documentation.CompactDocumentationProvider
-  editor:
-    commenter: dev.verloren.midnight.editor.CompactCommenter
-    brace_matcher: dev.verloren.midnight.editor.CompactPairedBraceMatcher
-    quote_handler: dev.verloren.midnight.editor.CompactQuoteHandler
-    folding: dev.verloren.midnight.editor.CompactFoldingBuilder
-    breadcrumbs: dev.verloren.midnight.editor.CompactBreadcrumbsProvider
-    spellchecking: dev.verloren.midnight.editor.CompactSpellcheckingStrategy
-    surround_descriptor: dev.verloren.midnight.editor.CompactSurroundDescriptor
-    inlay_hints: dev.verloren.midnight.editor.CompactInlayHintsProvider
-    line_marker: dev.verloren.midnight.editor.CompactLineMarkerProvider
-  navigation:
-    goto_class: dev.verloren.midnight.navigation.CompactGotoClassContributor
-    goto_symbol: dev.verloren.midnight.navigation.CompactGotoSymbolContributor
-    goto_declaration: dev.verloren.midnight.navigation.CompactGotoDeclarationHandler
-    type_declaration: dev.verloren.midnight.navigation.CompactTypeDeclarationProvider
-  resolve:
-    reference_contributor: dev.verloren.midnight.reference.CompactReferenceContributor
-    element_factory: dev.verloren.midnight.psi.CompactElementFactory
-  run:
-    config_type: dev.verloren.midnight.run.CompactConfigurationType
-    producer: dev.verloren.midnight.run.CompactRunConfigurationProducer
-    line_marker: dev.verloren.midnight.run.CompactRunLineMarkerContributor
-  external_annotator: dev.verloren.midnight.annotator.CompactExternalAnnotator
-  stdlib:
-    service: dev.verloren.midnight.stdlib.CompactStdlibService
-    provider: dev.verloren.midnight.stdlib.CompactStandardLibraryProvider
-  version:
-    semver: dev.verloren.midnight.version.CompactSemVerUtil
-    version_manager: dev.verloren.midnight.version.CompactVersionManager
-  toolwindow:
-    factory: dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory
-    panel: dev.verloren.midnight.toolwindow.CompactCompilerPanel
-  statusbar:
-    factory: dev.verloren.midnight.statusbar.CompactStatusBarWidgetFactory
-    widget: dev.verloren.midnight.statusbar.CompactStatusBarWidget
-    popup: dev.verloren.midnight.statusbar.CompactStatusBarPopup
-
-references:
-  compiler_source:
-    repo: compact/
-    path: compact/compiler/
-    description: Official Compact language compiler implementation (Chez Scheme)
-  local_devnet:
-    repo: ../midnight-local-dev/
-    description: Local Docker Compose Midnight network stack, proof server, dev accounts, RPC endpoints
-  docs_future_plan:
-    path: docs/FUTURE_PLAN.md
-    description: Comprehensive roadmap, comparative XML audit, Remix IDE spec, and PSI MCP Server architecture
+  smart_enter: dev.verloren.midnight.editor.smartEnter.CompactSmartEnterProcessor
+  commenter: dev.verloren.midnight.editor.CompactCommenter
+  doc_enter_handler: dev.verloren.midnight.editor.CompactDocCommentEnterHandler
+  adrs:
+    adr_001: .ai/decisions/ADR-001-handwritten-lexer-and-parser.md
+    adr_002: .ai/decisions/ADR-002-psi-based-single-file-resolution.md
+    adr_003: .ai/decisions/ADR-003-lightweight-structural-type-inference.md
+    adr_004: .ai/decisions/ADR-004-resilient-local-inspections-and-quick-fixes.md
+    adr_005: .ai/decisions/ADR-005-abstract-block-formatter-and-indentation.md
+    adr_006: .ai/decisions/ADR-006-non-destructive-smart-enter-completion.md
+    adr_007: .ai/decisions/ADR-007-non-conflicting-comment-enter-scaffolding.md
+    adr_008: .ai/decisions/ADR-008-dual-scoping-editor-intentions.md
+    adr_009: .ai/decisions/ADR-009-compact-type-system-grammar-alignment.md
+    adr_010: .ai/decisions/ADR-010-file-creation-and-template-sanitization.md
+    adr_011: .ai/decisions/ADR-011-toolchain-discovery-and-wsl-translation.md
+    adr_012: .ai/decisions/ADR-012-isolated-multi-version-compiler-management.md
+    adr_013: .ai/decisions/ADR-013-remix-style-compiler-tool-window.md
+    adr_014: .ai/decisions/ADR-014-status-bar-toolchain-monitor.md
+    adr_015: .ai/decisions/ADR-015-run-configurations-and-gutter-markers.md
+    adr_016: .ai/decisions/ADR-016-asynchronous-external-annotator-pipeline.md
+    adr_017: .ai/decisions/ADR-017-bundled-standard-library-indexing.md
+    adr_018: .ai/decisions/ADR-018-bidirectional-line-markers-and-zk-gutters.md
+    adr_019: .ai/decisions/ADR-019-context-aware-code-completion.md
+    adr_020: .ai/decisions/ADR-020-symbol-navigation-and-type-declaration-provider.md
+    adr_021: .ai/decisions/ADR-021-find-usages-and-rename-refactoring.md
+    adr_022: .ai/decisions/ADR-022-structural-editor-features-and-inlay-hints.md
+    adr_023: .ai/decisions/ADR-023-quick-documentation-and-parameter-info.md
+    adr_024: .ai/decisions/ADR-024-semantic-syntax-highlighting-and-color-settings.md
+    adr_025: .ai/decisions/ADR-025-compact-live-templates-and-surround-with.md

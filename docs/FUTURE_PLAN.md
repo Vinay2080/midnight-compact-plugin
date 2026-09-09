@@ -11,7 +11,7 @@
 
 The **Midnight Compact Language Plugin** delivers first-class development support for **Compact**, the smart-contract language of the **Midnight privacy-centric blockchain**. 
 
-While the plugin has achieved production-grade language tooling—featuring a handwritten lexer, recursive-descent parser, typed PSI model, dual-namespace symbol resolver, type inference engine, 10 static inspections, formatter, multi-version compiler manager, status bar toolchain monitor, type navigation (`Ctrl+Shift+B`), and parameter info (backed by 441 passing unit tests)—the next evolution transforms the plugin from a *language editor* into a **full-lifecycle Blockchain IDE and AI-Agent Development Platform**.
+While the plugin has achieved production-grade language tooling—featuring a handwritten lexer, recursive-descent parser, typed PSI model, dual-namespace symbol resolver, type inference engine, 10 static inspections, formatter, multi-version compiler manager, status bar toolchain monitor, type navigation (`Ctrl+Shift+B`), and parameter info (backed by 459 passing unit tests)—the next evolution transforms the plugin from a *language editor* into a **full-lifecycle Blockchain IDE and AI-Agent Development Platform**.
 
 This plan integrates three game-changing capability tracks:
 1. **Core In-Editor Ergonomics & Invisible IDE Infrastructure**: Complete statement processor (`Ctrl+Shift+Enter`), intentions (`Alt+Enter` / `Ctrl+.`), postfix templates, code generation (`Alt+Insert`), and binary stub indexing for zero-lag symbol resolution.
@@ -27,7 +27,8 @@ Auditing [`plugin.xml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/
 - [x] **Core Parsing**: `CompactFileType`, `CompactParserDefinition`, `CompactElementTypes`.
 - [x] **Syntax & Semantic Highlighting**: `CompactSyntaxHighlighterFactory`, `CompactColorSettingsPage` (42+ color keys), `CompactHighlightingAnnotator`.
 - [x] **Code Insight**: `CompactCompletionContributor`, `CompactFindUsagesProvider`, `CompactStructureViewFactory`, `CompactDocumentationProvider`, `CompactTypeDeclarationProvider` (`Ctrl+Shift+B`), `CompactParameterInfoHandler` (`Ctrl+P`).
-- [x] **Editor Ergonomics**: `CompactCommenter`, `CompactPairedBraceMatcher`, `CompactQuoteHandler`, `CompactFoldingBuilder`, `CompactBreadcrumbsProvider`, `CompactInlayHintsProvider`, `CompactLineMarkerProvider`.
+- [x] **Editor Ergonomics**: `CompactCommenter`, `CompactPairedBraceMatcher`, `CompactQuoteHandler`, `CompactFoldingBuilder`, `CompactBreadcrumbsProvider`, `CompactInlayHintsProvider`, `CompactLineMarkerProvider`, `CompactSmartEnterProcessor` (`Ctrl+Shift+Enter`), `CompactDocCommentEnterHandler`.
+- [x] **In-Editor Intentions**: 6 intentions registered (`CompactTogglePureCircuitIntention`, `CompactToggleExportIntention`, `CompactSurroundWithDiscloseIntention`, `CompactInvertIfIntention`, `CompactRemoveRedundantTypeIntention`, `CompactSpecifyTypeExplicitlyIntention`).
 - [x] **Formatting & Style**: `CompactFormattingModelBuilder`, `CompactLanguageCodeStyleSettingsProvider` (2-space indentation).
 - [x] **Code Inspections (10 Local Inspections)**: Unresolved reference, duplicate declaration, unused local variable (with quick-fix), type mismatch, pure circuit, sealed field mutation, recursive circuit, constructor restriction, undisclosed witness, pragma version.
 - [x] **Toolchain & Run Configurations**: `CompactRunConfiguration`, `CompactRunConfigurationProducer`, `CompactRunLineMarkerContributor`, `CompactExternalAnnotator`.
@@ -89,7 +90,7 @@ A production-grade language plugin requires addressing **6 critical dimensions b
 
 #### Dimension 6: Headless Testing & Verification Harness
 - XML declarations provide zero assurance of correctness without automated headless test fixtures.
-- The project maintains 441 passing tests across 52 test classes validating lexer tokens, AST nodes, type inference, resolution namespaces, formatting idempotency, status bar lifecycle, and inspection quick-fixes using `LightPlatformCodeInsightFixture4TestCase`.
+- The project maintains 459 passing tests across 55 test classes validating lexer tokens, AST nodes, type inference, resolution namespaces, formatting idempotency, status bar lifecycle, smart enter, and intentions using `LightPlatformCodeInsightFixture4TestCase`.
 
 ---
 
@@ -189,8 +190,8 @@ gantt
     dateFormat  YYYY-MM
     section Released
     Phase 27 - Status Bar & Toolchain Monitor (v1.2.2) :done, 2026-09, 1w
+    Phase 28 - Smart Enter & In-Editor Intentions     :done, 2026-09, 1w
     section Editor Ergonomics
-    Phase 28 - Smart Enter & In-Editor Intentions     :2026-10, 2w
     Phase 29 - Postfix Completion & Statement Mover   :2026-10, 2w
     section Indexing & Refactoring
     Phase 30 - Persistent Binary Stub Indexing Engine :2026-11, 3w
@@ -211,14 +212,17 @@ gantt
 - Interactive status bar popup displaying active compiler, language version, 1-click installed version switching, auto-detect reset, background compiler downloader, and tool window shortcuts.
 - Fully non-blocking $O(1)$ EDT presentation; 441 passing tests.
 
-### Phase 28: Smart Enter & In-Editor Intentions (`Ctrl + Shift + Enter` / `Alt + Enter`)
-- **Smart Enter (`lang.smartEnterProcessor`)**: Auto-completes circuit headers, unclosed blocks, missing parentheses, and trailing semicolons.
-- **Intentions (`intentionAction`)**:
-  - Convert `circuit` $\leftrightarrow$ `pure circuit`.
-  - Wrap in `disclose(...)`.
-  - Invert `if` conditions.
-  - Add `export` keyword.
-  - Add explicit type annotations to variable declarations.
+### Phase 28: Smart Enter & In-Editor Intentions (`Ctrl + Shift + Enter` / `Alt + Enter`) [RELEASED - v1.2.3]
+- **Smart Enter (`lang.smartEnterProcessor`)**: [`CompactSmartEnterProcessor`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/smartEnter/CompactSmartEnterProcessor.java) auto-completes circuit headers (`: Void { <caret> }`), unclosed declaration bodies (`contract`, `struct`, `enum`, `module`), missing parentheses/braces on `if`/`for`, and trailing semicolons on statements, expressions, and witnesses.
+- **Doc Comment Enter Handler (`enterHandlerDelegate`)**: [`CompactDocCommentEnterHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/CompactDocCommentEnterHandler.java) auto-continues JSDoc/KDoc-style `/** ... */` comment blocks with ` * ` and closing ` */`.
+- **In-Editor Intentions (`intentionAction`)**:
+  - [`CompactTogglePureCircuitIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactTogglePureCircuitIntention.java): Toggles `circuit` $\leftrightarrow$ `pure circuit`.
+  - [`CompactToggleExportIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactToggleExportIntention.java): Toggles `export` modifier.
+  - [`CompactSurroundWithDiscloseIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactSurroundWithDiscloseIntention.java): Surrounds expressions in `disclose(...)`.
+  - [`CompactInvertIfIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactInvertIfIntention.java): Inverts condition dualities (`==`/`!=`, etc.) and swaps `then`/`else` branches.
+  - [`CompactRemoveRedundantTypeIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactRemoveRedundantTypeIntention.java): Removes redundant `: Type` annotations from `const` bindings while preserving proper spacing.
+  - [`CompactSpecifyTypeExplicitlyIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactSpecifyTypeExplicitlyIntention.java): Automatically infers initializer type and inserts `: InferredType`.
+- Backed by 18 dedicated unit tests across `CompactSmartEnterTest`, `CompactDocCommentEnterTest`, and `CompactPhase28IntentionsTest` (bringing suite total to 459 passing tests).
 
 ### Phase 29: Postfix Completion & Structural Statement Mover
 - **Postfix Templates (`codeInsight.postfixTemplateProvider`)**: `.assert`, `.let`, `.disclose`, `.return`, `.not`.
@@ -262,7 +266,7 @@ gantt
 
 All future milestones will preserve the project's strict engineering standards:
 1. **Zero Compiler Warnings**: Verified against `-Xlint:all` under Java 25.
-2. **Preserve Unit Test Suite**: All existing 441 passing unit tests must continue passing without regression (`./gradlew test`).
+2. **Preserve Unit Test Suite**: All existing 459 passing unit tests must continue passing without regression (`./gradlew test`).
 3. **Threading Discipline**: All PSI reads guarded by `ReadAction` with cancellation checks; all PSI mutations scheduled via `WriteCommandAction` on the EDT.
 4. **Strict Namespace Separation**: Never merge `Namespace.VALUE` and `Namespace.TYPE`.
 5. **Cross-Platform Compatibility**: Native Windows, WSL, and Linux support verified.

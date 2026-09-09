@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.3-dev)
+Last Updated: September 2026 (v1.2.4-dev / Phase 28 Complete)
 
 ---
 
@@ -23,7 +23,7 @@ Last Updated: September 2026 (v1.2.3-dev)
   - Undisclosed witness usage (`CompactUndisclosedWitnessInspection`)
   - Pragma compiler version mismatch (`CompactPragmaVersionInspection`) with bare version `>=` interpretation and two-part semver normalization
 - **Code Style & Formatting**: Spacing rules, smart indentation, brace matching, quote handling, and commenter.
-- **IDE Features**: Structure view, syntax color settings page, breadcrumbs, code folding, hover documentation provider, live templates, and file templates.
+- **IDE Features**: Structure view, syntax color settings page, breadcrumbs, code folding, hover documentation provider, live templates, surround with, and file templates.
 - **Run Configurations & Toolchain Integration**: Compiler run configuration, gutter run line markers, toolchain discovery for Linux, macOS, Windows native, and WSL.
 - **Line Markers**: Bidirectional navigation between interface declarations, circuits, and contract implementations.
 - **Compiler Version Management**:
@@ -39,34 +39,29 @@ Last Updated: September 2026 (v1.2.3-dev)
   - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.
   - "Download More..." compiler version management dialog.
   - "Compile Current Contract" action triggering background compilation and problem reporting.
-- **Pragma Quick-Fixes & Context Actions**:
-  - `Alt + Enter` / `Ctrl + .` context action to switch project compiler version to match contract pragma.
-  - `Alt + Enter` / `Ctrl + .` context action to download a missing required compiler version.
-  - `Alt + Enter` / `Ctrl + .` context action to update pragma version in file to match active compiler.
-  - Quick-fixes attached directly to compiler version mismatch warnings.
-- **Phase 27: Status Bar Toolchain & Environment Widget (Released in v1.2.2)**:
+- **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
   - `CompactStatusBarPopup`: Native speed-search popup menu to switch installed compiler versions, download new versions, jump to the Remix Compiler panel, or open Midnight settings.
-- **Declarative Inlay Hints**: Parameter name hints for circuits, witnesses, and constructors.
-- **External Annotator**: Asynchronous background compiler diagnostic pipeline with cancellation support.
-- **Code Modernization (Java 25 & IntelliJ 2026.2+)**:
-  - Replaced deprecated `PathEnvironmentVariableUtil.findInPath` with modern Java `ProcessBuilder` and `where.exe`/`which` resolution.
-  - Migrated `DaemonCodeAnalyzer.restart()` to `restart(reason)` and `restart(psiFile, reason)` with selective restart triggers.
-  - Upgraded code constructs across 11 files:
-    - Pattern matching for `switch` and `instanceof`.
-    - Local variable type inference (`var`).
-    - Sequenced collections (`SequencedMap`, `firstEntry()`, `lastEntry()`, `getFirst()`, `getLast()`).
-    - Handled null selectors in pattern switch expressions (`case null, default ->`) to prevent JVM `NullPointerException`s.
-    - Resolved constructor `[this-escape]` warnings with `@SuppressWarnings("this-escape")`.
-  - Executed `./gradlew test` with 444 passing unit tests across 52 test classes.
+- **Phase 28: Smart Enter, Doc Comments & Intentions Suite (v1.2.4)**:
+  - `CompactSmartEnterProcessor`: Non-destructive `Ctrl+Shift+Enter` completion for circuits (`: Void` or preserve `:`), `const` declarations (requiring `=` before `;`), and parameterized types (`Bytes<>`, `Uint<>`).
+  - `CompactCommenter` & `CompactDocCommentEnterHandler`: Clean `Enter` handling in `/* ... */` and `/** ... */` without duplicate asterisks or trailing `*/` syntax errors.
+  - Full Intention Actions Suite (`Alt+Enter`):
+    - `CompactTogglePureCircuitIntention`
+    - `CompactToggleExportIntention`
+    - `CompactSurroundWithDiscloseIntention`
+    - `CompactInvertIfIntention`
+    - `CompactSpecifyTypeExplicitlyIntention`
+    - `CompactRemoveRedundantTypeIntention`
+- **Architectural Decision Records (ADRs)**:
+  - Fully maintained index in `.ai/decisions/README.md` covering all 25 major architectural subsystems (**ADR-001 through ADR-025**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
+- **Total Unit Test Count**: **472 passing tests** across 55 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
 
-### Production Testing Strategy (Multi-Tier Standard)
-- **Tier 1 (Golden Tree Conformance)**: Full AST assertions verifying PSI hierarchy against golden test files without errors.
-- **Tier 2 (Partial Parsing & Error Recovery)**: Deliberately broken syntax assertions verifying error elements without crashing or dropping subsequent declarations.
-- **Tier 3 (Precedence & Associativity Matrix)**: Binary, unary, boolean, and bitwise operator precedence assertions.
-- **Tier 4 (Stress & Stack Resilience)**: Deep nesting assertions verifying no `StackOverflowError` on large syntax depths.
-- **Tier 5 (Zero-Latency Concurrency)**: Guarded non-blocking read actions and cancellation responsiveness checks.
-
-### Roadmap & Evolution (Phases 28–37)
-- **Phase 28: Smart Enter & In-Editor Intentions** (`CompactSmartEnterProcessor`, `Alt+Enter` actions).
+### Roadmap & Evolution (Phases 29–35)
+- **Phase 29: New Project Wizard & Compact Templates**
+- **Phase 30: Stub Indexing & Large Workspace Caching**
+- **Phase 31: Advanced Refactorings (Rename, Extract Variable, Change Signature)**
+- **Phase 32: Remix Blockchain Explorer & Local Node Sandbox**
+- **Phase 33: Ledger Storage & ZK Constraint Profiler**
+- **Phase 34: In-IDE Language Server / PSI-MCP Bridge**
+- **Phase 35: Polyglot Compact/TypeScript Integration & Test Framework**

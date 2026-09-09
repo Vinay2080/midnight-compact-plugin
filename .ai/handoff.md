@@ -1,32 +1,28 @@
 # Current Handoff
 
 ## Current Feature
-Multi-Version Compact Compiler Management, Pragma Quick-Fix Context Actions, Remix-Style Sidebar Tool Window, and Windows/WSL Binary Path Architecture.
+Comprehensive Architectural Decision Records (ADRs 001 through 024), Smart Enter & Intentions Suite (Phase 28 / v1.2.4), and Multi-Version Compiler Toolchain.
 
 ## Status
-- **Clean, Pure Compiler Version List (Auto-detect Card Removed)**:
-  - Removed the redundant "Auto-detect" item from the Compact Compiler tool window version cards list. The list is now dedicated solely to explicit, isolatable compiler releases (`0.34.0`, `0.31.1`, `0.30.0`, etc.) matching Remix IDE conventions.
-  - Global system and WSL toolchain discovery remains cleanly managed in IDE settings (**Settings → Tools → Midnight Compact**).
-  - If no project-level version is pinned, the side panel automatically highlights the active installed version matching the contract's pragma.
-- **Interactive Run Button with Green Outline**:
-  - Redesigned the "Run Contract" button in [`CompactCompilerPanel`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/toolwindow/CompactCompilerPanel.java) with an emerald green outline (`new JBColor(new Color(46, 160, 67), new Color(63, 185, 80))`), green execution icon (`AllIcons.Actions.Execute`), and hover/press tinting.
-  - Eliminated disabled button states so the button is always active and interactive.
-  - Automatically resolves target `.compact` contracts across active editor tabs, open tabs, and project file index.
-  - Integrates into IntelliJ's native `ProgramRunnerUtil` and Run tool window console.
-- **Minimal, Classic Version Cards & Fixed Sizing**:
-  - Simplified [`CompactVersionCard`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/toolwindow/CompactVersionCard.java) with a single action icon (Download for uninstalled, Delete trash can for installed, animated spinner for downloading).
-  - Enforced a uniform, fixed height (`JBUI.scale(42)`) across all cards.
-- **Download Confirmation Dialog**:
-  - Clicking an uninstalled version prompts with a confirmation dialog (`Messages.showYesNoDialog`) before starting the download task.
-- **Windows / WSL Host Detection & Binary Path Architecture**:
-  - Automatically manages versions in WSL storage on Windows (`/home/<user>/.compact/versions/<version>/`), auto-migrating legacy Windows downloads with executable permissions (`chmod -R +x`).
-- **All Unit & Integration Tests Passing**:
-  - Verified with `./gradlew test --no-daemon --no-configuration-cache` (all 389+ unit tests passing).
-  - Verified with `./gradlew buildPlugin --no-daemon --no-configuration-cache` producing `build/distributions/midnight-plugin-1.2.0.zip`.
+- **Comprehensive ADR System (ADR-001 through ADR-024)**:
+  - Documented all 24 major architectural subsystems under [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/) matching 100% of the features registered in `plugin.xml` and implemented across the codebase.
+  - Fully upgraded ADR-001 through ADR-005 to strict production standards.
+  - Added ADR-010 through ADR-024 with upstream compiler citations (`compact/compiler/lexer.ss`, `parser.ss`, `langs.ss`), reference plugin cross-verifications (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`), anti-hardcoding / scalability evaluations, and feature implementation maps.
+  - Master index updated in [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md).
+- **Restored Complete `AGENTS.md`**:
+  - Restored all 13 canonical sections after historical truncation in commit `06d3b1b`.
+  - Re-enforced Invariant 9 (Mandatory ADR & Ground Truth Sourcing Rule).
+- **Phase 28 Complete**:
+  - Smart Enter (`CompactSmartEnterProcessor`) with non-destructive completion.
+  - Doc Comment Enter Handler (`CompactDocCommentEnterHandler`) with platform commenter delegation.
+  - 6 Editor Intentions (`Alt+Enter`) with dual line and word scoping.
+- **Verification Baseline**:
+  - **472 passing unit tests** across 55 test suites with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
 
 ## Relevant Context
-- Architecture details: [architecture.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md)
-- Current state: [current-state.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md)
-- Reference map: [reference-map.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/reference-map.md)
-- Compact semantics: [compact-semantics.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md)
-- IntelliJ patterns: [intellij-patterns.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/intellij-patterns.md)
+- Master ADR Index: [.ai/decisions/README.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md)
+- Machine State: [.ai/project-state.yaml](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml)
+- Current State: [.ai/context/current-state.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md)
+- Reference Map: [.ai/context/reference-map.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/reference-map.md)
+- Compact Semantics: [.ai/context/compact-semantics.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md)
+- IntelliJ Patterns: [.ai/context/intellij-patterns.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/intellij-patterns.md)
