@@ -82,7 +82,7 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static void addDeclarationCompletions(@NotNull CompletionResultSet result) {
-    // Top-level exported declarations
+    // Top-level exported declarations (conforming to Compact Program-element grammar)
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("export ledger")
             .withLookupString("ledger")
@@ -106,17 +106,6 @@ public class CompactCompletionContributor extends CompletionContributor {
             .bold()
             .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT)),
         120.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export const")
-            .withLookupString("export const")
-            .withPresentableText("export const")
-            .withTailText(" <name> = <val>;", true)
-            .withTypeText("const")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CONST)),
-        115.0
     ));
 
     result.addElement(PrioritizedLookupElement.withPriority(
@@ -241,16 +230,6 @@ public class CompactCompletionContributor extends CompletionContributor {
     ));
 
     result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("const")
-            .withPresentableText("const")
-            .withTailText(" <name> = <val>;", true)
-            .withTypeText("const")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CONST)),
-        105.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("witness")
             .withLookupString("wit")
             .withPresentableText("witness")
@@ -304,15 +283,6 @@ public class CompactCompletionContributor extends CompletionContributor {
             .bold()
             .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT)),
         120.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("const")
-            .withPresentableText("const")
-            .withTailText(" <name> = <val>;", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CONST)),
-        115.0
     ));
 
     result.addElement(PrioritizedLookupElement.withPriority(

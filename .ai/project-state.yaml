@@ -26,15 +26,16 @@ phases:
   status_bar_widget: complete (Phase 27)
   smart_enter_and_intentions: complete (Phase 28 / v1.2.4)
   declaration_name_generator_and_templates: complete (Phase 29 / v1.2.6)
-  stub_indexing: planned (Phase 30)
-  advanced_refactorings: planned (Phase 31)
-  remix_blockchain_explorer: planned (Phase 32)
-  ledger_storage_zk_profiler: planned (Phase 33)
-  psi_mcp_server: planned (Phase 34)
-  polyglot_ts_test_framework: planned (Phase 35)
+  strict_grammar_export_const_alignment: complete (Phase 30 / v1.2.6)
+  stub_indexing: planned (Phase 31)
+  advanced_refactorings: planned (Phase 32)
+  remix_blockchain_explorer: planned (Phase 33)
+  ledger_storage_zk_profiler: planned (Phase 34)
+  psi_mcp_server: planned (Phase 35)
+  polyglot_ts_test_framework: planned (Phase 36)
 
 tests:
-  last_known_passing: 509
+  last_known_passing: 519
   failures: 0
   skipped: 0
   suites:
@@ -129,3 +130,4 @@ architecture:
     adr_025: .ai/decisions/ADR-025-compact-live-templates-and-surround-with.md
     adr_026: .ai/decisions/ADR-026-compact-export-ledger-completion-and-templates.md
     adr_027: .ai/decisions/ADR-027-compact-declaration-name-generator-and-templates.md
+    adr_028: .ai/decisions/ADR-028-prohibit-top-level-export-const-and-grammar-alignment.md

@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
-import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +17,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * In-editor intention to toggle the {@code export} modifier on top-level declarations.
  *
- * <p>Available anywhere on the declaration header line (e.g. {@code contract}, {@code circuit},
- * {@code struct}, {@code enum}, {@code module}, {@code ledger}, {@code witness}, {@code type}, {@code const}).</p>
+ * <p>Available anywhere on the declaration header line for exportable declarations
+ * (contract, circuit, struct, enum, module, ledger, witness, type).
+ * Note: {@code const} statements are block-scoped and cannot be exported in Compact.</p>
  */
 public class CompactToggleExportIntention extends PsiElementBaseIntentionAction {
 
@@ -35,7 +35,7 @@ public class CompactToggleExportIntention extends PsiElementBaseIntentionAction 
 
   @Nullable
   private PsiElement findExportableDeclaration(@NotNull PsiElement element) {
-    PsiElement decl = PsiTreeUtil.getParentOfType(
+    return PsiTreeUtil.getParentOfType(
         element,
         CompactCircuitDefinition.class,
         CompactExternalContractDeclaration.class,
@@ -46,15 +46,6 @@ public class CompactToggleExportIntention extends PsiElementBaseIntentionAction 
         CompactLedgerDeclaration.class,
         CompactWitnessDeclaration.class
     );
-    if (decl != null) {
-      return decl;
-    }
-    for (PsiElement p = element; p != null && !(p instanceof CompactFile); p = p.getParent()) {
-      if (p.getNode() != null && p.getNode().getElementType() == CompactElementTypes.CONST_STATEMENT) {
-        return p;
-      }
-    }
-    return null;
   }
 
   @Override

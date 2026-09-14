@@ -39,6 +39,14 @@ public enum CompactDeclarationType {
     return baseName;
   }
 
+  /**
+   * Indicates whether this declaration type can be exported at the top or module level.
+   * In Compact grammar, {@code const} is strictly block-scoped and cannot be exported.
+   */
+  public boolean isExportable() {
+    return this != CONST;
+  }
+
   private static final Map<String, String> CUSTOM_TYPES = new ConcurrentHashMap<>();
 
   /**

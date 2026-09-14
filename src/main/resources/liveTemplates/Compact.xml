@@ -233,18 +233,6 @@
         </context>
     </template>
 
-    <template name="expconst"
-              value="export const $NAME$: $TYPE$ = $VALUE$;"
-              toReformat="true"
-              toShortenFQNames="true" key="live.template.expconst.description" resource-bundle="messages.MyMessageBundle">
-        <variable name="NAME" expression="compactDeclarationName(&quot;const&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
-        <variable name="VALUE" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
-        <context>
-            <option name="COMPACT_CODE" value="true"/>
-        </context>
-    </template>
-
     <template name="exp"
               value="export $END$"
               toReformat="true"
