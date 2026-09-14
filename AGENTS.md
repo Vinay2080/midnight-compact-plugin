@@ -1,5 +1,30 @@
 # AI & Developer Instructions — Midnight Language Plugin
 
+> [!CAUTION]
+> ### 🛑 MANDATORY STEP 0: PRE-FLIGHT GUARD FOR ALL AGENTS
+> **NEVER EDIT OR CREATE FILES DIRECTLY ON `master`.**
+>
+> Before executing ANY tool that modifies repository files (`client_edit_file`, `client_create_file`, file writes, refactorings):
+> 1. **VERIFY ISOLATION**:
+>    - Check `git status` on `master`. Never overwrite, stash destructively, or discard existing user work.
+>    - Create and enter a dedicated worktree on a dedicated branch (`ai/<task-slug>`):
+>      - **Standard Worktree**: `git worktree add -b ai/<task-slug> ../midnight-plugin-wt-<task-slug> master`
+>      - **Sandbox / Tool-Restricted Worktree**: When operating inside environments where file tools are restricted to the workspace root, use the gitignored worktree directory: `git worktree add -b ai/<task-slug> .worktrees/<task-slug> master` (or switch to dedicated branch `git checkout -b ai/<task-slug>`).
+> 2. **STRICT ENFORCEMENT OF ALL CONSTRAINTS**:
+>    Every rule in this document is **MANDATORY, CONTINUOUS, AND NON-NEGOTIABLE**:
+>    - **Zero Direct-to-Master Edits**: All implementation, tests, docs, and `.ai/` updates must occur on the task branch before merging to `master`.
+>    - **Threading Strictness**: PSI reads strictly within `ReadAction`; PSI mutations strictly on EDT in `WriteCommandAction`; zero `process.waitFor()` on EDT.
+>    - **PSI / AST Robustness**: Guard all PSI accesses against `null` and `PsiErrorElement`. Parser loops must advance tokens on every step to prevent UI thread freezes.
+>    - **Dual Namespace Separation**: Never collide `CompactResolveUtil.Namespace.VALUE` and `CompactResolveUtil.Namespace.TYPE`.
+>    - **Modern Java 25**: Use records, arrow `switch` expressions, unnamed `_` patterns, and sequenced collections.
+>    - **Compiler Ground Truth**: Never invent syntax or heuristics; verify against `compact/compiler/` and local reference plugins (`intellij-rust`, `intellij-elixir`, `intellij-scala`, `Rplugin`).
+>    - **Multi-Tier Testing**: Zero failures and zero compiler warnings on `./gradlew test`.
+>    - **Anti-Assumption Re-Read**: Always re-read edited files with `client_view_file` to verify edits before claiming task completion.
+>    - **Bug Knowledge Base**: Every concrete resolved defect MUST be documented in `.ai/bugs/` and indexed in `.ai/bugs/README.md`.
+>    - **User-Facing Changelog Hygiene**: [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) is written strictly for plugin users; internal engineering details belong exclusively in `.ai/`.
+
+---
+
 ## 1. Project Identity & Standards
 - **Project**: Midnight Compact Language Plugin for IntelliJ IDEA (`dev.verloren.midnight`).
 - **Purpose**: First-class development support for the Midnight blockchain's Compact smart contract language.
@@ -50,7 +75,7 @@ Compact Source Text (.compact)
     - **Tier 5 (Non-Blocking Concurrency)**: All inspections, linters, and index operations must yield immediately upon cancellation without UI thread lag.
 11. **Mandatory Task Lifecycle & Completion Gate**: Every change must adhere to the lifecycle in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), including documentation decision rules, anti-assumption re-read verification, and the final 9-step completion gate.
 12. **Persistent Bug Knowledge Base**: Whenever a concrete defect or incorrect behavior is identified, investigated, fixed, and verified, the agent MUST automatically document it as a markdown record in [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) using the standard bug record schema and register it in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md). Before investigating non-trivial bugs, agents must search `.ai/bugs/` for prior occurrences. A task involving a resolved bug is NEVER complete until the bug record is written and indexed.
-13. **Mandatory Git Worktree Isolation**: Every development session that modifies repository files MUST operate in a dedicated, isolated Git worktree (`../midnight-plugin-wt-<task-slug>`) on a dedicated branch (`ai/<task-slug>`). NEVER work directly on `master`. All implementation, testing, documentation, `.ai/` updates, and commits must take place inside the worktree. Upon task completion and verification, changes are committed, merged into `master`, `master` is verified, and the worktree and branch are deleted. Purely read-only query tasks that do not modify files are exempt. See [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) for the complete operational lifecycle.
+13. **Mandatory Git Worktree Isolation**: Every development session that modifies repository files MUST operate in a dedicated, isolated Git worktree (`../midnight-plugin-wt-<task-slug>` or `.worktrees/<task-slug>`) on a dedicated branch (`ai/<task-slug>`). NEVER work directly on `master`. All implementation, testing, documentation, `.ai/` updates, and commits must take place inside the worktree. Upon task completion and verification, changes are committed, merged into `master`, `master` is verified, and the worktree and branch are deleted. Purely read-only query tasks that do not modify files are exempt. See [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) for the complete operational lifecycle.
 14. **User-Facing Release Changelog Hygiene**: [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) is written strictly for IntelliJ plugin users, answering *"What changed for me?"* During ongoing development, `## [Unreleased]` serves as the working collection point for notable user-facing changes. Before creating or pushing any release tag, agents MUST execute the mandatory release-time changelog cleanup process defined in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) Section 8. All ADR identifiers, phase numbers, class/method names, source file paths, test method names, test counts, compiler lines, and internal AI documentation restructuring details MUST be removed or translated into concise, user-facing descriptions under standard Keep-a-Changelog categories. Engineering history and technical details are preserved exclusively in `.ai/bugs/`, `.ai/decisions/`, `.ai/context/`, git commits, and code comments. NEVER create or push a release tag while `CHANGELOG.md` still contains internal engineering notes.
 
 ---
