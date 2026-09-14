@@ -189,8 +189,7 @@ public class CompactCompletionTest extends BasePlatformTestCase {
   public void testReturnCompletionUintTypeAwareness() {
     myFixture.configureByText(CompactFileType.INSTANCE,
         """
-        circuit compute(secretKey: Field, publicAddress: Uint<32>, count: Uint<8>): Uint<32> {
-            const multiplier = 5;
+        circuit compute(secretKey: Field, publicAddress: Uint<32>, count: Uint<8>): Uint<32> {\n            const multiplier = 5;
             return <caret>
         }
         """
@@ -380,7 +379,7 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNotNull("Lookup strings should not be null", lookupStrings);
     assertTrue("Should suggest 'ledger'", lookupStrings.contains("ledger"));
     assertTrue("Should suggest 'circuit'", lookupStrings.contains("circuit"));
-    assertTrue("Should suggest 'const'", lookupStrings.contains("const"));
+    assertFalse("Should NOT suggest 'const' after export", lookupStrings.contains("const"));
     assertTrue("Should suggest 'struct'", lookupStrings.contains("struct"));
     assertTrue("Should suggest 'enum'", lookupStrings.contains("enum"));
     assertTrue("Should suggest 'type'", lookupStrings.contains("type"));
@@ -445,7 +444,7 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNotNull("Lookup strings should not be null", lookupStrings);
     assertTrue("Should suggest 'export ledger'", lookupStrings.contains("export ledger"));
     assertTrue("Should suggest 'export circuit'", lookupStrings.contains("export circuit"));
-    assertTrue("Should suggest 'export const'", lookupStrings.contains("export const"));
+    assertFalse("Should NOT suggest 'export const'", lookupStrings.contains("export const"));
     assertTrue("Should suggest 'export struct'", lookupStrings.contains("export struct"));
     assertTrue("Should suggest 'export enum'", lookupStrings.contains("export enum"));
     assertTrue("Should suggest 'export type'", lookupStrings.contains("export type"));
@@ -467,17 +466,17 @@ public class CompactCompletionTest extends BasePlatformTestCase {
         text.contains("export circuit circuit1(): Void {"));
   }
 
-  public void testExportConstCompletionInsertion() {
+  public void testExportConstNotSuggestedAtTopLevel() {
     myFixture.configureByText(CompactFileType.INSTANCE,
         """
         export con<caret>
         """
     );
     myFixture.completeBasic();
-    myFixture.type('\n');
-    String text = myFixture.getFile().getText();
-    assertTrue("File should contain 'export const const1 =' but was:\n" + text,
-        text.contains("export const const1 ="));
+    java.util.List<String> lookupStrings = myFixture.getLookupElementStrings();
+    if (lookupStrings != null) {
+      assertFalse("Should NOT suggest 'const' after export keyword", lookupStrings.contains("const"));
+    }
   }
 
   public void testExportStructCompletionInsertion() {

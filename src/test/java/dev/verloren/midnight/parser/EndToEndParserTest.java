@@ -1,5 +1,6 @@
 package dev.verloren.midnight.parser;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -21,7 +22,7 @@ public class EndToEndParserTest extends ParsingTestCase {
   }
 
   public void testReferenceTypeExampleParsesWithoutErrors() throws IOException {
-    String text = Files.readString(Path.of("references", "type-example.compact"));
+    String text = StringUtil.convertLineSeparators(Files.readString(Path.of("references", "type-example.compact")));
     PsiFile file = parseFile("TypeExample", text);
     String tree = DebugUtil.psiToString(file, true);
     PsiErrorElement error = PsiTreeUtil.findChildOfType(file, PsiErrorElement.class);

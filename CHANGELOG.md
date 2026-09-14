@@ -4,26 +4,25 @@
 
 ## [Unreleased]
 ### Added
-- **Comprehensive Export Declarations, Modifiers, & Scaffolding**:
-  - Expanded `export` completion in `CompactCompletionContributor` to support all upstream Compact exportable declaration types (`circuit`, `ledger`, `const`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and export selection forms (`{`).
-  - Added dedicated completion contexts to `CompactCompletionContext`:
-    - `Kind.AFTER_SEALED`: Suggests `ledger`.
-    - `Kind.AFTER_PURE`: Suggests `circuit`.
-    - `Kind.AFTER_NEW`: Suggests `type`.
-    - `Kind.AFTER_EXPORT`: Filters out invalid file headers (`pragma`, `include`, `import`) and offers all exportable declarations and modifiers.
-  - Added top-level declaration completions offering both bare (`circuit`, `ledger`, `const`, `struct`, `enum`, `type`, `module`, `contract`, `witness`) and exported variants (`export circuit`, `export ledger`, etc.) with `CompactDeclarationInsertHandler` live template scaffolding.
+- **Strict Upstream Compact Grammar Alignment for Export & Const Declarations (ADR-028)**:
+  - Cross-verified top-level declaration constructs against the official Compact compiler grammar (`compact/compiler/parser.ss:240-270, 460-480`).
+  - Confirmed `Program-element` does not permit `const` at top level; `const` is strictly a block-scoped statement inside circuit/function bodies (`Statement0`).
+  - Confirmed `export const` is invalid in Compact; constants at module scope are canonically declared and exported using `export pure circuit CONST_NAME(): Type { return ...; }`.
+  - Added unit test `testExportConstNotSuggestedAtTopLevel` in `CompactCompletionTest` verifying `export const` and `const` after `export` are not suggested.
+  - Added unit test `testToggleExportNotAvailableOnConst` in `CompactPhase28IntentionsTest` ensuring `Alt+Enter` export intention is not available on `const` statements.
+  - Registered `ADR-028: Prohibit Top-Level Export Const & Strict Compact Grammar Alignment`.
+- **Comprehensive Export Declarations, Modifiers, & Scaffolding (ADR-026)**:
+  - Expanded `export` completion in `CompactCompletionContributor` to support all upstream Compact exportable declaration types (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and export selection forms (`{`).
+  - Added dedicated completion contexts to `CompactCompletionContext` (`Kind.AFTER_SEALED`, `Kind.AFTER_PURE`, `Kind.AFTER_NEW`, `Kind.AFTER_EXPORT`).
+  - Added top-level declaration completions offering both bare and exported variants with `CompactDeclarationInsertHandler` live template scaffolding.
   - Added live templates in `Compact.xml` and bundle descriptions in `MyMessageBundle.properties`:
-    - `expconst`: `export const $NAME$: $TYPE$ = $VALUE$;`
     - `expstr`: `export struct $NAME$ { $FIELDS$ }`
     - `expen`: `export enum $NAME$ { $MEMBERS$ }`
     - `expt`: `export type $NAME$ = $TYPE$;`
     - `expw`: `export witness $NAME$($PARAMS$): $RET$;`
-    - `const`: `const $NAME$: $TYPE$ = $VALUE$;`
+    - `const`: `const $NAME$: $TYPE$ = $VALUE$;` (statement context only)
     - `exp`: `export $END$`
-  - Expanded `CompactToggleExportIntention` to support `CompactElementTypes.CONST_STATEMENT`, enabling in-editor `Alt+Enter` toggling of `export` on `const` declarations.
-  - Expanded `CompactDeclarationType` to support `CONST_STATEMENT` in `fromPsi` and `fromElementType`.
-  - Updated architectural decision record `ADR-026` to document the full architecture of comprehensive export completions, modifiers, and live templates.
-- **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29)**:
+- **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29, ADR-027)**:
   - Created `CompactDeclarationNameGenerator` providing universal auto-numbering (`circuit1`, `circuit2`, `witness1`, etc.) for newly generated declarations.
   - Implemented lowest-available-integer gap filling (e.g. if `circuit1` and `circuit3` exist, generates `circuit2`).
   - Implemented exact user intent preservation: explicit names are preserved verbatim without alteration.
@@ -34,7 +33,6 @@
     - `circuitName()`: Dedicated macro generating `circuit1`, `circuit2`, etc.
     - `witnessName()`: Dedicated macro generating `witness1`, `witness2`, etc.
   - Created `CompactDeclarationInsertHandler` for auto-numbered declaration insertion during code completion.
-  - Registered architectural decision record `ADR-027` documenting the declaration auto-numbering architecture, scope analysis, live template macros, and anti-hardcoding evaluation.
 - **AI Instruction & Context System Restructuring**:
   - Streamlined `AGENTS.md` to focus exclusively on permanent, high-priority rules, critical architectural invariants, Java 25 standards, threading models, and tool selection priorities.
   - Eliminated transient project state, hardcoded test counters, and fragmented checklists from `AGENTS.md`, establishing single sources of truth.
@@ -48,6 +46,12 @@
   - Added `ledger` live template alias expanding to `export ledger $NAME$: $TYPE$;` with dynamic auto-numbering via `compactDeclarationName("ledger")`.
 
 ### Changed
+- **Disallowed Top-Level `export const` and `const` Suggestions**:
+  - Removed `export const` and `const` from top-level declaration completions in `CompactCompletionContributor`.
+  - Removed `const` from completions after `export`.
+  - Removed obsolete `expconst` live template from `Compact.xml` and bundle descriptions.
+  - Restricted `CompactToggleExportIntention` to exportable top-level declarations only (excluding `const`).
+  - Updated `CompactDeclarationType.isExportable()` to return `false` for `CONST`.
 - **Live Templates Dynamic Auto-Numbering Alignment (`Compact.xml`)**:
   - Updated all declaration live templates (`cir`, `wit`, `en`, `str`, `mod`, `cct`, `ccti`, `type`, `led`, `ledg`, `ledger`) to calculate auto-numbered names dynamically via `compactDeclarationName(...)` with numbered fallbacks (`circuit1`, `witness1`, `struct1`, `enum1`, `module1`, `contract1`, `type1`, `ledger1`).
   - Replaced obsolete block syntax in `led` template (`ledger { ... }`) with contemporary exported ledger syntax `export ledger $NAME$: $TYPE$;`.
@@ -58,14 +62,11 @@
 ### Tested
 - Created unit tests in `CompactCompletionTest` verifying:
   - Context classification for `AFTER_EXPORT`, `AFTER_SEALED`, `AFTER_PURE`, `AFTER_NEW`.
-  - `export ` suggests all 9 declaration types, 3 modifiers, and `{`.
-  - `export sealed ` suggests `ledger`.
-  - `export pure ` suggests `circuit`.
-  - `export new ` suggests `type`.
-  - Top-level suggests `export` variants with live template scaffolding.
-  - Insertions for `export circuit`, `export const`, `export struct`, `export enum`, `export type`, and `export witness`.
-- Created unit test in `CompactPhase28IntentionsTest` verifying `CompactToggleExportIntention` toggles `export` on `const` declarations.
+  - `export ` suggests all exportable declaration types, modifiers, and `{`, but strictly excludes `const`.
+  - Top-level suggests `export` variants but strictly excludes `export const`.
+  - Insertions for `export circuit`, `export struct`, `export enum`, `export type`, `export witness`, `export ledger`.
+- Created unit test in `CompactPhase28IntentionsTest` verifying `CompactToggleExportIntention` is NOT available on `const` statements.
 - Created `CompactDeclarationNameGeneratorTest` covering auto-numbering, gaps, explicit names, and scope isolation.
-- Full test suite verified with `./gradlew test` passing 100% cleanly.
+- Full test suite verified with `./gradlew test` passing 100% cleanly (519 tests passing).
 
 ## [1.2.4] - 2026-09-09
