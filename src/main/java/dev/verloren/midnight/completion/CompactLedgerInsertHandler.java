@@ -17,9 +17,8 @@ import org.jetbrains.annotations.NotNull;
  * Insert handler for ledger declarations that completes the declaration skeleton
  * with live template fields for the ledger name and type.
  *
- * <p>Ensures that {@code export} is present in front of the ledger declaration,
- * then sets up interactive template variables for {@code <name>: <type>;} with an
- * auto-incremented default name (e.g. {@code ledger1}, {@code ledger2}).</p>
+ * <p>Supports both exported ({@code export ledger}) and bare ({@code ledger}) forms,
+ * deduplicating any redundant leading {@code export} when already present.</p>
  */
 public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> {
 
@@ -29,23 +28,23 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
     Document document = context.getDocument();
+    int startOffset = context.getStartOffset();
     int tailOffset = context.getTailOffset();
     CharSequence chars = document.getCharsSequence();
 
-    // Check line prefix: ensure 'export ' is in front of 'ledger'
-    int lineStart = document.getLineStartOffset(document.getLineNumber(tailOffset));
-    String linePrefix = chars.subSequence(lineStart, tailOffset).toString().trim();
-    if (!linePrefix.startsWith("export")) {
-      // Find start of the word that was just completed
-      int wordStart = tailOffset - item.getLookupString().length();
-      if (wordStart >= lineStart && !linePrefix.contains("export")) {
-        document.insertString(wordStart, "export ");
-        tailOffset += "export ".length();
-        context.setTailOffset(tailOffset);
-        if (editor != null) {
-          editor.getCaretModel().moveToOffset(tailOffset);
-        }
+    // Deduplicate export if 'export' was already preceding on the line and item starts with 'export'
+    int lineStart = document.getLineStartOffset(document.getLineNumber(startOffset));
+    boolean hasPrecedingExport = CompactCompletionContext.hasPrecedingExportOnLine(chars, lineStart, startOffset);
+    boolean itemHasExport = item.getLookupString().startsWith("export");
+
+    if (hasPrecedingExport && itemHasExport) {
+      document.deleteString(startOffset, startOffset + "export ".length());
+      tailOffset -= "export ".length();
+      context.setTailOffset(tailOffset);
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(tailOffset);
       }
+      chars = document.getCharsSequence();
     }
 
     // Check if line remainder already contains an identifier or colon

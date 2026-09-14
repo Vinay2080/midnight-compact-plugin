@@ -36,8 +36,24 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
     Document document = context.getDocument();
+    int startOffset = context.getStartOffset();
     int tailOffset = context.getTailOffset();
     CharSequence chars = document.getCharsSequence();
+
+    // Deduplicate export if 'export' was already preceding on the line and item starts with 'export'
+    int lineStart = document.getLineStartOffset(document.getLineNumber(startOffset));
+    boolean hasPrecedingExport = CompactCompletionContext.hasPrecedingExportOnLine(chars, lineStart, startOffset);
+    boolean itemHasExport = item.getLookupString().startsWith("export");
+
+    if (hasPrecedingExport && itemHasExport) {
+      document.deleteString(startOffset, startOffset + "export ".length());
+      tailOffset -= "export ".length();
+      context.setTailOffset(tailOffset);
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(tailOffset);
+      }
+      chars = document.getCharsSequence();
+    }
 
     // Guard: check if an identifier, signature, or colon already follows the caret on the current line
     int lineEnd = document.getLineEndOffset(document.getLineNumber(tailOffset));

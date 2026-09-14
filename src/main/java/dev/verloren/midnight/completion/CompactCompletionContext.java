@@ -30,13 +30,28 @@ public final class CompactCompletionContext {
     if (isAfterTypeIntro(previous)) {
       return Kind.TYPE;
     }
+    if (PsiTreeUtil.getParentOfType(position, CompactStructDefinition.class, false) != null
+        || PsiTreeUtil.getParentOfType(position, CompactEnumDefinition.class, false) != null) {
+      return Kind.NONE;
+    }
+    if (isExportPreceding(position)) {
+      if (previous != null && previous.getNode() != null) {
+        IElementType prevType = previous.getNode().getElementType();
+        if (prevType == CompactTokenTypes.SEALED) {
+          return Kind.AFTER_SEALED;
+        }
+        if (prevType == CompactTokenTypes.PURE) {
+          return Kind.AFTER_PURE;
+        }
+        if (prevType == CompactTokenTypes.NEW) {
+          return Kind.AFTER_NEW;
+        }
+      }
+      return Kind.AFTER_EXPORT;
+    }
     if (isDeclarationOrStatementStart(previous)) {
       if (PsiTreeUtil.getParentOfType(position, CompactBlock.class, false) != null) {
         return Kind.STATEMENT;
-      }
-      if (PsiTreeUtil.getParentOfType(position, CompactStructDefinition.class, false) != null
-          || PsiTreeUtil.getParentOfType(position, CompactEnumDefinition.class, false) != null) {
-        return Kind.NONE;
       }
       if (previous != null && previous.getNode() != null) {
         IElementType prevType = previous.getNode().getElementType();
@@ -59,6 +74,47 @@ public final class CompactCompletionContext {
       return Kind.MEMBER;
     }
     return Kind.VALUE;
+  }
+
+  public static boolean isExportPreceding(@NotNull PsiElement position) {
+    // 1. Walk backward through visible AST leaves until statement/block boundary
+    for (PsiElement p = PsiTreeUtil.prevVisibleLeaf(position); p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
+      if (p.getNode() == null) break;
+      IElementType tt = p.getNode().getElementType();
+      if (tt == CompactTokenTypes.EXPORT) {
+        return true;
+      }
+      if (tt == CompactTokenTypes.SEMICOLON || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE) {
+        break;
+      }
+    }
+
+    // 2. Check document text on the current line before the caret / element
+    try {
+      com.intellij.openapi.editor.Document doc = position.getContainingFile().getViewProvider().getDocument();
+      if (doc != null) {
+        int offset = position.getTextRange().getStartOffset();
+        int lineStart = doc.getLineStartOffset(doc.getLineNumber(offset));
+        CharSequence chars = doc.getCharsSequence();
+        return hasPrecedingExportOnLine(chars, lineStart, offset);
+      }
+    } catch (Exception ignored) {
+    }
+
+    return false;
+  }
+
+  public static boolean hasPrecedingExportOnLine(@NotNull CharSequence chars, int lineStart, int offset) {
+    int stmtStart = lineStart;
+    for (int i = offset - 1; i >= lineStart; i--) {
+      char c = chars.charAt(i);
+      if (c == ';' || c == '{' || c == '}') {
+        stmtStart = i + 1;
+        break;
+      }
+    }
+    String stmtBefore = chars.subSequence(stmtStart, offset).toString().trim();
+    return stmtBefore.matches(".*\\bexport\\b.*");
   }
 
   private static boolean isAfterTypeIntro(PsiElement previous) {
