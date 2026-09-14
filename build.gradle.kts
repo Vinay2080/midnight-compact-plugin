@@ -6,11 +6,42 @@ plugins {
     id("org.jetbrains.intellij.platform")
 }
 
-val enableMtui = providers.environmentVariable("MTUI")
-    .orElse(providers.environmentVariable("ENABLE_MTUI"))
-    .orElse(providers.gradleProperty("mtui"))
-    .map { it.isBlank() || it.equals("true", ignoreCase = true) || it == "1" }
-    .getOrElse(false)
+val requestedTasks = gradle.startParameter.taskNames
+
+// Tasks that build, test, verify, or publish the plugin for distribution/CI
+val isBuildOrPublish = requestedTasks.any { task ->
+    task.contains("buildPlugin", ignoreCase = true) ||
+    task.contains("publishPlugin", ignoreCase = true) ||
+    task.contains("signPlugin", ignoreCase = true) ||
+    task.contains("verifyPlugin", ignoreCase = true) ||
+    task.contains("build", ignoreCase = true) ||
+    task.contains("assemble", ignoreCase = true) ||
+    task.contains("check", ignoreCase = true) ||
+    task.contains("test", ignoreCase = true)
+}
+
+// Tasks or flags to run sandbox WITHOUT Material Theme UI
+val isExplicitlyDisabled = requestedTasks.any { task ->
+    task.contains("runIdeNoMtui", ignoreCase = true) ||
+    task.contains("withoutMtui", ignoreCase = true) ||
+    task.contains("noMtui", ignoreCase = true)
+} || providers.gradleProperty("noMtui").orNull?.let { it.isBlank() || it.equals("true", ignoreCase = true) || it == "1" } == true
+  || providers.gradleProperty("disableMtui").orNull?.let { it.isBlank() || it.equals("true", ignoreCase = true) || it == "1" } == true
+  || providers.gradleProperty("mtui").orNull?.let { it.equals("false", ignoreCase = true) || it == "0" } == true
+  || providers.environmentVariable("NO_MTUI").orNull?.let { it.isBlank() || it.equals("true", ignoreCase = true) || it == "1" } == true
+  || providers.environmentVariable("DISABLE_MTUI").orNull?.let { it.isBlank() || it.equals("true", ignoreCase = true) || it == "1" } == true
+  || providers.environmentVariable("MTUI").orNull?.let { it.equals("false", ignoreCase = true) || it == "0" } == true
+  || providers.environmentVariable("ENABLE_MTUI").orNull?.let { it.equals("false", ignoreCase = true) || it == "0" } == true
+
+// Running in development environment (e.g. running the sandbox IDE)
+val isDevRun = requestedTasks.any { task -> task.contains("runIde", ignoreCase = true) }
+
+// By default in development environment (runIde / sandbox), enable Material Theme UI.
+// If run via another command (e.g. runIdeNoMtui, -PnoMtui, -Pmtui=false, NO_MTUI=1, etc.), disable it.
+// When building, packaging, or publishing the plugin (buildPlugin, publishPlugin), NEVER include Material Theme UI.
+val enableMtui = !isBuildOrPublish && !isExplicitlyDisabled && (isDevRun || requestedTasks.isEmpty())
+
+logger.lifecycle("[Midnight] Material Theme UI enabled in sandbox: $enableMtui")
 
 dependencies {
     testImplementation(libs.junit)
@@ -86,5 +117,11 @@ tasks {
     }
     instrumentTestCode {
         enabled = false
+    }
+
+    register("runIdeNoMtui") {
+        group = "intellij platform"
+        description = "Runs the IDE sandbox without Material Theme UI."
+        dependsOn(named("runIde"))
     }
 }
