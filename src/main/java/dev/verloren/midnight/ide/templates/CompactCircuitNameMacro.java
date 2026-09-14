@@ -27,7 +27,8 @@ public class CompactCircuitNameMacro extends Macro {
   @Override
   public @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     PsiElement psiElement = context.getPsiElementAtStartOffset();
-    String generated = CompactDeclarationNameGenerator.generateName(CompactDeclarationType.CIRCUIT, psiElement);
+    int startOffset = context.getStartOffset();
+    String generated = CompactDeclarationNameGenerator.generateName(CompactDeclarationType.CIRCUIT.getBaseName(), null, psiElement, startOffset);
     return new TextResult(generated);
   }
 

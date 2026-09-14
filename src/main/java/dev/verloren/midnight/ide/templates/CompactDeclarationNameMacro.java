@@ -11,6 +11,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Universal live template macro generating auto-numbered declaration names based on declaration type.
+ *
+ * <p>Usage in live templates:
+ * <ul>
+ *   <li>{@code compactDeclarationName("circuit")} &rarr; {@code "circuit1"}, {@code "circuit2"}, etc.</li>
+ *   <li>{@code compactDeclarationName("witness")} &rarr; {@code "witness1"}, {@code "witness2"}, etc.</li>
+ *   <li>{@code compactDeclarationName("struct")} &rarr; {@code "struct1"}, etc.</li>
+ *   <li>{@code compactDeclarationName()} &rarr; automatically deduced from preceding keyword in context.</li>
+ * </ul>
+ * </p>
  */
 public class CompactDeclarationNameMacro extends Macro {
 
@@ -40,19 +49,13 @@ public class CompactDeclarationNameMacro extends Macro {
     }
 
     String baseName = typeKey != null ? CompactDeclarationType.resolveBaseName(typeKey) : "declaration";
-    System.out.println("DEBUG calculateResult: psiElement=" + psiElement + " text='" + (psiElement != null ? psiElement.getText() : null) + "'");
-    if (psiElement != null) {
-      System.out.println("DEBUG calculateResult: scopeRoot=" + CompactDeclarationNameGenerator.findScopeRoot(psiElement) + " scopeText='" + (CompactDeclarationNameGenerator.findScopeRoot(psiElement) != null ? CompactDeclarationNameGenerator.findScopeRoot(psiElement).getText() : null) + "'");
-      System.out.println("DEBUG calculateResult: existingNames=" + CompactDeclarationNameGenerator.collectExistingNamesInScope(psiElement));
-    }
-    String generated = CompactDeclarationNameGenerator.generateName(baseName, psiElement);
-    System.out.println("DEBUG calculateResult: generated=" + generated);
+    int startOffset = context.getStartOffset();
+    String generated = CompactDeclarationNameGenerator.generateName(baseName, null, psiElement, startOffset);
     return new TextResult(generated);
   }
 
   @Override
   public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
-    System.out.println("DEBUG calculateQuickResult called");
     return calculateResult(params, context);
   }
 
