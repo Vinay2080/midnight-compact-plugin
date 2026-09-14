@@ -79,6 +79,7 @@ tests:
     intentions_suite: dev.verloren.midnight.intention.CompactPhase28IntentionsTest
 
 architecture:
+  bug_knowledge_base: .ai/bugs/README.md
   language: dev.verloren.midnight.CompactLanguage
   file_type: dev.verloren.midnight.CompactFileType
   parser_definition: dev.verloren.midnight.parser.CompactParserDefinition

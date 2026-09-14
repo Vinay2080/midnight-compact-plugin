@@ -4,8 +4,8 @@
 - **Project**: Midnight Compact Language Plugin for IntelliJ IDEA (`dev.verloren.midnight`).
 - **Purpose**: First-class development support for the Midnight blockchain's Compact smart contract language.
 - **Language**: Java 25 (Gradle toolchain `JavaLanguageVersion.of(25)`).
-- **Architecture & System Status**: For current implementation state, active phases, and verified test metrics, consult [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml) and [`.ai/context/current-state.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md).
-- **Execution & Workflow**: Every task must follow the mandatory task lifecycle, documentation decision rules, and completion gate defined in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md).
+- **Architecture & System Status**: For current implementation state, active phases, and verified test metrics, consult [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml) and [`.ai/context/current-state.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md). For persistent debugging records and prior defect investigations, consult [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md).
+- **Execution & Workflow**: Every task must follow the mandatory task lifecycle, Git worktree isolation protocol, release-time changelog cleanup process, documentation decision rules, and completion gate defined in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md).
 
 ---
 
@@ -49,6 +49,9 @@ Compact Source Text (.compact)
     - **Tier 4 (Stress & Stack Resilience)**: Test resilience against deeply nested parentheses, brackets, and blocks (preventing `StackOverflowError`).
     - **Tier 5 (Non-Blocking Concurrency)**: All inspections, linters, and index operations must yield immediately upon cancellation without UI thread lag.
 11. **Mandatory Task Lifecycle & Completion Gate**: Every change must adhere to the lifecycle in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), including documentation decision rules, anti-assumption re-read verification, and the final 9-step completion gate.
+12. **Persistent Bug Knowledge Base**: Whenever a concrete defect or incorrect behavior is identified, investigated, fixed, and verified, the agent MUST automatically document it as a markdown record in [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) using the standard bug record schema and register it in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md). Before investigating non-trivial bugs, agents must search `.ai/bugs/` for prior occurrences. A task involving a resolved bug is NEVER complete until the bug record is written and indexed.
+13. **Mandatory Git Worktree Isolation**: Every development session that modifies repository files MUST operate in a dedicated, isolated Git worktree (`../midnight-plugin-wt-<task-slug>`) on a dedicated branch (`ai/<task-slug>`). NEVER work directly on `master`. All implementation, testing, documentation, `.ai/` updates, and commits must take place inside the worktree. Upon task completion and verification, changes are committed, merged into `master`, `master` is verified, and the worktree and branch are deleted. Purely read-only query tasks that do not modify files are exempt. See [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) for the complete operational lifecycle.
+14. **User-Facing Release Changelog Hygiene**: [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) is written strictly for IntelliJ plugin users, answering *"What changed for me?"* During ongoing development, `## [Unreleased]` serves as the working collection point for notable user-facing changes. Before creating or pushing any release tag, agents MUST execute the mandatory release-time changelog cleanup process defined in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) Section 8. All ADR identifiers, phase numbers, class/method names, source file paths, test method names, test counts, compiler lines, and internal AI documentation restructuring details MUST be removed or translated into concise, user-facing descriptions under standard Keep-a-Changelog categories. Engineering history and technical details are preserved exclusively in `.ai/bugs/`, `.ai/decisions/`, `.ai/context/`, git commits, and code comments. NEVER create or push a release tag while `CHANGELOG.md` still contains internal engineering notes.
 
 ---
 
@@ -185,7 +188,7 @@ All detailed context and workflow documents reside under [`.ai/`](file:///C:/Use
 | Need | Document | Description |
 |:---|:---|:---|
 | **Directory Index** | [`.ai/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/README.md) | Entry point & overview of the `.ai/` system |
-| **Task Lifecycle & Gate** | [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) | Standard 11-step workflow, decision rules, & final completion gate |
+| **Task Lifecycle & Gate** | [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) | Standard 11-step workflow, Git worktree isolation, release changelog cleanup, decision rules, & final gate |
 | **Machine State** | [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml) | Machine-readable feature phases, test counts, and test suites |
 | **Session Handoff** | [`.ai/handoff.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/handoff.md) | Current active feature, implementation status, and next priorities |
 | **Architecture Guide** | [`.ai/context/architecture.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md) | Detailed subsystem design, threading model, and extension points |
@@ -193,7 +196,9 @@ All detailed context and workflow documents reside under [`.ai/`](file:///C:/Use
 | **Compact Semantics** | [`.ai/context/compact-semantics.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md) | Verified Compact language behavior, typing rules, and grammar |
 | **IntelliJ Patterns** | [`.ai/context/intellij-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/intellij-patterns.md) | Plugin-specific IntelliJ Platform patterns, APIs, and comparative analysis |
 | **Reference Map** | [`.ai/context/reference-map.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/reference-map.md) | Index of compiler (`compact/`) and reference plugins (`intellij-*/`, `Rplugin/`) |
-| **Decisions (ADRs)** | [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md) | Master index of Architectural Decision Records (ADR-001 through ADR-026) |
+| **Decisions (ADRs)** | [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md) | Master index of Architectural Decision Records (ADR-001 through ADR-028) |
+| **Bug Knowledge Base** | [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md) | Searchable index of resolved debugging incidents, root causes, solutions, and prevention lessons |
+| **User Changelog** | [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) | Curated user-facing release notes and working Unreleased collection |
 
 ### Task-Specific Context Loading Router
-When starting a task, consult the **Context Loading Matrix** in [`.ai/workflow.md#2-phase-1-context-loading--task-routing`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) to load only the required files and avoid token bloat.
+When starting a task, consult the **Context Loading Matrix** in [`.ai/workflow.md#3-phase-1-context-loading--task-routing`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) to load only the required files and avoid token bloat.
