@@ -61,4 +61,46 @@ public class CompactLiveTemplateTest extends BasePlatformTestCase {
     String text = myFixture.getEditor().getDocument().getText();
     assertTrue("Should contain 'circuit1' but was: " + text, text.contains("circuit1"));
   }
+
+  public void testEnLiveTemplateExpansionFirstDeclaration() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "<caret>");
+    myFixture.type("en\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should contain 'enum1' but was: " + text, text.contains("enum1"));
+  }
+
+  public void testStrLiveTemplateExpansionFirstDeclaration() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "<caret>");
+    myFixture.type("str\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should contain 'struct1' but was: " + text, text.contains("struct1"));
+  }
+
+  public void testModLiveTemplateExpansionFirstDeclaration() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "<caret>");
+    myFixture.type("mod\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should contain 'module1' but was: " + text, text.contains("module1"));
+  }
+
+  public void testWitLiveTemplateExpansionFirstDeclaration() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "<caret>");
+    myFixture.type("wit\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should contain 'witness1' but was: " + text, text.contains("witness1"));
+  }
+
+  public void testLedLiveTemplateExpansionFirstDeclaration() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "<caret>");
+    myFixture.type("led\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should contain 'ledger1' but was: " + text, text.contains("ledger1"));
+  }
+
+  public void testSequentialCircuitLiveTemplateExpansion() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "circuit circuit1(): Void {}\n<caret>");
+    myFixture.type("cir\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should contain 'circuit2' but was: " + text, text.contains("circuit2"));
+  }
 }
