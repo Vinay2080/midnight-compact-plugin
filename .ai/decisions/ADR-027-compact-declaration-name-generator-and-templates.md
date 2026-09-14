@@ -17,10 +17,12 @@ The required behavior:
 4. Explicitly provided names must be preserved without alteration.
 5. Sibling scopes must remain isolated (e.g., `circuit1` in `ModuleA` does not prevent `circuit1` from being generated in `ModuleB`).
 6. The naming logic must be generalized, non-hardcoded, and extensible so newly supported declaration types can plug into the same mechanism without bespoke logic.
+7. Declarations across all constructs must consistently start at index `1` (`circuit1`, `witness1`, `enum1`, `struct1`, `module1`, `ledger1`) rather than skipping to `2`.
 
 ## Authoritative References
 1. **JetBrains Platform Macro & Live Template Architecture**:
    - `com.intellij.codeInsight.template.Macro`: Pluggable template expression functions evaluated interactively during live template expansion.
+   - `com.intellij.codeInsight.template.ExpressionContext`: Contextual state during template expansion, exposing `getStartOffset()`, `getTemplateStartOffset()`, `getPsiFile()`, and `getEditor()`.
    - `com.intellij.codeInsight.template.TemplateManager` & `com.intellij.codeInsight.template.impl.ConstantNode`: Interactive multi-variable template orchestration.
 2. **Compact Language Grammar & AST Structure**:
    - [`compact/compiler/parser.ss`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/compact/compiler/parser.ss): Top-level and module declarations (`contract`, `circuit`, `witness`, `struct`, `enum`, `module`, `type`, `ledger`).
@@ -34,24 +36,25 @@ The required behavior:
    - Provides runtime extensibility via `registerCustomType(typeKey, baseName)` and `resolveBaseName(typeOrKeyword)`.
    - Provides bidirectional mapping helpers from keywords, AST element types, and concrete PSI classes (`CompactCircuitDefinition`, `CompactWitnessDeclaration`, `CompactStructDefinition`, etc.).
 
-2. **Universal Scope-Aware Name Generator (`CompactDeclarationNameGenerator`)**:
-   - `generateName(baseName, explicitName, context)`:
+2. **Universal Scope-Aware Name Generator with Self-Collision Evasion (`CompactDeclarationNameGenerator`)**:
+   - `generateName(baseName, explicitName, context, ignoredOffset)`:
      - If `explicitName` is provided, returns it unchanged.
      - Resolves the innermost scope container (`findScopeRoot`) among `CompactBlock`, `CompactModuleDefinition`, `CompactExternalContractDeclaration`, and `CompactFile`.
-     - Collects existing symbols in scope through both parsed PSI elements (`CompactNamedElement`) and universal scope text token scanning (`IDENTIFIER_PATTERN`), ensuring safety even during uncommitted typing.
+     - Collects existing symbols in scope through both parsed PSI elements (`CompactNamedElement`) and universal scope text token scanning (`IDENTIFIER_PATTERN`).
+     - **Template Self-Collision & Oscillation Evasion**: When live template macros evaluate, IntelliJ's live template engine inserts intermediate text into the active document buffer and re-evaluates macros across multiple passes. Without isolating the active template variable, the generator detects its own in-flight placeholder at `context.getStartOffset()` as an existing symbol and increments to index `2`, resulting in an oscillating loop between `1` and `2`. By incorporating `ignoredOffset = context.getStartOffset()`, any identifier covering the variable under construction is excluded from the existing symbol set, ensuring index `1` is accurately assigned on the first declaration.
      - Iterates sequentially starting at index 1 (`candidate = baseName + index`) until the lowest unused integer is found, naturally backfilling gaps.
 
 3. **Pluggable Live Template Macros (`CompactDeclarationNameMacro`, `CompactCircuitNameMacro`, `CompactWitnessNameMacro`)**:
    - Registered under the `<liveTemplateMacro>` extension point in `plugin.xml`.
-   - `compactDeclarationName(declarationType)`: Evaluates dynamic expressions in live templates (e.g., `compactDeclarationName("circuit")` &rarr; `circuit1`, `circuit2`).
-   - `circuitName()` and `witnessName()`: Backward-compatible specialized macros delegating to the unified name generator.
+   - `compactDeclarationName(declarationType)`: Evaluates dynamic expressions in live templates (e.g., `compactDeclarationName("circuit")` &rarr; `circuit1`, `circuit2`). Passes `context.getStartOffset()` to prevent variable self-collision.
+   - `circuitName()` and `witnessName()`: Backward-compatible specialized macros delegating to the unified name generator with active variable offset tracking.
 
 4. **Declaration Code Completion Handlers**:
    - Created `CompactDeclarationInsertHandler` for auto-numbered template completions of `circuit`, `witness`, `struct`, `enum`, `module`, `contract`, `type`, and `ledger`.
    - Updated `CompactLedgerInsertHandler` to use `CompactDeclarationNameGenerator.generateName(CompactDeclarationType.LEDGER, psiContext)`, generating `ledger1`, `ledger2`, etc., instead of static `"state"`.
 
 5. **Parametric Live Templates (`Compact.xml`)**:
-   - Updated all declaration templates (`cir`, `wit`, `cct`, `ccti`, `mod`, `str`, `en`, `type`, `led`, `ledg`, `ledger`) to utilize `compactDeclarationName(...)` with standard fallbacks (`"circuit1"`, `"witness1"`, `"struct1"`, etc.).
+   - Configured all declaration templates (`cir`, `wit`, `cct`, `ccti`, `mod`, `str`, `en`, `type`, `led`, `ledg`, `ledger`) to utilize `compactDeclarationName(...)` with empty default values (`defaultValue=""`) so that dynamic macro calculation governs initial population without pre-filling conflicting tokens.
 
 ## Scalability & Anti-Hardcoding Evaluation
 - **Is it hardcoded?**: No. Declaration types are managed through the extensible `CompactDeclarationType` registry. Base names and scope analyzers operate on abstract identifiers without bespoke naming switches per declaration construct.
