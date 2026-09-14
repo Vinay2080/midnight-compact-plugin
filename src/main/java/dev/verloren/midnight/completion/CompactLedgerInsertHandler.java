@@ -8,7 +8,10 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import dev.verloren.midnight.ide.templates.CompactDeclarationNameGenerator;
 import dev.verloren.midnight.ide.templates.CompactDeclarationType;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +26,9 @@ import org.jetbrains.annotations.NotNull;
 public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> {
 
   public static final CompactLedgerInsertHandler INSTANCE = new CompactLedgerInsertHandler();
+
+  private CompactLedgerInsertHandler() {
+  }
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -47,10 +53,10 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
       chars = document.getCharsSequence();
     }
 
-    // Check if line remainder already contains an identifier or colon
+    // Guard: check if an identifier or colon already follows the caret on the current line
     int lineEnd = document.getLineEndOffset(document.getLineNumber(tailOffset));
     String lineSuffix = chars.subSequence(tailOffset, lineEnd).toString().trim();
-    if (!lineSuffix.isEmpty() && (lineSuffix.contains(":") || lineSuffix.matches("^[a-zA-Z_].*"))) {
+    if (!lineSuffix.isEmpty() && (lineSuffix.matches("^[a-zA-Z_].*") || lineSuffix.startsWith(":"))) {
       if (tailOffset < chars.length() && !Character.isWhitespace(chars.charAt(tailOffset))) {
         document.insertString(tailOffset, " ");
         if (editor != null) {
@@ -60,12 +66,25 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
       return;
     }
 
-    // Launch live template for ' <name>: <type>;' with tab stops
-    PsiElement psiContext = context.getFile().findElementAt(context.getStartOffset());
+    if (editor != null) {
+      insertTemplate(context.getProject(), editor, tailOffset);
+    }
+  }
+
+  /**
+   * Programmatically launches the live ledger template at {@code tailOffset} in the given editor.
+   *
+   * @param project    current project
+   * @param editor     active editor
+   * @param tailOffset document offset directly following the ledger keyword
+   */
+  public void insertTemplate(@NotNull Project project, @NotNull Editor editor, int tailOffset) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiElement psiContext = psiFile != null ? psiFile.findElementAt(Math.max(0, tailOffset - 1)) : null;
     String defaultName = CompactDeclarationNameGenerator.generateName(CompactDeclarationType.LEDGER, psiContext);
 
-    TemplateManager templateManager = TemplateManager.getInstance(context.getProject());
-    if (templateManager != null && editor != null) {
+    TemplateManager templateManager = TemplateManager.getInstance(project);
+    if (templateManager != null) {
       Template template = templateManager.createTemplate("", "");
       template.setToReformat(true);
       template.addTextSegment(" ");
@@ -76,10 +95,8 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
       templateManager.startTemplate(editor, template);
     } else {
       String insert = " " + defaultName + ": State;";
-      document.insertString(tailOffset, insert);
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(tailOffset + insert.length());
-      }
+      editor.getDocument().insertString(tailOffset, insert);
+      editor.getCaretModel().moveToOffset(tailOffset + insert.length());
     }
   }
 }

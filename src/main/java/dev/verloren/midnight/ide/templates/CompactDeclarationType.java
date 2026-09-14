@@ -63,6 +63,10 @@ public enum CompactDeclarationType {
    * Resolves the canonical base name for a given declaration type key, keyword, or identifier.
    */
   public static @NotNull String resolveBaseName(@NotNull String typeOrKeyword) {
+    CompactDeclarationTriggerResolver.TriggerResult trigger = CompactDeclarationTriggerResolver.resolve(typeOrKeyword);
+    if (trigger != null) {
+      return trigger.declarationType().getBaseName();
+    }
     String normalized = typeOrKeyword.toLowerCase(Locale.ROOT).trim();
     if (normalized.startsWith("export ")) {
       normalized = normalized.substring("export ".length()).trim();
@@ -84,6 +88,10 @@ public enum CompactDeclarationType {
   public static @Nullable CompactDeclarationType fromKeyword(@Nullable String keyword) {
     if (keyword == null) {
       return null;
+    }
+    CompactDeclarationTriggerResolver.TriggerResult trigger = CompactDeclarationTriggerResolver.resolve(keyword);
+    if (trigger != null) {
+      return trigger.declarationType();
     }
     String normalized = keyword.toLowerCase(Locale.ROOT).trim();
     if (normalized.startsWith("export ")) {

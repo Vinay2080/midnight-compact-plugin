@@ -228,6 +228,9 @@
         <enterHandlerDelegate
                 implementation="dev.verloren.midnight.editor.CompactDocCommentEnterHandler"/>
 
+        <enterHandlerDelegate
+                implementation="dev.verloren.midnight.editor.CompactDeclarationEnterHandler"/>
+
         <gotoClassContributor
                 implementation="dev.verloren.midnight.navigation.CompactGotoClassContributor"/>
 

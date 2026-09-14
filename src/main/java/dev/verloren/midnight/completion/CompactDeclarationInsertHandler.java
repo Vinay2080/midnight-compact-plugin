@@ -8,17 +8,22 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import dev.verloren.midnight.ide.templates.CompactDeclarationNameGenerator;
 import dev.verloren.midnight.ide.templates.CompactDeclarationType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Universal insert handler for Compact declaration keyword completions.
+ * Universal insert handler for top-level declarations that creates and starts
+ * an interactive live template containing tab stops for the declaration name, parameters,
+ * return type, and body.
  *
- * <p>Completes the declaration structure with live template fields, pre-filling
- * the declaration identifier with the lowest available numbered name for that type
- * (e.g. {@code circuit1}, {@code witness1}, {@code struct1}).</p>
+ * <p>Uses {@link CompactDeclarationNameGenerator} to generate auto-numbered declaration
+ * names (e.g. {@code circuit1}, {@code circuit2}, {@code witness1}) that avoid collisions
+ * with existing declarations in the file or imported modules.</p>
  */
 public class CompactDeclarationInsertHandler implements InsertHandler<LookupElement> {
 
@@ -71,21 +76,33 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
       return;
     }
 
-    PsiElement psiContext = context.getFile().findElementAt(context.getStartOffset());
+    if (editor != null) {
+      insertTemplate(context.getProject(), editor, tailOffset);
+    }
+  }
+
+  /**
+   * Programmatically launches the live declaration template at {@code tailOffset} in the given editor.
+   *
+   * @param project    current project
+   * @param editor     active editor
+   * @param tailOffset document offset directly following the declaration keyword
+   */
+  public void insertTemplate(@NotNull Project project, @NotNull Editor editor, int tailOffset) {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiElement psiContext = psiFile != null ? psiFile.findElementAt(Math.max(0, tailOffset - 1)) : null;
     String suggestedName = CompactDeclarationNameGenerator.generateName(declarationType, psiContext);
 
-    TemplateManager templateManager = TemplateManager.getInstance(context.getProject());
-    if (templateManager != null && editor != null) {
+    TemplateManager templateManager = TemplateManager.getInstance(project);
+    if (templateManager != null) {
       Template template = templateManager.createTemplate("", "");
       template.setToReformat(true);
       buildTemplate(template, suggestedName);
       templateManager.startTemplate(editor, template);
     } else {
       String fallback = buildFallbackString(suggestedName);
-      document.insertString(tailOffset, fallback);
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(tailOffset + fallback.length());
-      }
+      editor.getDocument().insertString(tailOffset, fallback);
+      editor.getCaretModel().moveToOffset(tailOffset + fallback.length());
     }
   }
 
@@ -146,6 +163,15 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
         template.addVariable("TYPE", new ConstantNode("Field"), true);
         template.addTextSegment(";");
       }
+      case CONST -> {
+        template.addTextSegment(" ");
+        template.addVariable("NAME", new ConstantNode(suggestedName), true);
+        template.addTextSegment(": ");
+        template.addVariable("TYPE", new ConstantNode("Field"), true);
+        template.addTextSegment(" = ");
+        template.addVariable("VALUE", new ConstantNode("0"), true);
+        template.addTextSegment(";");
+      }
       case LEDGER -> {
         template.addTextSegment(" ");
         template.addVariable("NAME", new ConstantNode(suggestedName), true);
@@ -153,27 +179,17 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
         template.addVariable("TYPE", new ConstantNode("State"), true);
         template.addTextSegment(";");
       }
-      case CONST -> {
-        template.addTextSegment(" ");
-        template.addVariable("NAME", new ConstantNode(suggestedName), true);
-        template.addTextSegment(" = ");
-        template.addEndVariable();
-        template.addTextSegment(";");
-      }
     }
   }
 
   private @NotNull String buildFallbackString(@NotNull String suggestedName) {
     return switch (declarationType) {
-      case CIRCUIT -> " " + suggestedName + "(): Void {\n}";
+      case CIRCUIT -> " " + suggestedName + "(): Void {\n  \n}";
       case WITNESS -> " " + suggestedName + "(): Field;";
-      case STRUCT -> " " + suggestedName + " {\n}";
-      case ENUM -> " " + suggestedName + " {\n}";
-      case MODULE -> " " + suggestedName + " {\n}";
-      case CONTRACT -> " " + suggestedName + " {\n}";
+      case STRUCT, ENUM, MODULE, CONTRACT -> " " + suggestedName + " {\n  \n}";
       case TYPE -> " " + suggestedName + " = Field;";
+      case CONST -> " " + suggestedName + ": Field = 0;";
       case LEDGER -> " " + suggestedName + ": State;";
-      case CONST -> " " + suggestedName + " = 0;";
     };
   }
 }

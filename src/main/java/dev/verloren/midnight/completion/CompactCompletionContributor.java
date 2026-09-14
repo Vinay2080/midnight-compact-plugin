@@ -1,6 +1,7 @@
 package dev.verloren.midnight.completion;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
@@ -8,6 +9,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import dev.verloren.midnight.CompactLanguage;
+import dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolver;
 import dev.verloren.midnight.ide.templates.CompactDeclarationType;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.psi.*;
@@ -103,326 +105,53 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static void addDeclarationCompletions(@NotNull CompletionResultSet result) {
-    // 1. LEDGER (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export ledger")
-            .withLookupString("led")
-            .withLookupString("ledger")
-            .withLookupString("export ledger")
-            .withPresentableText("export ledger")
-            .withTailText(" <name>: <type>;", true)
-            .withTypeText("ledger")
-            .bold()
-            .withInsertHandler(CompactLedgerInsertHandler.INSTANCE),
-        125.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("ledger")
-            .withLookupString("led")
-            .withLookupString("ledger")
-            .withPresentableText("ledger")
-            .withTailText(" <name>: <type>;", true)
-            .withTypeText("ledger")
-            .bold()
-            .withInsertHandler(CompactLedgerInsertHandler.INSTANCE),
-        110.0
-    ));
-
-    // 2. CIRCUIT (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export circuit")
-            .withLookupString("cir")
-            .withLookupString("circuit")
-            .withLookupString("export circuit")
-            .withPresentableText("export circuit")
-            .withTailText(" <name>(...): <type> { ... }", true)
-            .withTypeText("circuit")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT)),
-        120.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("circuit")
-            .withLookupString("cir")
-            .withLookupString("circuit")
-            .withPresentableText("circuit")
-            .withTailText(" <name>(...): <type> { ... }", true)
-            .withTypeText("circuit")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT)),
-        105.0
-    ));
-
-    // 3. STRUCT (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export struct")
-            .withLookupString("str")
-            .withLookupString("struct")
-            .withLookupString("export struct")
-            .withPresentableText("export struct")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("struct")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.STRUCT)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("struct")
-            .withLookupString("str")
-            .withLookupString("struct")
-            .withPresentableText("struct")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("struct")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.STRUCT)),
-        105.0
-    ));
-
-    // 4. ENUM (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export enum")
-            .withLookupString("en")
-            .withLookupString("enum")
-            .withLookupString("export enum")
-            .withPresentableText("export enum")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("enum")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.ENUM)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("enum")
-            .withLookupString("en")
-            .withLookupString("enum")
-            .withPresentableText("enum")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("enum")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.ENUM)),
-        105.0
-    ));
-
-    // 5. TYPE (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export type")
-            .withLookupString("type")
-            .withLookupString("export type")
-            .withPresentableText("export type")
-            .withTailText(" <name> = <type>;", true)
-            .withTypeText("type")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("type")
-            .withLookupString("type")
-            .withPresentableText("type")
-            .withTailText(" <name> = <type>;", true)
-            .withTypeText("type")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE)),
-        105.0
-    ));
-
-    // 6. MODULE (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export module")
-            .withLookupString("mod")
-            .withLookupString("module")
-            .withLookupString("export module")
-            .withPresentableText("export module")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("module")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.MODULE)),
-        110.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("module")
-            .withLookupString("mod")
-            .withLookupString("module")
-            .withPresentableText("module")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("module")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.MODULE)),
-        100.0
-    ));
-
-    // 7. CONTRACT (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export contract")
-            .withLookupString("cct")
-            .withLookupString("contract")
-            .withLookupString("export contract")
-            .withPresentableText("export contract")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("contract")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CONTRACT)),
-        110.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("contract")
-            .withLookupString("cct")
-            .withLookupString("contract")
-            .withPresentableText("contract")
-            .withTailText(" <name> { ... }", true)
-            .withTypeText("contract")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CONTRACT)),
-        100.0
-    ));
-
-    // 8. WITNESS (with and without export)
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("export witness")
-            .withLookupString("wit")
-            .withLookupString("witness")
-            .withLookupString("export witness")
-            .withPresentableText("export witness")
-            .withTailText(" <name>(...): <type>;", true)
-            .withTypeText("witness")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.WITNESS)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("witness")
-            .withLookupString("wit")
-            .withLookupString("witness")
-            .withPresentableText("witness")
-            .withTailText(" <name>(...): <type>;", true)
-            .withTypeText("witness")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.WITNESS)),
-        100.0
-    ));
+    registerDeclarationTemplate(result, CompactDeclarationType.LEDGER, 125.0, 110.0, CompactLedgerInsertHandler.INSTANCE);
+    registerDeclarationTemplate(result, CompactDeclarationType.CIRCUIT, 120.0, 105.0, new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT));
+    registerDeclarationTemplate(result, CompactDeclarationType.STRUCT, 115.0, 105.0, new CompactDeclarationInsertHandler(CompactDeclarationType.STRUCT));
+    registerDeclarationTemplate(result, CompactDeclarationType.ENUM, 115.0, 105.0, new CompactDeclarationInsertHandler(CompactDeclarationType.ENUM));
+    registerDeclarationTemplate(result, CompactDeclarationType.TYPE, 115.0, 105.0, new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE));
+    registerDeclarationTemplate(result, CompactDeclarationType.MODULE, 110.0, 100.0, new CompactDeclarationInsertHandler(CompactDeclarationType.MODULE));
+    registerDeclarationTemplate(result, CompactDeclarationType.CONTRACT, 110.0, 100.0, new CompactDeclarationInsertHandler(CompactDeclarationType.CONTRACT));
+    registerDeclarationTemplate(result, CompactDeclarationType.WITNESS, 115.0, 100.0, new CompactDeclarationInsertHandler(CompactDeclarationType.WITNESS));
 
     addAll(result, DECLARATION_KEYWORDS);
   }
 
   private static void addAfterExportCompletions(@NotNull CompletionResultSet result) {
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("ledger")
-            .withLookupString("led")
-            .withLookupString("ledger")
-            .withPresentableText("ledger")
-            .withTailText(" <name>: <type>;", true)
-            .withTypeText("ledger")
-            .bold()
-            .withInsertHandler(CompactLedgerInsertHandler.INSTANCE),
-        120.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("circuit")
-            .withLookupString("cir")
-            .withLookupString("circuit")
-            .withPresentableText("circuit")
-            .withTailText(" <name>(...): <type> { ... }", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT)),
-        120.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("struct")
-            .withLookupString("str")
-            .withLookupString("struct")
-            .withPresentableText("struct")
-            .withTailText(" <name> { ... }", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.STRUCT)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("enum")
-            .withLookupString("en")
-            .withLookupString("enum")
-            .withPresentableText("enum")
-            .withTailText(" <name> { ... }", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.ENUM)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("type")
-            .withLookupString("type")
-            .withPresentableText("type")
-            .withTailText(" <name> = <type>;", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE)),
-        115.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("module")
-            .withLookupString("mod")
-            .withLookupString("module")
-            .withPresentableText("module")
-            .withTailText(" <name> { ... }", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.MODULE)),
-        110.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("contract")
-            .withLookupString("cct")
-            .withLookupString("contract")
-            .withPresentableText("contract")
-            .withTailText(" <name> { ... }", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CONTRACT)),
-        110.0
-    ));
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("witness")
-            .withLookupString("wit")
-            .withLookupString("witness")
-            .withPresentableText("witness")
-            .withTailText(" <name>(...): <type>;", true)
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.WITNESS)),
-        105.0
-    ));
+    registerAfterExportTemplate(result, CompactDeclarationType.LEDGER, 120.0, CompactLedgerInsertHandler.INSTANCE);
+    registerAfterExportTemplate(result, CompactDeclarationType.CIRCUIT, 120.0, new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT));
+    registerAfterExportTemplate(result, CompactDeclarationType.STRUCT, 115.0, new CompactDeclarationInsertHandler(CompactDeclarationType.STRUCT));
+    registerAfterExportTemplate(result, CompactDeclarationType.ENUM, 115.0, new CompactDeclarationInsertHandler(CompactDeclarationType.ENUM));
+    registerAfterExportTemplate(result, CompactDeclarationType.TYPE, 115.0, new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE));
+    registerAfterExportTemplate(result, CompactDeclarationType.MODULE, 110.0, new CompactDeclarationInsertHandler(CompactDeclarationType.MODULE));
+    registerAfterExportTemplate(result, CompactDeclarationType.CONTRACT, 110.0, new CompactDeclarationInsertHandler(CompactDeclarationType.CONTRACT));
+    registerAfterExportTemplate(result, CompactDeclarationType.WITNESS, 105.0, new CompactDeclarationInsertHandler(CompactDeclarationType.WITNESS));
 
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("pure")
+            .withLookupString("pure")
             .withPresentableText("pure")
-            .withTailText(" circuit <name>(...): <type> { ... }", true)
+            .withTailText(" circuit ...", true)
             .bold(),
         100.0
     ));
 
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("sealed")
+            .withLookupString("sealed")
             .withPresentableText("sealed")
-            .withTailText(" ledger <name>: <type>;", true)
+            .withTailText(" ledger ...", true)
             .bold(),
         100.0
     ));
 
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("new")
+            .withLookupString("new")
             .withPresentableText("new")
-            .withTailText(" type <name> = <type>;", true)
+            .withTailText(" type ...", true)
             .bold(),
-        100.0
+        95.0
     ));
 
     result.addElement(PrioritizedLookupElement.withPriority(
@@ -435,45 +164,113 @@ public class CompactCompletionContributor extends CompletionContributor {
     ));
   }
 
+  private static void registerDeclarationTemplate(
+      @NotNull CompletionResultSet result,
+      @NotNull CompactDeclarationType type,
+      double exportPriority,
+      double barePriority,
+      @NotNull InsertHandler<LookupElement> insertHandler) {
+
+    String baseName = type.getBaseName();
+    String tailText = getDeclarationTailText(type);
+
+    if (type.isExportable()) {
+      LookupElementBuilder exportBuilder = LookupElementBuilder.create("export " + baseName)
+          .withPresentableText("export " + baseName)
+          .withTailText(tailText, true)
+          .withTypeText(baseName)
+          .bold()
+          .withInsertHandler(insertHandler);
+
+      for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, true)) {
+        exportBuilder = exportBuilder.withLookupString(lookup);
+      }
+      result.addElement(PrioritizedLookupElement.withPriority(exportBuilder, exportPriority));
+    }
+
+    LookupElementBuilder bareBuilder = LookupElementBuilder.create(baseName)
+        .withPresentableText(baseName)
+        .withTailText(tailText, true)
+        .withTypeText(baseName)
+        .bold()
+        .withInsertHandler(insertHandler);
+
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, false)) {
+      bareBuilder = bareBuilder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(bareBuilder, barePriority));
+  }
+
+  private static void registerAfterExportTemplate(
+      @NotNull CompletionResultSet result,
+      @NotNull CompactDeclarationType type,
+      double priority,
+      @NotNull InsertHandler<LookupElement> insertHandler) {
+
+    String baseName = type.getBaseName();
+    String tailText = getDeclarationTailText(type);
+
+    LookupElementBuilder builder = LookupElementBuilder.create(baseName)
+        .withPresentableText(baseName)
+        .withTailText(tailText, true)
+        .withTypeText(baseName)
+        .bold()
+        .withInsertHandler(insertHandler);
+
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, priority));
+  }
+
+  private static @NotNull String getDeclarationTailText(@NotNull CompactDeclarationType type) {
+    return switch (type) {
+      case CIRCUIT -> " <name>(...): <type> { ... }";
+      case WITNESS -> " <name>(...): <type>;";
+      case STRUCT, ENUM, MODULE, CONTRACT -> " <name> { ... }";
+      case TYPE -> " <name> = <type>;";
+      case LEDGER -> " <name>: <type>;";
+      case CONST -> " <name>: <type> = <value>;";
+    };
+  }
+
   private static void addAfterSealedCompletions(@NotNull CompletionResultSet result) {
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("ledger")
-            .withLookupString("led")
-            .withLookupString("ledger")
-            .withPresentableText("ledger")
-            .withTailText(" <name>: <type>;", true)
-            .withTypeText("ledger")
-            .bold()
-            .withInsertHandler(CompactLedgerInsertHandler.INSTANCE),
-        120.0
-    ));
+    LookupElementBuilder builder = LookupElementBuilder.create("ledger")
+        .withPresentableText("ledger")
+        .withTailText(" <name>: <type>;", true)
+        .withTypeText("ledger")
+        .bold()
+        .withInsertHandler(CompactLedgerInsertHandler.INSTANCE);
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.LEDGER, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAfterPureCompletions(@NotNull CompletionResultSet result) {
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("circuit")
-            .withLookupString("cir")
-            .withLookupString("circuit")
-            .withPresentableText("circuit")
-            .withTailText(" <name>(...): <type> { ... }", true)
-            .withTypeText("circuit")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT)),
-        120.0
-    ));
+    LookupElementBuilder builder = LookupElementBuilder.create("circuit")
+        .withPresentableText("circuit")
+        .withTailText(" <name>(...): <type> { ... }", true)
+        .withTypeText("circuit")
+        .bold()
+        .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT));
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.CIRCUIT, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAfterNewCompletions(@NotNull CompletionResultSet result) {
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("type")
-            .withLookupString("type")
-            .withPresentableText("type")
-            .withTailText(" <name> = <type>;", true)
-            .withTypeText("type")
-            .bold()
-            .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE)),
-        120.0
-    ));
+    LookupElementBuilder builder = LookupElementBuilder.create("type")
+        .withPresentableText("type")
+        .withTailText(" <name> = <type>;", true)
+        .withTypeText("type")
+        .bold()
+        .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE));
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.TYPE, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAll(@NotNull CompletionResultSet result, String @NotNull [] values) {
