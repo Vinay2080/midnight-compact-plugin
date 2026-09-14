@@ -20,7 +20,7 @@
         <h3>✨ Features</h3>
         <ul>
             <li><b>Remix-Style Compact Compiler Tool Window:</b> Sidebar panel to switch compiler versions, auto-download versions into isolated directories, view real-time pragma compatibility, and compile contracts with one click.</li>
-            <li><b>Multi-Version Compiler Management:</b> Isolated compiler version storage under <code>~/.compact/versions/&lt;version&gt;/</code> with automatic installer support and project-level compiler selection in <code>.idea/midnight.xml</code>.</li>
+            <li><b>Multi-Version Compiler Management:</b> Isolated compiler version storage under <code>~/.compact/versions/&lt;version&gt;/</code> preventing cross-project compiler collisions with automatic installer support and project-level compiler selection in <code>.idea/midnight.xml</code>.</li>
             <li><b>In-Editor Pragma Quick-Fixes:</b> <code>Alt + Enter</code> context actions on <code>pragma language_version</code> to switch project compiler or download required versions on demand, plus quick-fixes for compiler version mismatch errors.</li>
             <li><b>Bidirectional Interface &amp; Implementation Navigation:</b> Gutter line markers jumping between interface declarations, circuit definitions, and concrete contract implementations.</li>
             <li><b>Syntax Highlighting &amp; Formatting:</b> Rich semantic token coloring, code formatting, smart indentation, brace matching, and code folding.</li>
@@ -65,8 +65,8 @@
             <li>Select the location of your <code>compact</code> executable:
                 <ul>
                     <li><b>Linux / macOS:</b> Typically <code>/usr/local/bin/compact</code>, <code>~/.cargo/bin/compact</code>, or your local installation path.</li>
-                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\\\\\wsl$\\\\Ubuntu\\\\usr\\\\bin\\\\compact</code>).</li>
-                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\\\\Windows\\\\System32\\\\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
+                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\\\\\wsl$\\Ubuntu\\usr\\bin\\compact</code>).</li>
+                    <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\\Windows\\System32\\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
                 </ul>
             </li>
             <li>Click <b>Test / Validate</b> to verify that IntelliJ successfully communicates with the compiler.</li>
@@ -341,6 +341,15 @@
         <liveTemplateContext
                 contextId="COMPACT_CODE"
                 implementation="dev.verloren.midnight.ide.templates.CompactLiveTemplateContextType"/>
+
+        <liveTemplateMacro
+                implementation="dev.verloren.midnight.ide.templates.CompactDeclarationNameMacro"/>
+
+        <liveTemplateMacro
+                implementation="dev.verloren.midnight.ide.templates.CompactCircuitNameMacro"/>
+
+        <liveTemplateMacro
+                implementation="dev.verloren.midnight.ide.templates.CompactWitnessNameMacro"/>
 
         <lang.foldingBuilder
                 language="Compact"

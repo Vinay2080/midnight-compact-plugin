@@ -2,77 +2,70 @@
 
 # Midnight-plugin Changelog
 
-## [1.2.4] - 2026-09-09
+## [Unreleased]
 ### Added
-- **Comprehensive Architectural Decision Records (ADR-001 through ADR-025)**:
-  - Documented the entire plugin architecture in `.ai/decisions/` according to strict production standards (`AGENTS.md` Invariant 9).
-  - Grounded every architectural decision in official upstream compiler sources (`compact/compiler/lexer.ss`, `parser.ss`, `langs.ss`, `midnight-ledger.ss`) and local reference plugins (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
-  - Added explicit Anti-Hardcoding & Scalability evaluations and Feature Implementation Maps linking production code to test suites:
-    - `ADR-001`: Handwritten Lexer and Recursive-Descent Parser Engine
-    - `ADR-002`: Multi-File Symbol Resolution & Split Namespace Architecture
-    - `ADR-003`: Lightweight Structural Type Inference Engine
-    - `ADR-004`: Resilient Semantic Inspections Suite & Quick-Fixes
-    - `ADR-005`: Abstract Block Formatter & Indentation Model
-    - `ADR-006`: Non-Destructive Intent-Preserving Smart Enter Completion
-    - `ADR-007`: Non-Conflicting Comment & Doc Enter Scaffolding
-    - `ADR-008`: Dual Line and Word Scoping Model for Editor Intentions
-    - `ADR-009`: Strict Alignment with Upstream Compact Type Grammar
-    - `ADR-010`: File Creation Action, Nested MkDirs, & Template Sanitization
-    - `ADR-011`: Toolchain Discovery, WSL Translation, & Windows compact.exe Evasion
-    - `ADR-012`: Isolated Multi-Version Compiler Management & SemVer Normalization
-    - `ADR-013`: Remix-Style Compiler Tool Window & Dynamic File Tracking
-    - `ADR-014`: Status Bar Toolchain Monitor & Rapid Version Switching Popup
-    - `ADR-015`: Run Configurations & Context-Aware Gutter Play Actions
-    - `ADR-016`: 3-Phase Asynchronous External Annotator Pipeline
-    - `ADR-017`: Bundled Compact Standard Library & Virtual Indexing
-    - `ADR-018`: Bidirectional Gutter Line Markers & ZK Privacy Indicators
-    - `ADR-019`: Context-Aware Code Completion & Structural Scoping
-    - `ADR-020`: Symbol Navigation, Global Search, & Type Declaration Provider
-    - `ADR-021`: Find Usages Engine & In-Place Rename Refactoring
-    - `ADR-022`: Structural Editor Suite: Declarative Inlay Hints, Structure View, Breadcrumbs, & Folding
-    - `ADR-023`: Quick Documentation Provider & Interactive Parameter Info
-    - `ADR-024`: Two-Tier Semantic Syntax Highlighting & Color Settings Page
-    - `ADR-025`: Parametric Live Templates & Surround-With Statement Wrappers
-- **Smart Enter & Complete Current Statement (`Ctrl+Shift+Enter` / `Cmd+Shift+Enter`) (Phase 28)**:
-  - Registered `lang.smartEnterProcessor` via `CompactSmartEnterProcessor`.
-  - Intelligently completes circuit signatures without corrupting developer intent:
-    - Automatically appends `: Void {\n  \n}` when return type and colon are completely omitted after parameter list `)`.
-    - Preserves user intent when a trailing colon (`:`) is typed: never forces `Void`; formats spacing `: ` and positions caret directly at the return type slot, automatically triggering code completion for types (`AutoPopupController`).
-    - Intelligently handles incomplete type annotations conforming to Compact type grammar:
-      - `Byte`/`Bytes` completes to `Bytes<>` with caret positioned inside `<` `<caret>` `>` to enter byte size (e.g. `32`).
-      - `Uint` completes to `Uint<>` with caret inside `<` `<caret>` `>` to enter bit size (e.g. `64`).
-      - `Vector` completes to `Vector<>` with caret inside `<` `<caret>` `>`.\n    - Automatically closes unclosed angle brackets on parameterized types (e.g. `Bytes<32` -> `Bytes<32>`, `Uint<64` -> `Uint<64>`) and attaches the indented body block.
-    - Automatically closes unclosed bracketed tuple types (e.g. `[Field, Boolean` -> `[Field, Boolean]`) and attaches the indented body block.
-    - Appends indented body braces when complete return types are specified (e.g. `Uint<64>`, `Bytes<32>`, `Field`, `Boolean`).
-  - Const statement completion intelligence:
-    - Never appends premature semicolons to uninitialized `const` bindings (e.g. `const x` or `const x: Field`). Instead, appends ` = ` and moves the caret for immediate expression input.
-    - Accurately appends `;` when an initializer expression is present (e.g. `const x = 10;`).
-  - Automatically completes body blocks for `contract`, `struct`, `enum`, `module`, and `constructor` definitions.
-  - Guarded bare declaration keywords (`contract`, `struct`, `enum`, `module`, `circuit`, `constructor`) against erroneous semicolon insertion.
-  - Automatically closes unclosed parentheses and completes block braces for control-flow statements (`if`, `for`).
-  - Automatically inserts missing semicolons on statements (`return`, `assert`, `witness`, `ledger`, `type`, `import`, `include`, `emit`).
-  - Exact dynamic caret calculation to position the cursor directly on the indented blank line inside the body block ready for immediate typing.
-- **Intelligent Doc Comment Enter Handler (`CompactDocCommentEnterHandler`) (Phase 28)**:
-  - Registered `enterHandlerDelegate` for smart newline handling in doc comments (`/** ... */`) and block comments (`/* ... */`).
-  - Automatically scaffolds multiline doc comment blocks upon typing `/**` (or `/*`) followed by `Enter`, inserting leading asterisks, indentation, and closing `*/`.
-  - Continues comment lines cleanly while preventing duplicate asterisks (`* *`) by checking platform commenter continuation state (`CodeDocumentationAwareCommenter`).
-- **Compact In-Editor Intentions (`Alt+Enter`) with Dual Line & Word Scoping (Phase 28)**:
-  - Intelligent scoping model providing both **general construct suggestions** across the entire line/header and **specific token suggestions** for words/expressions directly under the caret:
-    - `CompactTogglePureCircuitIntention`: Toggle between `circuit` and `pure circuit` from anywhere on the circuit signature header line (not just the keyword).
-    - `CompactToggleExportIntention`: Toggle `export` modifier from anywhere on the header line of top-level contracts, circuits, structs, enums, modules, and type definitions.
-    - `CompactSurroundWithDiscloseIntention`: Surround target expression with `disclose(...)` to make private witness values public when the caret is on an expression, while smoothly coexisting with line-level intentions.
-    - `CompactInvertIfIntention`: Invert `if-else` conditions and swap corresponding `then` and `else` branches from anywhere on the `if (...)` header line or condition expression.
-    - `CompactSpecifyTypeExplicitlyIntention`: Add explicit type annotations to untyped `const` bindings from anywhere on the `const` statement line (including on `const`, identifier, `=`, or `;`).
-    - `CompactRemoveRedundantTypeIntention`: Remove redundant type annotations from anywhere on the `const` statement line.
-  - Full HTML description guides and before/after code previews are provided for all six intentions in `intentionDescriptions`.
+- **Comprehensive Export Declarations, Modifiers, & Scaffolding**:
+  - Expanded `export` completion in `CompactCompletionContributor` to support all upstream Compact exportable declaration types (`circuit`, `ledger`, `const`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and export selection forms (`{`).
+  - Added dedicated completion contexts to `CompactCompletionContext`:
+    - `Kind.AFTER_SEALED`: Suggests `ledger`.
+    - `Kind.AFTER_PURE`: Suggests `circuit`.
+    - `Kind.AFTER_NEW`: Suggests `type`.
+    - `Kind.AFTER_EXPORT`: Filters out invalid file headers (`pragma`, `include`, `import`) and offers all exportable declarations and modifiers.
+  - Added top-level declaration completions offering both bare (`circuit`, `ledger`, `const`, `struct`, `enum`, `type`, `module`, `contract`, `witness`) and exported variants (`export circuit`, `export ledger`, etc.) with `CompactDeclarationInsertHandler` live template scaffolding.
+  - Added live templates in `Compact.xml` and bundle descriptions in `MyMessageBundle.properties`:
+    - `expconst`: `export const $NAME$: $TYPE$ = $VALUE$;`
+    - `expstr`: `export struct $NAME$ { $FIELDS$ }`
+    - `expen`: `export enum $NAME$ { $MEMBERS$ }`
+    - `expt`: `export type $NAME$ = $TYPE$;`
+    - `expw`: `export witness $NAME$($PARAMS$): $RET$;`
+    - `const`: `const $NAME$: $TYPE$ = $VALUE$;`
+    - `exp`: `export $END$`
+  - Expanded `CompactToggleExportIntention` to support `CompactElementTypes.CONST_STATEMENT`, enabling in-editor `Alt+Enter` toggling of `export` on `const` declarations.
+  - Expanded `CompactDeclarationType` to support `CONST_STATEMENT` in `fromPsi` and `fromElementType`.
+  - Updated architectural decision record `ADR-026` to document the full architecture of comprehensive export completions, modifiers, and live templates.
+- **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29)**:
+  - Created `CompactDeclarationNameGenerator` providing universal auto-numbering (`circuit1`, `circuit2`, `witness1`, etc.) for newly generated declarations.
+  - Implemented lowest-available-integer gap filling (e.g. if `circuit1` and `circuit3` exist, generates `circuit2`).
+  - Implemented exact user intent preservation: explicit names are preserved verbatim without alteration.
+  - Implemented scope container isolation across blocks, modules, contracts, and top-level files.
+  - Created extensible `CompactDeclarationType` registry supporting standard constructs (`circuit`, `witness`, `struct`, `enum`, `module`, `contract`, `type`, `ledger`, `const`) and custom runtime type registrations (`registerCustomType`).
+  - Registered live template macros in `plugin.xml`:
+    - `compactDeclarationName(declarationType)`: Evaluates dynamic numbered identifier based on context and declaration type.
+    - `circuitName()`: Dedicated macro generating `circuit1`, `circuit2`, etc.
+    - `witnessName()`: Dedicated macro generating `witness1`, `witness2`, etc.
+  - Created `CompactDeclarationInsertHandler` for auto-numbered declaration insertion during code completion.
+  - Registered architectural decision record `ADR-027` documenting the declaration auto-numbering architecture, scope analysis, live template macros, and anti-hardcoding evaluation.
+- **AI Instruction & Context System Restructuring**:
+  - Streamlined `AGENTS.md` to focus exclusively on permanent, high-priority rules, critical architectural invariants, Java 25 standards, threading models, and tool selection priorities.
+  - Eliminated transient project state, hardcoded test counters, and fragmented checklists from `AGENTS.md`, establishing single sources of truth.
+  - Created `.ai/workflow.md` providing an explicit 11-step task lifecycle, task-specific context loading matrix, Intelligent Documentation Decision Rules, and a mandatory 9-step Final Task Gate.
+  - Established `.ai/README.md` as the unified directory index and fresh-agent entry point for the `.ai/` knowledge system.
+- **Context-Aware `export ledger` Autocompletion & Structural Insert Handler**:
+  - Registered `CompactLedgerInsertHandler` to scaffold `export ledger <name>: <type>;` with interactive IntelliJ live template tab-stops for field name and type (defaulting to `ledger1: State;`).
+  - Added lookahead guard to avoid overwriting or corrupting trailing identifiers or types if the user already started typing on the same line.
+  - Implemented automatic `export ` prefix injection if invoked at top-level without typing `export` first.
+  - Added `Kind.AFTER_EXPORT` contextual classification to `CompactCompletionContext` to offer only valid exportable constructs (`ledger`, `circuit`, `module`, `contract`, `sealed`) while suppressing invalid file headers (`pragma`, `include`, `import`).
+  - Added `ledger` live template alias expanding to `export ledger $NAME$: $TYPE$;` with dynamic auto-numbering via `compactDeclarationName("ledger")`.
 
-### Fixed
-- **Doc Comment Enter Scaffolding & Multi-Asterisk Deduplication**:
-  - Fixed duplicate asterisks (`* *`) and extraneous trailing closing `*/` on multi-asterisk doc comments (`/**`, `/****`) by delegating doc comment generation exclusively to the platform's `CodeDocumentationAwareCommenter`.
-  - Fixed block comment enters scaffolding when opening a new block comment `/*` on the same line after an existing closed comment `*/` (e.g. `/* first */ /*` or ` * but */ /*`).
-  - Added lookahead check ensuring existing closing `*/` lower in the document is not duplicated when pressing Enter inside unclosed block comments.
+### Changed
+- **Live Templates Dynamic Auto-Numbering Alignment (`Compact.xml`)**:
+  - Updated all declaration live templates (`cir`, `wit`, `en`, `str`, `mod`, `cct`, `ccti`, `type`, `led`, `ledg`, `ledger`) to calculate auto-numbered names dynamically via `compactDeclarationName(...)` with numbered fallbacks (`circuit1`, `witness1`, `struct1`, `enum1`, `module1`, `contract1`, `type1`, `ledger1`).
+  - Replaced obsolete block syntax in `led` template (`ledger { ... }`) with contemporary exported ledger syntax `export ledger $NAME$: $TYPE$;`.
+  - Updated `ledg` live template to `export ledger $NAME$: $TYPE$;`, removing reference to non-existent `Cell` type.
+  - Updated `cct` contract skeleton live template to declare `export ledger $STATE$: $TYPE$;` instead of obsolete `ledger { ... }` block.
+  - Updated bundle descriptions in `MyMessageBundle.properties`.
 
 ### Tested
-- Comprehensive unit testing suite across `CompactDocCommentEnterTest`, `CompactSmartEnterTest`, and `CompactPhase28IntentionsTest` (raising the total test suite to 472 passing tests with 0 warnings).
+- Created unit tests in `CompactCompletionTest` verifying:
+  - Context classification for `AFTER_EXPORT`, `AFTER_SEALED`, `AFTER_PURE`, `AFTER_NEW`.
+  - `export ` suggests all 9 declaration types, 3 modifiers, and `{`.
+  - `export sealed ` suggests `ledger`.
+  - `export pure ` suggests `circuit`.
+  - `export new ` suggests `type`.
+  - Top-level suggests `export` variants with live template scaffolding.
+  - Insertions for `export circuit`, `export const`, `export struct`, `export enum`, `export type`, and `export witness`.
+- Created unit test in `CompactPhase28IntentionsTest` verifying `CompactToggleExportIntention` toggles `export` on `const` declarations.
+- Created `CompactDeclarationNameGeneratorTest` covering auto-numbering, gaps, explicit names, and scope isolation.
+- Full test suite verified with `./gradlew test` passing 100% cleanly.
 
-## [1.2.3] - 2026-09-09
+## [1.2.4] - 2026-09-09

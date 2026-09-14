@@ -56,6 +56,19 @@ public class CompactPhase28IntentionsTest extends BasePlatformTestCase {
     myFixture.checkResult("circuit mint(): Void {}");
   }
 
+  public void testToggleExportOnConst() {
+    myFixture.configureByText("test.compact", "co<caret>nst threshold = 100;");
+    IntentionAction intention = myFixture.findSingleIntention("Add 'export' modifier");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("export const threshold = 100;");
+
+    IntentionAction removeIntention = myFixture.findSingleIntention("Remove 'export' modifier");
+    assertNotNull(removeIntention);
+    myFixture.launchAction(removeIntention);
+    myFixture.checkResult("const threshold = 100;");
+  }
+
   public void testSurroundWithDisclose() {
     myFixture.configureByText("test.compact",
         "circuit verify(): Void {\n" +

@@ -1,6 +1,7 @@
 package dev.verloren.midnight.completion;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
@@ -37,6 +38,21 @@ public final class CompactCompletionContext {
           || PsiTreeUtil.getParentOfType(position, CompactEnumDefinition.class, false) != null) {
         return Kind.NONE;
       }
+      if (previous != null && previous.getNode() != null) {
+        IElementType prevType = previous.getNode().getElementType();
+        if (prevType == CompactTokenTypes.EXPORT) {
+          return Kind.AFTER_EXPORT;
+        }
+        if (prevType == CompactTokenTypes.SEALED) {
+          return Kind.AFTER_SEALED;
+        }
+        if (prevType == CompactTokenTypes.PURE) {
+          return Kind.AFTER_PURE;
+        }
+        if (prevType == CompactTokenTypes.NEW) {
+          return Kind.AFTER_NEW;
+        }
+      }
       return Kind.KEYWORD;
     }
     if (PsiTreeUtil.getParentOfType(position, CompactMemberExprImpl.class, false) != null) {
@@ -49,28 +65,35 @@ public final class CompactCompletionContext {
     if (previous == null || previous.getNode() == null) {
       return false;
     }
-    return previous.getNode().getElementType() == CompactTokenTypes.COLON
-            || previous.getNode().getElementType() == CompactTokenTypes.AS
-            || previous.getNode().getElementType() == CompactTokenTypes.LT
-            || previous.getNode().getElementType() == CompactTokenTypes.HASH;
+    IElementType type = previous.getNode().getElementType();
+    return type == CompactTokenTypes.COLON
+            || type == CompactTokenTypes.AS
+            || type == CompactTokenTypes.LT
+            || type == CompactTokenTypes.HASH;
   }
 
   private static boolean isDeclarationOrStatementStart(PsiElement previous) {
     if (previous == null || previous.getNode() == null) {
       return true;
     }
-    return previous.getNode().getElementType() == CompactTokenTypes.SEMICOLON
-            || previous.getNode().getElementType() == CompactTokenTypes.LBRACE
-            || previous.getNode().getElementType() == CompactTokenTypes.RBRACE
-            || previous.getNode().getElementType() == CompactTokenTypes.ELSE
-            || previous.getNode().getElementType() == CompactTokenTypes.EXPORT
-            || previous.getNode().getElementType() == CompactTokenTypes.PURE
-            || previous.getNode().getElementType() == CompactTokenTypes.SEALED
-            || previous.getNode().getElementType() == CompactElementTypes.BLOCK;
+    IElementType type = previous.getNode().getElementType();
+    return type == CompactTokenTypes.SEMICOLON
+            || type == CompactTokenTypes.LBRACE
+            || type == CompactTokenTypes.RBRACE
+            || type == CompactTokenTypes.ELSE
+            || type == CompactTokenTypes.EXPORT
+            || type == CompactTokenTypes.PURE
+            || type == CompactTokenTypes.SEALED
+            || type == CompactTokenTypes.NEW
+            || type == CompactElementTypes.BLOCK;
   }
 
   public enum Kind {
     KEYWORD,
+    AFTER_EXPORT,
+    AFTER_SEALED,
+    AFTER_PURE,
+    AFTER_NEW,
     STATEMENT,
     TYPE,
     VALUE,
