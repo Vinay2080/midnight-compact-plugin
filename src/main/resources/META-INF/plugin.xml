@@ -225,6 +225,10 @@
                 id="CompactAngleBraceTypedHandler"
                 implementation="dev.verloren.midnight.editor.CompactAngleBraceTypedHandler"/>
 
+        <typedHandler
+                id="CompactDelimiterTypedHandler"
+                implementation="dev.verloren.midnight.editor.CompactDelimiterTypedHandler"/>
+
         <backspaceHandlerDelegate
                 id="CompactAngleBraceBackspaceHandler"
                 implementation="dev.verloren.midnight.editor.CompactAngleBraceBackspaceHandler"/>
