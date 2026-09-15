@@ -1,6 +1,8 @@
 package dev.verloren.midnight.annotator;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
@@ -68,9 +70,22 @@ public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implement
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) throws IncorrectOperationException {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      return;
+    }
     String toolchainVer = isCompilerPragma
         ? CompactVersionManager.cleanVersion(targetVersion)
         : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
     CompactVersionManager.ensureAndSwitchVersion(project, toolchainVer, file != null ? file.getVirtualFile() : null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return IntentionPreviewInfo.EMPTY;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

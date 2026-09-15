@@ -1,10 +1,13 @@
 package dev.verloren.midnight.intention;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import dev.verloren.midnight.psi.CompactPragmaForm;
@@ -80,6 +83,9 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      return;
+    }
     CompactPragmaForm pragma = PsiTreeUtil.getParentOfType(element, CompactPragmaForm.class, false);
     if (pragma == null) {
       return;
@@ -99,5 +105,10 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
 
     VirtualFile vFile = element.getContainingFile() != null ? element.getContainingFile().getVirtualFile() : null;
     CompactVersionManager.ensureAndSwitchVersion(project, toolchainVer, vFile);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return IntentionPreviewInfo.EMPTY;
   }
 }

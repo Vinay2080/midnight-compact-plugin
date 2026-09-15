@@ -193,6 +193,6 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
-| *No historical bugs recorded yet.* | — | Newly resolved bugs will be cataloged here. | — | — | — |
+| 2026-09-16 | annotator / intention / version | SideEffectGuard INVOKE_LATER exception during quick-fix & intention previews | [2026-09-16-quickfix-preview-side-effect-guard.md](2026-09-16-quickfix-preview-side-effect-guard.md) | High | Resolved |
 
 *(Bugs are listed in reverse chronological order with the most recent at the top.)*

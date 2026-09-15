@@ -1,6 +1,7 @@
 package dev.verloren.midnight.intention;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Context action to update the contract's pragma statement to match the currently active compiler version.
+ * Context action to update the file's pragma statement to match the currently active compiler version.
  */
 public class CompactUpdatePragmaVersionIntention extends PsiElementBaseIntentionAction {
 
@@ -87,7 +88,9 @@ public class CompactUpdatePragmaVersionIntention extends PsiElementBaseIntention
       PsiDocumentManager.getInstance(project).commitDocument(document);
     });
 
-    VirtualFile vFile = element.getContainingFile() != null ? element.getContainingFile().getVirtualFile() : null;
-    CompactProblemUtil.clearProblemsAndRestart(project, vFile);
+    if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
+      VirtualFile vFile = element.getContainingFile() != null ? element.getContainingFile().getVirtualFile() : null;
+      CompactProblemUtil.clearProblemsAndRestart(project, vFile);
+    }
   }
 }

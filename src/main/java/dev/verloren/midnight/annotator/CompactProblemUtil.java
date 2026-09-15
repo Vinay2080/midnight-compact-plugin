@@ -1,6 +1,7 @@
 package dev.verloren.midnight.annotator;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -23,7 +24,9 @@ public final class CompactProblemUtil {
   private CompactProblemUtil() {}
 
   public static void clearProblemsAndRestart(@NotNull Project project, @Nullable VirtualFile targetFile) {
-    if (project.isDisposed()) return;
+    if (project.isDisposed() || IntentionPreviewUtils.isIntentionPreviewActive()) {
+      return;
+    }
 
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;

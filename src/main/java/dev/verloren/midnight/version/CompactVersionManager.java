@@ -1,5 +1,6 @@
 package dev.verloren.midnight.version;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
@@ -759,6 +760,9 @@ public final class CompactVersionManager {
   }
 
   public static void ensureAndSwitchVersion(@NotNull Project project, @NotNull String toolchainVer, @Nullable VirtualFile vFile) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      return;
+    }
     String cleanToolchain = cleanVersion(toolchainVer);
     if (isVersionInstalled(cleanToolchain)) {
       switchAndApplyVersion(project, cleanToolchain, vFile);
@@ -776,6 +780,9 @@ public final class CompactVersionManager {
   }
 
   public static void switchAndApplyVersion(@NotNull Project project, @NotNull String toolchainVer, @Nullable VirtualFile vFile) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+      return;
+    }
     String cleanToolchain = cleanVersion(toolchainVer);
     MidnightProjectSettings.getInstance(project).selectedCompilerVersion = cleanToolchain;
     String installedExe = CompactVersionManager.getInstalledExecutable(cleanToolchain);

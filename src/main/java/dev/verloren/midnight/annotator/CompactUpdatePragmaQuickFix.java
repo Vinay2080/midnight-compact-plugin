@@ -1,6 +1,7 @@
 package dev.verloren.midnight.annotator;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -88,6 +89,8 @@ public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements 
       PsiDocumentManager.getInstance(project).commitDocument(document);
     });
 
-    CompactProblemUtil.clearProblemsAndRestart(project, file.getVirtualFile());
+    if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
+      CompactProblemUtil.clearProblemsAndRestart(project, file.getVirtualFile());
+    }
   }
 }

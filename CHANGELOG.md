@@ -18,6 +18,8 @@
 - Improved Compact grammar validation to disallow top-level `export const` and `const` completion suggestions, aligning with Compact module-scope rules.
 
 ### Fixed
+- Fixed unhandled `SideEffectGuard: INVOKE_LATER` runtime exception and editor crash when previewing compiler switch quick-fixes and intentions in IntelliJ IDEA 2023.2+.
+- Suppressed daemon code analyzer restarts and project SDK mutation during intention preview generation (`IntentionPreviewInfo.EMPTY`).
 - Fixed duplicate `export export` bug when autocompleting declarations after an existing `export` keyword.
 - Fixed invalid top-level `export const` and `const` suggestions in code completion and intention actions.
 
