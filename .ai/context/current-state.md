@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.6-dev / Angle Bracket Auto-Closing, Type Completion & Live Template Macros)
+Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type Completion & Live Template Macros)
 
 ---
 
@@ -10,14 +10,18 @@ Last Updated: September 2026 (v1.2.6-dev / Angle Bracket Auto-Closing, Type Comp
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
-- **Angle Bracket Auto-Closing & Navigation (v1.2.6)**:
-  - `CompactAngleBraceTypedHandler`: `TypedHandlerDelegate` providing intelligent angle bracket auto-closing (`<|>`) after parameterized types (`Vector`, `Uint`, `Bytes`, `Opaque`, `Field`, `Boolean`), parameterized expressions (`default`, `slice`), type identifiers (`Map`, `Set`, `Cell`, `T`), and generic declaration headers (`circuit foo<`, `witness bar<`, `struct Box<`, `type Alias<`, `module Mod<`, `contract Cont<`).
-  - Overtyping step-over: typing `>` immediately before a closing `>` advances the caret without inserting redundant angle brackets when balanced.
+- **Angle Bracket Pairing, Overtyping & Backspace Deletion (v1.2.6 / ADR-029)**:
+  - `CompactAngleBraceTypedHandler`: `TypedHandlerDelegate` registered in `plugin.xml` providing intelligent angle bracket auto-closing (`<|>`) after parameterized types (`Vector`, `Uint`, `Bytes`, `Opaque`, `Field`, `Boolean`), parameterized expressions (`default`, `slice`), type identifiers (`Map`, `Set`, `Cell`, `T`), and generic declaration headers (`circuit foo<`, `witness bar<`, `struct Box<`, `type Alias<`, `module Mod<`, `contract Cont<`).
+  - Overtyping step-over: typing `>` immediately before an existing closing `>` advances the caret without inserting redundant angle brackets when balanced.
   - `CompactAngleBraceBackspaceHandler`: `BackspaceHandlerDelegate` automatically deleting the matching closing `>` when backspacing `<` in `<|>`.
   - Negative context suppression: prevents pairing after comparison operators (`<`), inside comments, inside string literals, and in the middle of identifiers.
-- **Code Completion & Comprehensive Export System (v1.2.5+)**:
+- **Parameterized Type Completion & Sizing Options (v1.2.6 / ADR-029)**:
+  - `CompactParameterizedTypeInsertHandler`: `InsertHandler<LookupElement>` automatically appending `<>`, placing the caret inside `<|>`, registering empty tab-out scope with `TabOutScopesTracker`, and scheduling auto-popup lookup for size options.
+  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<"">`.
+  - Concurrency & live template coordination: schedules caret repositioning via `ApplicationManager.getApplication().invokeLater(...)` when an active `TemplateState` is present, preventing premature live template completion from ejecting the caret.
+- **Code Completion & Comprehensive Export System (v1.2.5+ / ADR-019, ADR-026, ADR-028)**:
   - Contextual classification in `CompactCompletionContext`:
-    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`).
+    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`). Prohibits invalid top-level `export const` per upstream compiler specification (ADR-028).
     - `Kind.AFTER_SEALED`: Suggests `ledger`.
     - `Kind.AFTER_PURE`: Suggests `circuit`.
     - `Kind.AFTER_NEW`: Suggests `type`.
@@ -29,15 +33,20 @@ Last Updated: September 2026 (v1.2.6-dev / Angle Bracket Auto-Closing, Type Comp
     - `prevNonCommentLeaf` leaf traversal in `CompactCompletionContext` to prevent AST comment trivia from masquerading as statement or declaration starts.
     - Live template context filtering in `CompactLiveTemplateContextType` preventing expansion of declaration triggers (e.g. `ledg`, `led`, `cir`) within comments.
   - Parametric live templates in `Compact.xml` with bundle descriptions: `led`, `ledg`, `ledger`, `expled`, `cir`, `wit`, `expw`, `str`, `expstr`, `en`, `expen`, `type`, `expt`, `const`, `cct`.
-- **Live Template Type Completion & Macro System (Phase 30 / v1.2.6)**:
+- **Live Template Type Completion & Macro System (Phase 30 / v1.2.6 / ADR-027, ADR-029)**:
   - `CompactTypeExpression`: Live template `Expression` providing interactive dropdown suggestions for all built-in types (`State`, `Counter`, `Void`, `Bytes`, `Field`, `Uint`, etc.), in-scope project types, and imported types when navigating through declaration templates.
   - `CompactTypeMacro`: Registered under `<liveTemplateMacro>` as `compactType(...)` for live template XML definitions.
   - Hardened `CompactCompletionContext`: Accurate classification of declaration type positions (after colons in ledger declarations, struct fields, const bindings, and after `=` in type aliases), preventing `isExportPreceding` keyword hijacking.
-- **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29 / v1.2.6)**:
+- **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29 / v1.2.6 / ADR-027)**:
   - `CompactDeclarationNameGenerator`: Universal lowest-positive-integer gap filling (`circuit1`, `circuit2`, `witness1`, etc.) with explicit user-provided name preservation.
   - `CompactDeclarationType`: Extensible registry for standard Compact declarations (`circuit`, `witness`, `struct`, `enum`, `module`, `contract`, `type`, `ledger`, `const`) and custom runtime type extensions (`registerCustomType`).
   - Pluggable Live Template Macros registered under `<liveTemplateMacro>`: `compactDeclarationName`, `circuitName`, `witnessName`.
   - `CompactDeclarationInsertHandler`: Completion insert handler with auto-numbered declaration naming.
+- **Asynchronous External Annotator & Quick-Fix Preview Guard (v1.2.6 / ADR-016)**:
+  - High-performance asynchronous external linter pipeline executing upstream compiler in background threads.
+  - Eliminated editor lag by synchronizing dirty documents on demand rather than blocking EDT.
+  - Robust WSL path translation between Windows host files and Linux WSL toolchain paths.
+  - `CompactQuickFixPreviewSideEffectTest`: Safe intention previews that never mutate workspace disk state or trigger external process execution during preview painting.
 - **Semantic Inspections**:
   - Unresolved references (`CompactUnresolvedReferenceInspection`)
   - Duplicate declarations (`CompactDuplicateDeclarationInspection`)
@@ -64,27 +73,103 @@ Last Updated: September 2026 (v1.2.6-dev / Angle Bracket Auto-Closing, Type Comp
   - Interactive compiler version switcher dropdown.
   - Real-time pragma version compatibility indicator with color-coded status badges and dynamic file tracking.
   - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.
-  - \"Download More...\" compiler version management dialog.
-  - \"Compile Current Contract\" action triggering background compilation and problem reporting.
-- **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2)**:
+  - "Download More..." compiler version management dialog.
+  - "Compile Current Contract" action triggering background compilation and problem reporting.
+- **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2 / ADR-014)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
   - `CompactStatusBarPopup`: Native speed-search popup menu to switch installed compiler versions, download new versions, jump to the Remix Compiler panel, or open Midnight settings.
-- **Phase 28: Smart Enter, Doc Comments & Intentions Suite (v1.2.4)**:
+- **Phase 28: Smart Enter, Doc Comments & Intentions Suite (v1.2.4 / ADR-006, ADR-007, ADR-008)**:
   - `CompactSmartEnterProcessor`: Non-destructive `Ctrl+Shift+Enter` completion for circuits (`: Void` or preserve `:`), `const` declarations (requiring `=` before `;`), and parameterized types (`Bytes<>`, `Uint<>`).
   - `CompactCommenter` & `CompactDocCommentEnterHandler`: Clean `Enter` handling in `/* ... */` and `/** ... */` without duplicate asterisks or trailing `*/` syntax errors.
   - Full Intention Actions Suite (`Alt+Enter`):
     - `CompactTogglePureCircuitIntention`
-    - `CompactToggleExportIntention` (supports circuits, contracts, structs, enums, modules, types, ledgers, witnesses, and `const` statements)
+    - `CompactToggleExportIntention` (supports circuits, contracts, structs, enums, modules, types, ledgers, witnesses; excludes block-scoped `const` per ADR-028)
     - `CompactSurroundWithDiscloseIntention`
     - `CompactInvertIfIntention`
     - `CompactSpecifyTypeExplicitlyIntention`
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
-  - Fully maintained index in `.ai/decisions/README.md` covering all 27 major architectural subsystems (**ADR-001 through ADR-027**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
-- **Total Unit Test Count**: **593 passing tests** across 58 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
+  - Fully maintained index in `.ai/decisions/README.md` covering all 29 major architectural subsystems (**ADR-001 through ADR-029**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
 
-### Roadmap & Evolution (Phases 31–36)
+---
+
+## 2. Test Suite & Verification Metrics
+
+- **Total Tests**: **601 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Active Test Suites**: **60 test classes**
+- **Execution Time**: ~1m 10s via `./gradlew test`
+
+### Test Suite Breakdown
+
+| Subsystem / Test Class | Test Count | Status |
+| :--- | :--- | :--- |
+| `dev.verloren.midnight.inspection.CompactInspectionTest` | 93 | Passed |
+| `dev.verloren.midnight.completion.CompactCompletionTest` | 70 | Passed |
+| `dev.verloren.midnight.formatter.CompactFormatterTest` | 39 | Passed |
+| `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | 24 | Passed |
+| `dev.verloren.midnight.resolve.CompactResolveTest` | 21 | Passed |
+| `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | 17 | Passed |
+| `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | 17 | Passed |
+| `dev.verloren.midnight.documentation.CompactDocumentationTest` | 16 | Passed |
+| `dev.verloren.midnight.highlighter.CompactHighlightingTest` | 16 | Passed |
+| `dev.verloren.midnight.editor.CompactSmartEnterTest` | 15 | Passed |
+| `dev.verloren.midnight.type.CompactTypeInferenceTest` | 15 | Passed |
+| `dev.verloren.midnight.navigation.CompactTypeDeclarationProviderTest` | 14 | Passed |
+| `dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest` | 12 | Passed |
+| `dev.verloren.midnight.intention.CompactPhase28IntentionsTest` | 12 | Passed |
+| `dev.verloren.midnight.lexer.LexerTest` | 12 | Passed |
+| `dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest` | 12 | Passed |
+| `dev.verloren.midnight.annotator.CompactExternalAnnotatorTest` | 10 | Passed |
+| `dev.verloren.midnight.findUsages.CompactFindUsagesTest` | 10 | Passed |
+| `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | 10 | Passed |
+| `dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest` | 10 | Passed |
+| `dev.verloren.midnight.editor.CompactDocCommentEnterTest` | 9 | Passed |
+| `dev.verloren.midnight.refactoring.CompactRenameTest` | 9 | Passed |
+| `dev.verloren.midnight.reference.CompactReferenceTest` | 9 | Passed |
+| `dev.verloren.midnight.structure.CompactStructureViewTest` | 9 | Passed |
+| `dev.verloren.midnight.editor.CompactLineMarkerTest` | 7 | Passed |
+| `dev.verloren.midnight.version.CompactVersionManagerTest` | 7 | Passed |
+| `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | 6 | Passed |
+| `dev.verloren.midnight.parser.ErrorRecoveryParserTest` | 6 | Passed |
+| `dev.verloren.midnight.run.CompactToolchainUtilTest` | 6 | Passed |
+| `dev.verloren.midnight.editor.CompactSurroundWithTest` | 5 | Passed |
+| `dev.verloren.midnight.run.CompactRunConfigurationTest` | 5 | Passed |
+| `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest` | 5 | Passed |
+| `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | 5 | Passed |
+| `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | 4 | Passed |
+| `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
+| `dev.verloren.midnight.editor.CompactFoldingTest` | 4 | Passed |
+| `dev.verloren.midnight.version.CompactSemVerUtilTest` | 4 | Passed |
+| `dev.verloren.midnight.CompactTestUtilsTest` | 3 | Passed |
+| `dev.verloren.midnight.editor.CompactInlayHintsTest` | 3 | Passed |
+| `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest` | 3 | Passed |
+| `dev.verloren.midnight.lexer.PragmaTest` | 3 | Passed |
+| `dev.verloren.midnight.parser.PragmaParserTest` | 3 | Passed |
+| `dev.verloren.midnight.parser.StatementParserTest` | 3 | Passed |
+| `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | 3 | Passed |
+| `dev.verloren.midnight.settings.MidnightSettingsTest` | 3 | Passed |
+| `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | 3 | Passed |
+| `dev.verloren.midnight.symbol.CompactSymbolTest` | 3 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 3 | Passed |
+| `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | 2 | Passed |
+| `dev.verloren.midnight.intention.CompactPragmaIntentionTest` | 2 | Passed |
+| `dev.verloren.midnight.navigation.CompactChooseByNameTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.CompactParserDefinitionTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.EndToEndParserTest` | 2 | Passed |
+| `dev.verloren.midnight.psi.DeclarationPsiTest` | 2 | Passed |
+| `dev.verloren.midnight.run.CompactRunConfigurationProducerTest` | 2 | Passed |
+| `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | 1 | Passed |
+| `dev.verloren.midnight.parser.DeclarationParserTest` | 1 | Passed |
+| `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
+| `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
+| `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
+| **Total Across 60 Suites** | **601** | **100% Passed** |
+
+---
+
+## 3. Roadmap & Evolution (Phases 31–36)
+
 - **Phase 31: Stub Indexing & Large Workspace Caching**
 - **Phase 32: Advanced Refactorings (Rename, Extract Variable, Change Signature)**
 - **Phase 33: Remix Blockchain Explorer & Local Node Sandbox**

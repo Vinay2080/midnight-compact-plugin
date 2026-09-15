@@ -6,6 +6,12 @@ project:
   java_version: "25"
   gradle_version: "8.13"
 
+metrics:
+  passing_tests: 601
+  failing_tests: 0
+  skipped_tests: 0
+  test_suites: 60
+
 phases:
   lexer: complete
   parser: complete
@@ -33,6 +39,7 @@ phases:
   comment_completion_suppression: complete (v1.2.6)
   template_type_completion_and_macro: complete (v1.2.6)
   angle_bracket_auto_closing: complete (v1.2.6)
+  parameterized_type_completion_and_sizing: complete (v1.2.6)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)
@@ -40,29 +47,100 @@ phases:
   psi_mcp_server: planned (Phase 35)
   polyglot_ts_test_framework: planned (Phase 36)
 
+architecture:
+  adrs:
+    - "ADR-001: Handwritten Lexer & Recursive-Descent Parser Engine"
+    - "ADR-002: Multi-File Symbol Resolution & Split Namespace Architecture"
+    - "ADR-003: Lightweight Structural Type Inference Engine"
+    - "ADR-004: Resilient Semantic Inspections Suite & Quick-Fixes"
+    - "ADR-005: Abstract Block Formatter & Indentation Model"
+    - "ADR-006: Non-Destructive Intent-Preserving Smart Enter Completion"
+    - "ADR-007: Non-Conflicting Multi-Asterisk Comment & Doc Scaffolding"
+    - "ADR-008: Dual Line and Word Scoping Model for Editor Intentions"
+    - "ADR-009: Strict Alignment with Upstream Compact Type Grammar"
+    - "ADR-010: File Creation Action, Nested MkDirs, & Template Sanitization"
+    - "ADR-011: Toolchain Discovery, WSL Translation, & Windows compact.exe Evasion"
+    - "ADR-012: Isolated Multi-Version Compiler Management & SemVer Normalization"
+    - "ADR-013: Remix-Style Compiler Tool Window & Dynamic File Tracking"
+    - "ADR-014: Status Bar Toolchain Monitor & Rapid Version Switching Popup"
+    - "ADR-015: Run Configurations & Context-Aware Gutter Play Actions"
+    - "ADR-016: 3-Phase Asynchronous External Annotator Pipeline"
+    - "ADR-017: Bundled Compact Standard Library & Virtual Indexing"
+    - "ADR-018: Bidirectional Gutter Line Markers & ZK Privacy Indicators"
+    - "ADR-019: Context-Aware Code Completion & Structural Scoping"
+    - "ADR-020: Symbol Navigation, Global Search, & Type Declaration Provider"
+    - "ADR-021: Find Usages Engine & In-Place Rename Refactoring"
+    - "ADR-022: Structural Editor Suite: Inlay Hints, Structure View, Breadcrumbs, & Folding"
+    - "ADR-023: Quick Documentation Provider & Interactive Parameter Info"
+    - "ADR-024: Two-Tier Semantic Syntax Highlighting & Color Settings Page"
+    - "ADR-025: Parametric Live Templates & Surround-With Statement Wrappers"
+    - "ADR-026: Export Ledger Code Completion, Contextual Filtering, & Parametric Live Templates"
+    - "ADR-027: Universal Declaration Name Auto-Numbering, Scope Analysis, & Live Template Macros"
+    - "ADR-028: Prohibit Top-Level Export Const & Strict Compact Grammar Alignment"
+    - "ADR-029: Angle Bracket Pairing, Overtyping, and Parameterized Type Scaffolding"
+
 tests:
-  last_known_passing: 593
+  last_known_passing: 601
   failures: 0
   skipped: 0
   suites:
-    lexer: dev.verloren.midnight.lexer.CompactLexerTest
-    parser: dev.verloren.midnight.parser.CompactParserTest
-    reference: dev.verloren.midnight.reference.CompactReferenceTest
+    annotator_external: dev.verloren.midnight.annotator.CompactExternalAnnotatorTest
+    annotator_preview_side_effects: dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest
+    test_utils: dev.verloren.midnight.CompactTestUtilsTest
     completion: dev.verloren.midnight.completion.CompactCompletionTest
-    angle_bracket_typing: dev.verloren.midnight.editor.CompactAngleBraceTypingTest
-    inspection_unresolved: dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspectionTest
-    inspection_duplicate: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspectionTest
-    inspection_unused: dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspectionTest
-    inspection_type_mismatch: dev.verloren.midnight.inspection.CompactTypeMismatchInspectionTest
-    inspection_pure_circuit: dev.verloren.midnight.inspection.CompactPureCircuitInspectionTest
-    inspection_sealed_field: dev.verloren.midnight.inspection.CompactSealedFieldMutationInspectionTest
-    inspection_recursive_circuit: dev.verloren.midnight.inspection.CompactRecursiveCircuitInspectionTest
-    inspection_constructor: dev.verloren.midnight.inspection.CompactConstructorRestrictionInspectionTest
-    inspection_undisclosed_witness: dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspectionTest
-    inspection_pragma_version: dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest
+    documentation: dev.verloren.midnight.documentation.CompactDocumentationTest
+    editor_angle_brace_typing: dev.verloren.midnight.editor.CompactAngleBraceTypingTest
+    editor_breadcrumbs: dev.verloren.midnight.editor.CompactBreadcrumbsTest
+    editor_doc_comment_enter: dev.verloren.midnight.editor.CompactDocCommentEnterTest
+    editor_features: dev.verloren.midnight.editor.CompactEditorFeaturesTest
+    editor_folding: dev.verloren.midnight.editor.CompactFoldingTest
+    editor_inlay_hints: dev.verloren.midnight.editor.CompactInlayHintsTest
+    editor_line_marker: dev.verloren.midnight.editor.CompactLineMarkerTest
+    editor_smart_enter: dev.verloren.midnight.editor.CompactSmartEnterTest
+    editor_surround_with: dev.verloren.midnight.editor.CompactSurroundWithTest
+    find_usages: dev.verloren.midnight.findUsages.CompactFindUsagesTest
     formatter: dev.verloren.midnight.formatter.CompactFormatterTest
-    structure: dev.verloren.midnight.structure.CompactStructureViewTest
-    documentation: dev.verloren.midnight.documentation.CompactDocumentationProviderTest
+    highlighter_color_settings: dev.verloren.midnight.highlighter.CompactColorSettingsPageTest
+    highlighter: dev.verloren.midnight.highlighter.CompactHighlightingTest
+    file_templates: dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest
+    template_name_generator: dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest
+    template_trigger: dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest
+    template_trigger_resolver: dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest
+    template_live: dev.verloren.midnight.ide.templates.CompactLiveTemplateTest
+    inspection: dev.verloren.midnight.inspection.CompactInspectionTest
+    inspection_pragma_version: dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest
+    intention_phase28: dev.verloren.midnight.intention.CompactPhase28IntentionsTest
+    intention_pragma: dev.verloren.midnight.intention.CompactPragmaIntentionTest
+    lexer: dev.verloren.midnight.lexer.LexerTest
+    lexer_pragma: dev.verloren.midnight.lexer.PragmaTest
+    navigation_choose_by_name: dev.verloren.midnight.navigation.CompactChooseByNameTest
+    navigation_type_declaration: dev.verloren.midnight.navigation.CompactTypeDeclarationProviderTest
+    parameter_info: dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest
+    parser_definition: dev.verloren.midnight.parser.CompactParserDefinitionTest
+    parser_declaration: dev.verloren.midnight.parser.DeclarationParserTest
+    parser_end_to_end: dev.verloren.midnight.parser.EndToEndParserTest
+    parser_error_recovery: dev.verloren.midnight.parser.ErrorRecoveryParserTest
+    parser_expression: dev.verloren.midnight.parser.ExpressionParserTest
+    parser_pragma: dev.verloren.midnight.parser.PragmaParserTest
+    parser_statement: dev.verloren.midnight.parser.StatementParserTest
+    parser_type_pattern: dev.verloren.midnight.parser.TypePatternParserTest
+    psi_declaration: dev.verloren.midnight.psi.DeclarationPsiTest
+    psi_element_factory_consistency: dev.verloren.midnight.psi.ElementFactoryConsistencyTest
+    refactoring_rename: dev.verloren.midnight.refactoring.CompactRenameTest
+    reference: dev.verloren.midnight.reference.CompactReferenceTest
+    resolve_cross_file: dev.verloren.midnight.resolve.CompactCrossFileResolveTest
+    resolve: dev.verloren.midnight.resolve.CompactResolveTest
+    run_config_producer: dev.verloren.midnight.run.CompactRunConfigurationProducerTest
     run_config: dev.verloren.midnight.run.CompactRunConfigurationTest
-    annotator: dev.verloren.midnight.annotator.CompactExternalAnnotatorTest
-    preview_side_effects: dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest
+    run_toolchain_util: dev.verloren.midnight.run.CompactToolchainUtilTest
+    settings_midnight_project: dev.verloren.midnight.settings.MidnightProjectSettingsTest
+    settings_midnight: dev.verloren.midnight.settings.MidnightSettingsTest
+    status_bar_widget: dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest
+    stdlib: dev.verloren.midnight.stdlib.CompactStandardLibraryTest
+    stdlib_service: dev.verloren.midnight.stdlib.CompactStdlibServiceTest
+    structure_view: dev.verloren.midnight.structure.CompactStructureViewTest
+    symbol: dev.verloren.midnight.symbol.CompactSymbolTest
+    toolwindow_version_card: dev.verloren.midnight.toolwindow.CompactVersionCardTest
+    type_inference: dev.verloren.midnight.type.CompactTypeInferenceTest
+    version_semver_util: dev.verloren.midnight.version.CompactSemVerUtilTest
+    version_manager: dev.verloren.midnight.version.CompactVersionManagerTest

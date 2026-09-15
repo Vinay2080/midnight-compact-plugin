@@ -12,7 +12,12 @@ This directory is the primary, single source of truth for architectural context,
 ├── workflow.md                  # Task lifecycle, worktree protocols, release changelog cleanup, & completion gates
 ├── project-state.yaml           # Machine-readable test counts, suites, and phase statuses
 ├── handoff.md                   # Current active task, worktree state, and next session priorities
-├── prompts/                     # Reusable prompts and execution scripts
+├── prompts/                     # Reusable prompts and execution playbooks
+│   ├── README.md                # Prompts catalog, cadence, & routing matrix
+│   ├── bug-fix.md               # Bug diagnosis, test reproduction, & KB record
+│   ├── feature-implementation.md # Feature planning, Java 25 implementation, state sync
+│   ├── architecture-decision.md # Trade-off analysis & ADR authoring
+│   ├── sync-context-and-decisions.md # Periodic drift audit & doc synchronization
 │   └── push-and-release.md      # Master AI prompt for inspection, changelog cleanup, tagging & pushing
 ├── context/                     # Deep subsystem context and verified technical references
 │   ├── architecture.md          # Plugin pipeline, PSI wrappers, indexing, threading
@@ -61,9 +66,14 @@ To prevent instruction fatigue, stale documentation, and scattered rules, the re
    - The Mandatory Final Completion Gate (Task Gate, Git Session Gate, Bug Completion Gate) and status table.
    - Release-time changelog cleanup process (curated user-facing notes vs. engineering history), semantic version tag decision matrix, and release publication protocol.
 
-3. **Automated Prompts & Release Workflows ([`.ai/prompts/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/))**:
-   - Standardized copy-pasteable prompts and execution guides.
-   - [`push-and-release.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/push-and-release.md): Master AI prompt and checklist for deep project inspection, continuous fix loop, user-facing changelog hygiene, semantic tag determination, and git push sequence.
+3. **Automated Prompts & Execution Playbooks ([`.ai/prompts/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/))**:
+   - Standardized copy-pasteable prompts and execution guides:
+     * [`README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/README.md): Master catalog, cadence guidelines, and routing matrix.
+     * [`bug-fix.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/bug-fix.md): Bug diagnosis, failing test reproduction, root cause analysis, bug record writing, and changelog update.
+     * [`feature-implementation.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/feature-implementation.md): Worktree isolation, modern Java 25 implementation, multi-tier tests, state updates.
+     * [`architecture-decision.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/architecture-decision.md): Option analysis, compiler citations, reference plugin comparisons, and ADR authoring.
+     * [`sync-context-and-decisions.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/sync-context-and-decisions.md): Periodic drift audit scanning commits/diffs to synchronize `architecture.md`, `current-state.md`, `project-state.yaml`, and `decisions/`.
+     * [`push-and-release.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/push-and-release.md): Deep project inspection, user-facing changelog hygiene, semantic tag determination, and git push sequence.
 
 4. **Verified Project Knowledge ([`.ai/context/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/))**:
    - Subsystem design and extension points ([`architecture.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md)).
@@ -104,12 +114,15 @@ If you are a fresh AI agent starting a new session:
    - Read [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml) and [`.ai/handoff.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/handoff.md).
 4. **How do I execute a development task?**
    - For tasks modifying the repository, create a dedicated Git worktree and branch (`ai/<task-slug>`) as required by [`AGENTS.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md) and [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md). Work exclusively in the worktree, test, commit, merge to `master`, verify `master`, and delete the worktree/branch.
+   - Consult [`.ai/prompts/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/README.md) to choose the dedicated prompt playbook for your task (`feature-implementation.md`, `bug-fix.md`, `architecture-decision.md`, `sync-context-and-decisions.md`, or `push-and-release.md`).
 5. **How do I debug or resolve a bug?**
-   - Search previous bugs in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md), follow [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), and record qualifying resolved bugs in [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/).
+   - Use [`.ai/prompts/bug-fix.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/bug-fix.md): search previous bugs in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md), follow [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), and record qualifying resolved bugs in [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/).
 6. **How do I handle `CHANGELOG.md`, releases, and pushing code?**
    - Use the standardized prompt and protocol in [`.ai/prompts/push-and-release.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/push-and-release.md).
    - During development, collect notable user-facing changes under `## [Unreleased]` answering *"What changed for me?"*.
    - Never record internal classes, test names, ADRs, or AI restructuring in `CHANGELOG.md` (keep them in `.ai/`).
    - Clean and consolidate `CHANGELOG.md`, determine semantic tag (`vX.Y.Z`), verify `./gradlew test`, commit, tag, and push.
-7. **How do I finish a task?**
+7. **How do I prevent context and architectural decisions from drifting?**
+   - Run the periodic sync playbook in [`.ai/prompts/sync-context-and-decisions.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/sync-context-and-decisions.md) after every few commits or milestone completions.
+8. **How do I finish a task?**
    - Fulfill the Mandatory Final Task Gate in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) Section 7 (including the Git Session Completion Gate and Bug Completion Gate) and provide the Artifact Status Table in your final response.

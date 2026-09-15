@@ -18,11 +18,16 @@ Compact Source Text (.compact)
 [Semantic Layer] CompactResolveUtil (Single-file AST scope walker) + CompactTypeInferenceUtil
   ↓
 [IDE Features]
-  ├── References & Navigation (Go To Declaration, Find Usages)
-  ├── Completion (CompactCompletionContributor)
+  ├── References & Navigation (Go To Declaration, Go To Type, Find Usages)
+  ├── Completion (CompactCompletionContributor, CompactParameterizedTypeInsertHandler)
+  ├── Live Templates & Macros (CompactTypeMacro, CompactDeclarationNameGenerator)
+  ├── Editor Typing (CompactAngleBraceTypedHandler, CompactAngleBraceBackspaceHandler)
+  ├── Smart Enter & Intentions (CompactSmartEnterProcessor, CompactToggleExportIntention)
   ├── Refactoring & Rename (CompactRefactoringSupportProvider, CompactNamesValidator)
-  ├── Semantic Inspections (Unresolved Ref, Duplicate Decl, Unused Local, Type Mismatch)
-  └── Code Style (CompactFormattingModelBuilder, CompactBlock, Indentation)
+  ├── Semantic Inspections (10 local inspections & quick fixes)
+  ├── Code Style (CompactFormattingModelBuilder, CompactBlock, Indentation)
+  ├── Toolchain & Annotator (CompactExternalAnnotator, CompactToolchainUtil, WSL Mapping)
+  └── Compiler Tool Window & Status Bar (CompactCompilerToolWindowFactory, CompactStatusBarWidget)
 ```
 
 ---
@@ -30,7 +35,7 @@ Compact Source Text (.compact)
 ## 2. Subsystems
 
 ### 2.1 Lexer
-- **Purpose**: Tokenize a Compact source into IntelliJ `IElementType` tokens.
+- **Purpose**: Tokenize Compact source code into IntelliJ `IElementType` tokens.
 - **Key Classes**:
   - `dev.verloren.midnight.lexer.CompactLexer`: Handwritten lexer extending `LexerBase`.
   - `dev.verloren.midnight.lexer.CompactTokenTypes`: All token types (keywords, primitives, operators, delimiters, literals, comments, whitespace).
@@ -38,18 +43,19 @@ Compact Source Text (.compact)
 - **Used by**: `CompactParserDefinition`, `CompactSyntaxHighlighter`, `CompactWordsScanner`.
 - **Invariants**:
   - Keywords, primitives, and operators are categorized during lexing.
-  - Must remain robust and never crash or hang on arbitrary/malformed character input.
+  - Must remain robust and never crash or hang on arbitrary or malformed character input.
+  - Aligns with upstream compiler lexer (`compact/compiler/lexer.ss`) and ADR-001.
 
 ### 2.2 Parser & AST
 - **Purpose**: Parse token stream into an AST with rich error recovery.
 - **Key Classes**:
-  - `dev.verloren.midnight.parser.CompactParser`: Recursive-descent parser implementing `PsiParser`.
+  - `dev.verloren.midnight.parser.CompactParser`: Handwritten recursive-descent parser implementing `PsiParser`.
   - `dev.verloren.midnight.parser.CompactParserDefinition`: Plugin integration with IntelliJ PSI infrastructure.
   - `dev.verloren.midnight.psi.CompactElementTypes`: Node element types (`CIRCUIT_DEFINITION`, `WITNESS_DECLARATION`, `BLOCK`, `IF_STATEMENT`, `BINARY_EXPR`, etc.).
 - **Depends on**: `CompactTokenTypes`, `CompactElementTypes`.
 - **Used by**: `CompactParserDefinition`, IDE PSI build pass.
 - **Invariants**:
-  - Hand-crafted recursive descent with explicit error recovery markers.
+  - Hand-crafted recursive descent with explicit error recovery markers (ADR-001).
   - Loop safety: every parser loop MUST guarantee token advancement to avoid EDT freezes.
   - Never regenerate parser from grammar files without explicit project migration.
 
@@ -64,12 +70,12 @@ Compact Source Text (.compact)
 - **Used by**: All semantic layers and IDE features.
 - **Invariants**:
   - All declared named symbols (circuits, witnesses, structs, enums, parameters, consts, import aliases) must implement `CompactNamedElement`.
-  - `src/main/gen` is treated as an editable project source if present, but the current implementation resides in `src/main/java`.
+  - Tolerant of incomplete code and `PsiErrorElement` nodes without throwing exceptions.
 
 ### 2.4 Reference Resolution & Scoping
-- **Purpose**: Resolve identifiers to their declaration elements.
+- **Purpose**: Resolve identifiers to declaration elements.
 - **Key Classes**:
-  - `dev.verloren.midnight.resolve.CompactResolveUtil`: Scope tree walker with namespace separation.
+  - `dev.verloren.midnight.resolve.CompactResolveUtil`: Scope tree walker with namespace separation (ADR-002).
   - `dev.verloren.midnight.resolve.CompactScopeProcessor`: Callback processor collecting declarations.
   - `dev.verloren.midnight.psi.impl.CompactReferenceExprImpl`: Value reference (`PsiReference`).
   - `dev.verloren.midnight.psi.impl.CompactTypeReferenceImpl`: Type reference (`PsiReference`).
@@ -80,91 +86,85 @@ Compact Source Text (.compact)
   - `CompactResolveUtil.Namespace.TYPE`: Structs, enums, type aliases, primitive types, generic type parameters.
 - **Invariants**:
   - Innermost-first lexical shadowing: local bindings shadow outer/file-level bindings of the same namespace.
-  - Single-file resolution using `PsiTreeUtil` and AST traversal; no external index dependencies yet.
-  - Soft-unresolved handling for external includes or builtins that are not defined in the local file.
+  - Single-file resolution using `PsiTreeUtil` and AST traversal; soft-unresolved handling for external includes or builtins not defined in the local file.
 
-### 2.5 Code Completion
-- **Purpose**: Provide context-aware code completion.
+### 2.5 Code Completion & Export Scoping
+- **Purpose**: Context-aware code completion with export filtering and comment suppression (ADR-019, ADR-026, ADR-028).
 - **Key Classes**:
   - `dev.verloren.midnight.completion.CompactCompletionContributor`: IntelliJ `CompletionContributor`.
-- **Completion Modes**:
-  - Keyword completion (declaration keywords at file level, statement keywords in blocks).
-  - Expression values (in-scope value declarations, keywords like `true`, `false`, `self`).
-  - Type completion (primitive types, in-scope structs, enums, type aliases, generic type parameters).
-  - Enum member completion (triggered after `Enum.`).
+  - `dev.verloren.midnight.completion.CompactCompletionContext`: Structural classifier determining cursor context (`TOP_LEVEL`, `STATEMENT`, `EXPRESSION`, `TYPE`, `AFTER_EXPORT`, `AFTER_SEALED`, `AFTER_PURE`, `AFTER_NEW`, `NONE`).
+  - `dev.verloren.midnight.completion.CompactDeclarationInsertHandler`: Insert handler for declaration completions with auto-numbering.
+  - `dev.verloren.midnight.completion.CompactLedgerInsertHandler`: Insert handler for ledger declarations with live template scaffolding.
 - **Invariants**:
-  - Fast, single-pass scope collection; must never block the UI thread.
+  - Keyword and completion suggestions strictly suppressed inside comments and docstrings.
+  - `export const` strictly prohibited per upstream grammar (ADR-028).
+  - Fast, non-blocking single-pass scope collection on background threads.
 
-### 2.6 Refactoring & Search
-- **Purpose**: Safe symbol renaming and usage search.
+### 2.6 Angle Bracket Pairing & Parameterized Type Scaffolding
+- **Purpose**: Intelligent angle bracket auto-closing, overtyping, backspacing, and sized type insertion (ADR-029).
 - **Key Classes**:
-  - `dev.verloren.midnight.refactoring.CompactRenameHandler` / `CompactRefactoringSupportProvider`.
-  - `dev.verloren.midnight.refactoring.CompactNamesValidator`: Validates identifier tokens and rejects keywords.
-  - `dev.verloren.midnight.findUsages.CompactFindUsagesProvider`: Integrates with IntelliJ Find Usages and words scanner.
+  - `dev.verloren.midnight.editor.CompactAngleBraceTypedHandler`: `TypedHandlerDelegate` pairing `<|>` on generic types, expressions, and headers; stepping over on `>`.
+  - `dev.verloren.midnight.editor.CompactAngleBraceBackspaceHandler`: `BackspaceHandlerDelegate` deleting matching `>` when backspacing `<` in `<|>`.
+  - `dev.verloren.midnight.completion.CompactParameterizedTypeInsertHandler`: Appends `<>`, positions caret inside, and opens auto-popup for size options (`Uint`, `Bytes`, etc.).
 - **Invariants**:
-  - Reject Compact reserved keywords as identifiers during rename.
-  - `setName` uses `CompactElementFactory` to replace leaf identifier tokens cleanly.
+  - Zero false positives on comparison operators (`a < b`).
+  - No pairing inside comments or strings.
+  - Retains cursor position inside angle brackets when live templates are active.
 
-### 2.7 Type Inference System
-- **Purpose**: Lightweight local type inference for editor features.
+### 2.7 Live Template Macros & Auto-Numbering
+- **Purpose**: Dynamic variable calculation, gap-filling declaration naming, and interactive type dropdowns (ADR-025, ADR-027, ADR-029).
 - **Key Classes**:
-  - `dev.verloren.midnight.type.CompactType`: Common type interface.
-  - `dev.verloren.midnight.type.CompactPrimitiveType`: Singleton constants for `BOOLEAN`, `FIELD`, `UINT`, `BYTES`, `OPAQUE`, `VOID`, `UNKNOWN`.
-  - `dev.verloren.midnight.type.CompactNamedType`: Struct and enum nominal types.
-  - `dev.verloren.midnight.type.CompactTypeInferenceUtil`: Evaluates types for expressions (literals, binary ops, calls, member access, casts).
-  - `dev.verloren.midnight.psi.CompactExpression`: Base interface for typed PSI expression nodes.
-  - `dev.verloren.midnight.psi.CompactTypeElement`: Interface for typed declarations (`getType()`).
+  - `dev.verloren.midnight.ide.templates.CompactDeclarationNameGenerator`: Scope-aware auto-numbering generator (`circuit1`, `witness1`, etc.) with self-collision evasion.
+  - `dev.verloren.midnight.ide.templates.CompactDeclarationType`: Declaration construct registry (`CIRCUIT`, `WITNESS`, `STRUCT`, `ENUM`, `MODULE`, `CONTRACT`, `TYPE`, `LEDGER`, `CONST`).
+  - `dev.verloren.midnight.ide.templates.CompactDeclarationNameMacro`, `CompactCircuitNameMacro`, `CompactWitnessNameMacro`: Macros registered in `plugin.xml`.
+  - `dev.verloren.midnight.ide.templates.CompactTypeMacro` & `CompactTypeExpression`: `compactType()` macro providing interactive type dropdown in live templates.
 - **Invariants**:
-  - Lightweight and single-file; returns `CompactPrimitiveType.UNKNOWN` for complex uninferable or external constructs to avoid false positives.
+  - Never mutates explicit user-provided identifiers.
+  - Sibling scopes remain cleanly isolated.
 
-### 2.8 Semantic Inspections & Quick-Fixes
-- **Purpose**: Static analysis and quick fixes registered via `<localInspection>`.
+### 2.8 Smart Enter & Intentions Suite
+- **Purpose**: Non-destructive statement completion and contextual editor intentions (ADR-006, ADR-007, ADR-008).
 - **Key Classes**:
-  - `dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection`: Flags unresolved identifiers and fields (excluding soft-unresolved builtins).
-  - `dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspection`: Identifies duplicate sibling declarations in the same scope.
-  - `dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspection`: Flags unused local variables and provides `CompactRemoveUnusedVariableFix`.
-  - `dev.verloren.midnight.inspection.CompactTypeMismatchInspection`: Type checking for booleans in conditionals, logical operators, and equality compatibility.
+  - `dev.verloren.midnight.editor.smartEnter.CompactSmartEnterProcessor`: `SmartEnterProcessor` for circuits, consts, types, and statement blocks.
+  - `dev.verloren.midnight.editor.CompactDocCommentEnterHandler`: Clean `Enter` handling in block and doc comments.
+  - `dev.verloren.midnight.editor.CompactDeclarationEnterHandler`: Automatic continuation in multi-line declarations.
+  - Intention Actions: `CompactTogglePureCircuitIntention`, `CompactToggleExportIntention`, `CompactSurroundWithDiscloseIntention`, `CompactInvertIfIntention`, `CompactSpecifyTypeExplicitlyIntention`, `CompactRemoveRedundantTypeIntention`.
 - **Invariants**:
-  - Must guard against `PsiErrorElement` trees and incomplete code during editing.
-  - Quick-fixes must use IntelliJ write commands and maintain formatting.
+  - Intention previews must never execute external compiler processes or mutate disk state (verified by `CompactQuickFixPreviewSideEffectTest`).
 
-### 2.9 Formatter & Smart Indentation
-- **Purpose**: Code formatting (`Ctrl + Alt + L`) and automatic indent on Enter.
+### 2.9 Semantic Inspections & Quick-Fixes
+- **Purpose**: Real-time static analysis and automated quick fixes (ADR-004).
 - **Key Classes**:
-  - `dev.verloren.midnight.formatter.CompactFormattingModelBuilder`: Creates `DocumentBasedFormattingModel`.
-  - `dev.verloren.midnight.formatter.CompactBlock`: AST block computing spacing and child indentation.
-  - `dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider`: Configures 2-space canonical indentation.
+  - 10 local inspections: `CompactUnresolvedReferenceInspection`, `CompactDuplicateDeclarationInspection`, `CompactUnusedLocalVariableInspection`, `CompactTypeMismatchInspection`, `CompactPureCircuitInspection`, `CompactSealedFieldMutationInspection`, `CompactRecursiveCircuitInspection`, `CompactConstructorRestrictionInspection`, `CompactUndisclosedWitnessInspection`, `CompactPragmaVersionInspection`.
 - **Invariants**:
-  - Formatting must be idempotent: `format(format(x)) == format(x)`.
-  - Handle malformed trees gracefully without throwing exceptions.
+  - Must guard against `PsiErrorElement` trees during typing.
+  - Quick-fixes run in WriteCommandActions with undo support.
 
-### 2.10 Structure View & Documentation Provider
-- **Purpose**: File structure navigation and hover documentation (`Ctrl + Q`).
+### 2.10 Formatter & Indentation Model
+- **Purpose**: Code style formatting (`Ctrl + Alt + L`) and automatic indent on Enter (ADR-005).
 - **Key Classes**:
-  - `dev.verloren.midnight.structure.CompactStructureViewFactory`, `CompactStructureViewModel`, `CompactStructureViewElement`.
-  - `dev.verloren.midnight.documentation.CompactDocumentationProvider`, `CompactDocComment`.
+  - `dev.verloren.midnight.formatter.CompactFormattingModelBuilder`, `CompactBlock`, `CompactLanguageCodeStyleSettingsProvider`.
 - **Invariants**:
-  - Render documentation in standard `DocumentationMarkup` sections with Markdown formatting.
-  - Structure elements must guard against null declaration identifiers.
+  - Idempotent formatting: `format(format(code)) == format(code)`. Canonical 2-space indentation.
 
 ### 2.11 Toolchain, Run Configurations & External Linter
-- **Purpose**: Local & WSL compiler execution, run configurations with gutter play buttons, and background diagnostics.
+- **Purpose**: Compiler execution, gutter play markers, and background diagnostics (ADR-011, ADR-015, ADR-016).
 - **Key Classes**:
-  - `dev.verloren.midnight.run.CompactToolchainUtil`: WSL and native compiler binary detection and path translation.
-  - `dev.verloren.midnight.run.CompactConfigurationType`, `CompactRunConfiguration`, `CompactRunConfigurationProducer`.
-  - `dev.verloren.midnight.annotator.CompactExternalAnnotator`, `CompactCompilerOutputParser`.
+  - `dev.verloren.midnight.run.CompactToolchainUtil`: Toolchain discovery across Linux, macOS, native Windows, and WSL; evades `C:\Windows\System32\compact.exe`.
+  - `dev.verloren.midnight.run.CompactConfigurationType`, `CompactRunConfiguration`, `CompactRunConfigurationProducer`, `CompactRunLineMarkerContributor`.
+  - `dev.verloren.midnight.annotator.CompactExternalAnnotator`: Asynchronous 3-phase annotator with on-demand document flushing and WSL path translation.
 - **Invariants**:
-  - Compiler execution must be asynchronous and never block EDT.
-  - Deterministic per-contract output directories (`gen/<contract-path>`) to prevent artifact collision.
+  - External compiler execution must be asynchronous and never block EDT.
 
-### 2.12 Semantic Gutter Markers & Bundled Standard Library
-- **Purpose**: Privacy visualizer gutter icons and built-in standard library symbol resolution.
+### 2.12 Status Bar Widget & Remix Compiler Tool Window
+- **Purpose**: Persistent compiler state monitoring, rapid switching, and contract compilation (ADR-012, ADR-013, ADR-014).
 - **Key Classes**:
-  - `dev.verloren.midnight.editor.CompactLineMarkerProvider`: Gutter icons for `witness`, `disclose`, `circuit`, `ledger`.
-  - `dev.verloren.midnight.stdlib.CompactStdlibService`, `CompactStandardLibraryProvider`: Bundled `standard-library.compact` and `zkir-v3-library.compact` virtual files.
+  - `dev.verloren.midnight.statusbar.CompactStatusBarWidgetFactory`, `CompactStatusBarWidget`, `CompactStatusBarPopup`.
+  - `dev.verloren.midnight.toolwindow.CompactCompilerToolWindowFactory`, `CompactCompilerPanel`.
+  - `dev.verloren.midnight.version.CompactVersionManager`, `CompactSemVerUtil`.
 - **Invariants**:
-  - Standard library initialization is deterministic with `0L` timestamp.
-  - User-defined symbols lexically shadow standard library definitions.
+  - Multi-version compilers isolated under `~/.compact/versions/<version>/`.
+  - Per-project compiler persistence in `.idea/midnight.xml`.
 
 ---
 
@@ -172,121 +172,143 @@ Compact Source Text (.compact)
 
 ### 3.1 Operation vs. Thread Context Matrix
 
-The following rules govern concurrency and execution across the plugin:
+| Operation Category | Required Thread / Context | Mechanism / API | Critical Constraints |
+| :--- | :--- | :--- | :--- |
+| **PSI Read** | Background Thread or EDT with ReadAction | `ReadAction.compute()` | Never block waiting on external locks. |
+| **PSI Mutation** | **EDT only** with WriteAction & Command | `WriteCommandAction.runWriteCommandAction()` | Modifying PSI off-EDT throws `IllegalStateException`. |
+| **VFS Read** | Any thread with ReadAction | `VirtualFile.findChild()` | Avoid expensive disk operations under ReadAction. |
+| **VFS Write** | **EDT only** with WriteAction | `WriteAction.run()` | Direct disk writes bypass VFS unless followed by refresh. |
+| **VFS Refresh** | Any thread (asynchronous preferred) | `VfsUtil.markDirtyAndRefresh(true, ...)` | **NEVER** call synchronous refresh on EDT. |
+| **UI Updates** | **EDT only** | `ApplicationManager.getApplication().invokeLater()` | Never manipulate Swing components from background threads. |
+| **Process Execution** | **Background Thread only** | `Task.Backgroundable`, `ExternalAnnotator.doAnnotate()` | **NEVER execute blocking process calls on EDT.** |
+| **Services** | Any thread (thread-safe) | `@Service` + `getInstance()` | Double-checked locking / volatile fields. |
+| **Index Queries** | Any thread with ReadAction | `DumbService.isDumb(project)` guard | Accessing indexes during indexing throws `IndexNotReadyException`. |
 
-| Operation Category             | Required Thread / Context                              | Mechanism / API                                                                                | Existing Plugin Example                                                          | Critical Constraints & Pitfalls                                                                                              |
-|:-------------------------------|:-------------------------------------------------------|:-----------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------|
-| **PSI Read**                   | Background Thread or EDT with **ReadAction**           | Automatically active in inspections, completion, annotators; manual via `ReadAction.compute()` | `CompactResolveUtil.resolve()`, `CompactTypeInferenceUtil.inferType()`           | Reading PSI without ReadAction throws `ProcessCanceledException` or `AssertionError`. Never block waiting on external locks. |
-| **PSI Mutation**               | **EDT only** with **WriteAction** & Command            | `WriteCommandAction.runWriteCommandAction(project, () -> ...)`                                 | `CompactRemoveUnusedVariableFix.applyFix()`, `CompactNamedElementImpl.setName()` | Modifying PSI on a background thread throws `IllegalStateException`. Mutations must be recorded in undo/redo stack.          |
-| **VFS Read**                   | Any thread with **ReadAction**                         | `VirtualFile.findChild()`, `VirtualFile.getPath()`                                             | `CompactExternalAnnotator.collectInformation()`                                  | Avoid expensive disk operations or blocking I/O while holding a ReadAction.                                                  |
-| **VFS Write**                  | **EDT only** with **WriteAction**                      | `WriteAction.run(...)` or `WriteCommandAction`                                                 | File creation actions via platform handlers                                      | Direct physical file writes (`new FileOutputStream`) bypass VFS unless followed by a refresh.                                |
-| **VFS Refresh**                | Any thread (asynchronous strongly preferred)           | `VfsUtil.markDirtyAndRefresh(true, ...)`                                                       | Compiler output directory synchronization                                        | **NEVER** call synchronous refresh (`async = false`) on EDT; it freezes the UI while scanning the disk.                      |
-| **UI Updates / Dialogs**       | **EDT only**                                           | `ApplicationManager.getApplication().invokeLater(...)`                                         | `CompactCreateFileAction.buildDialog()`, `MidnightSettingsComponent`             | Never touch Swing/JComponent hierarchies or open modal dialogs from a background worker thread.                              |
-| **External Process Execution** | **Background Thread only**                             | `Task.Backgroundable`, `ExternalAnnotator.doAnnotate()`, `CommandLineState.startProcess()`     | `CompactExternalAnnotator.doAnnotate()`, `CompactRunProfileState.startProcess()` | **NEVER execute `process.waitFor()` or blocking CLI operations on EDT.** Doing so locks the entire IDE UI.                   |
-| **Project / App Services**     | Any thread (service methods must ensure thread-safety) | `@Service` + `getInstance()`                                                                   | `CompactStdlibService` (Project), `MidnightSettingsState` (App)                  | Thread-safe retrieval. State mutation must use internal locks or volatile fields (e.g. double-checked locking).              |
-| **Index Queries / Stubs**      | Any thread with ReadAction outside Dumb Mode           | `DumbService.isDumb(project)` guard                                                            | Future StubIndex cross-file symbol resolution                                    | Accessing indexes during indexing without `DumbAware` throws `IndexNotReadyException`.                                       |
-| **Long Computations**          | Background thread with cancellation support            | `ProgressManager.getInstance().run(new Task.Backgroundable(...) { ... })`                      | External linting, bulk file resolution                                           | Must periodically invoke `ProgressManager.checkCanceled()` to respond to user keystrokes and cancellations.                  |
+### 3.2 Extension Points & Threading Catalog
 
----
-
-### 3.2 External Process Execution & WSL Boundaries
-
-When invoking external Compact tools (`compact`, `compactc`):
-
-1. **Toolchain Discovery (`CompactToolchainUtil`)**:
-   - Searches settings, project `node_modules/.bin`, WSL distributions, and system PATH.
-   - **Critical Trap**: On Windows, `compact.exe` exists in `C:\Windows\System32\compact.exe` as the native NTFS compression tool. `CompactToolchainUtil` specifically prioritizes WSL and filters out Windows system directories to prevent accidentally launching the NTFS compression utility.
-2. **Command Line Construction**:
-   - Always route through `CompactToolchainUtil.createCommandLine(project, args, workingDir)`.
-   - WSL paths are automatically translated (`C:\path` -> `/mnt/c/path`).
-3. **Execution & Handlers**:
-   - **Run Configurations**: Managed via `CommandLineState` and `OSProcessHandler`. Output is streamed to the Run Console with `CompactConsoleFilter` parsing hyperlinked error locations (`file:line:col`).
-   - **Background Linter (`CompactExternalAnnotator`)**: Executed via background thread with explicit timeouts (`process.waitFor(5, TimeUnit.SECONDS)`). If the timeout expires or execution is canceled, `process.destroyForcibly()` is called immediately to prevent orphan daemon processes.
-4. **Cancellation**:
-   - External processes must be aborted immediately if the enclosing `ProgressIndicator` is canceled or the parent `Disposable` is disposed of.
-
----
-
-### 3.3 Caching & Lifecycle Invariants
-
-1. **PSI-Derived Value Caching**:
-   - Use `CachedValuesManager.getCachedValue(element, () -> Result.create(value, PsiModificationTracker.MODIFICATION_COUNT))`.
-   - Concrete Example: [`CompactIncludeDeclarationImpl.resolveIncludedFile()`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/psi/CompactIncludeDeclarationImpl.java).
-2. **Reference Resolution Caching**:
-   - Leverage `ResolveCache.getInstance(project).resolveWithCaching(this, RESOLVER, needToPreventRecursion, incompleteCode)`.
-   - Set `needToPreventRecursion = true` to protect against circular symbol graphs.
-   - Concrete Example: [`CompactReferenceBase`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/reference/CompactReferenceBase.java).
-3. **Recursion Guards in Type Inference**:
-   - Guard against recursive structural evaluation using `RecursionGuard<PsiElement>` created via `RecursionManager.createGuard(...)`.
-   - Concrete Example: [`CompactPatternImpl.getType()`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/psi/CompactPatternImpl.java) and [`CompactConstBindingImpl.getType()`](file:///c:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/psi/CompactConstBindingImpl.java).
-4. **Disposal & Leaks**:
-   - Never retain strong references to `Project`, `PsiElement`, or `VirtualFile` in static caches, application-level services, or non-disposable listeners.
-   - Use `Disposer.register(parentDisposable, childDisposable)` when subscribing to message buses or creating background task listeners.
-
----
-
-### 3.4 Extension Points & Threading Catalog
-
-Every extension point in `src/main/resources/META-INF/plugin.xml` runs in a specific thread context:
-
-| Extension Point                    | Implementation Class                | Thread / Context               | DumbAware | Purpose                                            |
-|:-----------------------------------|:------------------------------------|:-------------------------------|:----------|:---------------------------------------------------|
-| `<fileType>`                       | `CompactFileType`                   | Registration (App startup)     | Yes       | Binds `.compact` extension to language             |
-| `<lang.parserDefinition>`          | `CompactParserDefinition`           | Any thread (ReadAction)        | Yes       | Creates lexer, parser, and PSI AST nodes           |
-| `<lang.syntaxHighlighterFactory>`  | `CompactSyntaxHighlighterFactory`   | Any thread                     | Yes       | Lexer-based token syntax coloring                  |
-| `<colorSettingsPage>`              | `CompactColorSettingsPage`          | EDT (Settings dialog)          | Yes       | Color scheme customization page                    |
-| `<annotator>`                      | `CompactHighlightingAnnotator`      | Background (ReadAction)        | No        | Fast semantic coloring (primitives, operators)     |
-| `<externalAnnotator>`              | `CompactExternalAnnotator`          | Background (3-phase pipeline)  | No        | Authoritative `compactc` background linting        |
-| `<completion.contributor>`         | `CompactCompletionContributor`      | Background (ReadAction)        | No        | Contextual autocomplete (types, keywords, values)  |
-| `<lang.findUsagesProvider>`        | `CompactFindUsagesProvider`         | Background (ReadAction)        | No        | Find Usages and words scanner                      |
-| `<lang.refactoringSupport>`        | `CompactRefactoringSupportProvider` | EDT (ReadAction)               | No        | In-place rename refactoring                        |
-| `<lang.namesValidator>`            | `CompactNamesValidator`             | Pure string logic (any thread) | Yes       | Validates identifiers & rejects keywords           |
-| `<lang.formatter>`                 | `CompactFormattingModelBuilder`     | Background (ReadAction)        | No        | Code formatting (`Ctrl + Alt + L`)                 |
-| `<lang.foldingBuilder>`            | `CompactFoldingBuilder`             | Background (ReadAction)        | **Yes**   | Code folding for blocks, comments, imports         |
-| `<lang.documentationProvider>`     | `CompactDocumentationProvider`      | Background (ReadAction)        | No        | Quick documentation hover (`Ctrl + Q`)             |
-| `<breadcrumbsInfoProvider>`        | `CompactBreadcrumbsProvider`        | EDT (ReadAction)               | No        | Contextual scope breadcrumb bar                    |
-| `<spellchecker.support>`           | `CompactSpellcheckingStrategy`      | Background (ReadAction)        | Yes       | Identifier token splitting & spellcheck            |
-| `<lang.surroundWithRange>`         | `CompactSurroundDescriptor`         | EDT (ReadAction / WriteAction) | No        | Surround with `if` or block (`Ctrl + Alt + T`)     |
-| `<configurationType>`              | `CompactConfigurationType`          | Any thread                     | **Yes**   | Run Configuration descriptor                       |
-| `<runConfigurationProducer>`       | `CompactRunConfigurationProducer`   | Background (ReadAction)        | No        | Contextual run configuration producer              |
-| `<applicationConfigurable>`        | `MidnightSettingsConfigurable`      | EDT                            | Yes       | Midnight settings UI under Languages               |
-| `<applicationService>`             | `MidnightSettingsState`             | Thread-safe service            | Yes       | Persistent compiler and network settings           |
-| `<projectService>`                 | `CompactStdlibService`              | Thread-safe service            | Yes       | Bundled standard library & ZKIR virtual files      |
-| `<fileTemplateGroup>`              | `CompactFileTemplateGroupFactory`   | Any thread                     | Yes       | File templates descriptor                          |
-| `<internalFileTemplate>`           | Four bundled `.ft` templates        | Any thread                     | Yes       | Registers `Compact Contract`, `Module`, etc.       |
-| `<defaultLiveTemplates>`           | `/liveTemplates/Compact.xml`        | App startup                    | Yes       | Bundled live code snippets                         |
-| `<psi.referenceContributor>`       | `CompactReferenceContributor`       | Background (ReadAction)        | No        | Injects direct `PsiReference` on identifier tokens |
-| `<gotoDeclarationHandler>`         | `CompactGotoDeclarationHandler`     | Background (ReadAction)        | No        | `Ctrl + Click` navigation to declarations          |
-| `<codeInsight.lineMarkerProvider>` | `CompactLineMarkerProvider`         | Background (ReadAction)        | No        | Gutter icons for `witness`, `disclose`, etc.       |
-| `<localInspection>`                | 9 Semantic Inspection classes       | Background (ReadAction)        | No        | Static analysis checks & quick fixes               |
-| `<action>` (`NewGroup`)            | `CompactCreateFileAction`           | **EDT** (Action execution)     | **Yes**   | New Compact File dialog & creation                 |
+| Extension Point | Implementation Class | Thread / Context | DumbAware | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `<fileType>` | `CompactFileType` | App Startup | Yes | Binds `.compact` extension to language |
+| `<lang.parserDefinition>` | `CompactParserDefinition` | Any thread (ReadAction) | Yes | Lexer, parser, and PSI AST nodes |
+| `<lang.syntaxHighlighterFactory>` | `CompactSyntaxHighlighterFactory` | Any thread | Yes | Lexer-based token syntax coloring |
+| `<colorSettingsPage>` | `CompactColorSettingsPage` | EDT (Settings dialog) | Yes | Color scheme customization page |
+| `<annotator>` | `CompactHighlightingAnnotator` | Background (ReadAction) | No | Fast semantic syntax highlighting |
+| `<externalAnnotator>` | `CompactExternalAnnotator` | Background (3-phase pipeline) | No | Upstream `compactc` background linting |
+| `<completion.contributor>` | `CompactCompletionContributor` | Background (ReadAction) | No | Contextual code autocompletion |
+| `<lang.findUsagesProvider>` | `CompactFindUsagesProvider` | Background (ReadAction) | No | Find Usages and words scanner |
+| `<lang.namesValidator>` | `CompactNamesValidator` | Pure string logic (any thread) | Yes | Validates identifiers & rejects keywords |
+| `<lang.refactoringSupport>` | `CompactRefactoringSupportProvider` | EDT (ReadAction) | No | In-place rename refactoring |
+| `<lang.formatter>` | `CompactFormattingModelBuilder` | Background (ReadAction) | No | Code formatting (`Ctrl + Alt + L`) |
+| `<langCodeStyleSettingsProvider>` | `CompactLanguageCodeStyleSettingsProvider` | EDT (Settings dialog) | Yes | Code style settings definitions |
+| `<lang.psiStructureViewFactory>` | `CompactStructureViewFactory` | EDT (ReadAction) | No | Structure view visual tree |
+| `<lang.documentationProvider>` | `CompactDocumentationProvider` | Background (ReadAction) | No | Quick documentation hover (`Ctrl + Q`) |
+| `<lang.commenter>` | `CompactCommenter` | Any thread | Yes | Line (`//`) and block (`/* */`) comments |
+| `<lang.braceMatcher>` | `CompactPairedBraceMatcher` | Any thread | Yes | Bracket pairing for `{}`, `[]`, `()` |
+| `<lang.quoteHandler>` | `CompactQuoteHandler` | EDT | Yes | Double-quote string auto-closing |
+| `<typedHandler>` | `CompactAngleBraceTypedHandler` | EDT | Yes | Angle bracket auto-closing & overtyping |
+| `<backspaceHandlerDelegate>` | `CompactAngleBraceBackspaceHandler` | EDT | Yes | Balanced angle bracket backspace deletion |
+| `<lang.smartEnterProcessor>` | `CompactSmartEnterProcessor` | EDT (WriteCommandAction) | No | Non-destructive `Ctrl+Shift+Enter` |
+| `<enterHandlerDelegate>` | `CompactDocCommentEnterHandler` | EDT (WriteCommandAction) | No | Multi-asterisk comment scaffolding |
+| `<enterHandlerDelegate>` | `CompactDeclarationEnterHandler` | EDT (WriteCommandAction) | No | Declaration line continuation |
+| `<gotoClassContributor>` | `CompactGotoClassContributor` | Background (ReadAction) | Yes | `Ctrl + N` navigation to contracts/structs |
+| `<gotoSymbolContributor>` | `CompactGotoSymbolContributor` | Background (ReadAction) | Yes | `Ctrl + Alt + Shift + N` navigation |
+| `<gotoDeclarationHandler>` | `CompactGotoDeclarationHandler` | Background (ReadAction) | No | `Ctrl + Click` navigation to declarations |
+| `<typeDeclarationProvider>` | `CompactTypeDeclarationProvider` | Background (ReadAction) | No | `Ctrl + Shift + B` navigation to types |
+| `<psi.referenceContributor>` | `CompactReferenceContributor` | Background (ReadAction) | No | Direct `PsiReference` injection |
+| `<configurationType>` | `CompactConfigurationType` | Any thread | Yes | Run Configuration descriptor |
+| `<runConfigurationProducer>` | `CompactRunConfigurationProducer` | Background (ReadAction) | No | Contextual run configuration producer |
+| `<runLineMarkerContributor>` | `CompactRunLineMarkerContributor` | Background (ReadAction) | No | Gutter play buttons on contracts |
+| `<applicationService>` | `MidnightSettingsState` | Thread-safe service | Yes | Persistent compiler settings |
+| `<applicationConfigurable>` | `MidnightSettingsConfigurable` | EDT | Yes | Settings UI under Languages |
+| `<toolWindow>` | `CompactCompilerToolWindowFactory` | EDT | Yes | Remix-style compiler panel on right stripe |
+| `<statusBarWidgetFactory>` | `CompactStatusBarWidgetFactory` | EDT | Yes | Status bar toolchain & version widget |
+| `<notificationGroup>` | Midnight Notifications | App Startup | Yes | Balloon notification group |
+| `<intentionAction>` (x8) | 2 pragma + 6 editor intentions | EDT (ReadAction / WriteCommand) | No | `Alt + Enter` contextual editor actions |
+| `<fileTemplateGroup>` | `CompactFileTemplateGroupFactory` | Any thread | Yes | File templates descriptor |
+| `<internalFileTemplate>` (x4) | Contract, Module, Interface, File | Any thread | Yes | Bundled file templates |
+| `<defaultLiveTemplates>` | `/liveTemplates/Compact.xml` | App Startup | Yes | Bundled live code snippets |
+| `<liveTemplateContext>` | `CompactLiveTemplateContextType` | Any thread | Yes | Scopes live templates to Compact code |
+| `<liveTemplateMacro>` (x4) | DeclarationName, Circuit, Witness, Type | Any thread | Yes | Live template dynamic macro expressions |
+| `<lang.foldingBuilder>` | `CompactFoldingBuilder` | Background (ReadAction) | Yes | Code folding for blocks, comments |
+| `<breadcrumbsInfoProvider>` | `CompactBreadcrumbsProvider` | EDT (ReadAction) | No | Scope breadcrumb navigation bar |
+| `<spellchecker.support>` | `CompactSpellcheckingStrategy` | Background (ReadAction) | Yes | Spellchecking for identifier tokens |
+| `<lang.surroundDescriptor>` | `CompactSurroundDescriptor` | EDT (WriteCommandAction) | No | Surround with block or `if` (`Ctrl+Alt+T`) |
+| `<codeInsight.declarativeInlayProvider>` | `CompactInlayHintsProvider` | Background (ReadAction) | No | Declarative inline parameter hints |
+| `<codeInsight.lineMarkerProvider>` | `CompactLineMarkerProvider` | Background (ReadAction) | No | Gutter icons for `witness`, `disclose` |
+| `<codeInsight.parameterInfo>` | `CompactParameterInfoHandler` | Background (ReadAction) / EDT | No | Parameter info tooltip (`Ctrl + P`) |
+| `<errorHandler>` | `JetBrainsMarketplaceErrorReportSubmitter` | EDT | Yes | Marketplace exception reporter |
+| `<localInspection>` (x10) | 10 Semantic Inspection classes | Background (ReadAction) | No | Static analysis checks & quick fixes |
+| `<action>` (`NewGroup`) | `CompactCreateFileAction` | EDT (Action execution) | Yes | New Compact File dialog & creation |
 
 ---
 
 ## 4. Test Structure & Strategy
 
-All test suites extend IntelliJ test base classes (`ParsingTestCase` or `BasePlatformTestCase`):
+All 60 test suites extend IntelliJ test base classes (`ParsingTestCase` or `BasePlatformTestCase`):
 
-| Test Class                                                                                                                                                                                          | Category                       | Base Class             | Test Count |
-|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-------------------------------|:-----------------------|:-----------|
-| `LexerTest`, `PragmaTest`                                                                                                                                                                           | Tokenization                   | Standalone JUnit 4     | 15         |
-| `DeclarationParserTest`, `StatementParserTest`, `ExpressionParserTest`, `PragmaParserTest`, `TypePatternParserTest`, `ErrorRecoveryParserTest`, `EndToEndParserTest`, `CompactParserDefinitionTest` | Parsing & AST                  | `ParsingTestCase`      | 19         |
-| `DeclarationPsiTest`, `ElementFactoryConsistencyTest`                                                                                                                                               | PSI structure                  | `BasePlatformTestCase` | 3          |
-| `CompactResolveTest`, `CompactCrossFileResolveTest`, `CompactReferenceTest`                                                                                                                         | Scope & Resolution             | `BasePlatformTestCase` | 44         |
-| `CompactCompletionTest`                                                                                                                                                                             | Code Completion                | `BasePlatformTestCase` | 13         |
-| `CompactRenameTest`, `CompactFindUsagesTest`, `CompactSymbolTest`                                                                                                                                   | Refactoring & Search           | `BasePlatformTestCase` | 22         |
-| `CompactTypeInferenceTest`                                                                                                                                                                          | Type Inference                 | `BasePlatformTestCase` | 15         |
-| `CompactInspectionTest`                                                                                                                                                                             | Inspections & Fixes            | `BasePlatformTestCase` | 91         |
-| `CompactFormatterTest`                                                                                                                                                                              | Formatter & Indent             | `BasePlatformTestCase` | 39         |
-| `CompactStructureViewTest`                                                                                                                                                                          | File Outline                   | `BasePlatformTestCase` | 9          |
-| `CompactDocumentationTest`                                                                                                                                                                          | Quick Docs & Hover             | `BasePlatformTestCase` | 16         |
-| `CompactHighlightingTest`, `CompactColorSettingsPageTest`                                                                                                                                           | Syntax & Semantic Highlighting | `BasePlatformTestCase` | 12         |
-| `CompactFoldingTest`, `CompactBreadcrumbsTest`                                                                                                                                                      | Editor Structure               | `BasePlatformTestCase` | 6          |
-| `CompactLiveTemplateTest`, `CompactFileTemplateTest`, `CompactSurroundWithTest`                                                                                                                     | Templates & Code Generation    | `BasePlatformTestCase` | 20         |
-| `CompactRunConfigurationTest`, `CompactRunConfigurationProducerTest`, `CompactToolchainUtilTest`                                                                                                    | Run & Toolchain                | `BasePlatformTestCase` | 13         |
-| `CompactExternalAnnotatorTest`, `CompactLineMarkerTest`                                                                                                                                             | External Diagnostics & Markers | `BasePlatformTestCase` | 7          |
-| `CompactStandardLibraryTest`, `CompactStdlibServiceTest`, `MidnightSettingsTest`, `CompactTestUtilsTest`                                                                                            | Stdlib, Settings & DSL         | `BasePlatformTestCase` | 14         |
-| **Total Passing Tests**                                                                                                                                                                             |                                |                        | **376**    |
+| Test Class | Category | Base Class | Test Count |
+| :--- | :--- | :--- | :--- |
+| `dev.verloren.midnight.lexer.LexerTest` | Tokenization | Standalone JUnit 4 | 12 |
+| `dev.verloren.midnight.lexer.PragmaTest` | Tokenization | Standalone JUnit 4 | 3 |
+| `dev.verloren.midnight.parser.DeclarationParserTest` | Parsing & AST | `ParsingTestCase` | 1 |
+| `dev.verloren.midnight.parser.StatementParserTest` | Parsing & AST | `ParsingTestCase` | 3 |
+| `dev.verloren.midnight.parser.ExpressionParserTest` | Parsing & AST | `ParsingTestCase` | 1 |
+| `dev.verloren.midnight.parser.PragmaParserTest` | Parsing & AST | `ParsingTestCase` | 3 |
+| `dev.verloren.midnight.parser.TypePatternParserTest` | Parsing & AST | `ParsingTestCase` | 1 |
+| `dev.verloren.midnight.parser.ErrorRecoveryParserTest` | Parsing & AST | `ParsingTestCase` | 6 |
+| `dev.verloren.midnight.parser.EndToEndParserTest` | Parsing & AST | `ParsingTestCase` | 2 |
+| `dev.verloren.midnight.parser.CompactParserDefinitionTest` | Parsing & AST | `ParsingTestCase` | 2 |
+| `dev.verloren.midnight.psi.DeclarationPsiTest` | PSI Structure | `BasePlatformTestCase` | 2 |
+| `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | PSI Structure | `BasePlatformTestCase` | 1 |
+| `dev.verloren.midnight.resolve.CompactResolveTest` | Scope & Resolution | `BasePlatformTestCase` | 21 |
+| `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | Scope & Resolution | `BasePlatformTestCase` | 17 |
+| `dev.verloren.midnight.reference.CompactReferenceTest` | Scope & References | `BasePlatformTestCase` | 9 |
+| `dev.verloren.midnight.completion.CompactCompletionTest` | Code Completion | `BasePlatformTestCase` | 70 |
+| `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | Angle Bracket Typing | `BasePlatformTestCase` | 24 |
+| `dev.verloren.midnight.refactoring.CompactRenameTest` | Refactoring & Rename | `BasePlatformTestCase` | 9 |
+| `dev.verloren.midnight.findUsages.CompactFindUsagesTest` | Find Usages | `BasePlatformTestCase` | 10 |
+| `dev.verloren.midnight.symbol.CompactSymbolTest` | Symbol Navigation | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.navigation.CompactChooseByNameTest` | Symbol Navigation | `BasePlatformTestCase` | 2 |
+| `dev.verloren.midnight.navigation.CompactTypeDeclarationProviderTest` | Type Navigation | `BasePlatformTestCase` | 14 |
+| `dev.verloren.midnight.type.CompactTypeInferenceTest` | Type Inference | `BasePlatformTestCase` | 15 |
+| `dev.verloren.midnight.inspection.CompactInspectionTest` | Inspections & Fixes | `BasePlatformTestCase` | 93 |
+| `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest` | Inspections & Fixes | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.intention.CompactPhase28IntentionsTest` | Editor Intentions | `BasePlatformTestCase` | 12 |
+| `dev.verloren.midnight.intention.CompactPragmaIntentionTest` | Pragma Intentions | `BasePlatformTestCase` | 2 |
+| `dev.verloren.midnight.formatter.CompactFormatterTest` | Formatter & Indent | `BasePlatformTestCase` | 39 |
+| `dev.verloren.midnight.structure.CompactStructureViewTest` | Structure View | `BasePlatformTestCase` | 9 |
+| `dev.verloren.midnight.documentation.CompactDocumentationTest` | Hover Documentation | `BasePlatformTestCase` | 16 |
+| `dev.verloren.midnight.highlighter.CompactHighlightingTest` | Syntax Highlighting | `BasePlatformTestCase` | 16 |
+| `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | Color Settings | `BasePlatformTestCase` | 1 |
+| `dev.verloren.midnight.editor.CompactFoldingTest` | Code Folding | `BasePlatformTestCase` | 4 |
+| `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | Scope Breadcrumbs | `BasePlatformTestCase` | 2 |
+| `dev.verloren.midnight.editor.CompactInlayHintsTest` | Inlay Parameter Hints | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | Quote & Brace Matching | `BasePlatformTestCase` | 4 |
+| `dev.verloren.midnight.editor.CompactLineMarkerTest` | Gutter Line Markers | `BasePlatformTestCase` | 7 |
+| `dev.verloren.midnight.editor.CompactSmartEnterTest` | Smart Enter | `BasePlatformTestCase` | 15 |
+| `dev.verloren.midnight.editor.CompactDocCommentEnterTest` | Doc Comment Enter | `BasePlatformTestCase` | 9 |
+| `dev.verloren.midnight.editor.CompactSurroundWithTest` | Surround With | `BasePlatformTestCase` | 5 |
+| `dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest` | File Templates | `BasePlatformTestCase` | 12 |
+| `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | Live Templates | `BasePlatformTestCase` | 17 |
+| `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | Template Name Generator | `BasePlatformTestCase` | 10 |
+| `dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest` | Template Triggers | `BasePlatformTestCase` | 10 |
+| `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | Trigger Resolver | `BasePlatformTestCase` | 6 |
+| `dev.verloren.midnight.run.CompactRunConfigurationTest` | Run Configurations | `BasePlatformTestCase` | 5 |
+| `dev.verloren.midnight.run.CompactRunConfigurationProducerTest` | Run Configurations | `BasePlatformTestCase` | 2 |
+| `dev.verloren.midnight.run.CompactToolchainUtilTest` | Toolchain Discovery | `BasePlatformTestCase` | 6 |
+| `dev.verloren.midnight.annotator.CompactExternalAnnotatorTest` | External Linter | `BasePlatformTestCase` | 10 |
+| `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | Annotator Previews | `BasePlatformTestCase` | 4 |
+| `dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest` | Parameter Info | `BasePlatformTestCase` | 12 |
+| `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | Standard Library | `BasePlatformTestCase` | 5 |
+| `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | Stdlib Virtual VFS | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.settings.MidnightSettingsTest` | Settings & State | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | Per-Project Settings | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest` | Status Bar Widget | `BasePlatformTestCase` | 5 |
+| `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | Remix Compiler UI | `BasePlatformTestCase` | 3 |
+| `dev.verloren.midnight.version.CompactVersionManagerTest` | Version Manager | `BasePlatformTestCase` | 7 |
+| `dev.verloren.midnight.version.CompactSemVerUtilTest` | SemVer Evaluator | `BasePlatformTestCase` | 4 |
+| `dev.verloren.midnight.CompactTestUtilsTest` | Test Utilities | `BasePlatformTestCase` | 3 |
+| **Total Across 60 Suites** | | | **601** |
 
 ---
 
@@ -295,15 +317,17 @@ All test suites extend IntelliJ test base classes (`ParsingTestCase` or `BasePla
 The following architectural components are mature, verified, and **MUST NOT be rewritten, replaced, or degraded**:
 
 1. **Handwritten Recursive-Descent Lexer & Parser**:
-   - `CompactLexer` and `CompactParser` are fully tested and handle incomplete code cleanly. Do not replace them with GrammarKit (`.bnf`), Antlr, or generated parsers.
+   - `CompactLexer` and `CompactParser` are fully tested and handle incomplete code cleanly (ADR-001). Do not replace them with GrammarKit (`.bnf`), Antlr, or generated parsers.
 2. **Lexical Scope Resolver (`CompactResolveUtil`)**:
-   - All symbol lookups (in-file, includes, standard library) must route through or extend `CompactResolveUtil`. Do not introduce ad-hoc AST walkers that bypass namespace separation (`VALUE` vs `TYPE`) or innermost lexical shadowing.
+   - All symbol lookups (in-file, includes, standard library) must route through or extend `CompactResolveUtil` (ADR-002). Do not introduce ad-hoc AST walkers that bypass namespace separation (`VALUE` vs `TYPE`) or innermost lexical shadowing.
 3. **Tolerance for Incomplete Code**:
    - Every PSI wrapper, inspection visitor, formatter block, and structure view element must guard against `null` children, missing identifiers, and `PsiErrorElement` nodes.
 4. **Threading Separation**:
    - Never execute external compiler processes or blocking disk operations on the EDT.
    - Never mutate PSI or VFS state outside a `WriteCommandAction` on the EDT.
 5. **Zero Test Regressions**:
-   - All 376 unit tests must pass (`./gradlew test`) before any task or feature is marked complete.
+   - All **601 unit tests** across all **60 test suites** must pass (`./gradlew test`) before any task or feature is marked complete.
 6. **Reference Code Discipline**:
    - Reference repositories (`compact/`, `intellij-rust/`, `intellij-elixir/`, `intellij-scala/`, `Rplugin/`) are read-only references. Never edit them or import them wholesale into the plugin build.
+7. **Architectural Decision Rigor**:
+   - Every major subsystem design or semantic change must be accompanied by an ADR in `.ai/decisions/` citing upstream compiler sources and workspace reference implementations (ADR-001 through ADR-029).
