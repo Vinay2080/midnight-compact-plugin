@@ -20,6 +20,10 @@
 ### Fixed
 - Fixed unhandled `SideEffectGuard: INVOKE_LATER` runtime exception and editor crash when previewing compiler switch quick-fixes and intentions in IntelliJ IDEA 2023.2+.
 - Suppressed daemon code analyzer restarts and project SDK mutation during intention preview generation (`IntentionPreviewInfo.EMPTY`).
+- Fixed stale compiler error underlines by automatically flushing dirty editor document buffers to disk before external compilation.
+- Added WSL `/mnt/<drive>/...` path translation and normalized virtual file paths in `CompactExternalAnnotator` for accurate diagnostic mapping on Windows.
+- Added process termination listeners in run configuration and compiler panel to refresh code analysis diagnostics immediately when a compile execution finishes.
+- Handled boundary and empty line offsets safely in annotator text range calculation to prevent index out of bounds exceptions.
 - Fixed duplicate `export export` bug when autocompleting declarations after an existing `export` keyword.
 - Fixed invalid top-level `export const` and `const` suggestions in code completion and intention actions.
 
