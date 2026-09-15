@@ -1,31 +1,30 @@
 # Current Handoff
 
 ## Current Feature
-Mandatory Release-Time Changelog Cleanup Process, Git Worktree Lifecycle, & Bug Knowledge Base Integration (AI Operating System).
+Resolution and Full Integration of Halted Sessions: Intention Preview SideEffectGuard, External Annotator Lag & WSL Path Mapping, and Code Inspection / Java 25 Modernization.
 
 ## Status
-- **Mandatory Release-Time Changelog Cleanup Architecture**:
-  - Established the distinction between **Development `CHANGELOG.md`** (working collection under `## [Unreleased]` answering *"What changed for me?"*), **Release `CHANGELOG.md`** (curated, consolidated user-facing release notes), and **Internal Engineering Knowledge** ([`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/), [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/), [`.ai/context/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/), git commit history, and code documentation).
-  - Added **Critical Invariant #14 (User-Facing Release Changelog Hygiene)** to [`AGENTS.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md) prohibiting release tags from being created or pushed while `CHANGELOG.md` contains engineering notes, ADR numbers, class names, test names, compiler lines, or AI restructuring details.
-  - Authored comprehensive Section 8 in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md):
-    - 8.1 Core Principle: Public user-facing standard answering *"What changed for me?"*.
-    - 8.2 Mandatory Release Execution Order (The Tagging Guard).
-    - 8.3 The Technical Blacklist: Required removals/translations (ADR numbers, phases, classes, methods, test fixtures, paths, compiler lines, AI restructuring, test counts) with concrete before/after translation examples.
-    - 8.4 Internal-Only Changes Policy: Zero leaks of private tooling, refactoring, or documentation changes to the public changelog.
-    - 8.5 Grouping & Consolidation: Combining multi-step technical implementations into single, cohesive user-facing bullet points.
-    - 8.6 Standard Keep-a-Changelog Categories & ISO date formatting; strict ban on custom categories like `### Tested`.
-    - 8.7 Mandatory Release-Time Changelog Review Gate (6 evaluation questions).
-    - 8.8 Final Release Changelog Checklist (10 items before tagging).
-    - 8.9 Release metadata synchronization (`gradle.properties`, `plugin.xml` fallback `<change-notes>`) and verification (`./gradlew test`, `./gradlew buildPlugin`).
-  - Integrated into [`.ai/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/README.md) (Layer 7 and Fresh-Agent Quick Orientation Question 6).
-  - Curated and cleaned [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) `## [Unreleased]`, purging ADR references, `parser.ss` citations, unit test names, test counters, and internal AI restructuring notes in favor of clean, user-facing release notes.
-- **Mandatory Git Worktree Session Lifecycle Architecture**:
-  - Established the mandatory session lifecycle:
-    `SESSION START -> Create dedicated worktree & branch -> Work ONLY in worktree -> Test / document -> Commit branch -> Merge into master -> Verify master -> Cleanup -> SESSION COMPLETE`.
-  - Added **Critical Invariant #13** to [`AGENTS.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md) and Section 2 in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md).
-- **Persistent Bug Knowledge Base Architecture**:
-  - Established [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) as a permanent, searchable historical debugging knowledge base.
-  - Added **Critical Invariant #12** to [`AGENTS.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md) and registered in [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml).
+- **Worktree 1: Intention Preview Side-Effect Guard (`ai/quickfix-preview-side-effect`)**:
+  - Successfully merged to `master` (commit `2c5cba8`).
+  - Overrode `generatePreview` to return `IntentionPreviewInfo.EMPTY` and added `IntentionPreviewUtils.isIntentionPreviewActive()` guards across [`CompactProblemUtil`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactProblemUtil.java), [`CompactSwitchCompilerQuickFix`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactSwitchCompilerQuickFix.java), [`CompactUpdatePragmaQuickFix`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactUpdatePragmaQuickFix.java), [`CompactSwitchCompilerVersionIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactSwitchCompilerVersionIntention.java), [`CompactUpdatePragmaVersionIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactUpdatePragmaVersionIntention.java), and [`CompactVersionManager`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/version/CompactVersionManager.java).
+  - Added regression test suite [`CompactQuickFixPreviewSideEffectTest`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/annotator/CompactQuickFixPreviewSideEffectTest.java).
+  - Documented in [`.ai/bugs/2026-09-16-quickfix-preview-side-effect-guard.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/2026-09-16-quickfix-preview-side-effect-guard.md).
+
+- **Worktree 2: External Annotator Lag & WSL Diagnostic Mapping (`ai/annotator-lag`)**:
+  - Successfully fixed, verified, and merged to `master` (commit `3e109d1` / merge `f7cb0b2`).
+  - Added automatic dirty document buffer flushing to disk in [`CompactExternalAnnotator.collectInformation()`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactExternalAnnotator.java) to eliminate compiler lag against stale disk contents.
+  - Added WSL `/tmp` output directories and `/mnt/<drive>/...` path translation (`CompactToolchainUtil.toWindowsPath()`), plus leading-slash virtual file path normalization.
+  - Added process listeners in [`CompactRunProfileState`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/run/CompactRunProfileState.java) and [`CompactCompilerPanel`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/toolwindow/CompactCompilerPanel.java) to proactively refresh problem diagnostics when execution terminates.
+  - Clamped line and offset boundaries in [`CompactExternalAnnotator.getRange()`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/annotator/CompactExternalAnnotator.java) for empty lines.
+  - Documented in [`.ai/bugs/2026-09-16-external-annotator-lag-and-stale-underlines.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/2026-09-16-external-annotator-lag-and-stale-underlines.md).
+
+- **Session 3: Code Inspection & Java 25 Modernization (`ai/inspection-cleanup`)**:
+  - Rescued all uncommitted root modifications into a dedicated branch, verified with `compileJava check` (`task-224.log`, passing cleanly in 1m 43s), confirmed zero errors across IDEA MCP file inspections, and fast-forward merged to `master` (commit `42ad1c8`).
+  - Modernized syntax (arrow switches, enhanced `instanceof` pattern matching, localized bundle messages via [`CompactBundle`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/CompactBundle.java), explicit PSI expression implementations for pad, tuple, index, default).
+
+- **Master Branch Status**:
+  - `master` is 100% clean, no dirty files, no lingering worktrees (`git worktree list` shows only `master`).
+  - Full test suite passed (550 tests passing, 0 failures, 0 errors).
 
 ## Relevant Context
 - Master AI Router: [.ai/README.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/README.md)
@@ -33,16 +32,10 @@ Mandatory Release-Time Changelog Cleanup Process, Git Worktree Lifecycle, & Bug 
 - Task Lifecycle & Release Gate: [.ai/workflow.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md)
 - Permanent Rules & Invariants: [AGENTS.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md)
 - Bug Knowledge Base: [.ai/bugs/README.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md)
-- Master ADR Index: [.ai/decisions/README.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md)
 - Machine State: [.ai/project-state.yaml](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml)
 - Current State: [.ai/context/current-state.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md)
-- Reference Map: [.ai/context/reference-map.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/reference-map.md)
-- Compact Semantics: [.ai/context/compact-semantics.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md)
-- IntelliJ Patterns: [.ai/context/intellij-patterns.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/intellij-patterns.md)
 
 ## Immediate Next Priorities
-1. For any incoming development session modifying repository files, **create a dedicated Git worktree and branch** (`../midnight-plugin-wt-<task-slug>`, `ai/<task-slug>`) before modifying any files.
-2. Maintain `CHANGELOG.md` `## [Unreleased]` with concise, user-facing descriptions; never record internal classes, test names, ADRs, or AI restructuring.
-3. Before cutting or tagging a release, execute the mandatory release changelog cleanup process in `.ai/workflow.md` Section 8.
-4. Search `.ai/bugs/` whenever debugging a defect, and record qualifying resolved bugs in `.ai/bugs/`.
-5. Proceed with planned Phase 31 (Stub Indexing & Large Workspace Caching) when directed.
+1. When starting any new task, create a dedicated Git worktree and branch (`../midnight-plugin-wt-<task-slug>`, `ai/<task-slug>`).
+2. Maintain `CHANGELOG.md` `## [Unreleased]` with clean user-facing descriptions.
+3. Proceed with planned Phase 31 (Stub Indexing & Large Workspace Caching) or other user requests.

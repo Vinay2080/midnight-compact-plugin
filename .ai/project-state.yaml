@@ -27,6 +27,9 @@ phases:
   smart_enter_and_intentions: complete (Phase 28 / v1.2.4)
   declaration_name_generator_and_templates: complete (Phase 29 / v1.2.6)
   strict_grammar_export_const_alignment: complete (Phase 30 / v1.2.6)
+  intention_preview_side_effect_guard: complete (v1.2.6)
+  external_annotator_lag_and_wsl_mapping: complete (v1.2.6)
+  code_inspection_and_java25_modernization: complete (v1.2.6)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)
@@ -35,7 +38,7 @@ phases:
   polyglot_ts_test_framework: planned (Phase 36)
 
 tests:
-  last_known_passing: 519
+  last_known_passing: 550
   failures: 0
   skipped: 0
   suites:
@@ -58,77 +61,4 @@ tests:
     documentation: dev.verloren.midnight.documentation.CompactDocumentationProviderTest
     run_config: dev.verloren.midnight.run.CompactRunConfigurationTest
     annotator: dev.verloren.midnight.annotator.CompactExternalAnnotatorTest
-    stdlib: dev.verloren.midnight.stdlib.CompactStdlibTest
-    find_usages: dev.verloren.midnight.findUsages.CompactFindUsagesTest
-    folding: dev.verloren.midnight.editor.CompactFoldingBuilderTest
-    breadcrumbs: dev.verloren.midnight.editor.CompactBreadcrumbsProviderTest
-    inlay_hints: dev.verloren.midnight.editor.CompactInlayHintsProviderTest
-    line_markers: dev.verloren.midnight.editor.CompactLineMarkerProviderTest
-    parameter_info: dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest
-    file_templates: dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest
-    live_templates: dev.verloren.midnight.ide.templates.CompactLiveTemplateTest
-    declaration_name_generator: dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest
-    semver: dev.verloren.midnight.version.CompactSemVerUtilTest
-    version_manager: dev.verloren.midnight.version.CompactVersionManagerTest
-    compiler_panel: dev.verloren.midnight.toolwindow.CompactCompilerPanelTest
-    pragma_switch_intention: dev.verloren.midnight.intention.CompactSwitchCompilerVersionIntentionTest
-    pragma_update_intention: dev.verloren.midnight.intention.CompactUpdatePragmaVersionIntentionTest
-    status_bar_widget: dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest
-    smart_enter: dev.verloren.midnight.editor.CompactSmartEnterTest
-    doc_comment_enter: dev.verloren.midnight.editor.CompactDocCommentEnterTest
-    intentions_suite: dev.verloren.midnight.intention.CompactPhase28IntentionsTest
-
-architecture:
-  bug_knowledge_base: .ai/bugs/README.md
-  language: dev.verloren.midnight.CompactLanguage
-  file_type: dev.verloren.midnight.CompactFileType
-  parser_definition: dev.verloren.midnight.parser.CompactParserDefinition
-  lexer: dev.verloren.midnight.lexer.CompactLexer
-  parser: dev.verloren.midnight.parser.CompactParser
-  psi_package: dev.verloren.midnight.psi
-  psi_types: dev.verloren.midnight.psi.CompactElementTypes
-  psi_tokens: dev.verloren.midnight.psi.CompactTokenTypes
-  highlighter: dev.verloren.midnight.highlighter.CompactSyntaxHighlighter
-  annotator: dev.verloren.midnight.highlighter.CompactHighlightingAnnotator
-  color_settings: dev.verloren.midnight.highlighter.CompactColorSettingsPage
-  find_usages: dev.verloren.midnight.findUsages.CompactFindUsagesProvider
-  names_validator: dev.verloren.midnight.refactoring.CompactNamesValidator
-  refactoring_support: dev.verloren.midnight.refactoring.CompactRefactoringSupportProvider
-  completion: dev.verloren.midnight.completion.CompactCompletionContributor
-  declaration_insert_handler: dev.verloren.midnight.completion.CompactDeclarationInsertHandler
-  ledger_insert_handler: dev.verloren.midnight.completion.CompactLedgerInsertHandler
-  declaration_name_generator: dev.verloren.midnight.ide.templates.CompactDeclarationNameGenerator
-  declaration_type_registry: dev.verloren.midnight.ide.templates.CompactDeclarationType
-  declaration_macros: dev.verloren.midnight.ide.templates.CompactDeclarationNameMacro
-  smart_enter: dev.verloren.midnight.editor.smartEnter.CompactSmartEnterProcessor
-  commenter: dev.verloren.midnight.editor.CompactCommenter
-  doc_enter_handler: dev.verloren.midnight.editor.CompactDocCommentEnterHandler
-  adrs:
-    adr_001: .ai/decisions/ADR-001-handwritten-lexer-and-parser.md
-    adr_002: .ai/decisions/ADR-002-psi-based-single-file-resolution.md
-    adr_003: .ai/decisions/ADR-003-lightweight-structural-type-inference.md
-    adr_004: .ai/decisions/ADR-004-resilient-local-inspections-and-quick-fixes.md
-    adr_005: .ai/decisions/ADR-005-abstract-block-formatter-and-indentation.md
-    adr_006: .ai/decisions/ADR-006-non-destructive-smart-enter-completion.md
-    adr_007: .ai/decisions/ADR-007-non-conflicting-comment-enter-scaffolding.md
-    adr_008: .ai/decisions/ADR-008-dual-scoping-editor-intentions.md
-    adr_009: .ai/decisions/ADR-009-compact-type-system-grammar-alignment.md
-    adr_010: .ai/decisions/ADR-010-file-creation-and-template-sanitization.md
-    adr_011: .ai/decisions/ADR-011-toolchain-discovery-and-wsl-translation.md
-    adr_012: .ai/decisions/ADR-012-isolated-multi-version-compiler-management.md
-    adr_013: .ai/decisions/ADR-013-remix-style-compiler-tool-window.md
-    adr_014: .ai/decisions/ADR-014-status-bar-toolchain-monitor.md
-    adr_015: .ai/decisions/ADR-015-run-configurations-and-gutter-markers.md
-    adr_016: .ai/decisions/ADR-016-asynchronous-external-annotator-pipeline.md
-    adr_017: .ai/decisions/ADR-017-bundled-standard-library-indexing.md
-    adr_018: .ai/decisions/ADR-018-bidirectional-line-markers-and-zk-gutters.md
-    adr_019: .ai/decisions/ADR-019-context-aware-code-completion.md
-    adr_020: .ai/decisions/ADR-020-symbol-navigation-and-type-declaration-provider.md
-    adr_021: .ai/decisions/ADR-021-find-usages-and-rename-refactoring.md
-    adr_022: .ai/decisions/ADR-022-structural-editor-features-and-inlay-hints.md
-    adr_023: .ai/decisions/ADR-023-quick-documentation-and-parameter-info.md
-    adr_024: .ai/decisions/ADR-024-semantic-syntax-highlighting-and-color-settings.md
-    adr_025: .ai/decisions/ADR-025-compact-live-templates-and-surround-with.md
-    adr_026: .ai/decisions/ADR-026-compact-export-ledger-completion-and-templates.md
-    adr_027: .ai/decisions/ADR-027-compact-declaration-name-generator-and-templates.md
-    adr_028: .ai/decisions/ADR-028-prohibit-top-level-export-const-and-grammar-alignment.md
+    preview_side_effects: dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest
