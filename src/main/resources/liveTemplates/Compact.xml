@@ -6,7 +6,7 @@
         <variable name="NAME" expression="compactDeclarationName(&quot;contract&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="CIRCUIT" expression="compactDeclarationName(&quot;circuit&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="STATE" expression="compactDeclarationName(&quot;ledger&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Counter&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;Counter&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="INIT" expression="" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
@@ -40,7 +40,7 @@
               toShortenFQNames="true" key="live.template.cir.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;circuit&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="RET" expression="" defaultValue="&quot;Void&quot;" alwaysStopAt="true"/>
+        <variable name="RET" expression="compactType(&quot;Void&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -52,7 +52,7 @@
               toShortenFQNames="true" key="live.template.wit.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;witness&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="RET" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <variable name="RET" expression="compactType(&quot;Field&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -64,7 +64,7 @@
               toShortenFQNames="true" key="live.template.expw.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;witness&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="PARAMS" expression="" defaultValue="" alwaysStopAt="true"/>
-        <variable name="RET" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <variable name="RET" expression="compactType(&quot;Field&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -75,7 +75,18 @@
               toReformat="true"
               toShortenFQNames="true" key="live.template.led.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;ledger&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;State&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;State&quot;)" defaultValue="" alwaysStopAt="true"/>
+        <context>
+            <option name="COMPACT_CODE" value="true"/>
+        </context>
+    </template>
+
+    <template name="expled"
+              value="export ledger $NAME$: $TYPE$;"
+              toReformat="true"
+              toShortenFQNames="true" key="live.template.led.description" resource-bundle="messages.MyMessageBundle">
+        <variable name="NAME" expression="compactDeclarationName(&quot;ledger&quot;)" defaultValue="" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;State&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -86,7 +97,7 @@
               toReformat="true"
               toShortenFQNames="true" key="live.template.ledg.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;ledger&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Counter&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;Counter&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -97,7 +108,7 @@
               toReformat="true"
               toShortenFQNames="true" key="live.template.ledger.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;ledger&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Bytes&lt;32&gt;&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;Bytes&lt;32&gt;&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -204,7 +215,7 @@
               toReformat="true"
               toShortenFQNames="true" key="live.template.type.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;type&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;Field&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -215,7 +226,7 @@
               toReformat="true"
               toShortenFQNames="true" key="live.template.expt.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;type&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;Field&quot;)" defaultValue="" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>
         </context>
@@ -226,7 +237,7 @@
               toReformat="true"
               toShortenFQNames="true" key="live.template.const.description" resource-bundle="messages.MyMessageBundle">
         <variable name="NAME" expression="compactDeclarationName(&quot;const&quot;)" defaultValue="" alwaysStopAt="true"/>
-        <variable name="TYPE" expression="" defaultValue="&quot;Field&quot;" alwaysStopAt="true"/>
+        <variable name="TYPE" expression="compactType(&quot;Field&quot;)" defaultValue="" alwaysStopAt="true"/>
         <variable name="VALUE" expression="" defaultValue="&quot;0&quot;" alwaysStopAt="true"/>
         <context>
             <option name="COMPACT_CODE" value="true"/>

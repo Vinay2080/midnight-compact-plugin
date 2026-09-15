@@ -1,5 +1,6 @@
 package dev.verloren.midnight.completion;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,9 +31,8 @@ public final class CompactCompletionContext {
     if (isAfterTypeIntro(previous)) {
       return Kind.TYPE;
     }
-    if (PsiTreeUtil.getParentOfType(position, CompactStructDefinition.class, false) != null
-        || PsiTreeUtil.getParentOfType(position, CompactEnumDefinition.class, false) != null) {
-      return Kind.NONE;
+    if (isTypePosition(position, previous)) {
+      return Kind.TYPE;
     }
     if (isExportPreceding(position)) {
       if (previous != null && previous.getNode() != null) {
@@ -48,6 +48,10 @@ public final class CompactCompletionContext {
         }
       }
       return Kind.AFTER_EXPORT;
+    }
+    if (PsiTreeUtil.getParentOfType(position, CompactStructDefinition.class, false) != null
+        || PsiTreeUtil.getParentOfType(position, CompactEnumDefinition.class, false) != null) {
+      return Kind.NONE;
     }
     if (isDeclarationOrStatementStart(previous)) {
       if (PsiTreeUtil.getParentOfType(position, CompactBlock.class, false) != null) {
@@ -77,14 +81,21 @@ public final class CompactCompletionContext {
   }
 
   public static boolean isExportPreceding(@NotNull PsiElement position) {
-    // 1. Walk backward through visible AST leaves until statement/block boundary
+    // 1. Walk backward through visible AST leaves until statement/block boundary or declaration keyword
     for (PsiElement p = PsiTreeUtil.prevVisibleLeaf(position); p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
       if (p.getNode() == null) break;
       IElementType tt = p.getNode().getElementType();
       if (tt == CompactTokenTypes.EXPORT) {
         return true;
       }
-      if (tt == CompactTokenTypes.SEMICOLON || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE) {
+      if (tt == CompactTokenTypes.SEMICOLON || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE
+          || tt == CompactTokenTypes.COLON || tt == CompactTokenTypes.ASSIGN
+          || tt == CompactTokenTypes.LPAREN || tt == CompactTokenTypes.RPAREN
+          || tt == CompactTokenTypes.COMMA
+          || tt == CompactTokenTypes.LEDGER || tt == CompactTokenTypes.CIRCUIT
+          || tt == CompactTokenTypes.WITNESS || tt == CompactTokenTypes.STRUCT
+          || tt == CompactTokenTypes.ENUM || tt == CompactTokenTypes.TYPE
+          || tt == CompactTokenTypes.MODULE || tt == CompactTokenTypes.CONTRACT) {
         break;
       }
     }
@@ -114,7 +125,7 @@ public final class CompactCompletionContext {
       }
     }
     String stmtBefore = chars.subSequence(stmtStart, offset).toString().trim();
-    return stmtBefore.matches(".*\\bexport\\b.*");
+    return stmtBefore.matches("^export(\\s+(sealed|pure|new))?(\\s+\\w*)?$");
   }
 
   private static boolean isAfterTypeIntro(PsiElement previous) {
@@ -126,6 +137,63 @@ public final class CompactCompletionContext {
             || type == CompactTokenTypes.AS
             || type == CompactTokenTypes.LT
             || type == CompactTokenTypes.HASH;
+  }
+
+  private static boolean isTypePosition(@NotNull PsiElement position, PsiElement previous) {
+    // 1. Inside ledger declaration type slot: ledger foo: <caret>
+    CompactLedgerDeclaration ledger = PsiTreeUtil.getParentOfType(position, CompactLedgerDeclaration.class, false);
+    if (ledger != null) {
+      ASTNode colonNode = ledger.getNode().findChildByType(CompactTokenTypes.COLON);
+      if (colonNode != null && position.getTextRange().getStartOffset() >= colonNode.getTextRange().getEndOffset()) {
+        return true;
+      }
+    }
+
+    // 2. Inside struct field type slot: struct Foo { x: <caret> }
+    CompactStructFieldImpl structField = PsiTreeUtil.getParentOfType(position, CompactStructFieldImpl.class, false);
+    if (structField != null) {
+      ASTNode colonNode = structField.getNode().findChildByType(CompactTokenTypes.COLON);
+      if (colonNode != null && position.getTextRange().getStartOffset() >= colonNode.getTextRange().getEndOffset()) {
+        return true;
+      }
+    }
+
+    // 3. Inside type alias definition: type Foo = <caret>
+    CompactTypeDefinition typeDef = PsiTreeUtil.getParentOfType(position, CompactTypeDefinition.class, false);
+    if (typeDef != null) {
+      ASTNode eqNode = typeDef.getNode().findChildByType(CompactTokenTypes.ASSIGN);
+      if (eqNode != null && position.getTextRange().getStartOffset() >= eqNode.getTextRange().getEndOffset()) {
+        return true;
+      }
+    }
+
+    // 4. Inside const declaration type slot: const x: <caret> = 0;
+    CompactConstBindingImpl constBinding = PsiTreeUtil.getParentOfType(position, CompactConstBindingImpl.class, false);
+    if (constBinding != null) {
+      ASTNode colonNode = constBinding.getNode().findChildByType(CompactTokenTypes.COLON);
+      ASTNode eqNode = constBinding.getNode().findChildByType(CompactTokenTypes.ASSIGN);
+      if (colonNode != null && position.getTextRange().getStartOffset() >= colonNode.getTextRange().getEndOffset()) {
+        if (eqNode == null || position.getTextRange().getStartOffset() <= eqNode.getTextRange().getStartOffset()) {
+          return true;
+        }
+      }
+    }
+
+    // 5. After comma inside type arguments, e.g. Vector<#32, <caret>>
+    if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.COMMA) {
+      for (PsiElement p = previous; p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
+        if (p.getNode() == null) break;
+        IElementType tt = p.getNode().getElementType();
+        if (tt == CompactTokenTypes.LT) {
+          return true;
+        }
+        if (tt == CompactTokenTypes.SEMICOLON || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE || tt == CompactTokenTypes.GT) {
+          break;
+        }
+      }
+    }
+
+    return false;
   }
 
   private static boolean isDeclarationOrStatementStart(PsiElement previous) {

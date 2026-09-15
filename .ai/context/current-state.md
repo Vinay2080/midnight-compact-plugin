@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & Generalized Name Generation)
+Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Type Completion & Live Template Macros)
 
 ---
 
@@ -12,13 +12,17 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & G
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
 - **Code Completion & Comprehensive Export System (v1.2.5+)**:
   - Contextual classification in `CompactCompletionContext`:
-    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `const`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`).
+    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`).
     - `Kind.AFTER_SEALED`: Suggests `ledger`.
     - `Kind.AFTER_PURE`: Suggests `circuit`.
     - `Kind.AFTER_NEW`: Suggests `type`.
   - Top-level declaration completion offering both bare and exported variants with `CompactDeclarationInsertHandler` interactive live template scaffolding.
   - `CompactLedgerInsertHandler`: Interactive live template tab-stops (`$NAME$`, `$TYPE$`), automatic `export ` prefix injection, and non-destructive lookahead preservation.
-  - Parametric live templates in `Compact.xml` with bundle descriptions: `led`, `ledg`, `ledger`, `cir`, `wit`, `expw`, `str`, `expstr`, `en`, `expen`, `type`, `expt`, `const`, `expconst`, `exp`, `cct`.
+  - Parametric live templates in `Compact.xml` with bundle descriptions: `led`, `ledg`, `ledger`, `expled`, `cir`, `wit`, `expw`, `str`, `expstr`, `en`, `expen`, `type`, `expt`, `const`, `cct`.
+- **Live Template Type Completion & Macro System (Phase 30 / v1.2.6)**:
+  - `CompactTypeExpression`: Live template `Expression` providing interactive dropdown suggestions for all built-in types (`State`, `Counter`, `Void`, `Bytes`, `Field`, `Uint`, etc.), in-scope project types, and imported types when navigating through declaration templates.
+  - `CompactTypeMacro`: Registered under `<liveTemplateMacro>` as `compactType(...)` for live template XML definitions.
+  - Hardened `CompactCompletionContext`: Accurate classification of declaration type positions (after colons in ledger declarations, struct fields, const bindings, and after `=` in type aliases), preventing `isExportPreceding` keyword hijacking.
 - **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29 / v1.2.6)**:
   - `CompactDeclarationNameGenerator`: Universal lowest-positive-integer gap filling (`circuit1`, `circuit2`, `witness1`, etc.) with explicit user-provided name preservation.
   - `CompactDeclarationType`: Extensible registry for standard Compact declarations (`circuit`, `witness`, `struct`, `enum`, `module`, `contract`, `type`, `ledger`, `const`) and custom runtime type extensions (`registerCustomType`).
@@ -49,8 +53,7 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & G
   - Right-hand stripe tool window ("Compact Compiler") with SVG branding icon.
   - Interactive compiler version switcher dropdown.
   - Real-time pragma version compatibility indicator with color-coded status badges and dynamic file tracking.
-  - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.
-  - "Download More..." compiler version management dialog.
+  - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.\n  - \"Download More...\" compiler version management dialog.
   - "Compile Current Contract" action triggering background compilation and problem reporting.
 - **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
@@ -68,13 +71,12 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & G
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
   - Fully maintained index in `.ai/decisions/README.md` covering all 27 major architectural subsystems (**ADR-001 through ADR-027**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
-- **Total Unit Test Count**: **509 passing tests** across 56 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
+- **Total Unit Test Count**: **561 passing tests** across 56 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
 
-### Roadmap & Evolution (Phases 29–35)
-- **Phase 29: Generalized Declaration Name Generation & Live Template Macros (Complete)**
-- **Phase 30: Stub Indexing & Large Workspace Caching**
-- **Phase 31: Advanced Refactorings (Rename, Extract Variable, Change Signature)**
-- **Phase 32: Remix Blockchain Explorer & Local Node Sandbox**
-- **Phase 33: Ledger Storage & ZK Constraint Profiler**
-- **Phase 34: In-IDE Language Server / PSI-MCP Bridge**
-- **Phase 35: Polyglot Compact/TypeScript Integration & Test Framework**
+### Roadmap & Evolution (Phases 31–36)
+- **Phase 31: Stub Indexing & Large Workspace Caching**
+- **Phase 32: Advanced Refactorings (Rename, Extract Variable, Change Signature)**
+- **Phase 33: Remix Blockchain Explorer & Local Node Sandbox**
+- **Phase 34: Ledger Storage & ZK Constraint Profiler**
+- **Phase 35: In-IDE Language Server / PSI-MCP Bridge**
+- **Phase 36: Polyglot Compact/TypeScript Integration & Test Framework**

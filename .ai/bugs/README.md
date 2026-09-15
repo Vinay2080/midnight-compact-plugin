@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-16 | completion / live-templates | Data type completion suppression in live template navigation and declaration type positions | [2026-09-16-template-type-completion-suppression.md](2026-09-16-template-type-completion-suppression.md) | High | Resolved |
 | 2026-09-16 | annotator / intention / version | SideEffectGuard INVOKE_LATER exception during quick-fix & intention previews | [2026-09-16-quickfix-preview-side-effect-guard.md](2026-09-16-quickfix-preview-side-effect-guard.md) | High | Resolved |
 
 *(Bugs are listed in reverse chronological order with the most recent at the top.)*

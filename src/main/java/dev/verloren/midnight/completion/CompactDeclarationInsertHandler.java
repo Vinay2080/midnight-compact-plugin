@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import dev.verloren.midnight.ide.templates.CompactDeclarationNameGenerator;
 import dev.verloren.midnight.ide.templates.CompactDeclarationType;
+import dev.verloren.midnight.ide.templates.CompactTypeExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * with existing declarations in the file or imported modules.</p>
  */
 public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType declarationType) implements InsertHandler<LookupElement> {
-
-
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -68,8 +67,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
   }
 
   /**
-   * Programmatically launches the live declaration template at {@code tailOffset} in the given editor.
-   *
+   * Programmatically launches the live declaration template at {@code tailOffset} in the given editor.\n   *
    * @param project    current project
    * @param editor     active editor
    * @param tailOffset document offset directly following the declaration keyword
@@ -100,7 +98,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
         template.addTextSegment("(");
         template.addVariable("PARAMS", new ConstantNode(""), true);
         template.addTextSegment("): ");
-        template.addVariable("RET", new ConstantNode("Void"), true);
+        template.addVariable("RET", new CompactTypeExpression("Void"), true);
         template.addTextSegment(" {\n  ");
         template.addEndVariable();
         template.addTextSegment("\n}");
@@ -111,7 +109,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
         template.addTextSegment("(");
         template.addVariable("PARAMS", new ConstantNode(""), true);
         template.addTextSegment("): ");
-        template.addVariable("RET", new ConstantNode("Field"), true);
+        template.addVariable("RET", new CompactTypeExpression("Field"), true);
         template.addTextSegment(";");
       }
       case STRUCT, ENUM, MODULE, CONTRACT -> {
@@ -125,14 +123,14 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
         template.addTextSegment(" ");
         template.addVariable("NAME", new ConstantNode(suggestedName), true);
         template.addTextSegment(" = ");
-        template.addVariable("TYPE", new ConstantNode("Field"), true);
+        template.addVariable("TYPE", new CompactTypeExpression("Field"), true);
         template.addTextSegment(";");
       }
       case CONST -> {
         template.addTextSegment(" ");
         template.addVariable("NAME", new ConstantNode(suggestedName), true);
         template.addTextSegment(": ");
-        template.addVariable("TYPE", new ConstantNode("Field"), true);
+        template.addVariable("TYPE", new CompactTypeExpression("Field"), true);
         template.addTextSegment(" = ");
         template.addVariable("VALUE", new ConstantNode("0"), true);
         template.addTextSegment(";");
@@ -141,7 +139,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
         template.addTextSegment(" ");
         template.addVariable("NAME", new ConstantNode(suggestedName), true);
         template.addTextSegment(": ");
-        template.addVariable("TYPE", new ConstantNode("State"), true);
+        template.addVariable("TYPE", new CompactTypeExpression("State"), true);
         template.addTextSegment(";");
       }
     }

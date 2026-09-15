@@ -1,14 +1,25 @@
 package dev.verloren.midnight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.ExpressionContext;
+import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.TextResult;
+import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
+import dev.verloren.midnight.ide.templates.CompactTypeExpression;
+import dev.verloren.midnight.ide.templates.CompactTypeMacro;
 import dev.verloren.midnight.parser.CompactParserDefinition;
 import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -789,5 +800,158 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertTrue(CompactCompletionContext.hasPrecedingExportOnLine(text5, 0, text5.length()));
     String text6 = "{ export ";
     assertTrue(CompactCompletionContext.hasPrecedingExportOnLine(text6, 0, text6.length()));
+  }
+
+  public void testExportLedgerTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export ledger ledger1: <caret>;
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'State'", lookupStrings.contains("State"));
+    assertTrue("Should suggest 'Bytes'", lookupStrings.contains("Bytes"));
+    assertTrue("Should suggest 'Field'", lookupStrings.contains("Field"));
+    assertFalse("Should NOT suggest 'circuit'", lookupStrings.contains("circuit"));
+    assertFalse("Should NOT suggest 'ledger'", lookupStrings.contains("ledger"));
+  }
+
+  public void testExportLedgerPrefixTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export ledger ledger1: St<caret>;
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'State'", lookupStrings.contains("State"));
+    assertFalse("Should NOT suggest 'circuit'", lookupStrings.contains("circuit"));
+  }
+
+  public void testBareLedgerTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        ledger myLedger: <caret>;
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'State'", lookupStrings.contains("State"));
+    assertTrue("Should suggest 'Counter'", lookupStrings.contains("Counter"));
+  }
+
+  public void testExportCircuitReturnTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export circuit myCircuit(): <caret> {
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'Void'", lookupStrings.contains("Void"));
+    assertTrue("Should suggest 'Field'", lookupStrings.contains("Field"));
+    assertTrue("Should suggest 'Boolean'", lookupStrings.contains("Boolean"));
+  }
+
+  public void testStructFieldTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct User {
+            id: <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'Field'", lookupStrings.contains("Field"));
+    assertTrue("Should suggest 'Bytes'", lookupStrings.contains("Bytes"));
+  }
+
+  public void testTypeAliasTypeCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        type MyType = <caret>;
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'Field'", lookupStrings.contains("Field"));
+    assertTrue("Should suggest 'Bytes'", lookupStrings.contains("Bytes"));
+  }
+
+  public void testTypeExpressionLookupItems() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct CustomRecord {}
+        export ledger ledger1: <caret>State;
+        """
+    );
+    CompactTypeExpression expr = new CompactTypeExpression("State");
+    ExpressionContext context = new ExpressionContext() {
+      @Override
+      public Project getProject() {
+        return myFixture.getProject();
+      }
+
+      @Override
+      public Editor getEditor() {
+        return myFixture.getEditor();
+      }
+
+      @Override
+      public int getStartOffset() {
+        return myFixture.getCaretOffset();
+      }
+
+      @Override
+      public int getTemplateStartOffset() {
+        return 0;
+      }
+
+      @Override
+      public int getTemplateEndOffset() {
+        return myFixture.getFile().getTextLength();
+      }
+
+      @Override
+      public <T> T getProperty(Key<T> key) {
+        return null;
+      }
+
+      @Override
+      public PsiElement getPsiElementAtStartOffset() {
+        return myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+      }
+
+      @Override
+      public TextResult getVariableValue(String variableName) {
+        return null;
+      }
+    };
+    LookupElement[] items = expr.calculateLookupItems(context);
+    assertNotNull("Lookup items should not be null", items);
+    List<String> itemNames = Arrays.stream(items).map(LookupElement::getLookupString).toList();
+    assertTrue("Should include 'State'", itemNames.contains("State"));
+    assertTrue("Should include 'Bytes'", itemNames.contains("Bytes"));
+    assertTrue("Should include 'CustomRecord'", itemNames.contains("CustomRecord"));
+  }
+
+  public void testTypeMacroDelegatesToExpression() {
+    CompactTypeMacro macro = new CompactTypeMacro();
+    assertEquals("compactType", macro.getName());
+    assertEquals("compactType(defaultType)", macro.getPresentableName());
+
+    Expression[] params = new Expression[]{new ConstantNode("State")};
+    Result result = macro.calculateResult(params, null);
+    assertNotNull(result);
+    assertEquals("State", result.toString());
   }
 }

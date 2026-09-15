@@ -35,20 +35,21 @@ import java.util.Set;
  */
 public class CompactCompletionContributor extends CompletionContributor {
 
-  private static final String[] DECLARATION_KEYWORDS = {
+  public static final String[] DECLARATION_KEYWORDS = {
       "pragma", "include", "import", "export", "module", "contract", "struct", "enum", "type", "witness", "constructor", "circuit", "ledger"
   };
 
-  private static final String[] STATEMENT_KEYWORDS = {
+  public static final String[] STATEMENT_KEYWORDS = {
       "const", "if", "for", "return", "assert", "emit"
   };
 
-  private static final String[] VALUE_KEYWORDS = {
+  public static final String[] VALUE_KEYWORDS = {
       "true", "false", "default", "disclose", "map", "fold", "pad", "slice", "assert", "emit"
   };
 
-  private static final String[] BUILTIN_TYPES = {
-      "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar"
+  public static final String[] BUILTIN_TYPES = {
+      "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "State", "Counter", "Void",
+      "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point"
   };
 
   @SuppressWarnings("this-escape")
@@ -62,27 +63,6 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static void addCompactCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
-    if (CompactCompletionContext.isExportPreceding(position)) {
-      PsiElement previous = PsiTreeUtil.prevVisibleLeaf(position);
-      if (previous != null && previous.getNode() != null) {
-        com.intellij.psi.tree.IElementType prevType = previous.getNode().getElementType();
-        if (prevType == CompactTokenTypes.SEALED) {
-          addAfterSealedCompletions(result);
-          return;
-        }
-        if (prevType == CompactTokenTypes.PURE) {
-          addAfterPureCompletions(result);
-          return;
-        }
-        if (prevType == CompactTokenTypes.NEW) {
-          addAfterNewCompletions(result);
-          return;
-        }
-      }
-      addAfterExportCompletions(result);
-      return;
-    }
-
     switch (CompactCompletionContext.classify(position)) {
       case KEYWORD -> addDeclarationCompletions(result);
       case AFTER_EXPORT -> addAfterExportCompletions(result);
