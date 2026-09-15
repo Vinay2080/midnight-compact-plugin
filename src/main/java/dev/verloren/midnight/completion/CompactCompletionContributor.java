@@ -43,11 +43,11 @@ public class CompactCompletionContributor extends CompletionContributor {
   };
 
   public static final String[] STATEMENT_KEYWORDS = {
-      "const", "if", "for", "return", "assert", "emit"
+      "const", "if", "for", "return", "emit"
   };
 
   public static final String[] VALUE_KEYWORDS = {
-      "true", "false", "default", "disclose", "map", "fold", "pad", "slice", "assert", "emit"
+      "true", "false", "default", "disclose", "map", "fold", "pad", "slice", "emit"
   };
 
   public static final String[] BUILTIN_TYPES = {
@@ -564,6 +564,7 @@ public class CompactCompletionContributor extends CompletionContributor {
     addNamed(result, CompactResolveUtil.collectValueDeclarations(position));
     addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
     addAll(result, VALUE_KEYWORDS);
+    result.addElement(createAssertLookupElement());
   }
 
   public static @Nullable CompactType getExpectedType(@NotNull PsiElement position) {
@@ -705,5 +706,17 @@ public class CompactCompletionContributor extends CompletionContributor {
       default -> builder;
     };
     result.addElement(builder);
+  }
+
+  public static @NotNull LookupElement createAssertLookupElement() {
+    return PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("assert")
+            .withPresentableText("assert")
+            .withTailText("(condition, \"message\")", true)
+            .withTypeText("statement")
+            .bold()
+            .withInsertHandler(CompactAssertInsertHandler.INSTANCE),
+        10.0
+    );
   }
 }

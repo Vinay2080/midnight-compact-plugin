@@ -1173,4 +1173,103 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     myFixture.type('\n');
     myFixture.checkResult("const x: Uint<64><caret>;");
   }
+
+  public void testAssertCompletionInsertsParenthesesAndPlacesCaretInside() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    LookupElement[] elements = myFixture.getLookupElements();
+    assertNotNull("Lookup elements should not be null", elements);
+    LookupElement assertEl = null;
+    for (LookupElement el : elements) {
+      if ("assert".equals(el.getLookupString())) {
+        assertEl = el;
+        break;
+      }
+    }
+    assertNotNull("Should find 'assert' lookup element", assertEl);
+    myFixture.getLookup().setCurrentItem(assertEl);
+    myFixture.type('\n');
+    myFixture.checkResult(
+        """
+        circuit test(): Void {
+          assert(<caret>)
+        }
+        """
+    );
+  }
+
+  public void testAssertCompletionWithExistingParenthesesDoesNotDuplicate() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          <caret>(true, "msg");
+        }
+        """
+    );
+    myFixture.completeBasic();
+    LookupElement[] elements = myFixture.getLookupElements();
+    assertNotNull("Lookup elements should not be null", elements);
+    LookupElement assertEl = null;
+    for (LookupElement el : elements) {
+      if ("assert".equals(el.getLookupString())) {
+        assertEl = el;
+        break;
+      }
+    }
+    assertNotNull("Should find 'assert' lookup element", assertEl);
+    myFixture.getLookup().setCurrentItem(assertEl);
+    myFixture.type('\n');
+    myFixture.checkResult(
+        """
+        circuit test(): Void {
+          assert(<caret>true, "msg");
+        }
+        """
+    );
+  }
+
+
+  public void testAssertCompletionPrefixAutoInsert() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          ass<caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    if (elements == null) {
+      myFixture.checkResult(
+          """
+          circuit test(): Void {
+            assert(<caret>)
+          }
+          """
+      );
+    } else {
+      LookupElement assertEl = null;
+      for (LookupElement el : elements) {
+        if ("assert".equals(el.getLookupString())) {
+          assertEl = el;
+          break;
+        }
+      }
+      assertNotNull(assertEl);
+      myFixture.getLookup().setCurrentItem(assertEl);
+      myFixture.type('\n');
+      myFixture.checkResult(
+          """
+          circuit test(): Void {
+            assert(<caret>)
+          }
+          """
+      );
+    }
+  }
 }

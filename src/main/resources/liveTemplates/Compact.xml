@@ -169,7 +169,7 @@
     </template>
 
     <template name="ass"
-              value="assert $COND$, &quot;$MSG$&quot;;"
+              value="assert($COND$, &quot;$MSG$&quot;);"
               toReformat="true"
               toShortenFQNames="true" key="live.template.ass.description" resource-bundle="messages.MyMessageBundle">
         <variable name="COND" expression="" defaultValue="&quot;true&quot;" alwaysStopAt="true"/>

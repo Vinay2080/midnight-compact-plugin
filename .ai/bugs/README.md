@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-16 | completion / live-templates | Assert statement completion and live template missing parentheses, caret placement inside, and tab-out scope | [2026-09-16-completion-assert-parentheses.md](2026-09-16-completion-assert-parentheses.md) | Medium | Resolved |
 | 2026-09-16 | completion / parameterized-types | Sized data type completion missing angle brackets, caret positioning, and size options | [2026-09-16-sized-type-completion-angle-brackets.md](2026-09-16-sized-type-completion-angle-brackets.md) | Medium | Resolved |
 | 2026-09-16 | editor / brace-matching | Missing angle bracket (<>) auto-closing, cursor placement, and overtyping | [2026-09-16-editor-angle-bracket-pairing.md](2026-09-16-editor-angle-bracket-pairing.md) | Medium | Resolved |
 | 2026-09-16 | completion / live-templates | Data type completion suppression in live template navigation and declaration type positions | [2026-09-16-template-type-completion-suppression.md](2026-09-16-template-type-completion-suppression.md) | High | Resolved |

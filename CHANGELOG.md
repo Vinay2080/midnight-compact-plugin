@@ -22,6 +22,7 @@
 - Aligned Compact grammar completion rules with contemporary language specifications.
 
 ### Fixed
+- Fixed 'assert' completion and 'ass' live template to insert enclosing parentheses ('assert()'), position the caret inside for condition and message input, avoid duplicate parentheses, and register a tab-out scope.
 - Fixed sized type completion inserting bare type names without required size parameter brackets.
 - Fixed issue where data type completion was incorrectly suppressed in exported declaration headers.
 - Fixed code completion, keyword suggestions, and template expansion popping up inside comments and documentation blocks.

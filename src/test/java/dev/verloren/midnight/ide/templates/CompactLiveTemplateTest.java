@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 
+@SuppressWarnings("UnstableApiUsage")
 public class CompactLiveTemplateTest extends BasePlatformTestCase {
 
   public void testLiveTemplateResourceExists() {
@@ -70,6 +71,20 @@ public class CompactLiveTemplateTest extends BasePlatformTestCase {
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("ledger", "Compact");
     assertNotNull("Live template 'ledger' should exist", template);
     assertEquals("export ledger $NAME$: $TYPE$;", template.getString());
+  }
+
+  public void testAssertLiveTemplateFormat() {
+    TemplateImpl template = TemplateSettings.getInstance().getTemplate("ass", "Compact");
+    assertNotNull("Live template 'ass' should exist", template);
+    assertEquals("assert($COND$, \"$MSG$\");", template.getString());
+  }
+
+    public void testAssertLiveTemplateExpansion() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "circuit test(): Void {\n  <caret>\n}");
+    myFixture.type("ass\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertTrue("Should expand to 'assert(true, \"Assertion failed\");' but was: " + text,
+        text.contains("assert(true, \"Assertion failed\");"));
   }
 
   public void testCctLiveTemplateContainsExportLedger() {
