@@ -58,7 +58,7 @@ public class CompactCompletionContributor extends CompletionContributor {
         CompletionType.BASIC,
         PlatformPatterns.psiElement()
             .withLanguage(CompactLanguage.INSTANCE)
-            .andNot(PlatformPatterns.psiComment())\
+            .andNot(PlatformPatterns.psiComment())
             .andNot(PlatformPatterns.psiElement().inside(PlatformPatterns.psiComment())),
         new CompletionProvider<>() {
           @Override
@@ -225,173 +225,330 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static void addAfterSealedCompletions(@NotNull CompletionResultSet result) {
-    registerAfterExportTemplate(result, CompactDeclarationType.LEDGER, 100.0, CompactLedgerInsertHandler.INSTANCE);
+    LookupElementBuilder builder = LookupElementBuilder.create("ledger")
+        .withPresentableText("ledger")
+        .withTailText(" <name>: <type>;", true)
+        .withTypeText("ledger")
+        .bold()
+        .withInsertHandler(CompactLedgerInsertHandler.INSTANCE);
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.LEDGER, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAfterPureCompletions(@NotNull CompletionResultSet result) {
-    registerAfterExportTemplate(result, CompactDeclarationType.CIRCUIT, 100.0, new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT));
+    LookupElementBuilder builder = LookupElementBuilder.create("circuit")
+        .withPresentableText("circuit")
+        .withTailText(" <name>(...): <type> { ... }", true)
+        .withTypeText("circuit")
+        .bold()
+        .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT));
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.CIRCUIT, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAfterNewCompletions(@NotNull CompletionResultSet result) {
-    registerAfterExportTemplate(result, CompactDeclarationType.TYPE, 100.0, new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE));
+    LookupElementBuilder builder = LookupElementBuilder.create("type")
+        .withPresentableText("type")
+        .withTailText(" <name> = <type>;", true)
+        .withTypeText("type")
+        .bold()
+        .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE));
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.TYPE, false)) {
+      builder = builder.withLookupString(lookup);
+    }
+    result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
-  private static void addValueCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
-    addAll(result, VALUE_KEYWORDS);
-    addNamed(result, CompactResolveUtil.collectValueDeclarations(position));
-    addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
-    addSmartReturnCompletions(position, result);
+  private static void addAll(@NotNull CompletionResultSet result, String @NotNull [] values) {
+    for (String value : values) {
+      result.addElement(LookupElementBuilder.create(value));
+    }
   }
 
-  private static void addSmartReturnCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
-    CompactCircuitDefinition circuit = PsiTreeUtil.getParentOfType(position, CompactCircuitDefinition.class, false);
-    if (circuit == null) {
-      return;
-    }
-    PsiElement prevLeaf = CompactCompletionContext.prevNonCommentLeaf(position);
-    if (prevLeaf == null || prevLeaf.getNode() == null || prevLeaf.getNode().getElementType() != CompactTokenTypes.RETURN) {
-      return;
-    }
-    CompactType returnType = circuit.getReturnType();
-    if (returnType == null) {
-      return;
-    }
-
-    for (CompactNamedElement decl : CompactResolveUtil.collectValueDeclarations(position)) {
-      String name = decl.getName();
-      if (name == null) {
-        continue;
-      }
-      CompactType declType = CompactType.from(decl);
-      if (declType != null && declType.isAssignableFrom(returnType)) {
-        result.addElement(PrioritizedLookupElement.withPriority(
-            LookupElementBuilder.create(decl)
-                .withIcon(decl.getIcon(0))
-                .withTypeText(declType.getPresentableText())
-                .bold(),
-            120.0
-        ));
+  private static void addNamed(@NotNull CompletionResultSet result, @NotNull Collection<? extends CompactNamedElement> elements) {
+    Set<String> seen = new HashSet<>();
+    for (CompactNamedElement element : elements) {
+      String name = element.getName();
+      if (name != null && seen.add(name)) {
+        addNamed(result, element);
       }
     }
+  }
 
-    if (returnType instanceof CompactPrimitiveType primitive && primitive.getPrimitiveKind() == CompactPrimitiveType.Kind.BOOLEAN) {
-      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create("true").bold(), 110.0));
-      result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create("false").bold(), 110.0));
+  private static void addPrefixed(@NotNull CompletionResultSet result, @NotNull Collection<String> values) {
+    for (String value : values) {
+      result.addElement(LookupElementBuilder.create(value));
+    }
+  }
+
+  private static void addResolvedNamed(@NotNull CompletionResultSet result, ResolveResult @NotNull [] resolveResults) {
+    for (ResolveResult resolveResult : resolveResults) {
+      if (resolveResult.getElement() instanceof CompactNamedElement named) {
+        addNamed(result, named);
+      }
     }
   }
 
   private static void addMemberCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
-    PsiElement dot = CompactCompletionContext.prevNonCommentLeaf(position);
-    if (dot == null) {
-      return;
-    }
-    PsiElement qualifier = CompactCompletionContext.prevNonCommentLeaf(dot);
-    if (qualifier == null) {
-      return;
-    }
+    CompactMemberExprImpl memberExpr = PsiTreeUtil.getParentOfType(position, CompactMemberExprImpl.class, false);
 
-    if (qualifier.getNode() != null && qualifier.getNode().getElementType() == CompactTokenTypes.IDENTIFIER) {
-      String name = qualifier.getText();
-      for (CompactNamedElement typeDecl : CompactResolveUtil.collectTypeDeclarations(position)) {
-        if (name.equals(typeDecl.getName()) && typeDecl instanceof CompactEnumDefinition enumDef) {
-          for (CompactEnumMember member : enumDef.getMembers()) {
-            String memberName = member.getName();
-            if (memberName != null) {
-              result.addElement(LookupElementBuilder.create(member)
-                  .withIcon(member.getIcon(0))
-                  .withTypeText(name));
-            }
-          }
-          return;
+    if (memberExpr != null) {
+      // 1. Check existing references (Enum / Struct field)
+      switch (Objects.requireNonNull(memberExpr.getReference())) {
+        case CompactEnumMemberReference enumRef -> addResolvedNamed(result, enumRef.multiResolve(false));
+        case CompactStructFieldReference structRef -> addResolvedNamed(result, structRef.multiResolve(false));
+        default -> {}
+      }
+
+      CompactExpression baseExpr = memberExpr.getBaseExpression();
+      if (baseExpr != null) {
+        // Resolve type of base expression (e.g., cfg -> Config)
+        CompactType baseType = baseExpr.getType();
+        String typeName = baseType.name();
+        if (!"Unknown".equalsIgnoreCase(typeName)) {
+          addMembersFromTypeName(typeName, memberExpr, result);
+        }
+
+        // If base is an identifier or reference
+        String baseText = baseExpr.getText();
+        if (baseText != null && !baseText.isEmpty()) {
+          addMembersFromBaseText(baseText, memberExpr, result);
         }
       }
-    }
-
-    CompactType qualifierType = CompactType.from(qualifier);
-    if (qualifierType != null) {
-      addTypeMemberCompletions(qualifierType, result);
       return;
     }
 
-    if (qualifier.getNode() != null && qualifier.getNode().getElementType() == CompactTokenTypes.IDENTIFIER) {
-      String name = qualifier.getText();
-      for (CompactNamedElement valDecl : CompactResolveUtil.collectValueDeclarations(position)) {
-        if (name.equals(valDecl.getName())) {
-          CompactType valType = CompactType.from(valDecl);
-          if (valType != null) {
-            addTypeMemberCompletions(valType, result);
-            return;
+    // 2. Fallback when the caret is immediately after the DOT token and not enclosed in CompactMemberExprImpl
+    PsiElement previous = PsiTreeUtil.prevVisibleLeaf(position);
+    if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.DOT) {
+      PsiElement leafBeforeDot = PsiTreeUtil.prevVisibleLeaf(previous);
+      if (leafBeforeDot != null) {
+        String baseText = leafBeforeDot.getText();
+        if (baseText != null && !baseText.isEmpty()) {
+          addMembersFromBaseText(baseText, leafBeforeDot, result);
+        }
+      }
+    }
+  }
+
+  private static void addMembersFromBaseText(
+      @NotNull String baseText,
+      @NotNull PsiElement context,
+      @NotNull CompletionResultSet result
+  ) {
+    for (CompactNamedElement valueTarget : CompactResolveUtil.resolveValue(baseText, context)) {
+      if (valueTarget instanceof CompactImportElementImpl importElem) {
+        valueTarget = CompactResolveUtil.resolveImportElementSource(importElem);
+      }
+      if (valueTarget instanceof CompactTypeElement typeElem) {
+        CompactType valType = typeElem.getType();
+        String valTypeName = valType.name();
+        if (!"Unknown".equalsIgnoreCase(valTypeName)) {
+          addMembersFromTypeName(valTypeName, context, result);
+        }
+      }
+    }
+    addMembersFromTypeName(baseText, context, result);
+  }
+
+  private static void addMembersFromTypeName(
+      @NotNull String typeName,
+      @NotNull PsiElement context,
+      @NotNull CompletionResultSet result
+  ) {
+    for (CompactNamedElement target : CompactResolveUtil.resolveType(typeName, context)) {
+      CompactNamedElement unwrapped = (target instanceof CompactImportElementImpl importElem)
+          ? CompactResolveUtil.resolveImportElementSource(importElem)
+          : target;
+      switch (Objects.requireNonNull(unwrapped)) {
+        case CompactStructDefinition structDef -> addNamed(result, structDef.getFields());
+        case CompactEnumDefinition enumDef -> addNamed(result, enumDef.getMembers());
+        default -> {}
+      }
+    }
+  }
+
+  private static void addValueCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
+    CompactType expectedType = getExpectedType(position);
+
+    if (expectedType != null && !CompactPrimitiveType.UNKNOWN.equals(expectedType)) {
+      Collection<CompactNamedElement> allDecls = CompactResolveUtil.collectValueDeclarations(position);
+      Set<String> seen = new HashSet<>();
+
+      for (CompactNamedElement decl : allDecls) {
+        CompactType declType = getCandidateType(decl);
+        if (isTypeCompatible(declType, expectedType)) {
+          String name = decl.getName();
+          if (name != null && seen.add(name)) {
+            addNamed(result, decl);
           }
         }
       }
+
+      // Add compatible expression keywords with high priority
+      if (isTypeCompatible(CompactPrimitiveType.BOOLEAN, expectedType)) {
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("true").bold(), 100.0));
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("false").bold(), 100.0));
+      }
+      if (!"Void".equalsIgnoreCase(expectedType.name())) {
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("default"), 50.0));
+        result.addElement(PrioritizedLookupElement.withPriority(
+            LookupElementBuilder.create("disclose"), 50.0));
+      }
+      return;
     }
 
-    for (PsiElement parent = position.getParent(); parent != null; parent = parent.getParent()) {
-      if (parent instanceof CompactMemberExpr) {
-        for (CompactNamedElement elem : resolveMembersForExpression((CompactMemberExpr) parent)) {
-          String elemName = elem.getName();
-          if (elemName != null) {
-            result.addElement(LookupElementBuilder.create(elem).withIcon(elem.getIcon(0)));
-          }
+    // Default / unrestricted value completion
+    addNamed(result, CompactResolveUtil.collectValueDeclarations(position));
+    addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
+    addAll(result, VALUE_KEYWORDS);
+  }
+
+  public static @Nullable CompactType getExpectedType(@NotNull PsiElement position) {
+    // 1. Check if in the return expression context
+    if (isReturnContext(position)) {
+      PsiElement enclosing = PsiTreeUtil.getParentOfType(position,
+          CompactCircuitDefinition.class,
+          CompactWitnessDeclaration.class,
+          CompactConstructorDeclaration.class);
+      CompactType callableRt = CompactPsiUtil.getCallableReturnType(enclosing);
+      if (!CompactPrimitiveType.UNKNOWN.equals(callableRt)) {
+        return callableRt;
+      }
+    }
+
+    // 2. Check if in const x: Type = <caret> context
+    CompactConstBindingImpl binding = PsiTreeUtil.getParentOfType(position, CompactConstBindingImpl.class);
+    if (binding != null) {
+      CompactTypeElement typeElem = PsiTreeUtil.findChildOfType(binding, CompactTypeElement.class);
+      if (typeElem != null) {
+        return typeElem.getType();
+      }
+    }
+
+    // 3. Check if in the "is (<caret>)" or "assert(<caret>)" condition context
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.LPAREN) {
+      PsiElement beforeParen = PsiTreeUtil.prevVisibleLeaf(prev);
+      if (beforeParen != null && beforeParen.getNode() != null) {
+        com.intellij.psi.tree.IElementType tt = beforeParen.getNode().getElementType();
+        if (tt == CompactTokenTypes.IF || tt == CompactTokenTypes.ASSERT) {
+          return CompactPrimitiveType.BOOLEAN;
         }
-        return;
       }
     }
+
+    return null;
   }
 
-  private static void addTypeMemberCompletions(@NotNull CompactType type, @NotNull CompletionResultSet result) {
-    for (CompactNamedElement member : type.getMembers()) {
-      String memberName = member.getName();
-      if (memberName != null) {
-        LookupElementBuilder builder = LookupElementBuilder.create(member).withIcon(member.getIcon(0));
-        CompactType memberType = CompactType.from(member);
-        if (memberType != null) {
-          builder = builder.withTypeText(memberType.getPresentableText());
-        }
-        result.addElement(builder);
+  private static boolean isReturnContext(@NotNull PsiElement position) {
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.RETURN) {
+      return true;
+    }
+    PsiElement returnStmt = PsiTreeUtil.findFirstParent(position, false,
+        p -> p.getNode() != null && p.getNode().getElementType() == dev.verloren.midnight.parser.CompactElementTypes.RETURN_STATEMENT);
+    if (returnStmt != null) {
+      return true;
+    }
+    for (PsiElement p = prev; p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
+      if (p.getNode() == null) break;
+      com.intellij.psi.tree.IElementType tt = p.getNode().getElementType();
+      if (tt == CompactTokenTypes.RETURN) {
+        return true;
+      }
+      if (tt == CompactTokenTypes.SEMICOLON || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE) {
+        break;
       }
     }
+    return false;
   }
 
-  private static Collection<CompactNamedElement> resolveMembersForExpression(CompactMemberExpr memberExpr) {
-    Set<CompactNamedElement> members = new HashSet<>();
-    for (CompactStructFieldReference ref : PsiTreeUtil.findChildrenOfType(memberExpr, CompactStructFieldReference.class)) {
-      for (ResolveResult resolveResult : ref.multiResolve(false)) {
-        PsiElement el = resolveResult.getElement();
-        if (el instanceof CompactNamedElement) {
-          members.add((CompactNamedElement) el);
-        }
+  public static @NotNull CompactType getCandidateType(@NotNull CompactNamedElement element) {
+    if (element instanceof CompactImportElementImpl importElem) {
+      CompactNamedElement resolved = CompactResolveUtil.resolveImportElementSource(importElem);
+      if (resolved != null) {
+        return getCandidateType(resolved);
       }
     }
-    for (CompactEnumMemberReference ref : PsiTreeUtil.findChildrenOfType(memberExpr, CompactEnumMemberReference.class)) {
-      for (ResolveResult resolveResult : ref.multiResolve(false)) {
-        PsiElement el = resolveResult.getElement();
-        if (el instanceof CompactNamedElement) {
-          members.add((CompactNamedElement) el);
-        }
-      }
+    CompactType callableRt = CompactPsiUtil.getCallableReturnType(element);
+    if (!CompactPrimitiveType.UNKNOWN.equals(callableRt)) {
+      return callableRt;
     }
-    return members;
+    return switch (element) {
+      case CompactParameterImpl param -> param.getType();
+      case CompactConstBindingImpl constBinding -> constBinding.getType();
+      case CompactPatternImpl pattern -> pattern.getType();
+      case CompactStructFieldImpl field -> field.getType();
+      case CompactEnumMemberImpl member -> member.getType();
+      case CompactEnumDefinition enumDef ->
+          new CompactPrimitiveType(enumDef.getName() != null ? enumDef.getName() : "Enum");
+      default -> element.getType();
+    };
   }
 
-  private static void addAll(CompletionResultSet result, String[] items) {
-    for (String item : items) {
-      result.addElement(LookupElementBuilder.create(item).bold());
+  public static boolean isTypeCompatible(@NotNull CompactType candidateType, @Nullable CompactType expectedType) {
+    if (expectedType == null || CompactPrimitiveType.UNKNOWN.equals(expectedType)) {
+      return true;
     }
+    if (CompactPrimitiveType.UNKNOWN.equals(candidateType)) {
+      return true;
+    }
+
+    String expectedName = expectedType.name();
+    String candidateName = candidateType.name();
+
+    // Void handling
+    if ("Void".equalsIgnoreCase(expectedName)) {
+      return "Void".equalsIgnoreCase(candidateName);
+    }
+    if ("Void".equalsIgnoreCase(candidateName)) {
+      return false;
+    }
+
+    if (candidateType.isAssignableTo(expectedType) || expectedType.isAssignableTo(candidateType)) {
+      return true;
+    }
+
+    if (expectedName.equalsIgnoreCase(candidateName)) {
+      return true;
+    }
+
+    // Number literals / Field interoperability
+    if ("Field".equalsIgnoreCase(expectedName) && ("Field".equalsIgnoreCase(candidateName) || "Uint".equalsIgnoreCase(candidateName))) {
+      return true;
+    }
+
+    // Prefix matching for parameterized types (e.g., Uint<64> matches Uint)
+    return (expectedName.startsWith("Uint") && candidateName.startsWith("Uint"))
+        || (expectedName.startsWith("Vector") && candidateName.startsWith("Vector"));
   }
 
-  private static void addNamed(CompletionResultSet result, Collection<? extends CompactNamedElement> elements) {
-    for (CompactNamedElement element : elements) {
-      String name = element.getName();
-      if (name != null) {
-        result.addElement(LookupElementBuilder.create(element).withIcon(element.getIcon(0)));
-      }
+  private static void addNamed(@NotNull CompletionResultSet result, @NotNull CompactNamedElement element) {
+    String name = element.getName();
+    if (name == null || name.isEmpty()) {
+      return;
     }
-  }
 
-  private static void addPrefixed(CompletionResultSet result, Collection<String> names) {
-    for (String name : names) {
-      result.addElement(LookupElementBuilder.create(name).bold());
-    }
+    LookupElementBuilder builder = LookupElementBuilder.create(element, name);
+    builder = switch (element) {
+      case CompactCircuitDefinition _ -> builder.withTypeText("circuit").withBoldness(true);
+      case CompactStructDefinition _ -> builder.withTypeText("struct");
+      case CompactEnumDefinition _ -> builder.withTypeText("enum");
+      case CompactTypeDefinition _ -> builder.withTypeText("type");
+      case CompactLedgerDeclaration _ -> builder.withTypeText("ledger");
+      case CompactWitnessDeclaration _ -> builder.withTypeText("witness");
+      case CompactParameterImpl _ -> builder.withTypeText("param");
+      case CompactConstBindingImpl _ -> builder.withTypeText("const");
+      default -> builder;
+    };
+    result.addElement(builder);
   }
 }

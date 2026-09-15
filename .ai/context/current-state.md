@@ -77,7 +77,7 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Ty
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
   - Fully maintained index in `.ai/decisions/README.md` covering all 27 major architectural subsystems (**ADR-001 through ADR-027**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
-- **Total Unit Test Count**: **566 passing tests** across 57 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
+- **Total Unit Test Count**: **569 passing tests** across 57 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
 
 ### Roadmap & Evolution (Phases 31–36)
 - **Phase 31: Stub Indexing & Large Workspace Caching**

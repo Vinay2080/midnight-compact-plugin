@@ -40,7 +40,7 @@ phases:
   polyglot_ts_test_framework: planned (Phase 36)
 
 tests:
-  last_known_passing: 566
+  last_known_passing: 569
   failures: 0
   skipped: 0
   suites:
