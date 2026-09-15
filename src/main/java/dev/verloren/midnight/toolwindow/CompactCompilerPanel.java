@@ -8,6 +8,8 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltipKt;
@@ -581,6 +583,12 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
           ProcessHandler handler = new OSProcessHandler(cmd);
+          handler.addProcessListener(new ProcessListener() {
+            @Override
+            public void processTerminated(@NotNull ProcessEvent event) {
+              CompactProblemUtil.clearProblemsAndRestart(project, file);
+            }
+          });
           handler.startNotify();
         } catch (ExecutionException ex) {
           notifyUser("Compilation failed: " + ex.getMessage(), NotificationType.ERROR);

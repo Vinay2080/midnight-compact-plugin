@@ -1,6 +1,8 @@
 package dev.verloren.midnight.annotator;
 
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -154,5 +156,22 @@ public class CompactExternalAnnotatorTest extends BasePlatformTestCase {
         "/mnt/c/projects/midnight/contract.compact", 1, 1, "WSL error", true
     );
     assertTrue("Should match WSL path translated to Windows path", CompactExternalAnnotator.isDiagnosticForVirtualFile(wslDiag, vFile));
+  }
+
+  public void testTextRangeCalculationHandlesEmptyLineAndBoundaries() {
+    myFixture.configureByText("contract.compact", "circuit main() {\n\n}\n");
+    Document doc = myFixture.getEditor().getDocument();
+
+    // Line 2 is completely empty ("\n")
+    TextRange rangeLine2 = CompactExternalAnnotator.getRange(doc, 2, 1);
+    assertNotNull("Range should not be null", rangeLine2);
+    assertEquals("Start offset should be start of line 2", doc.getLineStartOffset(1), rangeLine2.getStartOffset());
+    assertEquals("End offset should be end of line 2", doc.getLineEndOffset(1), rangeLine2.getEndOffset());
+
+    // Line 1 contains "circuit main() {"
+    TextRange rangeLine1 = CompactExternalAnnotator.getRange(doc, 1, 1);
+    assertNotNull("Range should not be null", rangeLine1);
+    assertEquals(0, rangeLine1.getStartOffset());
+    assertEquals(7, rangeLine1.getEndOffset()); // "circuit" length 7
   }
 }

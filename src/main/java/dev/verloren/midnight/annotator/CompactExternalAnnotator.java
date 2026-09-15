@@ -1,46 +1,44 @@
 package dev.verloren.midnight.annotator;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.util.PathUtil;
 import dev.verloren.midnight.psi.CompactFile;
 import dev.verloren.midnight.run.CompactToolchainUtil;
 import dev.verloren.midnight.settings.MidnightSettingsState;
-import dev.verloren.midnight.version.CompactSemVerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * Runs {@code compactc} asynchronously as an external annotator to provide
+ * deep semantic diagnostics, type mismatches, and syntax errors in the editor.
+ */
 public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalAnnotator.InitialInfo, CompactExternalAnnotator.AnnotationResult> {
   private static final Logger LOG = Logger.getInstance(CompactExternalAnnotator.class);
+  private static final int COMPILER_TIMEOUT_MS = 5000;
 
   public record InitialInfo(
-      @NotNull Project project,
-      @NotNull VirtualFile virtualFile,
-      @NotNull String compilerPath,
+      @NotNull PsiFile file,
+      @NotNull String filePath,
       boolean skipZk,
       long modificationStamp
   ) {}
@@ -60,65 +58,82 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
       return null;
     }
 
-    MidnightSettingsState state = MidnightSettingsState.getInstance();
-    String compilerPath = CompactToolchainUtil.getCompilerExecutablePath(file.getProject());
-    if (compilerPath == null || compilerPath.isEmpty()) {
-      compilerPath = state != null && state.compilerPath != null && !state.compilerPath.isEmpty()
-          ? state.compilerPath
-          : "compactc";
+    // Flush unsaved editor document modifications to disk so the external compiler
+    // CLI compiles the live buffer rather than stale disk contents.
+    // Must be dispatched via invokeLater outside read actions, and skipped in unit test mode.
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      Document document = editor.getDocument();
+      FileDocumentManager docManager = FileDocumentManager.getInstance();
+      if (docManager.isDocumentUnsaved(document)) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!file.getProject().isDisposed() && docManager.isDocumentUnsaved(document)) {
+            docManager.saveDocument(document);
+          }
+        }, ModalityState.nonModal());
+      }
     }
 
+    MidnightSettingsState state = MidnightSettingsState.getInstance();
     boolean skipZk = state == null || state.skipZkDefault;
-    return new InitialInfo(file.getProject(), vFile, compilerPath, skipZk, file.getModificationStamp());
+
+    return new InitialInfo(file, vFile.getPath(), skipZk, editor.getDocument().getModificationStamp());
   }
 
   @Override
   public @Nullable AnnotationResult doAnnotate(@NotNull InitialInfo info) {
-    ProgressManager.checkCanceled();
-    File tempDir = null;
-    try {
-      tempDir = FileUtil.createTempDirectory("compact-annotator-output", null, true);
+    CompactToolchainUtil.ToolchainInfo toolchain = CompactToolchainUtil.getToolchainInfo(info.file().getProject());
+    if (toolchain == null || !toolchain.isValid()) {
+      return null;
+    }
 
+    // Determine output directory: native Linux /tmp for WSL, Windows temp dir otherwise
+    File outDir = null;
+    String outDirPath;
+    if (toolchain.isWsl()) {
+      outDirPath = "/tmp/compact-annotator-" + Math.abs(info.filePath().hashCode());
+    } else {
+      try {
+        outDir = FileUtil.createTempDirectory("compact-annotator", null);
+        outDirPath = outDir.getAbsolutePath();
+      } catch (Exception e) {
+        LOG.warn("Failed to create temporary output directory for compactc", e);
+        return null;
+      }
+    }
+
+    try {
       List<String> args = new ArrayList<>();
-      args.add("--vscode");
       if (info.skipZk()) {
         args.add("--skip-zk");
       }
-      args.add(info.virtualFile().getPath());
-      args.add(tempDir.getAbsolutePath());
+      args.add("-o");
+      args.add(outDirPath);
+      args.add(info.filePath());
 
-      GeneralCommandLine cmd = CompactToolchainUtil.createCommandLine(
-          info.project(),
+      GeneralCommandLine commandLine = CompactToolchainUtil.createCommandLine(
+          info.file().getProject(),
           args,
-          info.project().getBasePath()
+          info.file().getProject().getBasePath()
       );
-      cmd.setRedirectErrorStream(true);
 
-      ProgressManager.checkCanceled();
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      CapturingProcessHandler processHandler = new CapturingProcessHandler(cmd);
-      ProcessOutput processOutput = indicator != null
-          ? processHandler.runProcessWithProgressIndicator(indicator, 10000)
-          : processHandler.runProcess(10000);
+      ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, COMPILER_TIMEOUT_MS);
+      String combinedOutput = output.getStdout() + "\n" + output.getStderr();
 
-      if (processOutput.isCancelled()) {
-        return null;
+      List<CompactCompilerDiagnostic> allDiagnostics = CompactCompilerOutputParser.parse(combinedOutput);
+      List<CompactCompilerDiagnostic> fileDiagnostics = new ArrayList<>();
+      for (CompactCompilerDiagnostic diag : allDiagnostics) {
+        if (isDiagnosticForFile(diag, info.file())) {
+          fileDiagnostics.add(diag);
+        }
       }
 
-      String stdout = processOutput.getStdout();
-      String stderr = processOutput.getStderr();
-      String output = stdout + (stderr.isEmpty() ? "" : "\n" + stderr);
-
-      List<CompactCompilerDiagnostic> diagnostics = CompactCompilerOutputParser.parse(output);
-      return new AnnotationResult(info.modificationStamp(), diagnostics);
-    } catch (ProcessCanceledException e) {
-      throw e;
-    } catch (Exception e) {
-      LOG.debug("Compact compiler external annotation failed", e);
-      return null;
+      return new AnnotationResult(info.modificationStamp(), fileDiagnostics);
+    } catch (ExecutionException e) {
+      LOG.warn("Failed to run compactc external annotator", e);
+      return new AnnotationResult(info.modificationStamp(), Collections.emptyList());
     } finally {
-      if (tempDir != null) {
-        FileUtil.delete(tempDir);
+      if (outDir != null) {
+        FileUtil.delete(outDir);
       }
     }
   }
@@ -129,116 +144,95 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
       return;
     }
 
-    if (file.getModificationStamp() != result.modificationStamp()) {
-      return;
-    }
-
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
     if (document == null) {
       return;
     }
 
-    for (CompactCompilerDiagnostic diagnostic : result.diagnostics()) {
-      if (!isDiagnosticForFile(diagnostic, file)) {
-        continue;
-      }
+    if (document.getModificationStamp() != result.modificationStamp()) {
+      return;
+    }
 
-      TextRange range = getRange(diagnostic, document, file);
+    for (CompactCompilerDiagnostic diagnostic : result.diagnostics()) {
+      TextRange range = getRange(document, diagnostic.line(), diagnostic.column());
       HighlightSeverity severity = diagnostic.severity();
 
-      AnnotationBuilder builder = holder.newAnnotation(severity, diagnostic.message())
-          .range(range);
-
-      String msg = diagnostic.message().toLowerCase();
-      if ((msg.contains("pragma") || msg.contains("language version") || msg.contains("language_version")) &&
-          (msg.contains("mismatch") || msg.contains("version") || msg.contains("expected"))) {
-        String targetVer = CompactSemVerUtil.extractVersion(diagnostic.message());
-        if (targetVer != null) {
-          builder = builder.withFix(new CompactSwitchCompilerQuickFix(targetVer));
-        }
-        String activeVer = CompactToolchainUtil.getActiveCompilerVersion(file.getProject());
-        if (activeVer != null) {
-          builder = builder.withFix(new CompactUpdatePragmaQuickFix(activeVer));
-        }
-      }
-
-      builder.create();
+      holder.newAnnotation(severity, diagnostic.message())
+          .range(range)
+          .create();
     }
   }
 
   static boolean isDiagnosticForFile(@NotNull CompactCompilerDiagnostic diagnostic, @NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) {
-      return false;
+    if (vFile != null && isDiagnosticForVirtualFile(diagnostic, vFile)) {
+      return true;
     }
-    return isDiagnosticForVirtualFile(diagnostic, vFile);
+
+    String diagPath = diagnostic.filePath().replace('\\', '/');
+    String fileName = file.getName();
+    if (diagPath.equals(fileName) || diagPath.endsWith("/" + fileName)) {
+      return true;
+    }
+
+    return false;
   }
 
   static boolean isDiagnosticForVirtualFile(@NotNull CompactCompilerDiagnostic diagnostic, @NotNull VirtualFile vFile) {
-    String diagPath = diagnostic.filePath().trim();
-    if (diagPath.isEmpty()) {
+    String diagPath = diagnostic.filePath().replace('\\', '/');
+    String filePath = vFile.getPath().replace('\\', '/');
+    if (filePath.startsWith("/") && filePath.length() >= 3 && Character.isLetter(filePath.charAt(1)) && filePath.charAt(2) == ':') {
+      filePath = filePath.substring(1);
+    }
+
+    if (diagPath.equalsIgnoreCase(filePath)) {
       return true;
     }
 
-    String fileName = PathUtil.getFileName(vFile.getName().replace('\\', '/'));
-    String diagFileName = PathUtil.getFileName(diagPath.replace('\\', '/'));
-    if (!diagFileName.equalsIgnoreCase(fileName)) {
-      return false;
-    }
-
-    if (diagPath.equalsIgnoreCase(diagFileName)) {
-      return true;
-    }
-
-    String vPath = vFile.getPath().replace('\\', '/');
-    if (vPath.startsWith("/") && vPath.length() >= 3 && Character.isLetter(vPath.charAt(1)) && vPath.charAt(2) == ':') {
-      vPath = vPath.substring(1);
-    }
-
-    String normalizedDiag = diagPath.replace('\\', '/');
-
-    if (normalizedDiag.startsWith("/mnt/") && normalizedDiag.length() >= 7 && normalizedDiag.charAt(6) == '/') {
-      char driveLetter = Character.toUpperCase(normalizedDiag.charAt(5));
-      normalizedDiag = driveLetter + ":" + normalizedDiag.substring(6);
-    }
-
-    if (vPath.equalsIgnoreCase(normalizedDiag)) {
-      return true;
-    }
-
-    return vPath.toLowerCase().endsWith("/" + normalizedDiag.toLowerCase())
-        || vPath.toLowerCase().endsWith(normalizedDiag.toLowerCase())
-        || normalizedDiag.toLowerCase().endsWith("/" + vPath.toLowerCase())
-        || normalizedDiag.toLowerCase().endsWith(vPath.toLowerCase());
-  }
-
-  private static @NonNull TextRange getRange(
-      @NotNull CompactCompilerDiagnostic diagnostic,
-      @NotNull Document document,
-      @NotNull PsiFile file
-  ) {
-    int maxLine = Math.max(0, document.getLineCount() - 1);
-    int lineIndex = Math.clamp(diagnostic.line() - 1, 0, maxLine);
-    int lineStart = document.getLineStartOffset(lineIndex);
-    int lineEnd = document.getLineEndOffset(lineIndex);
-
-    int colOffset = Math.min(lineStart + Math.max(0, diagnostic.column() - 1), lineEnd);
-
-    if (colOffset < lineEnd) {
-      PsiElement element = file.findElementAt(colOffset);
-      if (element != null && !(element instanceof PsiWhiteSpace)) {
-        TextRange elemRange = element.getTextRange();
-        if (elemRange.getStartOffset() >= lineStart && elemRange.getEndOffset() <= lineEnd && !elemRange.isEmpty()) {
-          return elemRange;
-        }
+    if (diagPath.startsWith("/mnt/")) {
+      String translated = CompactToolchainUtil.toWindowsPath(diagPath).replace('\\', '/');
+      if (translated.equalsIgnoreCase(filePath)) {
+        return true;
       }
     }
 
-    int endOffset = Math.min(colOffset + 1, lineEnd);
-    if (colOffset >= endOffset && lineStart < lineEnd) {
-      endOffset = Math.min(colOffset + 1, lineEnd);
+    return false;
+  }
+
+  static @NotNull TextRange getRange(@NotNull Document document, int line, int column) {
+    int lineCount = document.getLineCount();
+    if (lineCount == 0) {
+      return TextRange.EMPTY_RANGE;
     }
 
-    return new TextRange(Math.min(colOffset, endOffset), Math.max(colOffset, endOffset));
+    int lineIndex = Math.clamp(line - 1, 0, lineCount - 1);
+    int lineStart = document.getLineStartOffset(lineIndex);
+    int lineEnd = document.getLineEndOffset(lineIndex);
+
+    if (lineStart >= lineEnd) {
+      return new TextRange(lineStart, lineEnd);
+    }
+
+    int startOffset = lineStart + Math.max(0, column - 1);
+    if (startOffset > lineEnd) {
+      startOffset = lineEnd;
+    }
+
+    // Find end of identifier or word at the error offset
+    CharSequence text = document.getCharsSequence();
+    int endOffset = startOffset;
+    while (endOffset < lineEnd && isIdentifierPart(text.charAt(endOffset))) {
+      endOffset++;
+    }
+
+    if (endOffset == startOffset) {
+      endOffset = Math.min(startOffset + 1, lineEnd);
+    }
+
+    return new TextRange(startOffset, Math.max(startOffset, endOffset));
+  }
+
+  private static boolean isIdentifierPart(char c) {
+    return Character.isJavaIdentifierPart(c) || c == '-' || c == '\'';
   }
 }

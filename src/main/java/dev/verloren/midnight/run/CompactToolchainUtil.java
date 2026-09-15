@@ -295,6 +295,24 @@ public final class CompactToolchainUtil {
   }
 
   /**
+   * Converts a Linux WSL path (e.g. /mnt/c/path) to its Windows file path equivalent.
+   */
+  public static @NotNull String toWindowsPath(@NotNull String path) {
+    if (path.isEmpty() || !path.startsWith("/mnt/")) {
+      return path;
+    }
+    if (path.length() >= 6 && path.charAt(4) == '/' && Character.isLetter(path.charAt(5))) {
+      char drive = Character.toUpperCase(path.charAt(5));
+      String rest = path.substring(6);
+      if (rest.isEmpty()) {
+        return drive + ":\\";
+      }
+      return drive + ":" + rest.replace('/', '\\');
+    }
+    return path;
+  }
+
+  /**
    * Parses a user-configured path string from settings (which can be a Windows path, WSL path, or UNC path).
    */
   public static @Nullable ToolchainInfo parseConfiguredPath(@NotNull String customPath) {
