@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import dev.verloren.midnight.ide.templates.CompactDeclarationNameGenerator;
 import dev.verloren.midnight.ide.templates.CompactDeclarationType;
+import dev.verloren.midnight.ide.templates.CompactTypeExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -84,7 +85,7 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
       template.addTextSegment(" ");
       template.addVariable("NAME", new ConstantNode(defaultName), true);
       template.addTextSegment(": ");
-      template.addVariable("TYPE", new ConstantNode("State"), true);
+      template.addVariable("TYPE", new CompactTypeExpression("State"), true);
       template.addTextSegment(";");
       templateManager.startTemplate(editor, template);
     } else {
