@@ -1,7 +1,6 @@
 # Task Lifecycle, Workflows, & Completion Gate
 
-This document defines the strict, standard execution lifecycle for any software development, refactoring, bug-fixing, code review, release-time changelog cleanup, and release task within `midnight-compact-plugin`.
-
+This document defines the strict, standard execution lifecycle for any software development, refactoring, bug-fixing, code review, release-time changelog cleanup, and release task within `midnight-compact-plugin`.\n
 ---
 
 ## 1. Task Lifecycle Overview
@@ -24,10 +23,10 @@ SESSION START
 [3. Plan & Align] ──────────────── Check invariants, consult ADRs, formulate minimal plan
   │
   ▼
-[4. Implement] ─────────────────── Write modern Java 25 inside worktree adhering to threading & PSI models
+[4. Implement] ────────────────── Write modern Java (Java 14–25) inside worktree adhering to threading & PSI models
   │
   ▼
-[5. Test & Validate] ───────────── Multi-tier testing (Tiers 1–5), run ./gradlew test inside worktree
+[5. Test & Validate] ──────────── Continuous inspection after EVERY edit (0 errors/warnings/weak warnings), multi-tier testing
   │
   ▼
 [6. Code Review Self-Check] ────── Verify against Section 9 anti-bikeshedding & invariant bar
@@ -144,8 +143,8 @@ Inside the worktree, the agent executes:
 1. Context loading & pre-debug search in `.ai/bugs/`.
 2. Inspect implementation and compiler references.
 3. Plan and architectural alignment.
-4. Modern Java 25 implementation conforming to threading and PSI invariants.
-5. Multi-tier testing and validation (`./gradlew test`).
+4. Comprehensive modern Java (Java 14–25) implementation conforming to threading and PSI invariants.
+5. Multi-tier testing and validation (`./gradlew test`) with continuous post-edit inspection (`get_file_problems`, `lint_files`).
 6. Code review self-check against the anti-bikeshedding bar.
 7. Documentation impact analysis via Decision Rules.
 8. Apply targeted documentation updates (including bug records in `.ai/bugs/` if fixing a bug).
@@ -255,25 +254,37 @@ Before proposing or editing anything, the agent **MUST** load the exact set of c
 - Ensure the plan avoids brittle heuristics and hardcoded patterns.
 
 ### Phase 4: Implementation
-- Follow Java 25 standards: Java records, switch expressions with arrow syntax, unnamed variables (`_`) for unconsumed patterns/exceptions, sequenced collections, and guard clauses.
-- Strictly adhere to Threading Rules: PSI reads inside `ReadAction`, PSI mutations on EDT inside `WriteCommandAction`, long operations on background threads with cancellation support.
-- Guard against null and `PsiErrorElement` nodes. Never freeze the UI thread or cause `StackOverflowError`.
+- **Full Spectrum Modern Java (Java 14–25)**:
+  - Utilize the full range of modern Java features introduced through Java 25:
+    - **Records (`record`)**: Mandatory for immutable data models, DTOs, AST containers, and resolver/cache keys. Explicitly avoid boilerplate POJOs with manual getters/setters.
+    - **Sequenced Collections**: Mandatory usage of `getFirst()`, `getLast()`, `reversed()`, `addFirst()`, `removeFirst()`, and sequenced map/set views. Legacy `get(0)` and `get(size() - 1)` are strictly forbidden.
+    - **Pattern Matching**: Switch expressions with arrow syntax, type patterns with `when` guards, and record deconstruction patterns (`instanceof Point(int x, int y)`). Legacy statement switches with colon and `break;` are forbidden.
+    - **Unnamed Patterns & Variables (`_`)**: Mandatory use of `_` for unconsumed exception parameters (`catch (Exception _)`), pattern bindings (`case Type _`), and unused lambda parameters. Never declare unused named variables.
+    - **Sealed Hierarchies**: Closed algebraic data types using `sealed` and `permits` for exhaustive switch expressions without redundant fallback branches.
+    - **Modern Collections & Streams**: Immutable collection factories (`List.of()`, `Set.of()`, `Map.of()`), direct `.toList()` on streams, `Stream.ofNullable()`, `takeWhile()`, and `dropWhile()`.
+    - **Text Blocks & Modern String APIs**: `"""` text blocks for multi-line strings, `isBlank()`, `strip()`, `repeat()`, and `formatted()`.
+- **Strict Threading Rules**: PSI reads inside `ReadAction`, PSI mutations on EDT inside `WriteCommandAction`, long operations on background threads with cancellation support.
+- **Robustness**: Guard against null and `PsiErrorElement` nodes. Never freeze the UI thread or cause `StackOverflowError`.
 
 ### Phase 5: Test & Validate
-- Apply the Multi-Tier Testing Standard:
+- **Mandatory Post-Edit Code Inspection (Every Edit)**:
+  - Immediately following **EVERY SINGLE EDIT** to any file, the agent MUST run IntelliJ inspections via MCP `execute_tool`:
+    - Live problem check: `get_file_problems --filePath <absolute_path>`
+    - Static inspections & linter: `lint_files --files ["<absolute_path>"]`
+  - **Zero Tolerance Policy**: Inspect for and immediately resolve ALL reported problems: errors, warnings, weak warnings, and bugs. Never proceed to subsequent edits or commits while any warning or weak warning remains.
+- **Multi-Tier Testing Standard**:
   - **Tier 1**: Golden AST tree conformance tests.
   - **Tier 2**: Partial parsing and error recovery (deliberately broken syntax must produce `PsiErrorElement` without freezing or crashing).
   - **Tier 3**: Operator precedence and associativity.
   - **Tier 4**: Stress and recursion resilience.
   - **Tier 5**: Non-blocking concurrency and cancellation.
 - Run `./gradlew test` inside the worktree and confirm 100% passing tests with zero failures and zero compiler warnings.
-- Check file health with MCP `get_file_problems` on modified Java files.
 
 ### Phase 6: Code Review Self-Check
 - Evaluate changes against the anti-bikeshedding bar in `AGENTS.md`:
   - No cosmetic rewrites (no converting working loops to streams or reformatting untouched code).
   - No speculative abstractions (no premature interfaces, builders, or generic factories).
-  - No subjective renames of identifiers that already follow project conventions.
+  - No subjective renames of identifiers that already follow project conventions).
   - Only introduce changes justified by threading safety, critical invariants, language semantics, or tangible bug fixes.
 
 ---
@@ -284,7 +295,7 @@ Do NOT blindly update every file for every change, and NEVER update `AGENTS.md` 
 
 | Artifact | When to Update | When NOT to Update |
 |:---|:---|:---|
-| **[`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md)** | **During Development**: Add notable user-visible features, templates, completion improvements, inspections, or bug fixes under `## [Unreleased]`, phrased from the user perspective answering *"What changed for me?"*<br>**At Release Time**: Mandatory release cleanup before tagging. Rewrite/consolidate `## [Unreleased]` into curated user notes under `## [X.Y.Z] - YYYY-MM-DD`, stripping all technical jargon, ADR IDs, class/test names, and internal AI notes. Open fresh `## [Unreleased]` for future work. | **Never during development**: Do NOT record internal refactorings, private test additions, ADR numbers, class/method names, line numbers, commit logs, or internal AI restructuring.<br>**Never at release time**: NEVER push a release tag while `CHANGELOG.md` still contains internal engineering notes. |
+| **[`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md)** | **During Development**: Add notable user-visible features, templates, completion improvements, inspections, or bug fixes under `## [Unreleased]`, phrased from the user perspective answering *\"What changed for me?\"*<br>**At Release Time**: Mandatory release cleanup before tagging. Rewrite/consolidate `## [Unreleased]` into curated user notes under `## [X.Y.Z] - YYYY-MM-DD`, stripping all technical jargon, ADR IDs, class/test names, and internal AI notes. Open fresh `## [Unreleased]` for future work. | **Never during development**: Do NOT record internal refactorings, private test additions, ADR numbers, class/method names, line numbers, commit logs, or internal AI restructuring.<br>**Never at release time**: NEVER push a release tag while `CHANGELOG.md` still contains internal engineering notes. |
 | **Bug Record ([`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/))** | Whenever a concrete defect or incorrect behavior was identified, investigated, fixed, and verified (meeting all 5 trigger conditions in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md)). Create `YYYY-MM-DD-<feature>-<title>.md` and register in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md). | Normal feature development, planned test-driven development iterations, speculative discussions, abandoned prototypes, or trivial typos. |
 | **ADR ([`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/))** | Architectural decisions, new subsystem designs, formalized language rules, significant AST/PSI structural changes, or non-trivial completion/refactoring algorithms. Register in [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md). | Routine bug fixes adhering to an existing ADR, minor test additions, or documentation improvements. |
 | **[`.ai/context/current-state.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md)** | Implementation status changes, new phase completion, new subsystem capabilities, known limitations, or baseline test metrics updates. | Code changes that do not alter the overall capability snapshot or test baseline. |
@@ -322,7 +333,7 @@ Before claiming that any development task is complete, the agent **MUST** execut
 FINAL TASK GATE CHECKLIST:
 [ ] 1. Inspect implementation diff (verify all changes match requirements).
 [ ] 2. Run relevant tests (./gradlew test passes with 0 failures).
-[ ] 3. Check for IDE/compiler problems (MCP get_file_problems reports 0 errors/warnings).
+[ ] 3. Check for IDE/compiler problems (MCP get_file_problems and lint_files report 0 errors, 0 warnings, 0 weak warnings).
 [ ] 4. Determine which documentation/state files are affected (via Decision Rules).
 [ ] 5. Update every applicable documentation/state file (including .ai/bugs/ if a bug was resolved).
 [ ] 6. Re-read every modified documentation/state file to verify edits landed correctly.
@@ -384,7 +395,7 @@ This protocol governs the mandatory process for cleaning the changelog, preparin
 This project is an IntelliJ IDEA plugin. [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) is written **strictly for plugin users** and must be immediately understandable without any knowledge of the repository's internal architecture, classes, or AI workflows.
 
 Every entry in the public release notes must answer:
-> **"What changed for me?"**
+> **\"What changed for me?\"**
 
 Changelogs follow [Keep a Changelog](https://keepachangelog.com/): they are **curated for humans** and contain notable changes, rather than serving as a commit log or raw development history.
 
@@ -440,18 +451,18 @@ During release cleanup, inspect every entry under `## [Unreleased]`. The followi
 
 | Category | Forbidden in Release Changelog | Correct User-Facing Translation |
 |:---|:---|:---|
-| **ADR Identifiers** | `ADR-026`, `ADR-028`, `ADR-019` | Describe the user capability directly (e.g., "Added support for Compact export declarations"). |
+| **ADR Identifiers** | `ADR-026`, `ADR-028`, `ADR-019` | Describe the user capability directly (e.g., \"Added support for Compact export declarations\"). |
 | **Phase Numbers** | `Phase 29`, `Phase 28` | Omit completely; describe the feature functionality. |
-| **Java Class Names** | `CompactCompletionContributor`, `CompactDeclarationNameGenerator` | "code completion", "automatic declaration numbering". |
-| **Method Names** | `isExportable()`, `registerCustomType()` | "export validation", "declaration registry". |
-| **Test Fixtures & Names** | `testExportConstNotSuggestedAtTopLevel`, `CompactPhase28IntentionsTest` | Omit completely or translate to: "Fixed invalid completion suggestions". |
+| **Java Class Names** | `CompactCompletionContributor`, `CompactDeclarationNameGenerator` | \"code completion\", \"automatic declaration numbering\". |
+| **Method Names** | `isExportable()`, `registerCustomType()` | \"export validation\", \"declaration registry\". |
+| **Test Fixtures & Names** | `testExportConstNotSuggestedAtTopLevel`, `CompactPhase28IntentionsTest` | Omit completely or translate to: \"Fixed invalid completion suggestions\". |
 | **File Paths & Line Numbers** | `compact/compiler/parser.ss:240-270`, `Compact.xml` | Omit completely; reference standard Compact syntax rules. |
-| **Upstream Compiler Lines** | `compiler/parser.ss:460-480`, `Program-element` | "aligned with upstream Compact grammar". |
+| **Upstream Compiler Lines** | `compiler/parser.ss:460-480`, `Program-element` | \"aligned with upstream Compact grammar\". |
 | **Internal AI Workflows** | `AI Instruction & Context System Restructuring`, `.ai/workflow.md` | **Strictly forbidden**: Internal AI/doc changes NEVER appear in user release notes. |
 | **Test Counts & Metrics** | `519 tests passing across 55 suites` | Omit completely; test passes are an internal engineering metric. |
-| **Implementation Mechanics** | `Kind.AFTER_EXPORT contextual classification to CompactCompletionContext` | "Improved completion suggestions after `export` to show only valid declarations." |
-| **Internal Refactorings** | `Refactored resolver cache keys to use Java 25 records` | Omit if no user-visible effect, or describe as "Performance and memory optimizations". |
-| **Trivial / Tiny Edits** | "Fixed typo in internal JavaDoc comment" | Omit completely. |
+| **Implementation Mechanics** | `Kind.AFTER_EXPORT contextual classification to CompactCompletionContext` | \"Improved completion suggestions after `export` to show only valid declarations.\" |
+| **Internal Refactorings** | `Refactored resolver cache keys to use Java 25 records` | Omit if no user-visible effect, or describe as \"Performance and memory optimizations\". |
+| **Trivial / Tiny Edits** | \"Fixed typo in internal JavaDoc comment\" | Omit completely. |
 
 #### Concrete Translation Examples
 
@@ -549,12 +560,11 @@ Before finalizing release notes or creating a release tag, the AI MUST review ev
 ### 8.8 Final Release Changelog Checklist
 Before pushing or creating a release tag, verify all 10 items:
 
-```text
-RELEASE CHANGELOG CHECKLIST:
+```text\nRELEASE CHANGELOG CHECKLIST:
 [ ] 1. Unreleased reviewed? (Every entry evaluated against user perspective)
-[ ] 2. User-facing wording? (Clear, concise answers to "What changed for me?")
+[ ] 2. User-facing wording? (Clear, concise answers to \"What changed for me?\")
 [ ] 3. Internal implementation details removed? (No classes, methods, mechanics, or AST details)
-[ ] 4. ADR numbers removed? (No "ADR-XXX" references)
+[ ] 4. ADR numbers removed? (No \"ADR-XXX\" references)
 [ ] 5. Source paths, classes, and test names removed? (No file paths, compiler lines, or test methods)
 [ ] 6. Related changes consolidated? (Cohesive single entries instead of fragmented technical steps)
 [ ] 7. Only notable changes retained? (Trivial edits and internal noise excluded)

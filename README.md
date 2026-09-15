@@ -310,8 +310,21 @@ Download the release `.zip` from [Releases](https://github.com/Vinay2080/midnigh
 ## 🧪 Building & Testing
 
 ### Prerequisites
-- **JDK 25** (Configured via Gradle Toolchain)
+- **JDK 25** (Configured via Gradle Toolchain `JavaLanguageVersion.of(25)`)
 - **IntelliJ IDEA 2026.2+** (Build `262+`)
+
+### Modern Java 25 Development Standards
+The plugin codebase strictly enforces modern Java idioms up to Java 25:
+- **Java Records**: Mandatory for immutable data models, DTOs, AST containers, and cache keys instead of verbose boilerplate POJOs.
+- **Sequenced Collections**: Mandatory usage of `getFirst()`, `getLast()`, `reversed()`, and sequenced views instead of legacy `get(0)` or `get(size() - 1)`.
+- **Pattern Matching**: Modern arrow `switch` expressions, type pattern matching with `when` guards, and record deconstruction patterns.
+- **Unnamed Patterns (`_`)**: Mandatory unnamed pattern variable `_` for unused catch exceptions, pattern bindings, and lambda arguments.
+- **Modern Collections & Streams**: Immutable factories (`List.of()`, `Set.of()`, `Map.of()`), direct `.toList()` on streams, and text blocks (`"""..."""`).
+
+### Post-Edit Code Inspection Standard
+All contributions and edits are subject to a **continuous post-edit inspection loop**:
+- After **every single edit**, files are checked using the IDE inspection tools (`get_file_problems` and `lint_files`).
+- **Zero Tolerance Policy**: Code must maintain **0 errors, 0 warnings, and 0 weak warnings**. All warnings, weak warnings, style hints, and potential bugs must be resolved immediately before proceeding.
 
 ### Build Commands
 
@@ -358,8 +371,8 @@ The test suite consists of **444 automated tests across 52 test classes**, adher
 
 Contributions are welcome! If you encounter any bugs, have feature suggestions, or want to contribute improvements:
 1. Check the [Issue Tracker](https://github.com/Vinay2080/midnight-plugin/issues) for open tasks or report a new issue.
-2. Review [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md) for technical guidelines.
-3. Fork the repository, create your feature branch, ensure all tests pass (`./gradlew test`), and submit a Pull Request.
+2. Review [`ARCHITECTURE.md`](ARCHITECTURE.md), [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md), and [`AGENTS.md`](AGENTS.md) for technical guidelines, modern Java 25 requirements, and inspection protocols.
+3. Fork the repository, create your feature branch in an isolated worktree (`ai/<task-slug>`), adhere to the modern Java 25 standards, verify 0 errors / 0 warnings / 0 weak warnings via live inspections after every edit, ensure all tests pass (`./gradlew test`), and submit a Pull Request.
 
 ---
 

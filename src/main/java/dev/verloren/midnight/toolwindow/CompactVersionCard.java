@@ -87,7 +87,7 @@ public class CompactVersionCard extends JPanel {
       deleteBtn.setFocusPainted(false);
       deleteBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       HelpTooltipKt.setToolTipText(deleteBtn, HtmlChunk.text("Remove Compact v" + version + " from local storage"));
-      deleteBtn.addActionListener(e -> {
+      deleteBtn.addActionListener(_ -> {
         if (onRemove != null) {
           onRemove.run();
         }
@@ -199,7 +199,7 @@ public class CompactVersionCard extends JPanel {
     JBPopupMenu menu = new JBPopupMenu();
     if (isInstalled) {
       JMenuItem removeItem = new JMenuItem("Remove Version v" + version, AllIcons.Actions.GC);
-      removeItem.addActionListener(ev -> {
+      removeItem.addActionListener(_ -> {
         if (onRemove != null) {
           onRemove.run();
         }
@@ -208,12 +208,12 @@ public class CompactVersionCard extends JPanel {
 
       if (installedPath != null && !installedPath.isEmpty()) {
         JMenuItem copyItem = new JMenuItem("Copy Executable Path", AllIcons.Actions.Copy);
-        copyItem.addActionListener(ev -> CopyPasteManager.getInstance().setContents(new StringSelection(installedPath)));
+        copyItem.addActionListener(_ -> CopyPasteManager.getInstance().setContents(new StringSelection(installedPath)));
         menu.add(copyItem);
       }
     } else {
       JMenuItem downloadItem = new JMenuItem("Download & Switch to v" + version, AllIcons.Actions.Download);
-      downloadItem.addActionListener(ev -> {
+      downloadItem.addActionListener(_ -> {
         if (onSelect != null) {
           onSelect.run();
         }
@@ -258,7 +258,7 @@ public class CompactVersionCard extends JPanel {
     } else if (isHovered) {
       bgColor = JBColor.namedColor("VersionCard.hoverBackground", new JBColor(new Color(245, 247, 250), new Color(48, 50, 52)));
     } else {
-      bgColor = JBColor.namedColor("VersionCard.background", new JBColor(new Color(250, 250, 250), new Color(40, 42, 44)));
+      bgColor = JBColor.namedColor("VersionCard.background", new JBColor(com.intellij.ui.Gray._250, new Color(40, 42, 44)));
     }
 
     g2.setColor(bgColor);

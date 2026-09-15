@@ -69,31 +69,31 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     WriteCommandAction.runWriteCommandAction(project, "Compact Smart Enter", null, () -> {
       // 1. If statement completion
       if (trimmed.startsWith("if ") || trimmed.startsWith("if(")) {
-        handleIfStatement(document, editor, lineNumber, finalLineEnd, trimmed, indent, innerIndent);
+        handleIfStatement(document, editor, finalLineEnd, trimmed, indent, innerIndent);
         return;
       }
 
       // 2. For statement completion
       if (trimmed.startsWith("for ") || trimmed.startsWith("for(")) {
-        handleForStatement(document, editor, lineNumber, finalLineEnd, trimmed, indent, innerIndent);
+        handleForStatement(document, editor, finalLineEnd, trimmed, indent, innerIndent);
         return;
       }
 
       // 3. Circuit definition completion
       if (CIRCUIT_PATTERN.matcher(trimmed).matches()) {
-        handleCircuitDefinition(project, document, editor, lineNumber, finalLineEnd, trimmed, indent, innerIndent);
+        handleCircuitDefinition(project, document, editor, finalLineEnd, trimmed, indent, innerIndent);
         return;
       }
 
       // 4. Constructor declaration completion
       if (CONSTRUCTOR_PATTERN.matcher(trimmed).matches()) {
-        handleConstructorDeclaration(document, editor, lineNumber, finalLineEnd, trimmed, indent, innerIndent);
+        handleConstructorDeclaration(document, editor, finalLineEnd, trimmed, indent, innerIndent);
         return;
       }
 
       // 5. Contract, Struct, Enum, Module declaration completion with identifier
       if (BLOCK_DECL_PATTERN.matcher(trimmed).matches()) {
-        handleBlockDeclaration(document, editor, lineNumber, finalLineEnd, trimmed, indent, innerIndent);
+        handleBlockDeclaration(document, editor, finalLineEnd, trimmed, indent, innerIndent);
         return;
       }
 
@@ -111,25 +111,25 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
 
       // 7. Const statement completion: must ensure '=' exists before inserting ';'
       if (CONST_STATEMENT_PATTERN.matcher(trimmed).matches()) {
-        handleConstStatement(project, document, editor, lineNumber, finalLineEnd, trimmed, indent);
+        handleConstStatement(project, document, editor, finalLineEnd, trimmed, indent);
         return;
       }
 
       // 8. Witness declaration completion
       if (trimmed.contains("witness ") || trimmed.startsWith("witness ")) {
-        handleWitnessDeclaration(project, document, editor, lineNumber, finalLineEnd, trimmed, indent);
+        handleWitnessDeclaration(project, document, editor, finalLineEnd, trimmed, indent);
         return;
       }
 
       // 9. Type alias completion
       if (trimmed.startsWith("type ") || trimmed.contains(" type ")) {
-        handleTypeAliasDeclaration(project, document, editor, lineNumber, finalLineEnd, trimmed, indent);
+        handleTypeAliasDeclaration(project, document, editor, finalLineEnd, trimmed, indent);
         return;
       }
 
       // 10. Statement semicolon completion (return, ledger, assert, etc.)
       if (STATEMENT_START_PATTERN.matcher(trimmed).matches()) {
-        handleStatementSemicolon(document, editor, lineNumber, finalLineEnd, trimmed, indent);
+        handleStatementSemicolon(document, editor, finalLineEnd, trimmed, indent);
         return;
       }
 
@@ -146,7 +146,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     return true;
   }
 
-  private void handleIfStatement(Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleIfStatement(Document doc, Editor editor, int lineEnd,
                                   String trimmed, String indent, String innerIndent) {
     if (trimmed.endsWith("{")) {
       return;
@@ -166,7 +166,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     editor.getCaretModel().moveToOffset(caretTarget);
   }
 
-  private void handleForStatement(Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleForStatement(Document doc, Editor editor, int lineEnd,
                                    String trimmed, String indent, String innerIndent) {
     if (trimmed.endsWith("{")) {
       return;
@@ -187,7 +187,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
   /**
    * Handles circuit signature completion without hardcoding return types when the user has typed ':'.
    */
-  private void handleCircuitDefinition(Project project, Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleCircuitDefinition(Project project, Document doc, Editor editor, int lineEnd,
                                        String trimmed, String indent, String innerIndent) {
     if (trimmed.endsWith("{")) {
       return;
@@ -292,7 +292,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     editor.getCaretModel().moveToOffset(caretTarget);
   }
 
-  private void handleConstructorDeclaration(Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleConstructorDeclaration(Document doc, Editor editor, int lineEnd,
                                             String trimmed, String indent, String innerIndent) {
     if (trimmed.endsWith("{")) {
       return;
@@ -312,7 +312,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     editor.getCaretModel().moveToOffset(caretTarget);
   }
 
-  private void handleBlockDeclaration(Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleBlockDeclaration(Document doc, Editor editor, int lineEnd,
                                       String trimmed, String indent, String innerIndent) {
     if (trimmed.endsWith("{")) {
       return;
@@ -329,7 +329,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
    * In Compact, const declarations MUST have an initializer expression '='.
    * If '=' is missing, append ' = ' and move caret there rather than appending ';'.
    */
-  private void handleConstStatement(Project project, Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleConstStatement(Project project, Document doc, Editor editor, int lineEnd,
                                     String trimmed, String indent) {
     if (!trimmed.contains("=")) {
       doc.insertString(lineEnd, " = ");
@@ -357,7 +357,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
   /**
    * Handles type aliases: e.g. "type Balance = Uint<64>;"
    */
-  private void handleTypeAliasDeclaration(Project project, Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleTypeAliasDeclaration(Project project, Document doc, Editor editor, int lineEnd,
                                           String trimmed, String indent) {
     if (!trimmed.contains("=")) {
       doc.insertString(lineEnd, " = ");
@@ -382,7 +382,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     }
   }
 
-  private void handleWitnessDeclaration(Project project, Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleWitnessDeclaration(Project project, Document doc, Editor editor, int lineEnd,
                                         String trimmed, String indent) {
     if (trimmed.endsWith(":")) {
       doc.insertString(lineEnd, " ");
@@ -400,7 +400,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     }
   }
 
-  private void handleStatementSemicolon(Document doc, Editor editor, int lineNumber, int lineEnd,
+  private void handleStatementSemicolon(Document doc, Editor editor, int lineEnd,
                                         String trimmed, String indent) {
     if (!trimmed.endsWith(";")) {
       doc.insertString(lineEnd, ";\n" + indent);

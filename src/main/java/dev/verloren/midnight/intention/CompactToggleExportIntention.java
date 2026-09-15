@@ -28,11 +28,6 @@ public class CompactToggleExportIntention extends PsiElementBaseIntentionAction 
     return "Compact export modifier";
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Nullable
   private PsiElement findExportableDeclaration(@NotNull PsiElement element) {
     return PsiTreeUtil.getParentOfType(

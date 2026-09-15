@@ -30,7 +30,6 @@ import dev.verloren.midnight.settings.MidnightSettingsState;
 import dev.verloren.midnight.version.CompactSemVerUtil;
 import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -60,14 +59,7 @@ public final class CompactStatusBarPopup {
     // 2. Installed Compiler Versions Section
     Map<String, String> installedMap = CompactVersionManager.getInstalledVersions();
     List<String> installedSorted = new ArrayList<>(installedMap.keySet());
-    installedSorted.sort((v1, v2) -> {
-      CompactSemVerUtil.SemVer s1 = CompactSemVerUtil.parse(v1);
-      CompactSemVerUtil.SemVer s2 = CompactSemVerUtil.parse(v2);
-      if (s1 != null && s2 != null) {
-        return s2.compareTo(s1);
-      }
-      return v2.compareTo(v1);
-    });
+    installedSorted.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
 
     if (!installedSorted.isEmpty()) {
       for (String ver : installedSorted) {
@@ -247,7 +239,7 @@ public final class CompactStatusBarPopup {
     private final Project project;
 
     public OpenMidnightSettingsAction(@NotNull Project project) {
-      super("Configure Midnight Settings...", "Open Midnight Compact settings", AllIcons.General.GearPlain);
+      super("Configure Midnight Settings...", "Open settings", AllIcons.General.GearPlain);
       this.project = project;
     }
 

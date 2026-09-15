@@ -26,10 +26,6 @@ public class CompactTogglePureCircuitIntention extends PsiElementBaseIntentionAc
     return "Compact circuit modifier";
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {

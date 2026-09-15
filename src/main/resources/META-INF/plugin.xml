@@ -276,7 +276,7 @@
         <statusBarWidgetFactory
                 id="CompactStatusBarWidget"
                 implementation="dev.verloren.midnight.statusbar.CompactStatusBarWidgetFactory"
-                order="after CodeStyleStatusBarWidget, before git, before Notifications"/>
+                order="after CodeStyleStatusBarWidget, before Notifications"/>
         <notificationGroup
                 id="Midnight Notifications"
                 displayType="BALLOON"

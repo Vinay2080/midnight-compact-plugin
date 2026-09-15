@@ -150,14 +150,14 @@ public final class CompactResolveUtil {
       if (importedFile != null) {
         for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
           String name = decl.getName();
-          if (isTopLevelFileDeclaration(decl) && name != null && isInNamespace(decl, namespace, importDeclaration)) {
+          if (isTopLevelFileDeclaration(decl) && name != null && isInNamespace(decl, namespace)) {
             result.add(prefix + name);
           }
         }
         for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(importedFile, CompactModuleDefinition.class)) {
           for (CompactNamedElement exported : moduleExports(mod)) {
             String name = exported.getName();
-            if (name != null && isInNamespace(exported, namespace, importDeclaration)) {
+            if (name != null && isInNamespace(exported, namespace)) {
               result.add(prefix + name);
             }
           }
@@ -167,7 +167,7 @@ public final class CompactResolveUtil {
       if (module != null) {
         for (CompactNamedElement exported : moduleExports(module)) {
           String name = exported.getName();
-          if (name != null && isInNamespace(exported, namespace, importDeclaration)) {
+          if (name != null && isInNamespace(exported, namespace)) {
             result.add(prefix + name);
           }
         }
@@ -293,14 +293,13 @@ public final class CompactResolveUtil {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactFile stdFile : dev.verloren.midnight.stdlib.CompactStdlibService.getInstance(project).getStandardLibraryFiles()) {
       for (CompactNamedElement decl : stdFile.getTopLevelDeclarations()) {
-        if (isInNamespace(decl, namespace, place)) {
+        if (isInNamespace(decl, namespace)) {
           result.add(decl);
         }
       }
     }
     return result;
   }
-
 
   private static void collectIncludedFiles(
       @NotNull CompactFile file,
@@ -329,7 +328,7 @@ public final class CompactResolveUtil {
 
     for (CompactFile incFile : includedFiles) {
       for (CompactNamedElement declaration : incFile.getTopLevelDeclarations()) {
-        if (isInNamespace(declaration, namespace, place)) {
+        if (isInNamespace(declaration, namespace)) {
           result.add(declaration);
         }
       }
@@ -413,7 +412,7 @@ public final class CompactResolveUtil {
     int placeOffset = place.getTextRange().getStartOffset();
     for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(scope, CompactNamedElement.class)) {
       if (declaration.getTextRange().getStartOffset() < placeOffset
-          && isInNamespace(declaration, namespace, place)
+          && isInNamespace(declaration, namespace)
           && belongsToLocalScope(declaration, scope)) {
         result.add(declaration);
       }
@@ -424,7 +423,7 @@ public final class CompactResolveUtil {
   private static @NotNull List<CompactNamedElement> collectModuleDeclarations(@NotNull CompactModuleDefinition module, @NotNull Namespace namespace, @NotNull PsiElement place) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(module, CompactNamedElement.class)) {
-      if (isDirectModuleDeclaration(declaration, module) && isInNamespace(declaration, namespace, place)) {
+      if (isDirectModuleDeclaration(declaration, module) && isInNamespace(declaration, namespace)) {
         result.add(declaration);
       }
     }
@@ -434,7 +433,7 @@ public final class CompactResolveUtil {
   private static @NotNull List<CompactNamedElement> collectFileDeclarations(@NotNull CompactFile file, @NotNull Namespace namespace, @NotNull PsiElement place) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement declaration : file.getTopLevelDeclarations()) {
-      if (isInNamespace(declaration, namespace, place)) {
+      if (isInNamespace(declaration, namespace)) {
         result.add(declaration);
       }
     }
@@ -477,7 +476,7 @@ public final class CompactResolveUtil {
   private static @NotNull List<CompactNamedElement> collectSelectionImports(@NotNull CompactFile file, @NotNull Namespace namespace) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactImportElementImpl importElement : PsiTreeUtil.findChildrenOfType(file, CompactImportElementImpl.class)) {
-      if (isInNamespace(importElement, namespace, importElement)) {
+      if (isInNamespace(importElement, namespace)) {
         result.add(importElement);
       }
     }
@@ -500,13 +499,13 @@ public final class CompactResolveUtil {
       CompactFile importedFile = importDeclaration.resolveImportedFile();
       if (importedFile != null) {
         for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
-          if (isTopLevelFileDeclaration(decl) && exportedName.equals(decl.getName()) && isInNamespace(decl, namespace, place)) {
+          if (isTopLevelFileDeclaration(decl) && exportedName.equals(decl.getName()) && isInNamespace(decl, namespace)) {
             result.add(decl);
           }
         }
         for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(importedFile, CompactModuleDefinition.class)) {
           for (CompactNamedElement exported : moduleExports(mod)) {
-            if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace, place)) {
+            if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace)) {
               result.add(exported);
             }
           }
@@ -516,7 +515,7 @@ public final class CompactResolveUtil {
       CompactModuleDefinition module = findModule(place, importDeclaration.getModuleName());
       if (module != null) {
         for (CompactNamedElement exported : moduleExports(module)) {
-          if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace, place)) {
+          if (exportedName.equals(exported.getName()) && isInNamespace(exported, namespace)) {
             result.add(exported);
           }
         }
@@ -525,10 +524,10 @@ public final class CompactResolveUtil {
     return result;
   }
 
-  private static boolean isInNamespace(@NotNull CompactNamedElement declaration, @NotNull Namespace namespace, @NotNull PsiElement place) {
+  private static boolean isInNamespace(@NotNull CompactNamedElement declaration, @NotNull Namespace namespace) {
     if (declaration instanceof CompactImportElementImpl) {
       CompactNamedElement target = resolveImportElementSource((CompactImportElementImpl) declaration);
-      return target != null && isInNamespace(target, namespace, place);
+      return target != null && isInNamespace(target, namespace);
     }
     if (namespace == Namespace.TYPE) {
       return declaration instanceof CompactTypeDefinition

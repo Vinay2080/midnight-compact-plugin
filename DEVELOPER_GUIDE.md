@@ -233,16 +233,51 @@ Reference Resolution Execution Flow:
 
 ---
 
-## 4. How to Run & Verify Tests
+## 4. Modern Java (Java 25) Coding Standard
+
+The plugin targets Java 25 (`JavaLanguageVersion.of(25)`). Developers and contributors must leverage the full spectrum of modern Java features up to Java 25:
+
+1. **Java Records**: Use `record` for all immutable data models, DTOs, AST containers, and cache keys instead of verbose boilerplate POJOs.
+2. **Sequenced Collections**: Always use `list.getFirst()`, `list.getLast()`, `list.reversed()`, `addFirst()`, and sequenced views instead of legacy `list.get(0)` or `list.get(list.size() - 1)`.
+3. **Pattern Matching for `switch`**: Use arrow switch expressions with type patterns and `when` guards.
+4. **Record Patterns**: Deconstruct records directly in `switch` and `instanceof` patterns without intermediate accessor calls.
+5. **Unnamed Patterns (`_`)**: Use `_` for unused catch blocks (`catch (Exception _)`), pattern bindings (`case Type _`), and lambda parameters.
+6. **Sealed Types**: Use `sealed` and `permits` for closed hierarchies to enable exhaustive switch matching.
+7. **Modern Collections & Streams**: Use `List.of()`, `Set.of()`, `Map.of()`, and direct stream `.toList()`.
+8. **Text Blocks & Modern String APIs**: Use `"""` text blocks for multi-line templates and modern string methods (`isBlank()`, `strip()`, `repeat()`).
+
+---
+
+## 5. Mandatory Post-Edit Code Inspection Protocol (Every Edit)
+
+Code quality is enforced continuously after every single file edit:
+
+1. **Error & Problem Check**:
+   ```bash
+   execute_tool --command "get_file_problems --filePath <absolute_path>"
+   ```
+2. **Static Inspection & Linter**:
+   ```bash
+   execute_tool --command "lint_files --files [\"<absolute_path>\"]"
+   ```
+3. **Zero Tolerance Standard**:
+   - `ERROR`: 0 allowed.
+   - `WARNING`: 0 allowed.
+   - `WEAK WARNING`: 0 allowed.
+   - Any identified issue or bug must be resolved immediately before proceeding.
+
+---
+
+## 6. How to Run & Verify Tests
 
 Run the full test suite using Gradle:
 
 ```bash
-# Run all tests
+# Run all 444+ unit & integration tests
 ./gradlew test
 
 # Run a specific test suite
 ./gradlew test --tests "dev.verloren.midnight.resolve.*"
 ```
 
-All 224 unit tests must pass before committing changes.
+All 444+ automated tests must pass with zero failures and zero compiler warnings before committing changes.

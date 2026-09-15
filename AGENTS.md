@@ -16,7 +16,8 @@
 >    - **Threading Strictness**: PSI reads strictly within `ReadAction`; PSI mutations strictly on EDT in `WriteCommandAction`; zero `process.waitFor()` on EDT.
 >    - **PSI / AST Robustness**: Guard all PSI accesses against `null` and `PsiErrorElement`. Parser loops must advance tokens on every step to prevent UI thread freezes.
 >    - **Dual Namespace Separation**: Never collide `CompactResolveUtil.Namespace.VALUE` and `CompactResolveUtil.Namespace.TYPE`.
->    - **Modern Java 25**: Use records, arrow `switch` expressions, unnamed `_` patterns, and sequenced collections.
+>    - **Comprehensive Modern Java up to Java 25**: Mandate the full spectrum of modern Java features (Java 14 through Java 25: records, sequenced collections with `getFirst()`/`getLast()`, pattern matching for `switch` and `instanceof`, record deconstruction patterns, unnamed patterns `_`, sealed hierarchies, text blocks, modern streams, and immutable collection factories). Old pre-modern Java idioms are strictly forbidden.
+>    - **Mandatory Strict Inspection After Every Edit**: After EVERY file edit, immediately run IntelliJ inspections (`get_file_problems` and `lint_files` via `execute_tool`). Actively inspect and resolve all reported problems: errors, warnings, weak warnings, and potential bugs, iterating until zero remain.
 >    - **Compiler Ground Truth**: Never invent syntax or heuristics; verify against `compact/compiler/` and local reference plugins (`intellij-rust`, `intellij-elixir`, `intellij-scala`, `Rplugin`).
 >    - **Multi-Tier Testing**: Zero failures and zero compiler warnings on `./gradlew test`.
 >    - **Anti-Assumption Re-Read**: Always re-read edited files with `client_view_file` to verify edits before claiming task completion.
@@ -63,7 +64,7 @@ Compact Source Text (.compact)
 3. **Strict Namespace Separation**: Maintain distinct `CompactResolveUtil.Namespace.VALUE` and `CompactResolveUtil.Namespace.TYPE` handling. A type and a variable can share an identifier without collision.
 4. **Tolerance for Incomplete Code**: Guard all PSI accesses, inspections, structure elements, doc providers, and formatting routines against `null` and `PsiErrorElement` nodes. Parser loops must guarantee token advancement on every iteration to prevent UI thread freezes.
 5. **Do Not Invent Compact Language Semantics**: Verify all syntax and typing rules against official compiler references (`compact/compiler/` and [`.ai/context/compact-semantics.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md)).
-6. **Zero Test Regressions & Zero Warnings**: All unit tests must pass before completing any task (`./gradlew test`). Compilations and test suites must complete with zero failures and zero warnings.
+6. **Zero Errors, Zero Warnings, Zero Weak Warnings & Zero Regressions**: All unit tests must pass before completing any task (`./gradlew test`). After every edit, code must be inspected via IDE inspection tools (`get_file_problems` and `lint_files`). All errors, warnings, and weak warnings must be fixed immediately. The repository baseline must remain at zero compiler warnings, zero test failures, zero inspection warnings, and zero weak warnings.
 7. **Inspect Before Modifying**: Read targeted production and test files before making code edits. Never propose changes based on unverified assumptions.
 8. **`.gitignore` and Dot-Folders Are NOT `.aiignore`**: Standard search tools (`grep_search`, `find_by_name`) automatically ignore hidden dot-folders and patterns in `.gitignore`. AI agents MUST NOT treat these files as excluded or nonexistent. All files under [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/), [`.ai/context/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/), `docs/`, and reference codebases (`compact/`, `intellij-elixir/`, `intellij-rust/`, `intellij-scala/`, `Rplugin/`) are vital project assets that must be directly accessed via `client_view_file` or `view_file`.
 9. **Ground Truth & Anti-Hardcoding Rigor**: Every architectural decision and implementation must cite upstream ground truth (`compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`, `midnight-ledger.ss`) and cross-verify with production reference plugins (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`). Never accept brittle hardcoded heuristics when scalable grammar-driven models exist.
@@ -73,41 +74,141 @@ Compact Source Text (.compact)
     - **Tier 3 (Operator Precedence & Associativity Matrix)**: Test complex binary, bitwise, boolean, relational, and range expression trees to guarantee correct AST hierarchy.
     - **Tier 4 (Stress & Stack Resilience)**: Test resilience against deeply nested parentheses, brackets, and blocks (preventing `StackOverflowError`).
     - **Tier 5 (Non-Blocking Concurrency)**: All inspections, linters, and index operations must yield immediately upon cancellation without UI thread lag.
-11. **Mandatory Task Lifecycle & Completion Gate**: Every change must adhere to the lifecycle in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), including documentation decision rules, anti-assumption re-read verification, and the final 9-step completion gate.
+11. **Mandatory Task Lifecycle & Completion Gate**: Every change must adhere to the lifecycle in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), including documentation decision rules, anti-assumption re-read verification, and the final completion gate.
 12. **Persistent Bug Knowledge Base**: Whenever a concrete defect or incorrect behavior is identified, investigated, fixed, and verified, the agent MUST automatically document it as a markdown record in [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) using the standard bug record schema and register it in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md). Before investigating non-trivial bugs, agents must search `.ai/bugs/` for prior occurrences. A task involving a resolved bug is NEVER complete until the bug record is written and indexed.
 13. **Mandatory Git Worktree Isolation**: Every development session that modifies repository files MUST operate in a dedicated, isolated Git worktree (`../midnight-plugin-wt-<task-slug>` or `.worktrees/<task-slug>`) on a dedicated branch (`ai/<task-slug>`). NEVER work directly on `master`. All implementation, testing, documentation, `.ai/` updates, and commits must take place inside the worktree. Upon task completion and verification, changes are committed, merged into `master`, `master` is verified, and the worktree and branch are deleted. Purely read-only query tasks that do not modify files are exempt. See [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) for the complete operational lifecycle.
 14. **User-Facing Release Changelog Hygiene**: [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) is written strictly for IntelliJ plugin users, answering *"What changed for me?"* During ongoing development, `## [Unreleased]` serves as the working collection point for notable user-facing changes. Before creating or pushing any release tag, agents MUST execute the mandatory release-time changelog cleanup process defined in [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md) Section 8. All ADR identifiers, phase numbers, class/method names, source file paths, test method names, test counts, compiler lines, and internal AI documentation restructuring details MUST be removed or translated into concise, user-facing descriptions under standard Keep-a-Changelog categories. Engineering history and technical details are preserved exclusively in `.ai/bugs/`, `.ai/decisions/`, `.ai/context/`, git commits, and code comments. NEVER create or push a release tag while `CHANGELOG.md` still contains internal engineering notes.
+15. **Strict Post-Edit Inspection & Fix Loop**: After ANY file edit, immediately execute inspection on the target file. Check for all severities (`ERROR`, `WARNING`, `WEAK WARNING`). Immediately resolve all reported warnings, weak warnings, and bugs before moving to the next edit or task. Never leave warnings or weak warnings unfixed.
 
 ---
 
 ## 4. Modern Java (Java 25) Guidelines & Feature Utilization
 
-The plugin builds against Java 25 (`JavaLanguageVersion.of(25)`). Developers and AI agents **MUST prefer modern Java features** over legacy, verbose pre-Java 17/21 patterns:
+The plugin builds against Java 25 (`JavaLanguageVersion.of(25)`). Developers and AI agents **MUST utilize the full spectrum of modern Java features introduced up to and including Java 25** (Java 14 through Java 25). Do NOT default to obsolete pre-Java 17/21 idioms or hardcode legacy patterns:
 
-1. **Prefer Java Records**:
-   - Use `record` for immutable data carriers, DTOs, type descriptors, parser/resolver return values, and cache keys instead of boilerplate classes with manual getters, `equals()`, `hashCode()`, and `toString()`.
-2. **Pattern Matching for `switch` & Enhanced Switch Expressions**:
-   - Use arrow switch expressions (`switch (...) ->`) yielding values or returning directly rather than legacy statement switches with fallthrough and `break;`.
-   - Match types directly in switch branches (e.g. `case CompactCircuitDefinition circuit -> ...`).
-3. **Unnamed Variables and Patterns (`_`) (JEP 456 / Java 22+)**:
-   - When pattern matching types in `switch` or `instanceof`, handling unused lambda arguments, or handling exceptions where the bound variable is not consumed, **ALWAYS use the unnamed pattern `_`** (e.g. `case CompactCircuitDefinition _ -> ...`, `try { ... } catch (IOException _) { ... }`).
-   - Never declare named pattern variables that remain unused and trigger compiler/IDE warnings.
-4. **Simplify Conditionals and Predicates**:
-   - Collapse boolean check ladders into direct boolean returns (`return (condA && condB) || (condC && condD);`) rather than writing multiple `if (...) return true; return false;`.
-   - Avoid redundant case-insensitive checks (`"Void".equalsIgnoreCase(str)` matches `"void"`, `"VOID"`, etc.).
-   - Collapse nested `if` blocks into single compound conditions with `&&` or guard clauses.
-5. **Record Patterns & Deconstruction (JEP 440)**:
-   - Leverage nested record deconstruction in `instanceof` and `switch` where components are immediately accessed.
-6. **Sequenced Collections & Modern Standard Library APIs**:
-   - Use Sequenced Collections methods (`getFirst()`, `getLast()`, `reversed()`).
-   - Use immutable collection factories (`List.of()`, `Set.of()`, `Map.of()`).
-   - Use modern string methods (`String.isBlank()`, `String.strip()`, `String.repeat()`).
-7. **Typography & Code Style**:
-   - In Javadoc, code comments, and documentation, adhere to standard American English punctuation: place commas after introductory abbreviations such as `e.g., ` and `i.e., `.
+1. **Java Records (`record`) & Immutability (Java 14+)**:
+   - Use `record` for all immutable data carriers, DTOs, type descriptors, AST node pairs, resolver lookup keys, multi-value return containers, and cache keys.
+   - **STRICTLY FORBIDDEN**: Writing boilerplate POJO classes with explicit private final fields, manual getters, `equals()`, `hashCode()`, and `toString()`.
+   - Use compact constructors (`public MyRecord { ... }`) for component validation, normalization, and defensive copies.
+
+2. **Sequenced Collections & Modern Indexing (Java 21+)**:
+   - **STRICTLY FORBIDDEN**: Using `list.get(0)` or `list.get(list.size() - 1)` or manual iteration to fetch endpoints.
+   - **ALWAYS USE**:
+     - `list.getFirst()` / `deque.getFirst()` instead of `list.get(0)`.
+     - `list.getLast()` / `deque.getLast()` instead of `list.get(list.size() - 1)`.
+     - `list.addFirst(...)`, `list.addLast(...)`, `list.removeFirst()`, `list.removeLast()`.
+     - `collection.reversed()` instead of manual index loops or `Collections.reverse()`.
+   - Leverage sequenced views on maps and sets: `map.sequencedKeySet()`, `map.sequencedValues()`, `map.sequencedEntrySet()`.
+
+3. **Pattern Matching for `switch` & Arrow Switch Expressions (Java 21+)**:
+   - Always use arrow switch expressions (`switch (...) ->`) yielding or returning values directly.
+   - **STRICTLY FORBIDDEN**: Legacy statement switches with colon syntax, manual `break;` statements, and accidental fall-through bugs.
+   - Pattern match types directly: `case CompactCircuitDefinition circuit -> ...`.
+   - Use guarded patterns with `when`: `case CompactFieldDefinition field when field.isSealed() -> ...`.
+   - Handle `null` cleanly in switch: `case null -> ...` or `case null, default -> ...`.
+
+4. **Record Patterns & Nested Deconstruction (Java 21+)**:
+   - Deconstruct records directly in `instanceof` and `switch` patterns:
+     ```java
+     if (result instanceof ResolveResult(CompactNamedElement target, Namespace ns)) {
+       // access target and ns directly without result.target() accessor calls
+     }
+     ```
+   - Use nested record patterns to match deep data hierarchies in a single step.
+
+5. **Unnamed Variables and Patterns (`_`) (Java 22+ / JEP 456)**:
+   - When pattern matching types in `switch` or `instanceof`, handling unused lambda arguments, or catching exceptions where the variable is not consumed, **ALWAYS use the unnamed pattern `_`**:
+     - `case CompactCircuitDefinition _ -> ...`
+     - `try { ... } catch (IOException _) { ... }`
+     - `(key, _) -> ...`
+     - `for (var _ : items) { ... }`
+   - **STRICTLY FORBIDDEN**: Declaring named variables that remain unused and trigger compiler/IDE warnings or weak warnings.
+
+6. **Sealed Classes and Interfaces (Java 17+)**:
+   - Use `sealed` and `permits` for closed algebraic data types, domain models, AST hierarchies, and expression kinds.
+   - Enables exhaustive pattern matching in `switch` expressions without redundant `default:` branches, guaranteeing compiler-checked completeness when new subtypes are added.
+
+7. **Modern Standard Library Collections & Factories (Java 9 - 25)**:
+   - Use immutable collection factories: `List.of(...)`, `Set.of(...)`, `Map.of(...)`, `Map.ofEntries(...)`, `List.copyOf(...)`.
+   - **Modern Stream APIs**:
+     - **STRICTLY FORBIDDEN**: `.collect(Collectors.toList())` — ALWAYS use `.toList()`.
+     - Use `takeWhile()`, `dropWhile()`, `mapMulti()`, and `Stream.ofNullable(...)`.
+   - **Modern `Optional` APIs**:
+     - Use `optional.ifPresentOrElse(...)`, `optional.orElseThrow()`, `optional.stream()`, `optional.or(...)`.
+
+8. **Text Blocks (`"""..."""`) & Modern String APIs (Java 11 - 25)**:
+   - Use multi-line text blocks for code snippets, HTML/XML inspection descriptions, test contract fixtures, and SQL/data templates.
+   - Use modern string methods: `String.isBlank()`, `String.strip()`, `String.stripLeading()`, `String.stripTrailing()`, `String.repeat(n)`, `String.lines()`, `String.formatted(...)`.
+   - **STRICTLY FORBIDDEN**: Verbose multi-line `+` concatenations or legacy `trim()` when `strip()` is intended.
+
+9. **Modern File and NIO APIs**:
+   - Use `Path.of(...)` instead of legacy `Paths.get(...)`.
+   - Use `Files.readString(...)` and `Files.writeString(...)` for text file operations.
+
+10. **Simplify Conditionals and Predicates**:
+    - Collapse boolean check ladders into direct boolean returns (`return (condA && condB) || (condC && condD);`) rather than writing multiple `if (...) return true; return false;`.
+    - Avoid redundant case-insensitive checks (`"Void".equalsIgnoreCase(str)` matches `"void"`, `"VOID"`, etc.).
+    - Collapse nested `if` blocks into single compound conditions with `&&` or guard clauses with early returns.
+
+11. **Typography & Code Style**:
+    - In Javadoc, code comments, and documentation, adhere to standard American English punctuation: place commas after introductory abbreviations such as `e.g., ` and `i.e., `.
 
 ---
 
-## 5. Threading & Concurrency Rules
+## 5. Mandatory Post-Edit Code Inspection Protocol (Every Edit)
+
+> [!IMPORTANT]
+> **CONTINUOUS INSPECTION AFTER EVERY EDIT**:
+> Code quality in this repository is enforced through immediate, continuous static analysis. AI agents and developers **MUST NOT batch inspections at the end of a session**. After **EVERY SINGLE EDIT** to any file (`.java`, `.xml`, `.properties`, `.gradle.kts`), the agent MUST run the inspection tools and resolve all reported issues before proceeding.
+
+### 5.1 Inspection Execution Order
+Immediately following any file creation or modification:
+
+1. **Check Live Errors & Problems**:
+   ```bash
+   # Via idea execute_tool
+   execute_tool --command "get_file_problems --filePath <absolute_path>"
+   ```
+   Inspect the `errors` array. Any item with severity `ERROR`, `WARNING`, or `WEAK WARNING` must be addressed.
+
+2. **Run Static Inspections & Linter**:
+   ```bash
+   # Via idea execute_tool (quote JSON array properly)
+   execute_tool --command "lint_files --files [\"<absolute_path>\"]"
+   ```
+   Inspect all returned inspection warnings, weak warnings, deprecation notices, and code smell hints.
+
+### 5.2 Strict Zero-Tolerance Standard: Errors, Warnings, Weak Warnings & Bugs
+- **Errors (`ERROR`)**: Mandatory zero. Fix compilation failures, unresolvable symbols, type mismatches, and syntax errors immediately.
+- **Warnings (`WARNING`)**: Mandatory zero. Fix deprecated API usages, unchecked operations, unhandled exceptions, raw types, and unused declarations.
+- **Weak Warnings (`WEAK WARNING`)**: Mandatory zero. Fix code style hints, redundant qualifiers, suboptimal method calls (e.g., replacing `list.get(0)` with `list.getFirst()`), unneeded suppressions, and simplifyable conditionals.
+- **Bugs & Regressions**: Must be caught immediately at the edit boundary and fixed before touching another file.
+
+### 5.3 The Inspection-Fix-Verify Loop
+```text
+File Edited
+   │
+   ▼
+Run get_file_problems & lint_files
+   │
+   ├─► Problems / Warnings / Weak Warnings Found?
+   │     │
+   │     ▼
+   │   Fix issues immediately in target file
+   │     │
+   │     └─► Re-run get_file_problems & lint_files (Loop until 100% clean)
+   │
+   ▼
+Zero Errors, Zero Warnings, Zero Weak Warnings Confirmed
+   │
+   ▼
+Proceed to Next Edit / Run Tests
+```
+Never mark a task complete or proceed to git commits while any file problem, warning, or weak warning remains unresolved.
+
+---
+
+## 6. Threading & Concurrency Rules
 
 | Operation | Thread / Context | Mechanism | Existing Repo Example |
 |:---|:---|:---|:---|
@@ -124,16 +225,16 @@ The plugin builds against Java 25 (`JavaLanguageVersion.of(25)`). Developers and
 
 ---
 
-## 6. Tool Selection Priorities: IntelliJ MCP vs. CLI
+## 7. Tool Selection Priorities: IntelliJ MCP vs. CLI
 
 For Java codebase exploration, refactoring, and code verification within this project, agents **MUST prioritize the `idea` MCP server tools over raw CLI commands (`grep`, `find`, `cat`)**:
 
 | Task | Preferred MCP Tool (`idea` server via `call_mcp_tool`) | Replaces CLI Tool | Reason |
 |:---|:---|:---|:---|
+| **Post-Edit Error & Problem Check** | `execute_tool --command "get_file_problems --filePath <path>"` | `./gradlew compileJava` | Instant (0s) check against IntelliJ's live error highlighter. Mandatory after EVERY edit. |
+| **Post-Edit Static Code Inspection** | `execute_tool --command "lint_files --files [\"<path>\"]"` | CLI checkstyle | Evaluates project inspections across target files for warnings and weak warnings. |
 | **Find Java Class / Method / Symbol** | `execute_tool --command "search_symbol --q <Name>"` | `grep_search`, `find_by_name` | Queries IntelliJ's live index; returns exact start/end line without false matches or noise (~40 tokens). |
 | **Inspect Symbol Signature / JavaDoc** | `execute_tool --command "get_symbol_info --filePath <path> --line <L> --column <C>"` | `client_view_file`, `cat` | Returns exact signature, inheritance (`extends`, `implements`), and JavaDoc without dumping hundreds of file lines. |
-| **Check Compilation & Errors** | `execute_tool --command "get_file_problems --filePath <path>"` | `./gradlew compileJava` | Instant (0s) check against IntelliJ's live error highlighter. |
-| **Run Static Inspections** | `execute_tool --command "lint_files --files [\"<path>\"]"` | CLI checkstyle | Evaluates project inspections across target files. |
 | **Cross-File Renaming** | `execute_tool --command "rename_refactoring --pathInProject <p> --symbolName <old> --newName <new>"` | Manual search & replace | True AST refactoring updating declarations, calls, imports, and overrides safely. |
 | **Code Formatting** | `execute_tool --command "reformat_file --files [\"<path>\"]"` | Manual formatting | Applies IntelliJ's exact code style settings. |
 | **Discovered Run Configurations** | `execute_tool --command "get_run_configurations"` / `execute_run_configuration --configurationName <name>` | CLI command guessing | Leverages configured IntelliJ run targets directly. |
@@ -142,7 +243,7 @@ For Java codebase exploration, refactoring, and code verification within this pr
 
 ---
 
-## 7. Reference Repository Selection Matrix
+## 8. Reference Repository Selection Matrix
 
 > [!IMPORTANT]
 > **MANDATORY RULE FOR COMPARISONS**: Whenever asked to compare with production repositories or reference implementations, ALWAYS compare against the four local reference repositories located directly in the workspace root:
@@ -167,19 +268,19 @@ For Java codebase exploration, refactoring, and code verification within this pr
 
 ---
 
-## 8. Critical Pitfalls & Anti-Patterns to Avoid
+## 9. Critical Pitfalls & Anti-Patterns to Avoid
 
 1. **The Windows `compact.exe` Trap**: Windows has a native NTFS compression utility at `C:\Windows\System32\compact.exe`. Never execute `findExecutableInPath("compact")` on Windows without prioritizing WSL and filtering out Windows system directories. Use [`CompactToolchainUtil`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/run/CompactToolchainUtil.java).
-2. **Velocity `${NAME}` Pollution**: In file templates, the `${NAME}` property must be the pure simple identifier (e.g. `Token`), not a file path (`sub/Token`) or file name (`Token.compact`).
+2. **Velocity `${NAME}` Pollution**: In file templates, the `${NAME}` property must be the pure simple identifier (e.g., `Token`), not a file path (`sub/Token`) or file name (`Token.compact`).
 3. **Bypassing `CreateFileAction.MkDirs`**: When creating files from templates with paths, always use `MkDirs` to create intermediate directories; calling `dir.createFile()` with path slashes throws `IncorrectOperationException`.
 4. **Missing `<internalFileTemplate>`**: In modern IntelliJ Platform, bundled file templates (`.ft`) must be explicitly declared in `plugin.xml` with `<internalFileTemplate name="..."/>` or IntelliJ's usage statistics collector throws assertion errors in tests.
 5. **Merging Value & Type Namespaces**: Compact has distinct namespaces. Resolving `Point` in an expression must never resolve to `struct Point` (type), and resolving `Point` in a type signature must never resolve to `const Point` (variable).
-6. **Swallowing Exceptions**: Never use empty `catch (Exception e) { return null; }` blocks that mask genuine configuration errors or permissions issues from the user.
+6. **Swallowing Exceptions**: Never use empty `catch (Exception _) { return null; }` blocks that mask genuine configuration errors or permissions issues from the user.
 7. **Memory Leaks via Static PSI**: Never store `PsiElement`, `PsiFile`, or `Project` instances in static fields, long-lived caches, or non-disposable listeners. Use `CachedValuesManager` or `Disposer`.
 
 ---
 
-## 9. Code Review & Improvement Bar (Zero Improvement Hallucinations)
+## 10. Code Review & Improvement Bar (Zero Improvement Hallucinations)
 
 When the user asks open-ended, casual, or vague questions such as *"Does this file need improvements?"*, *"Can this be improved?"*, or *"Review this file"*:
 
@@ -189,8 +290,8 @@ When the user asks open-ended, casual, or vague questions such as *"Does this fi
 
 2. **Strict Invariant Benchmark**:
    Only propose an improvement if there is a concrete, verifiable failure against one of these four criteria:
-   - **Threading & Concurrency (Section 5)**: e.g. PSI read off ReadAction, PSI mutation off EDT/WriteCommandAction, or blocking `process.waitFor()` on the EDT.
-   - **Critical Invariants (Section 3)**: e.g. Merged value/type namespaces, missing null/`PsiErrorElement` guards, or memory leaks via static PSI references.
+   - **Threading & Concurrency (Section 6)**: e.g., PSI read off ReadAction, PSI mutation off EDT/WriteCommandAction, or blocking `process.waitFor()` on the EDT.
+   - **Critical Invariants (Section 3)**: e.g., Merged value/type namespaces, missing null/`PsiErrorElement` guards, or memory leaks via static PSI references.
    - **Language / Compiler Semantics**: Direct deviation from official compiler rules (`compact/compiler/` or [`.ai/context/compact-semantics.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/compact-semantics.md)).
    - **Correctness / Regression**: A tangible bug, broken test, or resource leak.
 
@@ -202,11 +303,11 @@ When the user asks open-ended, casual, or vague questions such as *"Does this fi
 
 4. **Output Format when Clean**:
    If none of the four criteria are violated, state concisely:
-   > **"No improvements required."** Followed by a 1–2 bullet summary confirming compliance with the relevant invariants (e.g. threading model, null-safety, test coverage).
+   > **"No improvements required."** Followed by a 1–2 bullet summary confirming compliance with the relevant invariants (e.g., threading model, null-safety, test coverage).
 
 ---
 
-## 10. Context Navigation & Task Routing Map
+## 11. Context Navigation & Task Routing Map
 
 All detailed context and workflow documents reside under [`.ai/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/):
 

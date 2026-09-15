@@ -114,43 +114,30 @@ public enum CompactDeclarationType {
   /**
    * Deduces the declaration type from a concrete PSI element.
    */
+  @SuppressWarnings("unused")
   public static @Nullable CompactDeclarationType fromPsi(@Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
-    if (element instanceof CompactCircuitDefinition || element instanceof CompactExternalCircuit) {
-      return CIRCUIT;
-    }
-    if (element instanceof CompactWitnessDeclaration) {
-      return WITNESS;
-    }
-    if (element instanceof CompactStructDefinition) {
-      return STRUCT;
-    }
-    if (element instanceof CompactEnumDefinition) {
-      return ENUM;
-    }
-    if (element instanceof CompactModuleDefinition) {
-      return MODULE;
-    }
-    if (element instanceof CompactExternalContractDeclaration) {
-      return CONTRACT;
-    }
-    if (element instanceof CompactTypeDefinition) {
-      return TYPE;
-    }
-    if (element instanceof CompactLedgerDeclaration) {
-      return LEDGER;
-    }
-    if (element instanceof CompactConstBindingImpl || (element.getNode() != null && element.getNode().getElementType() == CompactElementTypes.CONST_STATEMENT)) {
-      return CONST;
-    }
-    return null;
+    return switch (element) {
+      case CompactCircuitDefinition _, CompactExternalCircuit _ -> CIRCUIT;
+      case CompactWitnessDeclaration _ -> WITNESS;
+      case CompactStructDefinition _ -> STRUCT;
+      case CompactEnumDefinition _ -> ENUM;
+      case CompactModuleDefinition _ -> MODULE;
+      case CompactExternalContractDeclaration _ -> CONTRACT;
+      case CompactTypeDefinition _ -> TYPE;
+      case CompactLedgerDeclaration _ -> LEDGER;
+      case CompactConstBindingImpl _ -> CONST;
+      default -> (element.getNode() != null && element.getNode().getElementType() == CompactElementTypes.CONST_STATEMENT)
+          ? CONST : null;
+    };
   }
 
   /**
    * Deduces the declaration type from an AST composite {@link IElementType}.
    */
+  @SuppressWarnings("unused")
   public static @Nullable CompactDeclarationType fromElementType(@Nullable IElementType elementType) {
     if (elementType == null) {
       return null;

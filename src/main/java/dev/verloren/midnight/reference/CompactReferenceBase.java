@@ -31,7 +31,7 @@ import java.util.Collection;
  * </p>
  */
 public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<PsiElement> {
-  private static final ResolveCache.PolyVariantResolver<CompactReferenceBase> RESOLVER = (reference, incompleteCode) -> reference.resolveInner();
+  private static final ResolveCache.PolyVariantResolver<CompactReferenceBase> RESOLVER = (reference, _) -> reference.resolveInner();
 
   protected CompactReferenceBase(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
     super(element, rangeInElement, false);

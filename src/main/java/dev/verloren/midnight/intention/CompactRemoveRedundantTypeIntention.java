@@ -25,10 +25,6 @@ public class CompactRemoveRedundantTypeIntention extends PsiElementBaseIntention
     return "Compact type annotation";
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {

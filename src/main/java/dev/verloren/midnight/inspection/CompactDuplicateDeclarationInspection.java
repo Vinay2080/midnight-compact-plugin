@@ -78,7 +78,7 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
         }
 
         Map<String, List<CompactNamedElement>> targetMap = isTypeDeclaration(named) ? typeDeclarations : valueDeclarations;
-        targetMap.computeIfAbsent(name, k -> new ArrayList<>()).add(named);
+        targetMap.computeIfAbsent(name, _ -> new ArrayList<>()).add(named);
       }
     }
 

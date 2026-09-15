@@ -26,11 +26,13 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
   }
 
   @Override
+  @SuppressWarnings("RedundantMethodOverride")
   public boolean isAvailable(@NotNull Project project) {
     return true;
   }
 
   @Override
+  @SuppressWarnings("RedundantMethodOverride")
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
     return true;
   }
@@ -41,6 +43,7 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
   }
 
   @Override
+  @SuppressWarnings("RedundantMethodOverride")
   public boolean isConfigurable() {
     return true;
   }
@@ -48,6 +51,7 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
   /**
    * Triggers an update of the widget across open status bars.
    */
+  @SuppressWarnings("IncorrectServiceRetrieving")
   public static void updateWidget(@NotNull Project project) {
     if (project.isDisposed()) return;
     StatusBarWidgetsManager manager = project.getService(StatusBarWidgetsManager.class);

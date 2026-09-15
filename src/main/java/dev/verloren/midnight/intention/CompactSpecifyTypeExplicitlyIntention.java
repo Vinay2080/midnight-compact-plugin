@@ -31,10 +31,6 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     return "Compact type annotation";
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 
   /**
    * Finds the {@link CompactConstBindingImpl} associated with the given element, whether the caret
@@ -95,7 +91,7 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     }
 
     CompactType type = initializer.getType();
-    if (type == null || CompactPrimitiveType.UNKNOWN.equals(type) || type.name().isBlank()) {
+    if (CompactPrimitiveType.UNKNOWN.equals(type) || type.name().isBlank()) {
       return false;
     }
 
@@ -117,7 +113,7 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     }
 
     CompactType type = initializer.getType();
-    if (type == null || CompactPrimitiveType.UNKNOWN.equals(type)) {
+    if (CompactPrimitiveType.UNKNOWN.equals(type)) {
       return;
     }
 

@@ -122,7 +122,7 @@ public final class CompactDeclarationTriggerResolver {
     }
 
     if (matches.size() == 1) {
-      return matches.get(0);
+      return matches.getFirst();
     }
 
     // Disambiguate conflicts:
@@ -130,7 +130,7 @@ public final class CompactDeclarationTriggerResolver {
     if (isExported) {
       matches.removeIf(t -> !t.isExportable());
       if (matches.size() == 1) {
-        return matches.get(0);
+        return matches.getFirst();
       }
     }
 
@@ -149,7 +149,7 @@ public final class CompactDeclarationTriggerResolver {
       }
     }
 
-    return matches.get(0);
+    return matches.getFirst();
   }
 
   private static boolean matchesDeclaration(@NotNull String declPrefix, @NotNull CompactDeclarationType type) {

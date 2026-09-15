@@ -174,9 +174,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     });
 
     // Listen to compiler version changes or project-level switches
-    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, () -> {
-      updateActiveFileInfo(null);
-    });
+    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, (CompactCompilerEventListener) () -> updateActiveFileInfo(null));
 
     // Listen to document edits in open .compact files so pragma changes update live
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
@@ -274,14 +272,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
 
       // Sort descending by SemVer
       List<String> sortedVersions = new ArrayList<>(allVersionKeys);
-      sortedVersions.sort((v1, v2) -> {
-        CompactSemVerUtil.SemVer s1 = CompactSemVerUtil.parse(v1);
-        CompactSemVerUtil.SemVer s2 = CompactSemVerUtil.parse(v2);
-        if (s1 != null && s2 != null) {
-          return s2.compareTo(s1);
-        }
-        return v2.compareTo(v1);
-      });
+      sortedVersions.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
 
       // 2. Render Minimal Classic Version Cards
       for (String v : sortedVersions) {

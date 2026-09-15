@@ -47,9 +47,7 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
       document.deleteString(startOffset, startOffset + "export ".length());
       tailOffset -= "export ".length();
       context.setTailOffset(tailOffset);
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(tailOffset);
-      }
+      editor.getCaretModel().moveToOffset(tailOffset);
       chars = document.getCharsSequence();
     }
 
@@ -59,16 +57,12 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
     if (!lineSuffix.isEmpty() && (lineSuffix.matches("^[a-zA-Z_].*") || lineSuffix.startsWith(":"))) {
       if (tailOffset < chars.length() && !Character.isWhitespace(chars.charAt(tailOffset))) {
         document.insertString(tailOffset, " ");
-        if (editor != null) {
-          editor.getCaretModel().moveToOffset(tailOffset + 1);
-        }
+        editor.getCaretModel().moveToOffset(tailOffset + 1);
       }
       return;
     }
 
-    if (editor != null) {
-      insertTemplate(context.getProject(), editor, tailOffset);
-    }
+    insertTemplate(context.getProject(), editor, tailOffset);
   }
 
   /**

@@ -25,17 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * names (e.g. {@code circuit1}, {@code circuit2}, {@code witness1}) that avoid collisions
  * with existing declarations in the file or imported modules.</p>
  */
-public class CompactDeclarationInsertHandler implements InsertHandler<LookupElement> {
+public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType declarationType) implements InsertHandler<LookupElement> {
 
-  private final CompactDeclarationType declarationType;
 
-  public CompactDeclarationInsertHandler(@NotNull CompactDeclarationType declarationType) {
-    this.declarationType = declarationType;
-  }
-
-  public @NotNull CompactDeclarationType getDeclarationType() {
-    return declarationType;
-  }
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -54,9 +46,7 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
       document.deleteString(startOffset, startOffset + "export ".length());
       tailOffset -= "export ".length();
       context.setTailOffset(tailOffset);
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(tailOffset);
-      }
+      editor.getCaretModel().moveToOffset(tailOffset);
       chars = document.getCharsSequence();
     }
 
@@ -69,16 +59,12 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
         || lineSuffix.startsWith(":"))) {
       if (tailOffset < chars.length() && !Character.isWhitespace(chars.charAt(tailOffset))) {
         document.insertString(tailOffset, " ");
-        if (editor != null) {
-          editor.getCaretModel().moveToOffset(tailOffset + 1);
-        }
+        editor.getCaretModel().moveToOffset(tailOffset + 1);
       }
       return;
     }
 
-    if (editor != null) {
-      insertTemplate(context.getProject(), editor, tailOffset);
-    }
+    insertTemplate(context.getProject(), editor, tailOffset);
   }
 
   /**
@@ -128,28 +114,7 @@ public class CompactDeclarationInsertHandler implements InsertHandler<LookupElem
         template.addVariable("RET", new ConstantNode("Field"), true);
         template.addTextSegment(";");
       }
-      case STRUCT -> {
-        template.addTextSegment(" ");
-        template.addVariable("NAME", new ConstantNode(suggestedName), true);
-        template.addTextSegment(" {\n  ");
-        template.addEndVariable();
-        template.addTextSegment("\n}");
-      }
-      case ENUM -> {
-        template.addTextSegment(" ");
-        template.addVariable("NAME", new ConstantNode(suggestedName), true);
-        template.addTextSegment(" {\n  ");
-        template.addEndVariable();
-        template.addTextSegment("\n}");
-      }
-      case MODULE -> {
-        template.addTextSegment(" ");
-        template.addVariable("NAME", new ConstantNode(suggestedName), true);
-        template.addTextSegment(" {\n  ");
-        template.addEndVariable();
-        template.addTextSegment("\n}");
-      }
-      case CONTRACT -> {
+      case STRUCT, ENUM, MODULE, CONTRACT -> {
         template.addTextSegment(" ");
         template.addVariable("NAME", new ConstantNode(suggestedName), true);
         template.addTextSegment(" {\n  ");

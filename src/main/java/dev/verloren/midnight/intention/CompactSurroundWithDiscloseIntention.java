@@ -24,10 +24,6 @@ public class CompactSurroundWithDiscloseIntention extends PsiElementBaseIntentio
     return "Compact privacy & disclosure";
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 
   @Nullable
   private CompactExpression findSurroundableExpression(@NotNull PsiElement element) {

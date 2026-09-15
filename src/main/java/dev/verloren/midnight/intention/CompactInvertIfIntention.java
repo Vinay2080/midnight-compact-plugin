@@ -32,10 +32,6 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     return "Compact control flow";
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 
   @Nullable
   private PsiElement findIfStatement(@NotNull PsiElement element) {
@@ -57,7 +53,7 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     }
 
     IfParts parts = parseIfParts(ifStmt);
-    if (parts == null || parts.condition == null || parts.thenBranch == null || parts.elseBranch == null) {
+    if (parts.condition == null || parts.thenBranch == null || parts.elseBranch == null) {
       return false;
     }
 
@@ -81,7 +77,7 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     }
 
     IfParts parts = parseIfParts(ifStmt);
-    if (parts == null || parts.condition == null || parts.thenBranch == null || parts.elseBranch == null) {
+    if (parts.condition == null || parts.thenBranch == null || parts.elseBranch == null) {
       return;
     }
 
@@ -145,7 +141,7 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     PsiElement elseBranch;
   }
 
-  @Nullable
+  @NotNull
   private static IfParts parseIfParts(@NotNull PsiElement ifStmt) {
     IfParts parts = new IfParts();
     boolean seenLParen = false;

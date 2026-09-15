@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
+import java.util.Comparator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +21,18 @@ public final class CompactSemVerUtil {
   private static final Pattern CONSTRAINT_PATTERN = Pattern.compile(
       "(>=|<=|>|<|==|=|\\^|~)?\\s*v?(\\d+(?:\\.\\d+)?(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?)"
   );
+
+  /**
+   * Comparator for sorting version strings in descending order (newest first).
+   */
+  public static final Comparator<String> DESCENDING_COMPARATOR = (v1, v2) -> {
+    SemVer s1 = parse(v1);
+    SemVer s2 = parse(v2);
+    if (s1 != null && s2 != null) {
+      return s2.compareTo(s1);
+    }
+    return v2.compareTo(v1);
+  };
 
   private CompactSemVerUtil() {}
 
