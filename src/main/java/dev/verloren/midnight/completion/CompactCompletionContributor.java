@@ -53,17 +53,27 @@ public class CompactCompletionContributor extends CompletionContributor {
 
   @SuppressWarnings("this-escape")
   public CompactCompletionContributor() {
-    extend(CompletionType.BASIC, PlatformPatterns.psiElement().withLanguage(CompactLanguage.INSTANCE), new CompletionProvider<>() {
-      @Override
-      protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
-        addCompactCompletions(parameters.getPosition(), result);
-      }
-    });
+    extend(
+        CompletionType.BASIC,
+        PlatformPatterns.psiElement()
+            .withLanguage(CompactLanguage.INSTANCE)
+            .andNot(PlatformPatterns.psiComment())
+            .andNot(PlatformPatterns.psiElement().inside(PlatformPatterns.psiComment())),
+        new CompletionProvider<>() {
+          @Override
+          protected void addCompletions(@NotNull CompletionParameters parameters, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
+            addCompactCompletions(parameters.getPosition(), result);
+          }
+        });
   }
 
   private static void addCompactCompletions(@NotNull PsiElement position, @NotNull CompletionResultSet result) {
+    if (CompactCompletionContext.isComment(position)) {
+      return;
+    }
+
     if (CompactCompletionContext.isExportPreceding(position)) {
-      PsiElement previous = PsiTreeUtil.prevVisibleLeaf(position);
+      PsiElement previous = CompactCompletionContext.prevNonCommentLeaf(position);
       if (previous != null && previous.getNode() != null) {
         com.intellij.psi.tree.IElementType prevType = previous.getNode().getElementType();
         if (prevType == CompactTokenTypes.SEALED) {
@@ -333,9 +343,9 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
 
     // 2. Fallback when the caret is immediately after the DOT token and not enclosed in CompactMemberExprImpl
-    PsiElement previous = PsiTreeUtil.prevVisibleLeaf(position);
+    PsiElement previous = CompactCompletionContext.prevNonCommentLeaf(position);
     if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.DOT) {
-      PsiElement leafBeforeDot = PsiTreeUtil.prevVisibleLeaf(previous);
+      PsiElement leafBeforeDot = CompactCompletionContext.prevNonCommentLeaf(previous);
       if (leafBeforeDot != null) {
         String baseText = leafBeforeDot.getText();
         if (baseText != null && !baseText.isEmpty()) {
@@ -444,9 +454,9 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
 
     // 3. Check if in the "is (<caret>)" or "assert(<caret>)" condition context
-    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    PsiElement prev = CompactCompletionContext.prevNonCommentLeaf(position);
     if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.LPAREN) {
-      PsiElement beforeParen = PsiTreeUtil.prevVisibleLeaf(prev);
+      PsiElement beforeParen = CompactCompletionContext.prevNonCommentLeaf(prev);
       if (beforeParen != null && beforeParen.getNode() != null) {
         com.intellij.psi.tree.IElementType tt = beforeParen.getNode().getElementType();
         if (tt == CompactTokenTypes.IF || tt == CompactTokenTypes.ASSERT) {
@@ -459,7 +469,7 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static boolean isReturnContext(@NotNull PsiElement position) {
-    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    PsiElement prev = CompactCompletionContext.prevNonCommentLeaf(position);
     if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.RETURN) {
       return true;
     }
@@ -468,7 +478,7 @@ public class CompactCompletionContributor extends CompletionContributor {
     if (returnStmt != null) {
       return true;
     }
-    for (PsiElement p = prev; p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
+    for (PsiElement p = prev; p != null; p = CompactCompletionContext.prevNonCommentLeaf(p)) {
       if (p.getNode() == null) break;
       com.intellij.psi.tree.IElementType tt = p.getNode().getElementType();
       if (tt == CompactTokenTypes.RETURN) {

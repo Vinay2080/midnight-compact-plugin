@@ -30,6 +30,7 @@ phases:
   intention_preview_side_effect_guard: complete (v1.2.6)
   external_annotator_lag_and_wsl_mapping: complete (v1.2.6)
   code_inspection_and_java25_modernization: complete (v1.2.6)
+  comment_completion_suppression: complete (v1.2.6)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)
@@ -38,7 +39,7 @@ phases:
   polyglot_ts_test_framework: planned (Phase 36)
 
 tests:
-  last_known_passing: 550
+  last_known_passing: 558
   failures: 0
   skipped: 0
   suites:
@@ -46,6 +47,7 @@ tests:
     parser: dev.verloren.midnight.parser.CompactParserTest
     reference: dev.verloren.midnight.reference.CompactReferenceTest
     completion: dev.verloren.midnight.completion.CompactCompletionTest
+    live_templates: dev.verloren.midnight.ide.templates.CompactLiveTemplateTest
     inspection_unresolved: dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspectionTest
     inspection_duplicate: dev.verloren.midnight.inspection.CompactDuplicateDeclarationInspectionTest
     inspection_unused: dev.verloren.midnight.inspection.CompactUnusedLocalVariableInspectionTest

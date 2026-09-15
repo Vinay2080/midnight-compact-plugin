@@ -1,12 +1,15 @@
 package dev.verloren.midnight.completion;
 
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Context classifier determining the semantic role of the cursor position during code completion.
@@ -19,8 +22,30 @@ public final class CompactCompletionContext {
   private CompactCompletionContext() {
   }
 
+  public static boolean isComment(@NotNull PsiElement position) {
+    if (position instanceof PsiComment) {
+      return true;
+    }
+    if (PsiTreeUtil.getParentOfType(position, PsiComment.class, false) != null) {
+      return true;
+    }
+    return position.getNode() != null && CompactTokenSets.COMMENTS.contains(position.getNode().getElementType());
+  }
+
+  public static @Nullable PsiElement prevNonCommentLeaf(@NotNull PsiElement position) {
+    for (PsiElement p = PsiTreeUtil.prevVisibleLeaf(position); p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
+      if (!isComment(p)) {
+        return p;
+      }
+    }
+    return null;
+  }
+
   public static @NotNull Kind classify(@NotNull PsiElement position) {
-    PsiElement previous = PsiTreeUtil.prevVisibleLeaf(position);
+    if (isComment(position)) {
+      return Kind.NONE;
+    }
+    PsiElement previous = prevNonCommentLeaf(position);
     if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.DOT) {
       return Kind.MEMBER;
     }
@@ -77,8 +102,11 @@ public final class CompactCompletionContext {
   }
 
   public static boolean isExportPreceding(@NotNull PsiElement position) {
-    // 1. Walk backward through visible AST leaves until statement/block boundary
-    for (PsiElement p = PsiTreeUtil.prevVisibleLeaf(position); p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
+    if (isComment(position)) {
+      return false;
+    }
+    // 1. Walk backward through visible non-comment AST leaves until statement/block boundary
+    for (PsiElement p = prevNonCommentLeaf(position); p != null; p = prevNonCommentLeaf(p)) {
       if (p.getNode() == null) break;
       IElementType tt = p.getNode().getElementType();
       if (tt == CompactTokenTypes.EXPORT) {
@@ -98,7 +126,7 @@ public final class CompactCompletionContext {
         CharSequence chars = doc.getCharsSequence();
         return hasPrecedingExportOnLine(chars, lineStart, offset);
       }
-    } catch (Exception ignored) {
+    } catch (Exception _) {
     }
 
     return false;

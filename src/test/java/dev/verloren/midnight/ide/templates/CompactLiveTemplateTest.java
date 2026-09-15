@@ -30,6 +30,30 @@ public class CompactLiveTemplateTest extends BasePlatformTestCase {
     assertFalse("Should not be in context for non-Compact files", contextType.isInContext(actionContext));
   }
 
+  public void testLiveTemplateContextNotInComment() {
+    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, "// comment with ledg\n");
+    CompactLiveTemplateContextType contextType = new CompactLiveTemplateContextType();
+
+    TemplateActionContext actionContext = TemplateActionContext.create(file, myFixture.getEditor(), 5, 5, false);
+    assertFalse("Should not be in context inside comments", contextType.isInContext(actionContext));
+  }
+
+  public void testLiveTemplateContextNotInDocComment() {
+    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, "/** doc with ledg */\n");
+    CompactLiveTemplateContextType contextType = new CompactLiveTemplateContextType();
+
+    TemplateActionContext actionContext = TemplateActionContext.create(file, myFixture.getEditor(), 6, 6, false);
+    assertFalse("Should not be in context inside doc comments", contextType.isInContext(actionContext));
+  }
+
+  public void testLiveTemplateExpansionSuppressedInsideComment() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "// led<caret>\n");
+    myFixture.type("g\t");
+    String text = myFixture.getEditor().getDocument().getText();
+    assertFalse("Should not expand 'export ledger' inside comment", text.contains("export ledger"));
+    assertTrue("Should contain literal typed comment text", text.contains("// led"));
+  }
+
   public void testLedLiveTemplateFormat() {
     TemplateImpl template = TemplateSettings.getInstance().getTemplate("led", "Compact");
     assertNotNull("Live template 'led' should exist", template);

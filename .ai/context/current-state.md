@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & Generalized Name Generation)
+Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Name Generation & Comment Completion Suppression)
 
 ---
 
@@ -16,8 +16,13 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & G
     - `Kind.AFTER_SEALED`: Suggests `ledger`.
     - `Kind.AFTER_PURE`: Suggests `circuit`.
     - `Kind.AFTER_NEW`: Suggests `type`.
+    - `Kind.NONE` for comment and docstring contexts (`isComment`).
   - Top-level declaration completion offering both bare and exported variants with `CompactDeclarationInsertHandler` interactive live template scaffolding.
   - `CompactLedgerInsertHandler`: Interactive live template tab-stops (`$NAME$`, `$TYPE$`), automatic `export ` prefix injection, and non-destructive lookahead preservation.
+  - **Comment Completion Suppression (v1.2.6)**:
+    - Defense-in-depth comment filtering in `CompactCompletionContributor` via `.andNot(PlatformPatterns.psiComment())` and early return guard.
+    - `prevNonCommentLeaf` leaf traversal in `CompactCompletionContext` to prevent AST comment trivia from masquerading as statement or declaration starts.
+    - Live template context filtering in `CompactLiveTemplateContextType` preventing expansion of declaration triggers (e.g. `ledg`, `led`, `cir`) within comments.
   - Parametric live templates in `Compact.xml` with bundle descriptions: `led`, `ledg`, `ledger`, `cir`, `wit`, `expw`, `str`, `expstr`, `en`, `expen`, `type`, `expt`, `const`, `expconst`, `exp`, `cct`.
 - **Generalized Declaration Name Auto-Numbering & Scope Analysis (Phase 29 / v1.2.6)**:
   - `CompactDeclarationNameGenerator`: Universal lowest-positive-integer gap filling (`circuit1`, `circuit2`, `witness1`, etc.) with explicit user-provided name preservation.
@@ -68,7 +73,7 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations & G
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
   - Fully maintained index in `.ai/decisions/README.md` covering all 27 major architectural subsystems (**ADR-001 through ADR-027**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
-- **Total Unit Test Count**: **509 passing tests** across 56 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
+- **Total Unit Test Count**: **558 passing tests** across 57 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
 
 ### Roadmap & Evolution (Phases 29–35)
 - **Phase 29: Generalized Declaration Name Generation & Live Template Macros (Complete)**

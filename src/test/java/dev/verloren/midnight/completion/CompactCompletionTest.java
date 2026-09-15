@@ -790,4 +790,85 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     String text6 = "{ export ";
     assertTrue(CompactCompletionContext.hasPrecedingExportOnLine(text6, 0, text6.length()));
   }
+
+  public void testNoCompletionInsideLineComment() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        // led<caret>
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertTrue("Should offer no completions inside line comment",
+        lookupStrings == null || lookupStrings.isEmpty());
+  }
+
+  public void testNoCompletionInsideBlockComment() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        /* led<caret> */
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertTrue("Should offer no completions inside block comment",
+        lookupStrings == null || lookupStrings.isEmpty());
+  }
+
+  public void testNoCompletionInsideDocComment() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        /**
+         * led<caret>
+         */
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertTrue("Should offer no completions inside doc comment",
+        lookupStrings == null || lookupStrings.isEmpty());
+  }
+
+  public void testCommentContextClassificationReturnsNone() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        // line comment <caret>
+        """
+    );
+    PsiElement linePos = myFixture.getFile().findElementAt(myFixture.getCaretOffset() - 1);
+    assertNotNull(linePos);
+    assertEquals(CompactCompletionContext.Kind.NONE, CompactCompletionContext.classify(linePos));
+
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        /* block comment <caret> */
+        """
+    );
+    PsiElement blockPos = myFixture.getFile().findElementAt(myFixture.getCaretOffset() - 1);
+    assertNotNull(blockPos);
+    assertEquals(CompactCompletionContext.Kind.NONE, CompactCompletionContext.classify(blockPos));
+
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        /** doc comment <caret> */
+        """
+    );
+    PsiElement docPos = myFixture.getFile().findElementAt(myFixture.getCaretOffset() - 1);
+    assertNotNull(docPos);
+    assertEquals(CompactCompletionContext.Kind.NONE, CompactCompletionContext.classify(docPos));
+  }
+
+  public void testTopLevelCompletionAfterCommentWorks() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        // Header comment
+        cir<caret>
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'circuit' after comment", lookupStrings.contains("circuit"));
+    assertTrue("Should suggest 'export circuit' after comment", lookupStrings.contains("export circuit"));
+  }
 }

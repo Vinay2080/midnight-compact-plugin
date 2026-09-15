@@ -18,6 +18,7 @@
 - Improved Compact grammar validation to disallow top-level `export const` and `const` completion suggestions, aligning with Compact module-scope rules.
 
 ### Fixed
+- Suppressed code completions, keyword suggestions, and declaration template expansions (e.g. typing `ledg` + Enter or Tab) inside single-line comments, block comments, and documentation blocks.
 - Fixed unhandled `SideEffectGuard: INVOKE_LATER` runtime exception and editor crash when previewing compiler switch quick-fixes and intentions in IntelliJ IDEA 2023.2+.
 - Suppressed daemon code analyzer restarts and project SDK mutation during intention preview generation (`IntentionPreviewInfo.EMPTY`).
 - Fixed stale compiler error underlines by automatically flushing dirty editor document buffers to disk before external compilation.
