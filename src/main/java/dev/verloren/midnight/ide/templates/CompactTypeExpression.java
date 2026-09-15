@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import dev.verloren.midnight.completion.CompactCompletionContributor;
+import dev.verloren.midnight.completion.CompactParameterizedTypeInsertHandler;
 import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import java.util.Set;
 
 /**
  * Live template expression providing data type completions (built-in primitive types,
- * in-scope user-defined types, and imported types) for live template variables.
+ * parameterized type variants, in-scope user-defined types, and imported types) for live template variables.
  */
 public class CompactTypeExpression extends Expression {
   private final String defaultType;
@@ -52,15 +53,16 @@ public class CompactTypeExpression extends Expression {
     Set<String> seen = new LinkedHashSet<>();
     List<LookupElement> items = new ArrayList<>();
 
-    // 1. Initial default item (e.g. State, Void, Field)
-    if (!defaultType.isEmpty() && seen.add(defaultType)) {
-      items.add(LookupElementBuilder.create(defaultType).bold());
+    // 1. Initial default item (e.g. State, Void, Field, Bytes<32>)
+    if (!defaultType.isEmpty()) {
+      seen.add(defaultType);
+      items.add(createTypeLookupElement(defaultType));
     }
 
-    // 2. Built-in types
-    for (String builtin : CompactCompletionContributor.BUILTIN_TYPES) {
-      if (seen.add(builtin)) {
-        items.add(LookupElementBuilder.create(builtin).bold());
+    // 2. Built-in types and parameterized/sized variants
+    for (LookupElement builtin : CompactCompletionContributor.createBuiltinTypeLookupElements()) {
+      if (seen.add(builtin.getLookupString())) {
+        items.add(builtin);
       }
     }
 
@@ -80,5 +82,28 @@ public class CompactTypeExpression extends Expression {
     }
 
     return items.toArray(LookupElement.EMPTY_ARRAY);
+  }
+
+  private static @NotNull LookupElement createTypeLookupElement(@NotNull String typeName) {
+    LookupElementBuilder builder = LookupElementBuilder.create(typeName).bold().withTypeText("type");
+    return switch (typeName) {
+      case "Bytes" -> builder
+          .withTailText("<> (length: 32, 64, etc.)", true)
+          .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS);
+      case "Uint" -> builder
+          .withTailText("<> (bit width: 8, 16, 32, 64, 128, 256)", true)
+          .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS);
+      case "Vector" -> builder
+          .withTailText("<> (Vector<length, type>)", true)
+          .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS);
+      case "Opaque" -> builder
+          .withTailText("<> (Opaque<\"name\">)", true)
+          .withInsertHandler(CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS);
+      case "Bytes<32>" -> builder
+          .withTailText(" (32 bytes - standard hash/key/address)", true);
+      case "Bytes<64>" -> builder
+          .withTailText(" (64 bytes - signature)", true);
+      default -> builder;
+    };
   }
 }

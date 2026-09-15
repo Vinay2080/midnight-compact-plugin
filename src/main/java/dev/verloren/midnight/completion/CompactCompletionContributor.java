@@ -21,8 +21,10 @@ import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -31,7 +33,8 @@ import java.util.Set;
  *
  * <p>Extends {@link CompletionContributor} and classifies the caret context via
  * {@link CompactCompletionContext#classify(PsiElement)} into keywords, types, values,
- * or members, populating the {@link CompletionResultSet} with contextually valid lookup items.</p>
+ * members, or parameterized type sizes, populating the {@link CompletionResultSet}
+ * with contextually valid lookup items.</p>
  */
 public class CompactCompletionContributor extends CompletionContributor {
 
@@ -84,13 +87,165 @@ public class CompactCompletionContributor extends CompletionContributor {
         addValueCompletions(position, result);
       }
       case TYPE -> {
-        addAll(result, BUILTIN_TYPES);
+        addBuiltinTypeCompletions(result);
         addNamed(result, CompactResolveUtil.collectTypeDeclarations(position));
         addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.TYPE));
       }
+      case BYTES_SIZE -> addBytesSizeCompletions(result);
+      case UINT_SIZE -> addUintSizeCompletions(result);
       case MEMBER -> addMemberCompletions(position, result);
       case VALUE -> addValueCompletions(position, result);
       case NONE -> {}
+    }
+  }
+
+  public static void addBuiltinTypeCompletions(@NotNull CompletionResultSet result) {
+    for (LookupElement element : createBuiltinTypeLookupElements()) {
+      result.addElement(element);
+    }
+  }
+
+  public static List<LookupElement> createBuiltinTypeLookupElements() {
+    List<LookupElement> elements = new ArrayList<>();
+
+    // 1. Sized and generic Bytes
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Bytes")
+            .withPresentableText("Bytes")
+            .withTailText("<> (length: 32, 64, etc.)", true)
+            .withTypeText("type")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+        100.0
+    ));
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Bytes<32>")
+            .withPresentableText("Bytes<32>")
+            .withTailText(" (32 bytes - standard hash/key/address)", true)
+            .withTypeText("type")
+            .bold(),
+        99.0
+    ));
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Bytes<64>")
+            .withPresentableText("Bytes<64>")
+            .withTailText(" (64 bytes - signature)", true)
+            .withTypeText("type")
+            .bold(),
+        98.0
+    ));
+
+    // 2. Sized and generic Uint
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Uint")
+            .withPresentableText("Uint")
+            .withTailText("<> (bit width: 8, 16, 32, 64, 128, 256)", true)
+            .withTypeText("type")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+        100.0
+    ));
+    int[] uintWidths = {8, 16, 32, 64, 128, 256};
+    double uintPriority = 99.0;
+    for (int width : uintWidths) {
+      elements.add(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("Uint<" + width + ">")
+              .withPresentableText("Uint<" + width + ">")
+              .withTailText(" (" + width + "-bit)", true)
+              .withTypeText("type")
+              .bold(),
+          uintPriority
+      ));
+      uintPriority -= 0.5;
+    }
+
+    // 3. Primitive non-parameterized types
+    String[] simpleTypes = {"Boolean", "Field", "State", "Counter", "Void",
+        "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point"};
+    for (String simple : simpleTypes) {
+      elements.add(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(simple).withTypeText("type").bold(),
+          95.0
+      ));
+    }
+
+    // 4. Vector and Opaque
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Vector")
+            .withPresentableText("Vector")
+            .withTailText("<> (Vector<length, type>)", true)
+            .withTypeText("type")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+        90.0
+    ));
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Opaque")
+            .withPresentableText("Opaque")
+            .withTailText("<> (Opaque<\"name\">)", true)
+            .withTypeText("type")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS),
+        85.0
+    ));
+
+    return elements;
+  }
+
+  private static void addBytesSizeCompletions(@NotNull CompletionResultSet result) {
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("32")
+            .withPresentableText("32")
+            .withTailText(" (32 bytes - 256 bits, standard hash/key/address)", true)
+            .bold(),
+        100.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("64")
+            .withPresentableText("64")
+            .withTailText(" (64 bytes - 512 bits, signature)", true)
+            .bold(),
+        90.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("16")
+            .withPresentableText("16")
+            .withTailText(" (16 bytes - 128 bits)", true),
+        80.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("8")
+            .withPresentableText("8")
+            .withTailText(" (8 bytes - 64 bits)", true),
+        70.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("48")
+            .withPresentableText("48")
+            .withTailText(" (48 bytes - 384 bits)", true),
+        60.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("20")
+            .withPresentableText("20")
+            .withTailText(" (20 bytes - 160 bits, Ethereum address)", true),
+        50.0
+    ));
+  }
+
+  private static void addUintSizeCompletions(@NotNull CompletionResultSet result) {
+    int[] bitWidths = {8, 16, 32, 64, 128, 256};
+    double priority = 100.0;
+    for (int width : bitWidths) {
+      String str = String.valueOf(width);
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(str)
+              .withPresentableText(str)
+              .withTailText(" (" + width + "-bit unsigned integer)", true)
+              .bold(),
+          priority
+      ));
+      priority -= 5.0;
     }
   }
 

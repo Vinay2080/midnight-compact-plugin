@@ -7,7 +7,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
-import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Inspects preceding AST tokens and containing PSI elements to distinguish between
  * top-level declaration keywords, block statements, type positions (after {@code :}, {@code as}, {@code <}),
- * member access (after {@code .}), and general value expressions.</p>
+ * parameterized type sizes (inside {@code Bytes<...>} or {@code Uint<...>}), member access (after {@code .}),
+ * and general value expressions.</p>
  */
 public final class CompactCompletionContext {
   private CompactCompletionContext() {
@@ -50,6 +50,12 @@ public final class CompactCompletionContext {
     if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.DOT) {
       return Kind.MEMBER;
     }
+
+    Kind sizeKind = checkParameterizedTypeSizeContext(previous);
+    if (sizeKind != null) {
+      return sizeKind;
+    }
+
     if (PsiTreeUtil.getParentOfType(position, CompactTypeReferenceImpl.class, false) != null) {
       return Kind.TYPE;
     }
@@ -103,6 +109,38 @@ public final class CompactCompletionContext {
       return Kind.MEMBER;
     }
     return Kind.VALUE;
+  }
+
+  private static @Nullable Kind checkParameterizedTypeSizeContext(@Nullable PsiElement previous) {
+    if (previous == null || previous.getNode() == null) {
+      return null;
+    }
+
+    // Walk backward across numbers, identifiers (or dummy completion tokens) up to '<'
+    PsiElement curr = previous;
+    while (curr != null && curr.getNode() != null) {
+      IElementType type = curr.getNode().getElementType();
+      if (type == CompactTokenTypes.LT) {
+        PsiElement beforeLt = prevNonCommentLeaf(curr);
+        if (beforeLt != null) {
+          String name = beforeLt.getText();
+          if ("Bytes".equals(name)) {
+            return Kind.BYTES_SIZE;
+          }
+          if ("Uint".equals(name)) {
+            return Kind.UINT_SIZE;
+          }
+        }
+        return null;
+      }
+      if (type == CompactTokenTypes.COMMA || type == CompactTokenTypes.GT
+          || type == CompactTokenTypes.SEMICOLON || type == CompactTokenTypes.LBRACE || type == CompactTokenTypes.RBRACE
+          || type == CompactTokenTypes.HASH) {
+        return null;
+      }
+      curr = prevNonCommentLeaf(curr);
+    }
+    return null;
   }
 
   public static boolean isExportPreceding(@NotNull PsiElement position) {
@@ -249,6 +287,8 @@ public final class CompactCompletionContext {
     AFTER_PURE,
     AFTER_NEW,
     TYPE,
+    BYTES_SIZE,
+    UINT_SIZE,
     VALUE,
     MEMBER,
     NONE
