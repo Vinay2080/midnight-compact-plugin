@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- Added automatic delimiter and structural punctuation skipping during editor typing for closing delimiters (`)`, `]`, `}`, `>`), colons (`:`), semicolons (`;`), commas (`,`), and closing quotes (`"`, `'`), advancing the cursor without inserting duplicate symbols.
 - Added automatic angle bracket insertion and caret positioning inside brackets for sized types (such as `Bytes` and `Uint`) with contextual size and bit-width suggestions.
 - Added automatic angle bracket (`<>`) pairing, cursor placement, overtyping, and paired backspace deletion for generic types and parameterized expressions.
 - Added automatic data type completion popups when tabbing through declaration live template variables.

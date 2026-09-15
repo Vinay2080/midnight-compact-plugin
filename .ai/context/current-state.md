@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type Completion & Live Template Macros)
+Last Updated: September 2026 (v1.2.7 / Universal Delimiter & Symbol Skipping During Typing)
 
 ---
 
@@ -10,20 +10,23 @@ Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Delimiter & Structural Symbol Skipping (v1.2.7 / ADR-030)**:
+  - `CompactDelimiterTypedHandler`: `TypedHandlerDelegate` registered in `plugin.xml` intercepting typed closing delimiters and structural punctuation when the matching character is present immediately ahead of the caret.
+  - Supported tokens: Closing delimiters (`)` `RPAREN`, `]` `RBRACKET`, `}` `RBRACE`, `>` `GT`), structural punctuation (`:` `COLON`, `;` `SEMICOLON`, `,` `COMMA`), and closing string quotes (`"` and `'` `STRING_LITERAL`).
+  - Cleanly handles multi-character typing workflows (e.g. `witness localSk(<caret>): Bytes<32>;` -> typing `)` then `:` cleanly skips both to `witness localSk():<caret> Bytes<32>;` without duplicate tokens).
+  - Context isolation: Suppresses skipping inside comments (`LINE_COMMENT`, `BLOCK_COMMENT`), non-quote symbols inside string literals, before string opening quotes, when active selection exists, and respects user platform preferences (`AUTOINSERT_PAIR_BRACKET`, `AUTOINSERT_PAIR_QUOTE`).
 - **Angle Bracket Pairing, Overtyping & Backspace Deletion (v1.2.6 / ADR-029)**:
   - `CompactAngleBraceTypedHandler`: `TypedHandlerDelegate` registered in `plugin.xml` providing intelligent angle bracket auto-closing (`<|>`) after parameterized types (`Vector`, `Uint`, `Bytes`, `Opaque`, `Field`, `Boolean`), parameterized expressions (`default`, `slice`), type identifiers (`Map`, `Set`, `Cell`, `T`), and generic declaration headers (`circuit foo<`, `witness bar<`, `struct Box<`, `type Alias<`, `module Mod<`, `contract Cont<`).
   - Overtyping step-over: typing `>` immediately before an existing closing `>` advances the caret without inserting redundant angle brackets when balanced.
-  - `CompactAngleBraceBackspaceHandler`: `BackspaceHandlerDelegate` automatically deleting the matching closing `>` when backspacing `<` in `<|>`.
-  - Negative context suppression: prevents pairing after comparison operators (`<`), inside comments, inside string literals, and in the middle of identifiers.
+  - `CompactAngleBraceBackspaceHandler`: `BackspaceHandlerDelegate` automatically deleting the matching closing `>` when backspacing `<` in `<|>`.\n  - Negative context suppression: prevents pairing after comparison operators (`<`), inside comments, inside string literals, and in the middle of identifiers.
 - **Parameterized Type Completion & Sizing Options (v1.2.6 / ADR-029)**:
   - `CompactParameterizedTypeInsertHandler`: `InsertHandler<LookupElement>` automatically appending `<>`, placing the caret inside `<|>`, registering empty tab-out scope with `TabOutScopesTracker`, and scheduling auto-popup lookup for size options.
-  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<"">`.
+  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<\"\">`.
   - Concurrency & live template coordination: schedules caret repositioning via `ApplicationManager.getApplication().invokeLater(...)` when an active `TemplateState` is present, preventing premature live template completion from ejecting the caret.
 - **Code Completion & Comprehensive Export System (v1.2.5+ / ADR-019, ADR-026, ADR-028)**:
   - Contextual classification in `CompactCompletionContext`:
     - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`). Prohibits invalid top-level `export const` per upstream compiler specification (ADR-028).
-    - `Kind.AFTER_SEALED`: Suggests `ledger`.
-    - `Kind.AFTER_PURE`: Suggests `circuit`.
+    - `Kind.AFTER_SEALED`: Suggests `ledger`.\n    - `Kind.AFTER_PURE`: Suggests `circuit`.
     - `Kind.AFTER_NEW`: Suggests `type`.
     - `Kind.NONE` for comment and docstring contexts (`isComment`).
   - Top-level declaration completion offering both bare and exported variants with `CompactDeclarationInsertHandler` interactive live template scaffolding.
@@ -69,12 +72,12 @@ Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type
   - Active version resolution chain: per-project setting -> global settings -> system PATH / WSL.
   - Two-digit SemVer parsing (`0.23` -> `0.23.0` -> toolchain `0.31.1`, `0.26` -> `0.26.0` -> toolchain `0.34.0`).
 - **Remix-Style Tool Window**:
-  - Right-hand stripe tool window ("Compact Compiler") with SVG branding icon.
+  - Right-hand stripe tool window (\"Compact Compiler\") with SVG branding icon.
   - Interactive compiler version switcher dropdown.
   - Real-time pragma version compatibility indicator with color-coded status badges and dynamic file tracking.
   - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.
-  - "Download More..." compiler version management dialog.
-  - "Compile Current Contract" action triggering background compilation and problem reporting.
+  - \"Download More...\" compiler version management dialog.
+  - \"Compile Current Contract\" action triggering background compilation and problem reporting.
 - **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2 / ADR-014)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
@@ -90,15 +93,15 @@ Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type
     - `CompactSpecifyTypeExplicitlyIntention`
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
-  - Fully maintained index in `.ai/decisions/README.md` covering all 29 major architectural subsystems (**ADR-001 through ADR-029**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
+  - Fully maintained index in `.ai/decisions/README.md` covering all 30 major architectural subsystems (**ADR-001 through ADR-030**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
 
 ---
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **601 passing tests** (0 failures, 0 skipped, 100% success rate)
-- **Active Test Suites**: **60 test classes**
-- **Execution Time**: ~1m 10s via `./gradlew test`
+- **Total Tests**: **631 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Active Test Suites**: **61 test classes**
+- **Execution Time**: ~1m 15s via `./gradlew test`
 
 ### Test Suite Breakdown
 
@@ -107,6 +110,7 @@ Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type
 | `dev.verloren.midnight.inspection.CompactInspectionTest` | 93 | Passed |
 | `dev.verloren.midnight.completion.CompactCompletionTest` | 70 | Passed |
 | `dev.verloren.midnight.formatter.CompactFormatterTest` | 39 | Passed |
+| `dev.verloren.midnight.editor.CompactDelimiterTypingTest` | 30 | Passed |
 | `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | 24 | Passed |
 | `dev.verloren.midnight.resolve.CompactResolveTest` | 21 | Passed |
 | `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | 17 | Passed |
@@ -164,7 +168,7 @@ Last Updated: September 2026 (v1.2.6 / Angle Bracket Pairing, Parameterized Type
 | `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
 | `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
-| **Total Across 60 Suites** | **601** | **100% Passed** |
+| **Total Across 61 Suites** | **631** | **100% Passed** |
 
 ---
 
