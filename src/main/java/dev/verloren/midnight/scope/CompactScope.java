@@ -14,6 +14,7 @@ import java.util.List;
  *
  * <p>Provides symbol enumeration and scoped name lookup across different {@link CompactSymbolNamespace}s.</p>
  */
+@SuppressWarnings("unused")
 public interface CompactScope {
   @NotNull CompactScopeKind kind();
 

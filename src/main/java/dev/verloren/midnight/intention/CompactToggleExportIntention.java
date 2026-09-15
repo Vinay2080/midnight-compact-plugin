@@ -81,14 +81,7 @@ public class CompactToggleExportIntention extends PsiElementBaseIntentionAction 
     ASTNode exportNode = decl.getNode().findChildByType(CompactTokenTypes.EXPORT);
 
     if (exportNode != null) {
-      // Remove 'export '
-      int start = exportNode.getTextRange().getStartOffset();
-      int end = exportNode.getTextRange().getEndOffset();
-      CharSequence chars = document.getCharsSequence();
-      while (end < chars.length() && Character.isWhitespace(chars.charAt(end)) && chars.charAt(end) != '\n') {
-        end++;
-      }
-      document.deleteString(start, end);
+      CompactPsiUtil.deleteNodeWithTrailingWhitespace(document, exportNode);
     } else {
       // Insert 'export ' at the start of the declaration
       int offset = decl.getTextRange().getStartOffset();

@@ -4,6 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +41,7 @@ public final class CompactProblemUtil {
 
       // 1. If a specific target file is modified (e.g., pragma updated), restart that file
       if (targetFile != null && targetFile.isValid()) {
-        PsiFile psi = PsiManager.getInstance(project).findFile(targetFile);
+        PsiFile psi = ReadAction.computeBlocking(() -> targetFile.isValid() ? PsiManager.getInstance(project).findFile(targetFile) : null);
         if (psi != null && psi.isValid()) {
           daemon.restart(psi, REASON_FILE_UPDATE);
         }
@@ -51,7 +52,7 @@ public final class CompactProblemUtil {
       boolean restartedOpenCompactFile = false;
       for (VirtualFile openFile : FileEditorManager.getInstance(project).getOpenFiles()) {
         if (openFile.isValid() && "compact".equalsIgnoreCase(openFile.getExtension())) {
-          PsiFile psi = PsiManager.getInstance(project).findFile(openFile);
+          PsiFile psi = ReadAction.computeBlocking(() -> openFile.isValid() ? PsiManager.getInstance(project).findFile(openFile) : null);
           if (psi != null && psi.isValid()) {
             daemon.restart(psi, REASON_COMPILER_CHANGED);
             restartedOpenCompactFile = true;

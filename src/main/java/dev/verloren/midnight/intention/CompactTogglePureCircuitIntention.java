@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
+import dev.verloren.midnight.psi.CompactPsiUtil;
 import dev.verloren.midnight.psi.CompactBlock;
 import dev.verloren.midnight.psi.CompactCircuitDefinition;
 import org.jetbrains.annotations.Nls;
@@ -64,14 +65,7 @@ public class CompactTogglePureCircuitIntention extends PsiElementBaseIntentionAc
     ASTNode pureNode = circuit.getNode().findChildByType(CompactTokenTypes.PURE);
 
     if (pureNode != null) {
-      // Remove 'pure '
-      int start = pureNode.getTextRange().getStartOffset();
-      int end = pureNode.getTextRange().getEndOffset();
-      CharSequence chars = document.getCharsSequence();
-      while (end < chars.length() && Character.isWhitespace(chars.charAt(end)) && chars.charAt(end) != '\n') {
-        end++;
-      }
-      document.deleteString(start, end);
+      CompactPsiUtil.deleteNodeWithTrailingWhitespace(document, pureNode);
     } else {
       // Insert 'pure ' before 'circuit'
       ASTNode circuitNode = circuit.getNode().findChildByType(CompactTokenTypes.CIRCUIT);

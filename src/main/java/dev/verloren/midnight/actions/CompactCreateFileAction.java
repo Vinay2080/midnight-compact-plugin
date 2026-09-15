@@ -205,3 +205,6 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     return obj instanceof CompactCreateFileAction;
   }
 }
+
+
+//todo add auto complete if : ; etc and for this < bracket too>

@@ -5,6 +5,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
+import dev.verloren.midnight.CompactBundle;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -22,7 +23,7 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
 
   @Override
   public @Nls @NotNull String getDisplayName() {
-    return "Midnight Compact Toolchain";
+    return CompactBundle.message("status.bar.compact.display.name");
   }
 
   @Override
@@ -40,6 +41,11 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project, @NotNull CoroutineScope scope) {
     return new CompactStatusBarWidget(project, scope);
+  }
+
+  @Override
+  public void disposeWidget(@NotNull StatusBarWidget widget) {
+    widget.dispose();
   }
 
   @Override

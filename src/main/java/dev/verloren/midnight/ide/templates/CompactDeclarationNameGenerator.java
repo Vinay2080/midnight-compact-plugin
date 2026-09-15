@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
  * </ul>
  * </p>
  */
+@SuppressWarnings("unused")
 public final class CompactDeclarationNameGenerator {
 
   private static final Pattern IDENTIFIER_PATTERN = Pattern.compile("\\b([a-zA-Z_][a-zA-Z0-9_]*)\\b");
@@ -132,37 +133,43 @@ public final class CompactDeclarationNameGenerator {
     }
 
     // 1. Inspect parsed PSI named elements directly belonging to this scope container
-    if (scopeRoot instanceof CompactFile file) {
-      for (CompactNamedElement named : file.getTopLevelDeclarations()) {
-        addNameIfPresent(names, named, ignoredOffset);
-      }
-      for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(file, CompactModuleDefinition.class)) {
-        addNameIfPresent(names, mod, ignoredOffset);
-      }
-      for (CompactExternalContractDeclaration cct : PsiTreeUtil.findChildrenOfType(file, CompactExternalContractDeclaration.class)) {
-        addNameIfPresent(names, cct, ignoredOffset);
-      }
-    } else if (scopeRoot instanceof CompactModuleDefinition module) {
-      for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(module, CompactNamedElement.class)) {
-        if (CompactResolveUtil.isDirectModuleDeclaration(named, module)) {
+    switch (scopeRoot) {
+      case CompactFile file -> {
+        for (CompactNamedElement named : file.getTopLevelDeclarations()) {
           addNameIfPresent(names, named, ignoredOffset);
         }
-      }
-    } else if (scopeRoot instanceof CompactExternalContractDeclaration contract) {
-      for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(contract, CompactNamedElement.class)) {
-        if (PsiTreeUtil.getParentOfType(named, CompactExternalContractDeclaration.class) == contract) {
-          addNameIfPresent(names, named, ignoredOffset);
+        for (CompactModuleDefinition mod : PsiTreeUtil.findChildrenOfType(file, CompactModuleDefinition.class)) {
+          addNameIfPresent(names, mod, ignoredOffset);
+        }
+        for (CompactExternalContractDeclaration cct : PsiTreeUtil.findChildrenOfType(file, CompactExternalContractDeclaration.class)) {
+          addNameIfPresent(names, cct, ignoredOffset);
         }
       }
-    } else if (scopeRoot instanceof CompactBlock block) {
-      for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(block, CompactNamedElement.class)) {
-        if (PsiTreeUtil.getParentOfType(named, CompactBlock.class) == block) {
-          addNameIfPresent(names, named, ignoredOffset);
+      case CompactModuleDefinition module -> {
+        for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(module, CompactNamedElement.class)) {
+          if (CompactResolveUtil.isDirectModuleDeclaration(named, module)) {
+            addNameIfPresent(names, named, ignoredOffset);
+          }
         }
       }
-    } else {
-      for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(scopeRoot, CompactNamedElement.class)) {
-        addNameIfPresent(names, named, ignoredOffset);
+      case CompactExternalContractDeclaration contract -> {
+        for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(contract, CompactNamedElement.class)) {
+          if (PsiTreeUtil.getParentOfType(named, CompactExternalContractDeclaration.class) == contract) {
+            addNameIfPresent(names, named, ignoredOffset);
+          }
+        }
+      }
+      case CompactBlock block -> {
+        for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(block, CompactNamedElement.class)) {
+          if (PsiTreeUtil.getParentOfType(named, CompactBlock.class) == block) {
+            addNameIfPresent(names, named, ignoredOffset);
+          }
+        }
+      }
+      default -> {
+        for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(scopeRoot, CompactNamedElement.class)) {
+          addNameIfPresent(names, named, ignoredOffset);
+        }
       }
     }
 
@@ -203,16 +210,8 @@ public final class CompactDeclarationNameGenerator {
    */
   public static @Nullable PsiElement findScopeRoot(@NotNull PsiElement context) {
     for (PsiElement element = context; element != null; element = element.getParent()) {
-      if (element instanceof CompactBlock) {
-        return element;
-      }
-      if (element instanceof CompactModuleDefinition) {
-        return element;
-      }
-      if (element instanceof CompactExternalContractDeclaration) {
-        return element;
-      }
-      if (element instanceof CompactFile) {
+      if (element instanceof CompactBlock || element instanceof CompactModuleDefinition
+          || element instanceof CompactExternalContractDeclaration || element instanceof CompactFile) {
         return element;
       }
     }

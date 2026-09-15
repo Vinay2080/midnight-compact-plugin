@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Provides symbol metadata including name, kind, namespace, visibility, inferred type,
  * containing module, and navigability.</p>
  */
+@SuppressWarnings("unused")
 public interface CompactSymbol {
   @Nullable String name();
 

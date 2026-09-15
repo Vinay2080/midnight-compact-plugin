@@ -133,6 +133,18 @@ public final class CompactElementFactory {
     if (elementType == CompactElementTypes.PATTERN) {
       return new CompactPatternImpl(node);
     }
+    if (elementType == CompactElementTypes.PAD_EXPR) {
+      return new CompactPadExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.TUPLE_EXPR) {
+      return new CompactTupleExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.INDEX_EXPR) {
+      return new CompactIndexExprImpl(node);
+    }
+    if (elementType == CompactElementTypes.DEFAULT_EXPR) {
+      return new CompactDefaultExprImpl(node);
+    }
 
     return new CompactPsiElement(node);
   }
@@ -182,6 +194,10 @@ public final class CompactElementFactory {
             || elementType == CompactElementTypes.ENUM_MEMBER
             || elementType == CompactElementTypes.CONST_BINDING
             || elementType == CompactElementTypes.GENERIC_PARAMETER
-            || elementType == CompactElementTypes.PATTERN;
+            || elementType == CompactElementTypes.PATTERN
+            || elementType == CompactElementTypes.PAD_EXPR
+            || elementType == CompactElementTypes.TUPLE_EXPR
+            || elementType == CompactElementTypes.INDEX_EXPR
+            || elementType == CompactElementTypes.DEFAULT_EXPR;
   }
 }

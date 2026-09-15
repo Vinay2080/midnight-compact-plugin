@@ -432,10 +432,10 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
 
     // 3. Project index search
     try {
-      Collection<VirtualFile> indexed = FileTypeIndex.getFiles(CompactFileType.INSTANCE, GlobalSearchScope.projectScope(project));
-      if (!indexed.isEmpty()) {
-        return indexed.iterator().next();
-      }
+      return ReadAction.computeBlocking(() -> {
+        Collection<VirtualFile> indexed = FileTypeIndex.getFiles(CompactFileType.INSTANCE, GlobalSearchScope.projectScope(project));
+        return !indexed.isEmpty() ? indexed.iterator().next() : null;
+      });
     } catch (Exception _) {
     }
 

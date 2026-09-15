@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import dev.verloren.midnight.CompactBundle;
 import dev.verloren.midnight.icons.MidnightIcons;
 import dev.verloren.midnight.annotator.CompactProblemUtil;
 import dev.verloren.midnight.run.CompactToolchainUtil;
@@ -94,7 +95,7 @@ public final class CompactStatusBarPopup {
     group.add(new OpenMidnightSettingsAction(project));
 
     return JBPopupFactory.getInstance().createActionGroupPopup(
-        "Compact Compiler Toolchain",
+        CompactBundle.message("status.bar.compact.popup.title"),
         group,
         context,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

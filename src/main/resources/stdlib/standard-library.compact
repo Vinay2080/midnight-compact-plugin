@@ -111,7 +111,7 @@ export struct ShieldedSendResult {
 }
 
 export circuit nativeToken(): Bytes<32> {
-  return pad(32, "");
+  return pad(32, "") as Bytes<32>;
 }
 
 // Midnight helper circuits
@@ -369,7 +369,8 @@ export circuit jubjubSchnorrVerify<#N>(
                  signature: JubjubSchnorrSignature,
                  pk: JubjubPoint
                  ): Boolean {
-  const {announcement, response} = signature;
+  const announcement = signature.announcement;
+  const response = signature.response;
   const cNative = transientHash<JubjubSchnorrHashInput<N>>(
                     JubjubSchnorrHashInput<N> { annX: jubjubPointX(announcement),
                                                 annY: jubjubPointY(announcement),

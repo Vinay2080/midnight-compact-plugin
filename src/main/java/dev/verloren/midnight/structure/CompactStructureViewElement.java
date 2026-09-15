@@ -31,6 +31,7 @@ import java.util.List;
  * </p>
  */
 public class CompactStructureViewElement implements StructureViewTreeElement, Navigatable {
+  private static final TreeElement[] EMPTY_TREE_ELEMENTS = new TreeElement[0];
   private final PsiElement element;
 
   public CompactStructureViewElement(@NotNull PsiElement element) {
@@ -44,19 +45,19 @@ public class CompactStructureViewElement implements StructureViewTreeElement, Na
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (element instanceof Navigatable && ((Navigatable) element).canNavigate()) {
-      ((Navigatable) element).navigate(requestFocus);
+    if (element instanceof Navigatable navigatable && navigatable.canNavigate()) {
+      navigatable.navigate(requestFocus);
     }
   }
 
   @Override
   public boolean canNavigate() {
-    return element instanceof Navigatable && ((Navigatable) element).canNavigate();
+    return element instanceof Navigatable navigatable && navigatable.canNavigate();
   }
 
   @Override
   public boolean canNavigateToSource() {
-    return element instanceof Navigatable && ((Navigatable) element).canNavigateToSource();
+    return element instanceof Navigatable navigatable && navigatable.canNavigateToSource();
   }
 
   @Override
@@ -65,97 +66,37 @@ public class CompactStructureViewElement implements StructureViewTreeElement, Na
   }
 
   public @Nullable String getPresentableText() {
-    switch (element) {
-      case CompactFile compactFile -> {
-        return compactFile.getName();
-      }
-      case CompactCircuitDefinition circuit -> {
-        String name = circuit.getName();
-        return name != null ? "circuit " + name : "circuit";
-      }
-      case CompactWitnessDeclaration witness -> {
-        String name = witness.getName();
-        return name != null ? "witness " + name : "witness";
-      }
+    return switch (element) {
+      case CompactFile compactFile -> compactFile.getName();
+      case CompactCircuitDefinition circuit -> circuit.getName() != null ? "circuit " + circuit.getName() : "circuit";
+      case CompactWitnessDeclaration witness -> witness.getName() != null ? "witness " + witness.getName() : "witness";
+      case CompactExternalContractDeclaration contract -> contract.getName() != null ? "contract " + contract.getName() : "contract";
+      case CompactContractImplementsDeclaration ignored -> "contract";
+      case CompactModuleDefinition module -> module.getName() != null ? "module " + module.getName() : "module";
+      case CompactStructDefinition struct -> struct.getName() != null ? "struct " + struct.getName() : "struct";
+      case CompactStructFieldImpl field -> field.getName() != null ? field.getName() : "field";
+      case CompactEnumDefinition enumDef -> enumDef.getName() != null ? "enum " + enumDef.getName() : "enum";
+      case CompactEnumMemberImpl member -> member.getName() != null ? member.getName() : "member";
+      case CompactTypeDefinition typeDef -> typeDef.getName() != null ? "type " + typeDef.getName() : "type";
+      case CompactConstructorDeclaration ignored -> "constructor";
+      case CompactLedgerDeclaration ledger -> ledger.getName() != null ? "ledger " + ledger.getName() : "ledger";
+      case CompactPatternImpl pattern -> pattern.getName() != null ? "const " + pattern.getName() : "const";
+      case CompactConstBindingImpl binding -> binding.getName() != null ? "const " + binding.getName() : "const";
+      case CompactPragmaForm pragma -> "pragma " + pragma.getText().trim();
+      case CompactIncludeDeclaration include -> "include " + include.getText().replace("include", "").replace(";", "").trim();
+      case CompactImportDeclaration importDecl -> "import " + importDecl.getText().replace("import", "").replace(";", "").trim();
+      case CompactExportDeclaration exportDecl -> "export " + exportDecl.getText().replace("export", "").replace(";", "").trim();
       default -> {
-      }
-    }
-    if (element instanceof CompactExternalContractDeclaration || element instanceof CompactContractImplementsDeclaration) {
-      if (element instanceof PsiNamedElement named) {
-        String name = named.getName();
-        if (name != null) {
-          return "contract " + name;
+        if (element.getNode() != null && element.getNode().getElementType() == CompactElementTypes.EXTERNAL_CIRCUIT) {
+          PsiElement id = PsiTreeUtil.findChildOfType(element, CompactReferenceExprImpl.class);
+          yield id != null ? "circuit " + id.getText() : "circuit " + element.getText();
         }
-      }
-      return "contract";
-    }
-    switch (element) {
-      case CompactModuleDefinition module -> {
-        String name = module.getName();
-        return name != null ? "module " + name : "module";
-      }
-      case CompactStructDefinition struct -> {
-        String name = struct.getName();
-        return name != null ? "struct " + name : "struct";
-      }
-      case CompactStructFieldImpl field -> {
-        String name = field.getName();
-        return name != null ? name : "field";
-      }
-      case CompactEnumDefinition enumDef -> {
-        String name = enumDef.getName();
-        return name != null ? "enum " + name : "enum";
-      }
-      case CompactEnumMemberImpl member -> {
-        String name = member.getName();
-        return name != null ? name : "member";
-      }
-      case CompactTypeDefinition typeDef -> {
-        String name = typeDef.getName();
-        return name != null ? "type " + name : "type";
-      }
-      case CompactConstructorDeclaration ignored -> {
-        return "constructor";
-      }
-      case CompactLedgerDeclaration ledger -> {
-        String name = ledger.getName();
-        if (name != null) {
-          return "ledger " + name;
+        if (element instanceof PsiNamedElement named) {
+          yield named.getName();
         }
-        return "ledger";
+        yield element.getText();
       }
-      default -> {
-      }
-    }
-    if (element instanceof CompactPatternImpl || element instanceof CompactConstBindingImpl) {
-      PsiNamedElement named = (PsiNamedElement) element;
-      String name = named.getName();
-      return name != null ? "const " + name : "const";
-    }
-    switch (element) {
-      case CompactPragmaForm pragma -> {
-        return "pragma " + pragma.getText().trim();
-      }
-      case CompactIncludeDeclaration include -> {
-        return "include " + include.getText().replace("include", "").replace(";", "").trim();
-      }
-      case CompactImportDeclaration importDecl -> {
-        return "import " + importDecl.getText().replace("import", "").replace(";", "").trim();
-      }
-      case CompactExportDeclaration exportDecl -> {
-        return "export " + exportDecl.getText().replace("export", "").replace(";", "").trim();
-      }
-      default -> {
-      }
-    }
-    if (element.getNode().getElementType() == CompactElementTypes.EXTERNAL_CIRCUIT) {
-      PsiElement id = PsiTreeUtil.findChildOfType(element, CompactReferenceExprImpl.class);
-      return id != null ? "circuit " + id.getText() : "circuit " + element.getText();
-    }
-    if (element instanceof PsiNamedElement named) {
-      return named.getName();
-    }
-    return element.getText();
+    };
   }
 
   public @Nullable String getLocationString() {
@@ -167,92 +108,68 @@ public class CompactStructureViewElement implements StructureViewTreeElement, Na
   }
 
   public @Nullable Icon getIcon() {
-    if (element instanceof CompactFile) {
-      return MidnightIcons.FILE;
-    }
-    if (element instanceof CompactCircuitDefinition || element.getNode().getElementType() == CompactElementTypes.EXTERNAL_CIRCUIT) {
-      return AllIcons.Nodes.Method;
-    }
-    if (element instanceof CompactWitnessDeclaration) {
-      return AllIcons.Nodes.AbstractMethod;
-    }
-    if (element instanceof CompactExternalContractDeclaration || element instanceof CompactContractImplementsDeclaration) {
-      return AllIcons.Nodes.Class;
-    }
-    switch (element) {
-      case CompactModuleDefinition ignored -> {
-        return AllIcons.Nodes.Package;
-      }
-      case CompactStructDefinition ignored -> {
-        return AllIcons.Nodes.Record;
-      }
-      case CompactStructFieldImpl ignored -> {
-        return AllIcons.Nodes.Field;
-      }
-      case CompactEnumDefinition ignored -> {
-        return AllIcons.Nodes.Enum;
-      }
-      case CompactEnumMemberImpl ignored -> {
-        return AllIcons.Nodes.Field;
-      }
-      case CompactTypeDefinition ignored -> {
-        return AllIcons.Nodes.Type;
-      }
-      case CompactConstructorDeclaration ignored -> {
-        return AllIcons.Nodes.ClassInitializer;
-      }
-      case CompactLedgerDeclaration ignored -> {
-        return AllIcons.Nodes.DataTables;
-      }
-      default -> {
-      }
-    }
-    if (element instanceof CompactPatternImpl || element instanceof CompactConstBindingImpl) {
-      return AllIcons.Nodes.Constant;
-    }
     return switch (element) {
+      case CompactFile ignored -> MidnightIcons.FILE;
+      case CompactCircuitDefinition ignored -> AllIcons.Nodes.Method;
+      case CompactWitnessDeclaration ignored -> AllIcons.Nodes.AbstractMethod;
+      case CompactExternalContractDeclaration ignored -> AllIcons.Nodes.Class;
+      case CompactContractImplementsDeclaration ignored -> AllIcons.Nodes.Class;
+      case CompactModuleDefinition ignored -> AllIcons.Nodes.Package;
+      case CompactStructDefinition ignored -> AllIcons.Nodes.Record;
+      case CompactStructFieldImpl ignored -> AllIcons.Nodes.Field;
+      case CompactEnumMemberImpl ignored -> AllIcons.Nodes.Field;
+      case CompactEnumDefinition ignored -> AllIcons.Nodes.Enum;
+      case CompactTypeDefinition ignored -> AllIcons.Nodes.Type;
+      case CompactConstructorDeclaration ignored -> AllIcons.Nodes.ClassInitializer;
+      case CompactLedgerDeclaration ignored -> AllIcons.Nodes.DataTables;
+      case CompactPatternImpl ignored -> AllIcons.Nodes.Constant;
+      case CompactConstBindingImpl ignored -> AllIcons.Nodes.Constant;
       case CompactPragmaForm ignored -> AllIcons.Nodes.Tag;
-      case CompactIncludeDeclaration ignored -> AllIcons.Nodes.Include;
       case CompactImportDeclaration ignored -> AllIcons.Nodes.Tag;
+      case CompactIncludeDeclaration ignored -> AllIcons.Nodes.Include;
       case CompactExportDeclaration ignored -> AllIcons.Nodes.Deploy;
-      default -> null;
+      default -> {
+        if (element.getNode() != null && element.getNode().getElementType() == CompactElementTypes.EXTERNAL_CIRCUIT) {
+          yield AllIcons.Nodes.Method;
+        }
+        yield null;
+      }
     };
   }
 
   @Override
   public TreeElement @NotNull [] getChildren() {
     List<TreeElement> children = new ArrayList<>();
-    if (element instanceof CompactFile) {
-      for (PsiElement child : element.getChildren()) {
-        addStructureItem(child, children);
-      }
-      return children.toArray(new TreeElement[0]);
-    }
-    if (element instanceof CompactExternalContractDeclaration) {
-      for (PsiElement child : element.getChildren()) {
-        if (child.getNode().getElementType() == CompactElementTypes.EXTERNAL_CIRCUIT) {
-          children.add(new CompactStructureViewElement(child));
+    switch (element) {
+      case CompactFile ignored -> {
+        for (PsiElement child : element.getChildren()) {
+          addStructureItem(child, children);
         }
       }
-      return children.toArray(new TreeElement[0]);
-    }
-    if (element instanceof CompactContractImplementsDeclaration || element instanceof CompactModuleDefinition) {
-      collectInnerDeclarations(element, children);
-      return children.toArray(new TreeElement[0]);
-    }
-    if (element instanceof CompactStructDefinition) {
-      for (CompactStructFieldImpl field : PsiTreeUtil.findChildrenOfType(element, CompactStructFieldImpl.class)) {
-        children.add(new CompactStructureViewElement(field));
+      case CompactExternalContractDeclaration ignored -> {
+        for (PsiElement child : element.getChildren()) {
+          if (child.getNode().getElementType() == CompactElementTypes.EXTERNAL_CIRCUIT) {
+            children.add(new CompactStructureViewElement(child));
+          }
+        }
       }
-      return children.toArray(new TreeElement[0]);
-    }
-    if (element instanceof CompactEnumDefinition) {
-      for (CompactEnumMemberImpl member : PsiTreeUtil.findChildrenOfType(element, CompactEnumMemberImpl.class)) {
-        children.add(new CompactStructureViewElement(member));
+      case CompactContractImplementsDeclaration ignored ->
+          collectInnerDeclarations(element, children);
+      case CompactModuleDefinition ignored ->
+          collectInnerDeclarations(element, children);
+      case CompactStructDefinition ignored -> {
+        for (CompactStructFieldImpl field : PsiTreeUtil.findChildrenOfType(element, CompactStructFieldImpl.class)) {
+          children.add(new CompactStructureViewElement(field));
+        }
       }
-      return children.toArray(new TreeElement[0]);
+      case CompactEnumDefinition ignored -> {
+        for (CompactEnumMemberImpl member : PsiTreeUtil.findChildrenOfType(element, CompactEnumMemberImpl.class)) {
+          children.add(new CompactStructureViewElement(member));
+        }
+      }
+      default -> {}
     }
-    return EMPTY_ARRAY;
+    return children.isEmpty() ? EMPTY_TREE_ELEMENTS : children.toArray(EMPTY_TREE_ELEMENTS);
   }
 
   private static void addStructureItem(@NotNull PsiElement elem, @NotNull List<TreeElement> out) {

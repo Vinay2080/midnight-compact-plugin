@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
+import dev.verloren.midnight.CompactBundle;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.run.CompactToolchainUtil;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
@@ -51,7 +52,7 @@ public class CompactStatusBarWidget extends EditorBasedStatusBarPopup {
       String langVer = CompactVersionManager.getLanguageVersionForToolchain(effective);
       String versionDisplay = effective.equals(langVer) ? "v" + effective : "v" + effective + " (" + langVer + ")";
       text = "Compact: " + versionDisplay;
-      tooltip = "Current Compact compiler: " + versionDisplay + "\nClick to switch version or configure";
+      tooltip = CompactBundle.message("status.bar.compact.tooltip", versionDisplay) + "\nClick to switch version or configure";
     } else {
       text = "Compact: Not Configured";
       tooltip = "Compact compiler is not configured.\nClick to select or download";

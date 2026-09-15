@@ -496,7 +496,7 @@ public final class CompactVersionManager {
           }
           // Preserve executable flag
           if (!file.setExecutable(true, false)) {
-            LOG.debug("Could not set executable flag on: " + file.getAbsolutePath());
+            LOG.debug("Could not set executable flag on extracted zip entry: " + file.getAbsolutePath());
           }
         }
         zis.closeEntry();
@@ -512,7 +512,7 @@ public final class CompactVersionManager {
           setExecutablePermissions(f);
         } else {
           if (!f.setExecutable(true, false)) {
-            LOG.debug("Could not set executable flag on: " + f.getAbsolutePath());
+            LOG.debug("Could not set executable flag during recursive directory scan on: " + f.getAbsolutePath());
           }
         }
       }

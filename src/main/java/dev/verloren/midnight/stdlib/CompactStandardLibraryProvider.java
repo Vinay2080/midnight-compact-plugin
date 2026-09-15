@@ -20,6 +20,7 @@ public final class CompactStandardLibraryProvider {
   private CompactStandardLibraryProvider() {
   }
 
+  @SuppressWarnings("unused")
   public static @NotNull List<CompactFile> getStandardLibraryFiles(@NotNull Project project) {
     return CompactStdlibService.getInstance(project).getStandardLibraryFiles();
   }

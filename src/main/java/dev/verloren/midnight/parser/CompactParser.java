@@ -685,9 +685,11 @@ public final class CompactParser implements PsiParser {
 
   private void parsePatternStructElement(PsiBuilder builder) {
     PsiBuilder.Marker element = builder.mark();
-    expect(builder, CompactTokenTypes.IDENTIFIER, "Expected field name");
-    if (at(builder, CompactTokenTypes.COLON)) {
-      builder.advanceLexer();
+    if (builder.lookAhead(1) == CompactTokenTypes.COLON) {
+      expect(builder, CompactTokenTypes.IDENTIFIER, "Expected field name");
+      expect(builder, CompactTokenTypes.COLON, "Expected ':'");
+      parsePattern(builder);
+    } else {
       parsePattern(builder);
     }
     element.done(CompactElementTypes.PATTERN_STRUCT_ELEMENT);

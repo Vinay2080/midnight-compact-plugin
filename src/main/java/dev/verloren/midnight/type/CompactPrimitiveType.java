@@ -32,7 +32,8 @@ public record CompactPrimitiveType(String name) implements CompactType {
         return uint.isAssignableTo(other);
       }
     }
-    return false;
+    if ("Bytes".equals(name) && other.name().startsWith("Bytes")) return true;
+    return name != null && name.startsWith("Bytes") && "Bytes".equals(other.name());
   }
 
   @Override

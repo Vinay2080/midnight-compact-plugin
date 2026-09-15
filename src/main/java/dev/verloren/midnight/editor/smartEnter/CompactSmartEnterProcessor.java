@@ -146,42 +146,29 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     return true;
   }
 
-  private void handleIfStatement(Document doc, Editor editor, int lineEnd,
-                                  String trimmed, String indent, String innerIndent) {
+  private void handleParenthesizedBlockStatement(Document doc, Editor editor, int lineEnd,
+                                                 String trimmed, String indent, String innerIndent) {
     if (trimmed.endsWith("{")) {
       return;
     }
 
-    String addition;
-    if (!trimmed.contains(")")) {
-      // Missing closing parenthesis and body
-      addition = ") {\n" + innerIndent + "\n" + indent + "}";
-    } else {
-      // Has closing parenthesis, missing body
-      addition = " {\n" + innerIndent + "\n" + indent + "}";
-    }
+    String addition = !trimmed.contains(")")
+        ? ") {\n" + innerIndent + "\n" + indent + "}"
+        : " {\n" + innerIndent + "\n" + indent + "}";
 
     doc.insertString(lineEnd, addition);
     int caretTarget = lineEnd + addition.indexOf('\n') + 1 + innerIndent.length();
     editor.getCaretModel().moveToOffset(caretTarget);
   }
 
+  private void handleIfStatement(Document doc, Editor editor, int lineEnd,
+                                  String trimmed, String indent, String innerIndent) {
+    handleParenthesizedBlockStatement(doc, editor, lineEnd, trimmed, indent, innerIndent);
+  }
+
   private void handleForStatement(Document doc, Editor editor, int lineEnd,
                                    String trimmed, String indent, String innerIndent) {
-    if (trimmed.endsWith("{")) {
-      return;
-    }
-
-    String addition;
-    if (!trimmed.contains(")")) {
-      addition = ") {\n" + innerIndent + "\n" + indent + "}";
-    } else {
-      addition = " {\n" + innerIndent + "\n" + indent + "}";
-    }
-
-    doc.insertString(lineEnd, addition);
-    int caretTarget = lineEnd + addition.indexOf('\n') + 1 + innerIndent.length();
-    editor.getCaretModel().moveToOffset(caretTarget);
+    handleParenthesizedBlockStatement(doc, editor, lineEnd, trimmed, indent, innerIndent);
   }
 
   /**
@@ -324,6 +311,25 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     editor.getCaretModel().moveToOffset(caretTarget);
   }
 
+  private void handleAssignmentStatement(Project project, Document doc, Editor editor, int lineEnd,
+                                         String trimmed, String indent) {
+    if (!trimmed.contains("=")) {
+      doc.insertString(lineEnd, " = ");
+      editor.getCaretModel().moveToOffset(lineEnd + 3);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+      return;
+    }
+
+    if (trimmed.endsWith("=")) {
+      doc.insertString(lineEnd, " ");
+      editor.getCaretModel().moveToOffset(lineEnd + 1);
+      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+      return;
+    }
+
+    handleStatementSemicolon(doc, editor, lineEnd, trimmed, indent);
+  }
+
   /**
    * Handles const statements:
    * In Compact, const declarations MUST have an initializer expression '='.
@@ -331,27 +337,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
    */
   private void handleConstStatement(Project project, Document doc, Editor editor, int lineEnd,
                                     String trimmed, String indent) {
-    if (!trimmed.contains("=")) {
-      doc.insertString(lineEnd, " = ");
-      editor.getCaretModel().moveToOffset(lineEnd + 3);
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
-      return;
-    }
-
-    if (trimmed.endsWith("=")) {
-      doc.insertString(lineEnd, " ");
-      editor.getCaretModel().moveToOffset(lineEnd + 1);
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
-      return;
-    }
-
-    if (!trimmed.endsWith(";")) {
-      doc.insertString(lineEnd, ";\n" + indent);
-      editor.getCaretModel().moveToOffset(lineEnd + 2 + indent.length());
-    } else {
-      doc.insertString(lineEnd, "\n" + indent);
-      editor.getCaretModel().moveToOffset(lineEnd + 1 + indent.length());
-    }
+    handleAssignmentStatement(project, doc, editor, lineEnd, trimmed, indent);
   }
 
   /**
@@ -359,27 +345,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
    */
   private void handleTypeAliasDeclaration(Project project, Document doc, Editor editor, int lineEnd,
                                           String trimmed, String indent) {
-    if (!trimmed.contains("=")) {
-      doc.insertString(lineEnd, " = ");
-      editor.getCaretModel().moveToOffset(lineEnd + 3);
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
-      return;
-    }
-
-    if (trimmed.endsWith("=")) {
-      doc.insertString(lineEnd, " ");
-      editor.getCaretModel().moveToOffset(lineEnd + 1);
-      AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
-      return;
-    }
-
-    if (!trimmed.endsWith(";")) {
-      doc.insertString(lineEnd, ";\n" + indent);
-      editor.getCaretModel().moveToOffset(lineEnd + 2 + indent.length());
-    } else {
-      doc.insertString(lineEnd, "\n" + indent);
-      editor.getCaretModel().moveToOffset(lineEnd + 1 + indent.length());
-    }
+    handleAssignmentStatement(project, doc, editor, lineEnd, trimmed, indent);
   }
 
   private void handleWitnessDeclaration(Project project, Document doc, Editor editor, int lineEnd,
@@ -391,13 +357,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
       return;
     }
 
-    if (!trimmed.endsWith(";")) {
-      doc.insertString(lineEnd, ";\n" + indent);
-      editor.getCaretModel().moveToOffset(lineEnd + 2 + indent.length());
-    } else {
-      doc.insertString(lineEnd, "\n" + indent);
-      editor.getCaretModel().moveToOffset(lineEnd + 1 + indent.length());
-    }
+    handleStatementSemicolon(doc, editor, lineEnd, trimmed, indent);
   }
 
   private void handleStatementSemicolon(Document doc, Editor editor, int lineEnd,

@@ -22,8 +22,8 @@ public final class CompactSymbols {
   private static final List<CompactBuiltinTypeSymbol> BUILTIN_TYPES = List.of(
           new CompactBuiltinTypeSymbol("Boolean", CompactPrimitiveType.BOOLEAN),
           new CompactBuiltinTypeSymbol("Field", CompactPrimitiveType.FIELD),
-          new CompactBuiltinTypeSymbol("Bytes", new CompactPrimitiveType("Bytes")),
-          new CompactBuiltinTypeSymbol("Opaque", new CompactPrimitiveType("Opaque")),
+          new CompactBuiltinTypeSymbol("Bytes", CompactPrimitiveType.BYTES),
+          new CompactBuiltinTypeSymbol("Opaque", CompactPrimitiveType.OPAQUE),
           new CompactBuiltinTypeSymbol("Uint", new CompactPrimitiveType("Uint")),
           new CompactBuiltinTypeSymbol("Vector", new CompactPrimitiveType("Vector")),
           new CompactBuiltinTypeSymbol("JubjubScalar", new CompactPrimitiveType("JubjubScalar")),

@@ -1,6 +1,7 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.TextRange;
@@ -222,5 +223,18 @@ public final class CompactPsiUtil {
     }
 
     return null;
+  }
+
+  /**
+   * Deletes an AST node and any trailing spaces (up to newline) from an editor document.
+   */
+  public static void deleteNodeWithTrailingWhitespace(@NotNull Document document, @NotNull ASTNode node) {
+    int start = node.getTextRange().getStartOffset();
+    int end = node.getTextRange().getEndOffset();
+    CharSequence chars = document.getCharsSequence();
+    while (end < chars.length() && Character.isWhitespace(chars.charAt(end)) && chars.charAt(end) != '\n') {
+      end++;
+    }
+    document.deleteString(start, end);
   }
 }
