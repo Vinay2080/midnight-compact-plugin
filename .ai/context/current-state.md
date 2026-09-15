@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Type Completion & Live Template Macros)
+Last Updated: September 2026 (v1.2.6-dev / Angle Bracket Auto-Closing, Type Completion & Live Template Macros)
 
 ---
 
@@ -10,6 +10,11 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Ty
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Angle Bracket Auto-Closing & Navigation (v1.2.6)**:
+  - `CompactAngleBraceTypedHandler`: `TypedHandlerDelegate` providing intelligent angle bracket auto-closing (`<|>`) after parameterized types (`Vector`, `Uint`, `Bytes`, `Opaque`, `Field`, `Boolean`), parameterized expressions (`default`, `slice`), type identifiers (`Map`, `Set`, `Cell`, `T`), and generic declaration headers (`circuit foo<`, `witness bar<`, `struct Box<`, `type Alias<`, `module Mod<`, `contract Cont<`).
+  - Overtyping step-over: typing `>` immediately before a closing `>` advances the caret without inserting redundant angle brackets when balanced.
+  - `CompactAngleBraceBackspaceHandler`: `BackspaceHandlerDelegate` automatically deleting the matching closing `>` when backspacing `<` in `<|>`.
+  - Negative context suppression: prevents pairing after comparison operators (`<`), inside comments, inside string literals, and in the middle of identifiers.
 - **Code Completion & Comprehensive Export System (v1.2.5+)**:
   - Contextual classification in `CompactCompletionContext`:
     - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`).
@@ -59,8 +64,8 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Ty
   - Interactive compiler version switcher dropdown.
   - Real-time pragma version compatibility indicator with color-coded status badges and dynamic file tracking.
   - Live updates via `CompactCompilerEventListener`, `FileEditorManagerListener`, and `DocumentListener`.
-  - "Download More..." compiler version management dialog.
-  - "Compile Current Contract" action triggering background compilation and problem reporting.
+  - \"Download More...\" compiler version management dialog.
+  - \"Compile Current Contract\" action triggering background compilation and problem reporting.
 - **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
@@ -77,7 +82,7 @@ Last Updated: September 2026 (v1.2.6-dev / Comprehensive Export Declarations, Ty
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
   - Fully maintained index in `.ai/decisions/README.md` covering all 27 major architectural subsystems (**ADR-001 through ADR-027**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
-- **Total Unit Test Count**: **569 passing tests** across 57 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
+- **Total Unit Test Count**: **593 passing tests** across 58 test classes with 0 failures and 0 warnings (`BUILD SUCCESSFUL`).
 
 ### Roadmap & Evolution (Phases 31–36)
 - **Phase 31: Stub Indexing & Large Workspace Caching**

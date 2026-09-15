@@ -221,6 +221,14 @@
                 language="Compact"
                 implementationClass="dev.verloren.midnight.editor.CompactQuoteHandler"/>
 
+        <typedHandler
+                id="CompactAngleBraceTypedHandler"
+                implementation="dev.verloren.midnight.editor.CompactAngleBraceTypedHandler"/>
+
+        <backspaceHandlerDelegate
+                id="CompactAngleBraceBackspaceHandler"
+                implementation="dev.verloren.midnight.editor.CompactAngleBraceBackspaceHandler"/>
+
         <lang.smartEnterProcessor
                 language="Compact"
                 implementationClass="dev.verloren.midnight.editor.smartEnter.CompactSmartEnterProcessor"/>

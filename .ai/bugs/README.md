@@ -162,7 +162,7 @@ Record the reusable lesson that could help prevent the same class of bug in the 
 
 ## 7. Mandatory Task Completion Gate
 
-In accordance with [`.ai/workflow.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/workflow.md), every task lifecycle requires evaluating the Bug Completion Gate:
+In accordance with [`.ai/workflow.md`](.ai/workflow.md), every task lifecycle requires evaluating the Bug Completion Gate:
 
 ```text
 Bug identified? Yes / No
@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-16 | editor / brace-matching | Missing angle bracket (<>) auto-closing, cursor placement, and overtyping | [2026-09-16-editor-angle-bracket-pairing.md](2026-09-16-editor-angle-bracket-pairing.md) | Medium | Resolved |
 | 2026-09-16 | completion / live-templates | Data type completion suppression in live template navigation and declaration type positions | [2026-09-16-template-type-completion-suppression.md](2026-09-16-template-type-completion-suppression.md) | High | Resolved |
 | 2026-09-16 | completion / live-templates | Code and declaration completions triggering inside comments and documentation blocks | [2026-09-16-comment-completion-suppression.md](2026-09-16-comment-completion-suppression.md) | Medium | Resolved |
 | 2026-09-16 | annotator / intention / version | SideEffectGuard INVOKE_LATER exception during quick-fix & intention previews | [2026-09-16-quickfix-preview-side-effect-guard.md](2026-09-16-quickfix-preview-side-effect-guard.md) | High | Resolved |
