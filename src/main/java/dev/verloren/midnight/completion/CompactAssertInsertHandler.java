@@ -15,18 +15,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Insert handler for the {@code assert} statement keyword completion.
- *
- * <p>When the user selects {@code assert} from the code-completion popup, this handler:
- * <ol>
- *   <li>Inserts a space and the parenthesized assertion outline with a trailing semicolon:
- *       <code>assert ();</code></li>
- *   <li>Positions the caret inside the parentheses: <code>assert (&lt;caret&gt;);</code></li>
- *   <li>Registers a tab-out scope so pressing &lt;Tab&gt; jumps over the closing parenthesis
- *       and semicolon to the next statement.</li>
- *   <li>Triggers an auto-popup completion inside the parentheses so in-scope variables,
- *       constants, and functions are suggested immediately without extra keystrokes.</li>
- * </ol>
+ * Insert handler for {@code assert} completion that automatically appends parentheses {@code ()},
+ * positions the caret inside the parentheses so the user can immediately specify the condition
+ * and failure message (e.g. {@code assert(_x1 != _x2, "Cannot use the same number twice");}),
+ * registers a tab-out scope, and triggers auto-popup completion for argument expressions.
  */
 public final class CompactAssertInsertHandler implements InsertHandler<LookupElement> {
 
@@ -43,7 +35,7 @@ public final class CompactAssertInsertHandler implements InsertHandler<LookupEle
     Project project = context.getProject();
     CharSequence chars = document.getCharsSequence();
 
-    // Check if '(' already follows the inserted keyword
+    // Check if '(' already follows the inserted assert keyword
     int offset = tailOffset;
     while (offset < chars.length() && Character.isWhitespace(chars.charAt(offset))) {
       offset++;
@@ -52,10 +44,10 @@ public final class CompactAssertInsertHandler implements InsertHandler<LookupEle
 
     int caretTarget;
     if (!hasParen) {
-      document.insertString(tailOffset, " ();");
-      caretTarget = tailOffset + 2; // inside " (<caret>);"
+      document.insertString(tailOffset, "()");
+      caretTarget = tailOffset + 1;
     } else {
-      caretTarget = offset + 1; // inside existing "("
+      caretTarget = offset + 1;
     }
 
     editor.getCaretModel().moveToOffset(caretTarget);
