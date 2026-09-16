@@ -212,7 +212,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
 
   @Override
   public void dispose() {
-    Disposer.dispose(pragmaUpdateAlarm);
+    pragmaUpdateAlarm.cancelAllRequests();
   }
 
   private JPanel createTopPanel() {
