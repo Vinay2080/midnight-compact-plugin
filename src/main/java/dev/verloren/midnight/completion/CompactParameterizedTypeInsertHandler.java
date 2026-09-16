@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -71,9 +72,13 @@ public class CompactParameterizedTypeInsertHandler implements InsertHandler<Look
     if (templateState != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (!editor.isDisposed()) {
-          editor.getCaretModel().moveToOffset(caretTarget);
-          TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
-          AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+          WriteCommandAction.runWriteCommandAction(project, () -> {
+            if (!editor.isDisposed()) {
+              editor.getCaretModel().moveToOffset(caretTarget);
+              TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
+              AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+            }
+          });
         }
       });
     }
