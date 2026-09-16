@@ -320,29 +320,13 @@ public class CompactCompletionContributor extends CompletionContributor {
     String tailText = getDeclarationTailText(type);
 
     if (type.isExportable()) {
-      LookupElementBuilder exportBuilder = LookupElementBuilder.create("export " + baseName)
-          .withPresentableText("export " + baseName)
-          .withTailText(tailText, true)
-          .withTypeText(baseName)
-          .bold()
-          .withInsertHandler(insertHandler);
-
-      for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, true)) {
-        exportBuilder = exportBuilder.withLookupString(lookup);
-      }
+      LookupElementBuilder exportBuilder = createDeclarationLookupElement(
+          type, "export " + baseName, tailText, insertHandler, true);
       result.addElement(PrioritizedLookupElement.withPriority(exportBuilder, exportPriority));
     }
 
-    LookupElementBuilder bareBuilder = LookupElementBuilder.create(baseName)
-        .withPresentableText(baseName)
-        .withTailText(tailText, true)
-        .withTypeText(baseName)
-        .bold()
-        .withInsertHandler(insertHandler);
-
-    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, false)) {
-      bareBuilder = bareBuilder.withLookupString(lookup);
-    }
+    LookupElementBuilder bareBuilder = createDeclarationLookupElement(
+        type, baseName, tailText, insertHandler, false);
     result.addElement(PrioritizedLookupElement.withPriority(bareBuilder, barePriority));
   }
 
@@ -352,20 +336,29 @@ public class CompactCompletionContributor extends CompletionContributor {
       double priority,
       @NotNull InsertHandler<LookupElement> insertHandler) {
 
-    String baseName = type.getBaseName();
     String tailText = getDeclarationTailText(type);
+    LookupElementBuilder builder = createDeclarationLookupElement(
+        type, type.getBaseName(), tailText, insertHandler, false);
+    result.addElement(PrioritizedLookupElement.withPriority(builder, priority));
+  }
 
-    LookupElementBuilder builder = LookupElementBuilder.create(baseName)
-        .withPresentableText(baseName)
+  private static @NotNull LookupElementBuilder createDeclarationLookupElement(
+      @NotNull CompactDeclarationType type,
+      @NotNull String lookupName,
+      @NotNull String tailText,
+      @NotNull InsertHandler<LookupElement> insertHandler,
+      boolean isExport) {
+    LookupElementBuilder builder = LookupElementBuilder.create(lookupName)
+        .withPresentableText(lookupName)
         .withTailText(tailText, true)
-        .withTypeText(baseName)
+        .withTypeText(type.getBaseName())
         .bold()
         .withInsertHandler(insertHandler);
 
-    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, false)) {
+    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(type, isExport)) {
       builder = builder.withLookupString(lookup);
     }
-    result.addElement(PrioritizedLookupElement.withPriority(builder, priority));
+    return builder;
   }
 
   private static @NotNull String getDeclarationTailText(@NotNull CompactDeclarationType type) {
@@ -380,41 +373,22 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static void addAfterSealedCompletions(@NotNull CompletionResultSet result) {
-    LookupElementBuilder builder = LookupElementBuilder.create("ledger")
-        .withPresentableText("ledger")
-        .withTailText(" <name>: <type>;", true)
-        .withTypeText("ledger")
-        .bold()
-        .withInsertHandler(CompactLedgerInsertHandler.INSTANCE);
-    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.LEDGER, false)) {
-      builder = builder.withLookupString(lookup);
-    }
+    LookupElementBuilder builder = createDeclarationLookupElement(
+        CompactDeclarationType.LEDGER, "ledger", " <name>: <type>;", CompactLedgerInsertHandler.INSTANCE, false);
     result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAfterPureCompletions(@NotNull CompletionResultSet result) {
-    LookupElementBuilder builder = LookupElementBuilder.create("circuit")
-        .withPresentableText("circuit")
-        .withTailText(" <name>(...): <type> { ... }", true)
-        .withTypeText("circuit")
-        .bold()
-        .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT));
-    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.CIRCUIT, false)) {
-      builder = builder.withLookupString(lookup);
-    }
+    LookupElementBuilder builder = createDeclarationLookupElement(
+        CompactDeclarationType.CIRCUIT, "circuit", " <name>(...): <type> { ... }",
+        new CompactDeclarationInsertHandler(CompactDeclarationType.CIRCUIT), false);
     result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 
   private static void addAfterNewCompletions(@NotNull CompletionResultSet result) {
-    LookupElementBuilder builder = LookupElementBuilder.create("type")
-        .withPresentableText("type")
-        .withTailText(" <name> = <type>;", true)
-        .withTypeText("type")
-        .bold()
-        .withInsertHandler(new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE));
-    for (String lookup : CompactDeclarationTriggerResolver.generateLookupStrings(CompactDeclarationType.TYPE, false)) {
-      builder = builder.withLookupString(lookup);
-    }
+    LookupElementBuilder builder = createDeclarationLookupElement(
+        CompactDeclarationType.TYPE, "type", " <name> = <type>;",
+        new CompactDeclarationInsertHandler(CompactDeclarationType.TYPE), false);
     result.addElement(PrioritizedLookupElement.withPriority(builder, 120.0));
   }
 

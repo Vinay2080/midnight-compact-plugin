@@ -33,6 +33,7 @@ public class CompactParameterizedTypeInsertHandler implements InsertHandler<Look
   }
 
   @Override
+  @SuppressWarnings("DuplicatedCode")
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
     Document document = context.getDocument();

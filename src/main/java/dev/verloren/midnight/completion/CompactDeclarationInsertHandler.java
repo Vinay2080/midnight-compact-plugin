@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType declarationType) implements InsertHandler<LookupElement> {
 
   @Override
+  @SuppressWarnings("DuplicatedCode")
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
     Document document = context.getDocument();
@@ -67,7 +68,8 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
   }
 
   /**
-   * Programmatically launches the live declaration template at {@code tailOffset} in the given editor.\n   *
+   * Programmatically launches the live declaration template at {@code tailOffset} in the given editor.
+   *
    * @param project    current project
    * @param editor     active editor
    * @param tailOffset document offset directly following the declaration keyword

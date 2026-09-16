@@ -979,7 +979,19 @@ public class CompactCompletionTest extends BasePlatformTestCase {
         """
     );
     CompactTypeExpression expr = new CompactTypeExpression("State");
-    ExpressionContext context = new ExpressionContext() {
+    LookupElement[] items = expr.calculateLookupItems(createExpressionContext());
+    assertNotNull("Lookup items should not be null", items);
+    List<String> itemNames = Arrays.stream(items).map(LookupElement::getLookupString).toList();
+    assertTrue("Should include 'State'", itemNames.contains("State"));
+    assertTrue("Should include 'Bytes'", itemNames.contains("Bytes"));
+    assertTrue("Should include 'Bytes<32>'", itemNames.contains("Bytes<32>"));
+    assertTrue("Should include 'Uint'", itemNames.contains("Uint"));
+    assertTrue("Should include 'Uint<64>'", itemNames.contains("Uint<64>"));
+    assertTrue("Should include 'CustomRecord'", itemNames.contains("CustomRecord"));
+  }
+
+  private ExpressionContext createExpressionContext() {
+    return new ExpressionContext() {
       @Override
       public Project getProject() {
         return myFixture.getProject();
@@ -1020,15 +1032,6 @@ public class CompactCompletionTest extends BasePlatformTestCase {
         return null;
       }
     };
-    LookupElement[] items = expr.calculateLookupItems(context);
-    assertNotNull("Lookup items should not be null", items);
-    List<String> itemNames = Arrays.stream(items).map(LookupElement::getLookupString).toList();
-    assertTrue("Should include 'State'", itemNames.contains("State"));
-    assertTrue("Should include 'Bytes'", itemNames.contains("Bytes"));
-    assertTrue("Should include 'Bytes<32>'", itemNames.contains("Bytes<32>"));
-    assertTrue("Should include 'Uint'", itemNames.contains("Uint"));
-    assertTrue("Should include 'Uint<64>'", itemNames.contains("Uint<64>"));
-    assertTrue("Should include 'CustomRecord'", itemNames.contains("CustomRecord"));
   }
 
   public void testTypeMacroDelegatesToExpression() {

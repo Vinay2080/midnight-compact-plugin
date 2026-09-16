@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-16
+
 ### Added
 - Added automatic delimiter and structural punctuation skipping during editor typing for closing delimiters (`)`, `]`, `}`, `>`), colons (`:`), semicolons (`;`), commas (`,`), and closing quotes (`"`, `'`), advancing the cursor without inserting duplicate symbols.
 - Added automatic angle bracket insertion and caret positioning inside brackets for sized types (such as `Bytes` and `Uint`) with contextual size and bit-width suggestions.
@@ -31,5 +33,3 @@
 - Fixed compiler diagnostic range mapping when running under WSL on Windows.
 - Fixed duplicate `export export` insertion when autocompleting declarations after an existing `export` keyword.
 - Fixed invalid top-level `export const` suggestions in code completion and intention actions.
-
-## [1.2.4] - 2026-09-09
