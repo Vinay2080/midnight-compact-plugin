@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed an issue where the editor cursor would unexpectedly jump to the beginning of the line when pressing the spacebar or typing on an indented empty line in Compact files.
+- Fixed premature stripping of trailing spaces and indentation during active editing by eliminating forced background file saves and compiling live document buffers seamlessly in memory.
+
 ## [1.3.1] - 2026-09-16
 
 ### Added

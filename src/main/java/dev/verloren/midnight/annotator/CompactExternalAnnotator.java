@@ -7,8 +7,6 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +36,7 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
   public record InitialInfo(
       @NotNull PsiFile file,
       @NotNull String filePath,
+      @Nullable String unsavedContent,
       boolean skipZk,
       long modificationStamp
   ) {}
@@ -58,25 +56,14 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
       return null;
     }
 
-    // Flush unsaved editor document modifications to disk so the external compiler
-    // CLI compiles the live buffer rather than stale disk contents.
-    // Must be dispatched via invokeLater outside read actions, and skipped in unit test mode.
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      Document document = editor.getDocument();
-      FileDocumentManager docManager = FileDocumentManager.getInstance();
-      if (docManager.isDocumentUnsaved(document)) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (!file.getProject().isDisposed() && docManager.isDocumentUnsaved(document)) {
-            docManager.saveDocument(document);
-          }
-        }, ModalityState.nonModal());
-      }
-    }
+    Document document = editor.getDocument();
+    FileDocumentManager docManager = FileDocumentManager.getInstance();
+    String unsavedContent = docManager.isDocumentUnsaved(document) ? document.getText() : null;
 
     MidnightSettingsState state = MidnightSettingsState.getInstance();
     boolean skipZk = state == null || state.skipZkDefault;
 
-    return new InitialInfo(file, vFile.getPath(), skipZk, editor.getDocument().getModificationStamp());
+    return new InitialInfo(file, vFile.getPath(), unsavedContent, skipZk, document.getModificationStamp());
   }
 
   @Override
@@ -88,6 +75,7 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
 
     // Determine output directory: native Linux /tmp for WSL, Windows temp dir otherwise
     File outDir = null;
+    File shadowDir = null;
     String outDirPath;
     if (toolchain.isWsl()) {
       outDirPath = "/tmp/compact-annotator-" + Math.abs(info.filePath().hashCode());
@@ -102,13 +90,34 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
     }
 
     try {
+      String sourcePath = info.filePath();
+      if (info.unsavedContent() != null) {
+        try {
+          shadowDir = FileUtil.createTempDirectory("compact-shadow", null);
+          File shadowFile = new File(shadowDir, info.file().getName());
+          FileUtil.writeToFile(shadowFile, info.unsavedContent());
+          sourcePath = shadowFile.getAbsolutePath();
+        } catch (Exception e) {
+          LOG.warn("Failed to create shadow source file for compactc", e);
+          sourcePath = info.filePath();
+        }
+      }
+
       List<String> args = new ArrayList<>();
       if (info.skipZk()) {
         args.add("--skip-zk");
       }
+
+      // Add parent directory of target source file to compact search path for relative includes
+      VirtualFile parent = info.file().getVirtualFile() != null ? info.file().getVirtualFile().getParent() : null;
+      if (parent != null) {
+        args.add("--compact-path");
+        args.add(parent.getPath());
+      }
+
       args.add("-o");
       args.add(outDirPath);
-      args.add(info.filePath());
+      args.add(sourcePath);
 
       GeneralCommandLine commandLine = CompactToolchainUtil.createCommandLine(
           info.file().getProject(),
@@ -130,10 +139,13 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
       return new AnnotationResult(info.modificationStamp(), fileDiagnostics);
     } catch (ExecutionException e) {
       LOG.warn("Failed to run compactc external annotator", e);
-      return new AnnotationResult(info.modificationStamp(), Collections.emptyList());
+      return new AnnotationResult(info.modificationStamp(), List.of());
     } finally {
       if (outDir != null) {
         FileUtil.delete(outDir);
+      }
+      if (shadowDir != null) {
+        FileUtil.delete(shadowDir);
       }
     }
   }

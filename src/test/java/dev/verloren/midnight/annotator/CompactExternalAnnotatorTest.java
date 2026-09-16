@@ -1,12 +1,16 @@
 package dev.verloren.midnight.annotator;
 
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 
 import java.util.List;
 
@@ -173,5 +177,49 @@ public class CompactExternalAnnotatorTest extends BasePlatformTestCase {
     assertNotNull("Range should not be null", rangeLine1);
     assertEquals(0, rangeLine1.getStartOffset());
     assertEquals(7, rangeLine1.getEndOffset()); // "circuit" length 7
+  }
+
+  public void testCollectInformationCapturesUnsavedBufferWithoutForcingSaveOrStrippingWhitespace() throws Exception {
+    VirtualFile vf = myFixture.getTempDirFixture().createFile("test.compact", "circuit main() {\n  \n}\n");
+    myFixture.openFileInEditor(vf);
+    Editor editor = myFixture.getEditor();
+    PsiFile psiFile = getPsiManager().findFile(vf);
+    assertNotNull("PSI file must exist", psiFile);
+
+    // Position caret on the indented line after the 2 spaces
+    int lineStart = editor.getDocument().getLineStartOffset(1);
+    editor.getCaretModel().moveToOffset(lineStart + 2);
+
+    // Type a space: now line 2 has 3 spaces
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      editor.getDocument().insertString(lineStart + 2, " ");
+      editor.getCaretModel().moveToOffset(lineStart + 3);
+    });
+
+    assertTrue("Document must be marked unsaved", FileDocumentManager.getInstance().isDocumentUnsaved(editor.getDocument()));
+    assertEquals("Caret must be at offset 3 on indented line", lineStart + 3, editor.getCaretModel().getOffset());
+
+    CompactExternalAnnotator annotator = new CompactExternalAnnotator();
+    CompactExternalAnnotator.InitialInfo info = annotator.collectInformation(psiFile, editor, false);
+    assertNotNull("InitialInfo must not be null", info);
+
+    // Dispatch any scheduled EDT events
+    UIUtil.dispatchAllInvocationEvents();
+
+    // Verify document was NOT saved to disk
+    assertTrue("Document must remain unsaved to prevent stripping whitespace",
+        FileDocumentManager.getInstance().isDocumentUnsaved(editor.getDocument()));
+
+    // Verify caret did not jump to start of line
+    assertEquals("Caret must remain at offset 3 and not jump to start of line",
+        lineStart + 3, editor.getCaretModel().getOffset());
+
+    // Verify trailing whitespace / indentation was not stripped
+    assertEquals("Indented spaces must not be stripped",
+        "circuit main() {\n   \n}\n", editor.getDocument().getText());
+
+    // Verify InitialInfo captured the live unsaved buffer
+    assertEquals("Live buffer must be captured in unsavedContent",
+        editor.getDocument().getText(), info.unsavedContent());
   }
 }

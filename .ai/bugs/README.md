@@ -193,6 +193,8 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-16 | annotator / editor | Caret jump and trailing whitespace stripping on spacebar or indented empty lines | [2026-09-16-annotator-trailing-space-caret-jump.md](2026-09-16-annotator-trailing-space-caret-jump.md) | High | Resolved |
+| 2026-09-16 | annotator / compiler | External annotator lag, stale underlines, and WSL path mapping | [2026-09-16-external-annotator-lag-and-stale-underlines.md](2026-09-16-external-annotator-lag-and-stale-underlines.md) | High | Resolved |
 | 2026-09-16 | toolwindow / threading | Caret freeze on typing and spacebar from EDT slow indexing and insert handler threading assertions | [2026-09-16-caret-freeze-on-spacebar.md](2026-09-16-caret-freeze-on-spacebar.md) | High | Resolved |
 | 2026-09-16 | bundle / platform | Deprecated DynamicBundle constructor usage causing plugin verification warning | [2026-09-16-bundle-dynamic-bundle-deprecation.md](2026-09-16-bundle-dynamic-bundle-deprecation.md) | Minor | Resolved |
 | 2026-09-16 | completion / live-templates | Assert statement completion and live template missing parentheses, caret placement inside, and tab-out scope | [2026-09-16-completion-assert-parentheses.md](2026-09-16-completion-assert-parentheses.md) | Medium | Resolved |
