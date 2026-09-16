@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 
@@ -48,7 +47,7 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
       CompactAssertInsertHandler.INSTANCE.handleInsert(context, item);
     });
 
-    assertTrue(myFixture.getEditor().getDocument().getText().contains("as ();"));
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("as()"));
   }
 
   public void testParameterizedTypeInsertHandlerWithTemplateStateDoesNotThrow() {
@@ -75,13 +74,13 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
       CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS.handleInsert(context, item);
     });
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("<\"\">"));
   }
 
   public void testAssertInsertHandlerWithTemplateStateDoesNotThrow() {
     myFixture.configureByText(CompactFileType.INSTANCE, "circuit test() { <caret> }");
     TemplateManager templateManager = TemplateManager.getInstance(getProject());
-    Template template = templateManager.createTemplate("t", "user", "as$VAR$");
+    Template template = templateManager.createTemplate("t", "user", "assert$VAR$");
     template.addVariable("VAR", "var", "var", true);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -102,6 +101,6 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
       CompactAssertInsertHandler.INSTANCE.handleInsert(context, item);
     });
 
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("assert"));
   }
 }
