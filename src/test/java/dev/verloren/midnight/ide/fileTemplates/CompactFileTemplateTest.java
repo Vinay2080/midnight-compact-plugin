@@ -26,6 +26,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertEquals(4, descriptor.getTemplates().size());
   }
 
+  @SuppressWarnings("unchecked")
   public void testContractTemplateEvaluatesAndParsesCleanly() throws IOException {
     FileTemplate template = FileTemplateManager.getInstance(getProject())
         .getInternalTemplate(CompactFileTemplateGroupFactory.COMPACT_CONTRACT);
