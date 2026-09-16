@@ -6,6 +6,7 @@
     <!-- Public plugin name should be written in Title Case.
      Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
     <name>Midnight Compact Language</name>
+    <version>1.3.1</version>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="shaking.121@gmail.com" url="https://github.com/Vinay2080">Verloren</vendor>
@@ -65,7 +66,7 @@
             <li>Select the location of your <code>compact</code> executable:
                 <ul>
                     <li><b>Linux / macOS:</b> Typically <code>/usr/local/bin/compact</code>, <code>~/.cargo/bin/compact</code>, or your local installation path.</li>
-                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\\\\\Ubuntu\\usr\\bin\\compact</code>).</li>
+                    <li><b>Windows (WSL):</b> Select your WSL distribution or path (e.g. <code>\\\\Ubuntu\\usr\\bin\\compact</code>).</li>
                     <li><b>Windows (Native):</b> Navigate to your installed <code>compact.exe</code> binary. <i>(Note: Avoid <code>C:\\Windows\\System32\\compact.exe</code>, which is Windows' built-in NTFS compression tool)</i>.</li>
                 </ul>
             </li>
@@ -90,6 +91,20 @@
 
     <!-- Change notes displayed in the IDE Plugin Manager "What's New" and Marketplace release history -->
     <change-notes><![CDATA[
+        <h3>1.3.1</h3>
+        <ul>
+            <li><b>Universal Delimiter &amp; Symbol Skipping:</b> Automatically skips over closing delimiters (<code>)</code>, <code>]</code>, <code>}</code>, <code>&gt;</code>), colons (<code>:</code>), semicolons (<code>;</code>), commas (<code>,</code>), and closing quotes (<code>&quot;</code>, <code>&#39;</code>) during typing without inserting duplicate characters.</li>
+            <li><b>Angle Bracket Auto-Pairing &amp; Overtyping:</b> Automatic angle bracket (<code>&lt;&gt;</code>) pairing, cursor positioning, overtyping, and paired backspace deletion for generic types and parameterized expressions.</li>
+            <li><b>Parameterized Type Completion:</b> Automatic angle bracket insertion and contextual bit-width/size suggestions for sized types like <code>Bytes&lt;32&gt;</code> and <code>Uint&lt;...&gt;</code>.</li>
+            <li><b>Interactive Live Template Type Macro:</b> Interactive dropdown suggestions for built-in and project types when tabbing through declaration live templates.</li>
+            <li><b>Declaration Auto-Numbering:</b> Intelligent scope-aware automatic numbering and gap filling for generated declarations.</li>
+            <li><b>Export Declarations &amp; Completions:</b> Context-aware autocompletion for all Compact export declarations (circuit, ledger, struct, enum, type, module, contract, witness) and export selection blocks.</li>
+            <li><b>Editor Responsiveness &amp; Typing Stability:</b> Eliminated caret freezes, dropped typing events, and unnecessary compiler card re-renders when the Compact Compiler tool window is open.</li>
+            <li><b>Live Template Threading Fixes:</b> Resolved editor threading exceptions when completing sized types or assert statements within active live templates.</li>
+            <li><b>Assert Completion:</b> Context-aware <code>assert()</code> completion inserting enclosing parentheses, positioning the caret inside for condition and message input, and registering a tab-out scope.</li>
+            <li><b>Platform Compatibility:</b> Modernized message bundle initialization to ensure compatibility with future IntelliJ releases.</li>
+            <li><b>External Linter Fixes:</b> Fixed WSL path translations and automatic editor synchronization before running external compilations.</li>
+        </ul>
         <h3>1.2.0</h3>
         <ul>
             <li><b>Go to Type Declaration (<code>Ctrl+Shift+B</code> / <code>Cmd+Shift+B</code>):</b> Direct navigation from variables, parameters, expressions, and ledger fields to the underlying struct, enum, or type declaration.</li>

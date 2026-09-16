@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.0 / Universal Delimiter Skipping, Angle Bracket Pairing, Assert Completion, Parameterized Type Scaffolding)
+Last Updated: September 2026 (v1.3.1 / Universal Delimiter Skipping, Angle Bracket Pairing, Assert Completion, Parameterized Type Scaffolding, Tool Window Responsiveness & Typing Stability)
 
 ---
 
@@ -38,6 +38,11 @@ Last Updated: September 2026 (v1.3.0 / Universal Delimiter Skipping, Angle Brack
     - `prevNonCommentLeaf` leaf traversal in `CompactCompletionContext` to prevent AST comment trivia from masquerading as statement or declaration starts.
     - Live template context filtering in `CompactLiveTemplateContextType` preventing expansion of declaration triggers (e.g. `ledg`, `led`, `cir`) within comments.
   - Parametric live templates in `Compact.xml` with bundle descriptions: `led`, `ledg`, `ledger`, `expled`, `cir`, `wit`, `expw`, `str`, `expstr`, `en`, `expen`, `type`, `expt`, `const`, `cct`.
+- **Tool Window Responsiveness & Typing Stability (v1.3.1)**:
+  - Optimized editor change notifications in `CompactCompilerPanel` to prevent redundant card re-renders and EDT queue stalls when typing.
+  - Suppressed background compiler check alarms and index reads on rapid text typing events, preventing caret freezes and dropped keystrokes (e.g. initial keywords and spacebar).
+  - Hardened live template write action boundary in `CompactParameterizedTypeInsertHandler` and `CompactAssertInsertHandler` to prevent template state corruptions and threading exceptions.
+  - Modernized `CompactBundle` constructor using explicit `CompactBundle.class` reference to eliminate platform deprecation warnings.
 - **Live Template Type Completion & Macro System (Phase 30 / v1.3.0 / ADR-027, ADR-029)**:
   - `CompactTypeExpression`: Live template `Expression` providing interactive dropdown suggestions for all built-in types (`State`, `Counter`, `Void`, `Bytes`, `Field`, `Uint`, etc.), in-scope project types, and imported types when navigating through declaration templates.
   - `CompactTypeMacro`: Registered under `<liveTemplateMacro>` as `compactType(...)` for live template XML definitions.
@@ -92,9 +97,9 @@ Last Updated: September 2026 (v1.3.0 / Universal Delimiter Skipping, Angle Brack
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **636 passing tests** (0 failures, 0 skipped, 100% success rate)
-- **Active Test Suites**: **61 test classes**
-- **Execution Time**: ~1m 15s via `./gradlew test`
+- **Total Tests**: **645 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Active Test Suites**: **64 test classes**
+- **Execution Time**: ~2m 30s via `./gradlew test`
 
 ### Test Suite Breakdown
 
@@ -137,7 +142,9 @@ Last Updated: September 2026 (v1.3.0 / Universal Delimiter Skipping, Angle Brack
 | `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | 4 | Passed |
 | `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
 | `dev.verloren.midnight.editor.CompactFoldingTest` | 4 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 4 | Passed |
 | `dev.verloren.midnight.version.CompactSemVerUtilTest` | 4 | Passed |
+| `dev.verloren.midnight.CompactBundleTest` | 3 | Passed |
 | `dev.verloren.midnight.CompactTestUtilsTest` | 3 | Passed |
 | `dev.verloren.midnight.editor.CompactInlayHintsTest` | 3 | Passed |
 | `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest` | 3 | Passed |
@@ -149,6 +156,7 @@ Last Updated: September 2026 (v1.3.0 / Universal Delimiter Skipping, Angle Brack
 | `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | 3 | Passed |
 | `dev.verloren.midnight.symbol.CompactSymbolTest` | 3 | Passed |
 | `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 3 | Passed |
+| `dev.verloren.midnight.completion.CompactInsertHandlersTest` | 2 | Passed |
 | `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | 2 | Passed |
 | `dev.verloren.midnight.intention.CompactPragmaIntentionTest` | 2 | Passed |
 | `dev.verloren.midnight.navigation.CompactChooseByNameTest` | 2 | Passed |
@@ -161,7 +169,8 @@ Last Updated: September 2026 (v1.3.0 / Universal Delimiter Skipping, Angle Brack
 | `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
 | `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
-| **Total Across 61 Suites** | **636** | **100% Passed** |\n
+| **Total Across 64 Suites** | **645** | **100% Passed** |
+
 ---
 
 ## 3. Roadmap & Evolution (Phases 31–36)

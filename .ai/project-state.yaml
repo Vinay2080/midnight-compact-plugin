@@ -5,13 +5,13 @@ project:
   platform_version: "2026.2"
   java_version: "25"
   gradle_version: "8.13"
-  current_version: "1.3.0"
+  current_version: "1.3.1"
 
 metrics:
-  passing_tests: 636
+  passing_tests: 645
   failing_tests: 0
   skipped_tests: 0
-  test_suites: 61
+  test_suites: 64
 
 phases:
   lexer: complete
@@ -42,6 +42,8 @@ phases:
   angle_bracket_auto_closing: complete (v1.3.0 / ADR-029)
   parameterized_type_completion_and_sizing: complete (v1.3.0)
   delimiter_and_symbol_skipping: complete (v1.3.0 / ADR-030)
+  compiler_tool_window_responsiveness_and_typing_freeze: complete (v1.3.1)
+  dynamic_bundle_migration: complete (v1.3.1)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)
@@ -83,14 +85,16 @@ architecture:
     - "ADR-030: Universal Delimiter and Structural Symbol Skipping During Editor Typing"
 
 tests:
-  last_known_passing: 636
+  last_known_passing: 645
   failures: 0
   skipped: 0
   suites:
     annotator_external: dev.verloren.midnight.annotator.CompactExternalAnnotatorTest
     annotator_preview_side_effects: dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest
+    bundle: dev.verloren.midnight.CompactBundleTest
     test_utils: dev.verloren.midnight.CompactTestUtilsTest
     completion: dev.verloren.midnight.completion.CompactCompletionTest
+    completion_insert_handlers: dev.verloren.midnight.completion.CompactInsertHandlersTest
     documentation: dev.verloren.midnight.documentation.CompactDocumentationTest
     editor_angle_brace_typing: dev.verloren.midnight.editor.CompactAngleBraceTypingTest
     editor_breadcrumbs: dev.verloren.midnight.editor.CompactBreadcrumbsTest
@@ -144,6 +148,7 @@ tests:
     stdlib_service: dev.verloren.midnight.stdlib.CompactStdlibServiceTest
     structure_view: dev.verloren.midnight.structure.CompactStructureViewTest
     symbol: dev.verloren.midnight.symbol.CompactSymbolTest
+    toolwindow_compiler_panel: dev.verloren.midnight.toolwindow.CompactCompilerPanelTest
     toolwindow_version_card: dev.verloren.midnight.toolwindow.CompactVersionCardTest
     type_inference: dev.verloren.midnight.type.CompactTypeInferenceTest
     version_semver_util: dev.verloren.midnight.version.CompactSemVerUtilTest
