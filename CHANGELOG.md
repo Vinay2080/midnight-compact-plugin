@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed caret freeze and dropped typing events (e.g. after typing the first word of a line or pressing Space) caused by synchronous `FileTypeIndex` querying and heavy card updates on the EDT in `CompactCompilerPanel`.
+- Debounced and filtered document change notifications in `CompactCompilerPanel` to prevent UI pauses and unnecessary compiler card rebuilds while typing in the editor.
+- Fixed `ThreadingAssertions` write-access violation in `CompactParameterizedTypeInsertHandler` and `CompactAssertInsertHandler` when completing within live templates.
+
 ## [1.3.0] - 2026-09-16
 
 ### Added
@@ -31,5 +36,4 @@
 - Fixed editor crash when previewing compiler switch quick-fixes and intention actions.
 - Fixed stale diagnostic underlines by automatically synchronizing editor buffers prior to external compilation.
 - Fixed compiler diagnostic range mapping when running under WSL on Windows.
-- Fixed duplicate `export export` insertion when autocompleting declarations after an existing `export` keyword.
-- Fixed invalid top-level `export const` suggestions in code completion and intention actions.
+- Fixed duplicate `export export` insertion when autocompleting declarations after an existing `export` keyword.\n- Fixed invalid top-level `export const` suggestions in code completion and intention actions.
