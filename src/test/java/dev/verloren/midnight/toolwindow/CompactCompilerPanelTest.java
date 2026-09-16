@@ -8,6 +8,8 @@ import com.intellij.util.SlowOperations;
 
 public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
+  @SuppressWarnings("UnstableApiUsage")
+
   public void testFindTargetCompactFileProhibitsSlowOperationsOnEdt() {
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
     Disposer.register(getTestRootDisposable(), panel);

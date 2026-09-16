@@ -399,7 +399,7 @@ public class CompactParameterInfoHandlerTest extends BasePlatformTestCase {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "RedundantSuppression"})
     public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {}
 
     @Override
@@ -554,7 +554,6 @@ public class CompactParameterInfoHandlerTest extends BasePlatformTestCase {
   private static class MockParameterInfoUIContext<T extends PsiElement> implements ParameterInfoUIContext {
     private final T parameterOwner;
     private int currentParameterIndex = -1;
-    private String text;
     private int highlightStart = -1;
     private int highlightEnd = -1;
     private boolean uiComponentEnabled = true;
@@ -573,7 +572,6 @@ public class CompactParameterInfoHandlerTest extends BasePlatformTestCase {
         boolean isDisabledBeforeHighlight,
         Color background
     ) {
-      this.text = text;
       this.highlightStart = highlightStartOffset;
       this.highlightEnd = highlightEndOffset;
       this.uiComponentEnabled = !isDisabled;
@@ -582,7 +580,6 @@ public class CompactParameterInfoHandlerTest extends BasePlatformTestCase {
 
     @Override
     public void setupRawUIComponentPresentation(String htmlText) {
-      this.text = htmlText;
     }
 
     @Override

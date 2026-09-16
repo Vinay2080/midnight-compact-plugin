@@ -24,9 +24,8 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
         false
     );
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS.handleInsert(context, item);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+        CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS.handleInsert(context, item));
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("Op<\"\">"));
   }
@@ -43,9 +42,8 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
         false
     );
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CompactAssertInsertHandler.INSTANCE.handleInsert(context, item);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+        CompactAssertInsertHandler.INSTANCE.handleInsert(context, item));
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("as()"));
   }
@@ -56,9 +54,8 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
     Template template = templateManager.createTemplate("t", "user", "Op$VAR$");
     template.addVariable("VAR", "var", "var", true);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      templateManager.startTemplate(myFixture.getEditor(), template);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+        templateManager.startTemplate(myFixture.getEditor(), template));
 
     LookupElement item = LookupElementBuilder.create("Opaque");
     InsertionContext context = new InsertionContext(
@@ -70,9 +67,8 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
         false
     );
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS.handleInsert(context, item);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+        CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS.handleInsert(context, item));
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("<\"\">"));
   }
@@ -83,9 +79,8 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
     Template template = templateManager.createTemplate("t", "user", "assert$VAR$");
     template.addVariable("VAR", "var", "var", true);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      templateManager.startTemplate(myFixture.getEditor(), template);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+        templateManager.startTemplate(myFixture.getEditor(), template));
 
     LookupElement item = LookupElementBuilder.create("assert");
     InsertionContext context = new InsertionContext(
@@ -97,9 +92,8 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
         false
     );
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      CompactAssertInsertHandler.INSTANCE.handleInsert(context, item);
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () ->
+        CompactAssertInsertHandler.INSTANCE.handleInsert(context, item));
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("assert"));
   }

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -34,7 +33,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -193,8 +191,8 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
         // If the modification is past the first 250 characters and doesn't mention "pragma", ignore.
         CharSequence oldFrag = event.getOldFragment();
         CharSequence newFrag = event.getNewFragment();
-        boolean mentionsPragma = (oldFrag != null && oldFrag.toString().contains("pragma"))
-            || (newFrag != null && newFrag.toString().contains("pragma"));
+        boolean mentionsPragma = oldFrag.toString().contains("pragma")
+            || newFrag.toString().contains("pragma");
         boolean nearTop = event.getOffset() < 250;
         if (!mentionsPragma && !nearTop) {
           return;

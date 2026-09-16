@@ -179,12 +179,12 @@ Every resolved bug that alters production behavior must be recorded in `.ai/bugs
 
 When updating [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) under `## [Unreleased]` -> `### Fixed`:
 
-| Forbidden Internal Detail | Required User-Facing Phrasing |
-|:---|:---|
+| Forbidden Internal Detail                                                   | Required User-Facing Phrasing                                                                        |
+|:----------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------|
 | `Fixed aggressive isExportPreceding check in CompactCompletionContributor.` | `Fixed issue where data type completion was incorrectly suppressed in exported declaration headers.` |
-| `Fixed SideEffectGuard: INVOKE_LATER in CompactSwitchCompilerQuickFix.` | `Fixed editor crash when previewing compiler switch quick-fixes and intention actions.` |
-| `Fixed WSL /mnt/ path translation in CompactExternalAnnotator.` | `Fixed external compiler diagnostic range mapping when running under WSL on Windows.` |
-| `Fixed missing null check on getFirstChild() in CompactResolveUtil.` | `Fixed intermittent IDE freeze when resolving symbols in incomplete contract files.` |
+| `Fixed SideEffectGuard: INVOKE_LATER in CompactSwitchCompilerQuickFix.`     | `Fixed editor crash when previewing compiler switch quick-fixes and intention actions.`              |
+| `Fixed WSL /mnt/ path translation in CompactExternalAnnotator.`             | `Fixed external compiler diagnostic range mapping when running under WSL on Windows.`                |
+| `Fixed missing null check on getFirstChild() in CompactResolveUtil.`        | `Fixed intermittent IDE freeze when resolving symbols in incomplete contract files.`                 |
 
 ---
 
