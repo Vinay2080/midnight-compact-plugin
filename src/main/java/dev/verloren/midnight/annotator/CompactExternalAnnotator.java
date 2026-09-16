@@ -103,21 +103,7 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
         }
       }
 
-      List<String> args = new ArrayList<>();
-      if (info.skipZk()) {
-        args.add("--skip-zk");
-      }
-
-      // Add parent directory of target source file to compact search path for relative includes
-      VirtualFile parent = info.file().getVirtualFile() != null ? info.file().getVirtualFile().getParent() : null;
-      if (parent != null) {
-        args.add("--compact-path");
-        args.add(parent.getPath());
-      }
-
-      args.add("-o");
-      args.add(outDirPath);
-      args.add(sourcePath);
+      List<String> args = buildCompilerArgs(info, outDirPath, sourcePath);
 
       GeneralCommandLine commandLine = CompactToolchainUtil.createCommandLine(
           info.file().getProject(),
@@ -148,6 +134,29 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
         FileUtil.delete(shadowDir);
       }
     }
+  }
+
+  private static @NotNull List<String> buildCompilerArgs(
+      @NotNull InitialInfo info,
+      @NotNull String outDirPath,
+      @NotNull String sourcePath
+  ) {
+    List<String> args = new ArrayList<>();
+    if (info.skipZk()) {
+      args.add("--skip-zk");
+    }
+
+    // Add parent directory of target source file to compact search path for relative includes
+    VirtualFile parent = info.file().getVirtualFile() != null ? info.file().getVirtualFile().getParent() : null;
+    if (parent != null) {
+      args.add("--compact-path");
+      args.add(parent.getPath());
+    }
+
+    args.add("-o");
+    args.add(outDirPath);
+    args.add(sourcePath);
+    return args;
   }
 
   @Override
@@ -183,11 +192,7 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
 
     String diagPath = diagnostic.filePath().replace('\\', '/');
     String fileName = file.getName();
-    if (diagPath.equals(fileName) || diagPath.endsWith("/" + fileName)) {
-      return true;
-    }
-
-    return false;
+    return diagPath.equals(fileName) || diagPath.endsWith("/" + fileName);
   }
 
   static boolean isDiagnosticForVirtualFile(@NotNull CompactCompilerDiagnostic diagnostic, @NotNull VirtualFile vFile) {
@@ -203,9 +208,7 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
 
     if (diagPath.startsWith("/mnt/")) {
       String translated = CompactToolchainUtil.toWindowsPath(diagPath).replace('\\', '/');
-      if (translated.equalsIgnoreCase(filePath)) {
-        return true;
-      }
+      return translated.equalsIgnoreCase(filePath);
     }
 
     return false;
