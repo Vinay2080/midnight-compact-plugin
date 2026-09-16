@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed deprecated platform message bundle initialization to maintain compatibility with future IntelliJ releases.
+
 ## [1.3.0] - 2026-09-16
 
 ### Added
