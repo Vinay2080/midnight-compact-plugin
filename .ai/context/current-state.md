@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.1 / Universal Delimiter Skipping, Angle Bracket Pairing, Assert Completion, Parameterized Type Scaffolding, Tool Window Responsiveness & Typing Stability)
+Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Caret Jump & Whitespace Stripping Fix, Universal Delimiter Skipping)
 
 ---
 
@@ -10,6 +10,11 @@ Last Updated: September 2026 (v1.3.1 / Universal Delimiter Skipping, Angle Brack
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **In-Memory Shadow Buffer Compilation & Caret Jump Prevention (v1.3.2)**:
+  - Eliminated forced document saves (`FileDocumentManager.saveDocument`) and EDT `invokeLater` dispatch from `CompactExternalAnnotator.collectInformation()`.
+  - Captures unsaved editor text dynamically in `InitialInfo.unsavedContent()` on the read thread.
+  - Spawns background external compiler execution against temporary shadow files preserving relative directory includes via `--compact-path`.
+  - Eliminates editor caret jumps to column 0 and prevents premature stripping of trailing spaces or indentation whitespace during active typing.
 - **Delimiter & Structural Symbol Skipping (v1.3.0 / ADR-030)**:
   - `CompactDelimiterTypedHandler`: `TypedHandlerDelegate` registered in `plugin.xml` intercepting typed closing delimiters and structural punctuation when the matching character is present immediately ahead of the caret.
   - Supported tokens: Closing delimiters (`)` `RPAREN`, `]` `RBRACKET`, `}` `RBRACE`, `>` `GT`), structural punctuation (`:` `COLON`, `;` `SEMICOLON`, `,` `COMMA`), and closing string quotes (`"` and `'` `STRING_LITERAL`).
@@ -97,7 +102,7 @@ Last Updated: September 2026 (v1.3.1 / Universal Delimiter Skipping, Angle Brack
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **645 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Total Tests**: **646 passing tests** (0 failures, 0 skipped, 100% success rate)
 - **Active Test Suites**: **64 test classes**
 - **Execution Time**: ~2m 30s via `./gradlew test`
 
@@ -122,7 +127,7 @@ Last Updated: September 2026 (v1.3.1 / Universal Delimiter Skipping, Angle Brack
 | `dev.verloren.midnight.intention.CompactPhase28IntentionsTest` | 12 | Passed |
 | `dev.verloren.midnight.lexer.LexerTest` | 12 | Passed |
 | `dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest` | 12 | Passed |
-| `dev.verloren.midnight.annotator.CompactExternalAnnotatorTest` | 10 | Passed |
+| `dev.verloren.midnight.annotator.CompactExternalAnnotatorTest` | 11 | Passed |
 | `dev.verloren.midnight.findUsages.CompactFindUsagesTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest` | 10 | Passed |
@@ -169,7 +174,7 @@ Last Updated: September 2026 (v1.3.1 / Universal Delimiter Skipping, Angle Brack
 | `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
 | `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
-| **Total Across 64 Suites** | **645** | **100% Passed** |
+| **Total Across 64 Suites** | **646** | **100% Passed** |
 
 ---
 

@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-09-16
+
 ### Fixed
 - Fixed an issue where the editor cursor would unexpectedly jump to the beginning of the line when pressing the spacebar or typing on an indented empty line in Compact files.
 - Fixed premature stripping of trailing spaces and indentation during active editing by eliminating forced background file saves and compiling live document buffers seamlessly in memory.
@@ -35,9 +37,7 @@
 - Fixed 'assert' completion and 'ass' live template to insert enclosing parentheses ('assert()'), position the caret inside for condition and message input, avoid duplicate parentheses, and register a tab-out scope.
 - Fixed sized type completion inserting bare type names without required size parameter brackets.
 - Fixed issue where data type completion was incorrectly suppressed in exported declaration headers.
-- Fixed code completion, keyword suggestions, and template expansion popping up inside comments and documentation blocks.
-- Fixed editor crash when previewing compiler switch quick-fixes and intention actions.
-- Fixed stale diagnostic underlines by automatically synchronizing editor buffers prior to external compilation.
+- Fixed automatic declaration numbering to skip existing numbered declarations and reuse deleted numbers.
 - Fixed compiler diagnostic range mapping when running under WSL on Windows.
 - Fixed duplicate `export export` insertion when autocompleting declarations after an existing `export` keyword.
 - Fixed invalid top-level `export const` suggestions in code completion and intention actions.
