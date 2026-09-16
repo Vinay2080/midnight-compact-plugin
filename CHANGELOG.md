@@ -5,10 +5,10 @@
 ## [Unreleased]
 
 ### Fixed
-- Fixed caret freeze and dropped typing events (e.g. after typing the first word of a line or pressing Space) caused by synchronous `FileTypeIndex` querying and heavy card updates on the EDT in `CompactCompilerPanel`.
-- Debounced and filtered document change notifications in `CompactCompilerPanel` to prevent UI pauses and unnecessary compiler card rebuilds while typing in the editor.
-- Fixed `ThreadingAssertions` write-access violation in `CompactParameterizedTypeInsertHandler` and `CompactAssertInsertHandler` when completing within live templates.
-- Fixed deprecated platform message bundle initialization to maintain compatibility with future IntelliJ releases.
+- Fixed editor caret freeze and dropped typing events (such as after typing the initial keyword of a line or pressing Space) when the Compact Compiler tool window is active.
+- Optimized editor change notifications and compiler panel responsiveness to eliminate unnecessary card re-renders while typing in the editor.
+- Fixed editor threading exceptions when completing sized types or assert statements within active live templates.
+- Fixed deprecated platform message bundle initialization to ensure compatibility with future IntelliJ platform releases.
 
 ## [1.3.0] - 2026-09-16
 
