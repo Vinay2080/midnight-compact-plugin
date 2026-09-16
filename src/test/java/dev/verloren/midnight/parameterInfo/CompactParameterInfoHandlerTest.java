@@ -399,7 +399,8 @@ public class CompactParameterInfoHandlerTest extends BasePlatformTestCase {
     }
 
     @Override
-    public void showHint(PsiElement element, int offset, ParameterInfoHandler<?, ?> handler) {}
+    @SuppressWarnings("rawtypes")
+    public void showHint(PsiElement element, int offset, ParameterInfoHandler handler) {}
 
     @Override
     public int getParameterListStart() {
