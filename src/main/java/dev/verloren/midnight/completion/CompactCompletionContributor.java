@@ -3,6 +3,7 @@ package dev.verloren.midnight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.editor.Document;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
@@ -33,7 +34,7 @@ import java.util.Set;
  *
  * <p>Extends {@link CompletionContributor} and classifies the caret context via
  * {@link CompactCompletionContext#classify(PsiElement)} into keywords, types, values,
- * members, or parameterized type sizes, populating the {@link CompletionResultSet}
+ * members, pragma directives, or parameterized type sizes, populating the {@link CompletionResultSet}
  * with contextually valid lookup items.</p>
  */
 public class CompactCompletionContributor extends CompletionContributor {
@@ -82,6 +83,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       case AFTER_SEALED -> addAfterSealedCompletions(result);
       case AFTER_PURE -> addAfterPureCompletions(result);
       case AFTER_NEW -> addAfterNewCompletions(result);
+      case AFTER_PRAGMA -> addAfterPragmaCompletions(result);
       case STATEMENT -> {
         addAll(result, STATEMENT_KEYWORDS);
         addValueCompletions(position, result);
@@ -247,6 +249,40 @@ public class CompactCompletionContributor extends CompletionContributor {
       ));
       priority -= 5.0;
     }
+  }
+
+  private static void addAfterPragmaCompletions(@NotNull CompletionResultSet result) {
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("language_version")
+            .withPresentableText("language_version")
+            .withTailText(" >= <version>", true)
+            .withTypeText("pragma")
+            .bold()
+            .withInsertHandler(createPragmaInsertHandler()),
+        100.0
+    ));
+
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("compiler_version")
+            .withPresentableText("compiler_version")
+            .withTailText(" >= <version>", true)
+            .withTypeText("pragma")
+            .bold()
+            .withInsertHandler(createPragmaInsertHandler()),
+        90.0
+    ));
+  }
+
+  private static @NotNull InsertHandler<LookupElement> createPragmaInsertHandler() {
+    return (context, _) -> {
+      int tailOffset = context.getTailOffset();
+      Document doc = context.getDocument();
+      CharSequence chars = doc.getCharsSequence();
+      if (tailOffset >= chars.length() || !Character.isWhitespace(chars.charAt(tailOffset))) {
+        doc.insertString(tailOffset, " ");
+        context.getEditor().getCaretModel().moveToOffset(tailOffset + 1);
+      }
+    };
   }
 
   private static void addDeclarationCompletions(@NotNull CompletionResultSet result) {

@@ -8,7 +8,7 @@ project:
   current_version: "1.3.4"
 
 metrics:
-  passing_tests: 670
+  passing_tests: 679
   failing_tests: 0
   skipped_tests: 0
   test_suites: 65
@@ -47,6 +47,7 @@ phases:
   external_annotator_shadow_buffer_compilation: complete (v1.3.2)
   quote_auto_completion_and_pairing: complete (v1.3.3 / ADR-031)
   stdlib_import_navigation_and_documentation: complete (v1.3.4 / ADR-017, ADR-023)
+  pragma_version_completion_and_documentation: complete (v1.3.4 / ADR-032)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)
@@ -87,7 +88,8 @@ architecture:
     - "ADR-029: Angle Bracket Pairing, Overtyping, and Parameterized Type Scaffolding"
     - "ADR-030: Universal Delimiter and Structural Symbol Skipping During Editor Typing"
     - "ADR-031: Automatic String Literal Quote Pairing, Caret Placement, and Smart Navigation"
+    - "ADR-032: Pragma Version Directives Code Completion and Quick Documentation"
 
 tests:
-  last_known_passing: 670
+  last_known_passing: 679
   failures: 0

@@ -5,6 +5,8 @@
 ## [Unreleased]
 
 ### Added
+- Added contextual code completion for `language_version` and `compiler_version` directives immediately after the `pragma` keyword at top level and inside incomplete pragma forms, with automatic trailing space insertion.
+- Added rich HTML quick documentation (`Ctrl+Q` / `F1`) for pragma directives (`language_version` and `compiler_version`) both on declaration hover and within completion lookup popups, explaining semantic version constraints, supported comparison operators (`>=`, `>`, `^`, `~`, `==`), and tooling requirements.
 - Added Ctrl+Click and Go to Declaration navigation for `CompactStandardLibrary` in import statements (`import CompactStandardLibrary;`), jumping directly to the bundled `standard-library.compact` source file.
 - Added comprehensive in-editor documentation comments across the entire Compact Standard Library (`standard-library.compact`), providing detailed descriptions, parameter documentation, and usage examples for core types (`Maybe`, `Either`), Merkle tree verification, and shielded token operations (`receiveShielded`, `sendShielded`, `mintShieldedToken`, etc.).
 - Added Quick Documentation (Ctrl+Q / F1) support for standard library imports and file headers, displaying rich documentation overviews of the Midnight Compact Standard Library.
