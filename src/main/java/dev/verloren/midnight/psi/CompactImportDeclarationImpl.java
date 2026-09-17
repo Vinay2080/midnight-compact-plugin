@@ -1,9 +1,7 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
-
 import com.intellij.openapi.util.TextRange;
-
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
@@ -13,13 +11,12 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.reference.CompactImportReference;
-
+import dev.verloren.midnight.stdlib.CompactStdlibService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
 import java.util.Collection;
-
+import java.util.List;
 
 public class CompactImportDeclarationImpl extends CompactPsiElement implements CompactImportDeclaration {
   public CompactImportDeclarationImpl(@NotNull ASTNode node) {
@@ -95,11 +92,24 @@ public class CompactImportDeclarationImpl extends CompactPsiElement implements C
     if (path == null || path.isBlank()) {
       String moduleName = getModuleName();
       if (moduleName != null && !moduleName.isBlank()) {
+        if (isStandardLibrary(moduleName)) {
+          List<CompactFile> stdlib = CompactStdlibService.getInstance(getProject()).getStandardLibraryFiles();
+          return stdlib.isEmpty() ? null : stdlib.getFirst();
+        }
         path = moduleName;
       } else {
         return null;
       }
+    } else if (isStandardLibrary(path)) {
+      List<CompactFile> stdlib = CompactStdlibService.getInstance(getProject()).getStandardLibraryFiles();
+      return stdlib.isEmpty() ? null : stdlib.getFirst();
     }
     return CompactPsiUtil.resolveRelativeCompactFile(this, path);
+  }
+
+  private static boolean isStandardLibrary(@NotNull String name) {
+    return "CompactStandardLibrary".equals(name)
+        || "standard-library".equals(name)
+        || "standard-library.compact".equals(name);
   }
 }

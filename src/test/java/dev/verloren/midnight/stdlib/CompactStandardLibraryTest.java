@@ -10,6 +10,7 @@ import dev.verloren.midnight.documentation.CompactDocumentationProvider;
 import dev.verloren.midnight.navigation.CompactGotoDeclarationHandler;
 import dev.verloren.midnight.parser.CompactParserDefinition;
 import dev.verloren.midnight.psi.CompactCircuitDefinition;
+import dev.verloren.midnight.psi.CompactFile;
 import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.psi.CompactStructDefinition;
 
@@ -170,5 +171,99 @@ public class CompactStandardLibraryTest extends BasePlatformTestCase {
     String doc = provider.generateDoc(target, element);
     assertNotNull("Documentation for standard library struct should be generated", doc);
     assertTrue("Doc should contain struct Maybe", doc.contains("Maybe"));
+  }
+
+  public void testResolveImportCompactStandardLibraryModule() {
+    String code = """
+        import CompactStandardLibrary;
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+
+    int offset = code.indexOf("CompactStandardLibrary");
+    PsiElement element = myFixture.getFile().findElementAt(offset);
+    assertNotNull("Identifier element 'CompactStandardLibrary' should exist", element);
+
+    // Direct reference on identifier element
+    PsiReference ref = element.getReference();
+    if (ref == null) {
+      ref = myFixture.getFile().findReferenceAt(offset);
+    }
+    assertNotNull("Reference on CompactStandardLibrary should exist", ref);
+
+    PsiElement target = ref.resolve();
+    assertNotNull("CompactStandardLibrary should resolve to standard library file", target);
+    assertTrue("Target should be CompactFile", target instanceof CompactFile);
+    assertEquals("standard-library.compact", ((CompactFile) target).getName());
+
+    // Verify GotoDeclarationHandler
+    CompactGotoDeclarationHandler handler = new CompactGotoDeclarationHandler();
+    PsiElement[] targets = handler.getGotoDeclarationTargets(element, offset, myFixture.getEditor());
+    assertNotNull("GotoDeclarationHandler should return targets for CompactStandardLibrary", targets);
+    assertEquals(1, targets.length);
+    assertTrue("Target should be CompactFile", targets[0] instanceof CompactFile);
+    assertEquals("standard-library.compact", ((CompactFile) targets[0]).getName());
+  }
+
+  public void testResolveImportCompactStandardLibraryString() {
+    String code = """
+        import "CompactStandardLibrary";
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+
+    int offset = code.indexOf("CompactStandardLibrary");
+    PsiElement element = myFixture.getFile().findElementAt(offset);
+    assertNotNull(element);
+
+    PsiReference ref = myFixture.getFile().findReferenceAt(offset);
+    assertNotNull(ref);
+
+    PsiElement target = ref.resolve();
+    assertNotNull(target);
+    assertTrue("Target should be CompactFile", target instanceof CompactFile);
+    assertEquals("standard-library.compact", ((CompactFile) target).getName());
+  }
+
+  public void testCompactStandardLibraryImportDocumentation() {
+    String code = """
+        import CompactStandardLibrary;
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+
+    int offset = code.indexOf("CompactStandardLibrary");
+    PsiElement element = myFixture.getFile().findElementAt(offset);
+    assertNotNull(element);
+
+    CompactDocumentationProvider provider = new CompactDocumentationProvider();
+    PsiElement customElement = provider.getCustomDocumentationElement(myFixture.getEditor(), myFixture.getFile(), element, offset);
+    assertNotNull("Custom documentation element should be found", customElement);
+
+    String doc = provider.generateDoc(customElement, element);
+    assertNotNull("Documentation should be generated for CompactStandardLibrary", doc);
+    assertTrue("Doc should contain standard library header", doc.contains("CompactStandardLibrary"));
+    assertTrue("Doc should contain overview description", doc.contains("Midnight Compact Standard Library") || doc.contains("standard zero-knowledge utility library"));
+  }
+
+  public void testStandardLibraryRichDocComments() {
+    String code = """
+        circuit test(coin: ShieldedCoinInfo): [] {
+            receiveShielded(coin);
+        }
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+
+    int offset = code.indexOf("receiveShielded");
+    PsiElement element = myFixture.getFile().findElementAt(offset);
+    assertNotNull(element);
+
+    PsiReference ref = myFixture.getFile().findReferenceAt(offset);
+    assertNotNull(ref);
+    PsiElement target = ref.resolve();
+    assertNotNull(target);
+
+    CompactDocumentationProvider provider = new CompactDocumentationProvider();
+    String doc = provider.generateDoc(target, element);
+    assertNotNull("Doc should be generated for receiveShielded", doc);
+    assertTrue("Doc should contain parameter documentation", doc.contains("coin"));
+    assertTrue("Doc should contain JSDoc description", doc.contains("Claims receipt of an incoming shielded coin"));
   }
 }

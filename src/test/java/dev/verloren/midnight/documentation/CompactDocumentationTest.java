@@ -9,6 +9,8 @@ import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.editor.CompactCommenter;
 import dev.verloren.midnight.parser.CompactParserDefinition;
+import dev.verloren.midnight.psi.CompactFile;
+import dev.verloren.midnight.stdlib.CompactStdlibService;
 
 public class CompactDocumentationTest extends BasePlatformTestCase {
 
@@ -360,5 +362,29 @@ public class CompactDocumentationTest extends BasePlatformTestCase {
     assertTrue(doc.contains("circuit helper"));
     assertTrue(doc.contains("Secret helper"));
   }
-}
 
+  public void testCompactStandardLibraryImportDoc() {
+    String code = """
+        import <caret>CompactStandardLibrary;
+        """;
+    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, code);
+    PsiElement element = docProvider.getCustomDocumentationElement(
+        myFixture.getEditor(), file, file.findElementAt(myFixture.getCaretOffset()), myFixture.getCaretOffset());
+    assertNotNull("Hover on CompactStandardLibrary should find element", element);
+
+    String doc = docProvider.generateDoc(element, null);
+    assertNotNull("Doc should be generated for CompactStandardLibrary", doc);
+    assertTrue(doc.contains("CompactStandardLibrary"));
+    assertTrue(doc.contains("standard zero-knowledge utility library") || doc.contains("Midnight Compact Standard Library"));
+  }
+
+  public void testCompactStandardLibraryFileDoc() {
+    CompactFile stdlibFile = CompactStdlibService.getInstance(getProject()).getStandardLibraryFiles().getFirst();
+    assertNotNull(stdlibFile);
+
+    String doc = docProvider.generateDoc(stdlibFile, null);
+    assertNotNull("Doc should be generated for standard-library.compact", doc);
+    assertTrue(doc.contains("standard library CompactStandardLibrary"));
+    assertTrue(doc.contains("standard zero-knowledge utility library"));
+  }
+}

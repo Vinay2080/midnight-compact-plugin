@@ -5,6 +5,9 @@
 ## [Unreleased]
 
 ### Added
+- Added Ctrl+Click and Go to Declaration navigation for `CompactStandardLibrary` in import statements (`import CompactStandardLibrary;`), jumping directly to the bundled `standard-library.compact` source file.
+- Added comprehensive in-editor documentation comments across the entire Compact Standard Library (`standard-library.compact`), providing detailed descriptions, parameter documentation, and usage examples for core types (`Maybe`, `Either`), Merkle tree verification, and shielded token operations (`receiveShielded`, `sendShielded`, `mintShieldedToken`, etc.).
+- Added Quick Documentation (Ctrl+Q / F1) support for standard library imports and file headers, displaying rich documentation overviews of the Midnight Compact Standard Library.
 - Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
 ### Fixed

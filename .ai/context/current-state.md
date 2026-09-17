@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement, In-Memory Shadow Buffer Compilation, Universal Delimiter Skipping)
+Last Updated: September 2026 (v1.3.4 / Standard Library Import Navigation & Documentation, Automatic Quote Pairing & Caret Placement)
 
 ---
 
@@ -10,6 +10,12 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Standard Library Import Navigation & Documentation (v1.3.4 / ADR-017, ADR-023)**:
+  - `CompactImportDeclarationImpl` & `CompactImportReference`: Automatically resolves `CompactStandardLibrary` module identifiers and import paths directly to the bundled `standard-library.compact` PSI file via `CompactStdlibService`.
+  - `CompactReferenceContributor`: Provides module-level references on import identifiers to allow Ctrl+B / Ctrl+Click jump to declaration on `CompactStandardLibrary`.
+  - `CompactGotoDeclarationHandler`: Direct fallback declaration navigation for `CompactStandardLibrary` identifier tokens to standard library PSI files.
+  - `standard-library.compact`: Enriched with comprehensive JSDoc/CompactDoc documentation (`/** ... */`) covering all standard structs (`Maybe`, `Either`, `MerkleTreeDigest`, `ShieldedCoinInfo`, etc.), circuits (`some`, `none`, `left`, `right`, `receiveShielded`, `sendShielded`, `mintShieldedToken`, `blockTime`, etc.), and fields with `@param`, `@return`, and `@see` tags.
+  - `CompactDocumentationProvider`: Full Quick Documentation (Ctrl+Q / F1) support for `CompactStandardLibrary` import statements and `standard-library.compact` file headers, rendering rich HTML documentation and architectural overviews.
 - **Quote Auto-Completion & Pairing (v1.3.3 / ADR-031)**:
   - `CompactQuoteHandler`: `SimpleTokenSetQuoteHandler` registered in `plugin.xml` managing automatic quotation mark insertion, pairing, and cursor positioning between quotes (`"<caret>"`, `'<caret>'`).
   - Strict token categorization: `isOpeningQuote` returns `true` only for `CompactTokenTypes.UNTERMINATED_STRING` at `offset == iterator.getStart()`, triggering automatic closing quote insertion without corrupting typing in front of existing string literals.
@@ -32,7 +38,7 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
   - Negative context suppression: prevents pairing after comparison operators (`<`), inside comments, inside string literals, and in the middle of identifiers.
 - **Parameterized Type Completion & Sizing Options (v1.3.0 / ADR-029)**:
   - `CompactParameterizedTypeInsertHandler`: `InsertHandler<LookupElement>` automatically appending `<>`, placing the caret inside `<|>`, registering empty tab-out scope with `TabOutScopesTracker`, and scheduling auto-popup lookup for size options.
-  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<\"\">`.
+  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<\”\”>`.
   - Concurrency & live template coordination: schedules caret repositioning via `ApplicationManager.getApplication().invokeLater(...)` when an active `TemplateState` is present, preventing premature live template completion from ejecting the caret.
 - **Code Completion & Comprehensive Export System (v1.3.0 / ADR-019, ADR-026, ADR-028)**:
   - Contextual classification in `CompactCompletionContext`:
@@ -85,7 +91,7 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
 - **Compiler Version Management**:
   - Isolated multi-version directory structure under `~/.compact/versions/<version>/`.
   - Automated binary download and installation with progress indicators and platform archive unpacking.
-  - \"Compile Current Contract\" action triggering background compilation and problem reporting.
+  - "Compile Current Contract" action triggering background compilation and problem reporting.
 - **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2 / ADR-014)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
@@ -107,7 +113,7 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **664 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Total Tests**: **670 passing tests** (0 failures, 0 skipped, 100% success rate)
 - **Active Test Suites**: **65 test classes**
 - **Execution Time**: ~2m 30s via `./gradlew test`
 
@@ -121,10 +127,10 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
 | `dev.verloren.midnight.editor.CompactDelimiterTypingTest` | 30 | Passed |
 | `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | 24 | Passed |
 | `dev.verloren.midnight.resolve.CompactResolveTest` | 21 | Passed |
+| `dev.verloren.midnight.documentation.CompactDocumentationTest` | 18 | Passed |
 | `dev.verloren.midnight.editor.CompactQuoteTypingTest` | 18 | Passed |
 | `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | 17 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | 17 | Passed |
-| `dev.verloren.midnight.documentation.CompactDocumentationTest` | 16 | Passed |
 | `dev.verloren.midnight.highlighter.CompactHighlightTest` | 16 | Passed |
 | `dev.verloren.midnight.editor.CompactSmartEnterTest` | 15 | Passed |
 | `dev.verloren.midnight.type.CompactTypeInferenceTest` | 15 | Passed |
@@ -138,6 +144,7 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
 | `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest` | 10 | Passed |
 | `dev.verloren.midnight.editor.CompactDocCommentEnterTest` | 9 | Passed |
+| `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | 9 | Passed |
 | `dev.verloren.midnight.refactoring.CompactRenameTest` | 9 | Passed |
 | `dev.verloren.midnight.reference.CompactReferenceTest` | 9 | Passed |
 | `dev.verloren.midnight.structure.CompactStructureViewTest` | 9 | Passed |

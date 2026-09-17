@@ -13,44 +13,117 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * @module CompactStandardLibrary
+ *
+ * Midnight Compact Standard Library
+ *
+ * Provides core zero-knowledge utility types (`Maybe<T>`, `Either<A, B>`),
+ * Merkle tree traversal and root calculation, cryptographic commitments,
+ * and Midnight kernel shielded token operations.
+ */
+
+/**
+ * Global Midnight runtime kernel interface exposing state, cryptographic assertions,
+ * and shielded token operations.
+ */
 export ledger kernel: Kernel;
 
+// =========================================================================
 // Generic Data
+// =========================================================================
+
+/**
+ * An optional value representation.
+ *
+ * @param is_some True if a value is present, false otherwise.
+ * @param value The encapsulated value if present, or default<T> if absent.
+ */
 export struct Maybe<T> {
   is_some: Boolean;
   value: T;
 }
 
+/**
+ * Wraps a value in a `Maybe<T>` container with `is_some = true`.
+ *
+ * @param value The value to wrap.
+ * @return A `Maybe<T>` instance containing `value`.
+ */
 export circuit some<T>(value: T): Maybe<T> {
   return Maybe<T>{ is_some: true, value: value };
 }
 
+/**
+ * Creates an empty `Maybe<T>` container with `is_some = false`.
+ *
+ * @return An empty `Maybe<T>` instance containing `default<T>`.
+ */
 export circuit none<T>(): Maybe<T> {
   return Maybe<T>{ is_some: false, value: default<T> };
 }
 
+/**
+ * A disjoint union of two types `A` and `B`.
+ *
+ * @param is_left True if holding the left variant `A`, false if holding `B`.
+ * @param left The left value if `is_left` is true.
+ * @param right The right value if `is_left` is false.
+ */
 export struct Either<A, B> {
   is_left: Boolean;
   left: A;
   right: B;
 }
 
+/**
+ * Constructs a left-variant instance of `Either<A, B>`.
+ *
+ * @param value The left value.
+ * @return An `Either<A, B>` holding `value` on the left.
+ */
 export circuit left<A, B>(value: A): Either<A, B> {
   return Either<A, B>{ is_left: true, left: value, right: default<B> };
 }
 
+/**
+ * Constructs a right-variant instance of `Either<A, B>`.
+ *
+ * @param value The right value.
+ * @return An `Either<A, B>` holding `value` on the right.
+ */
 export circuit right<A, B>(value: B): Either<A, B> {
   return Either<A, B>{ is_left: false, left: default<A>, right: value };
 }
 
+// =========================================================================
 // Merkle trees
+// =========================================================================
+
+/**
+ * Represents a Merkle tree root or node hash digest in the Midnight native field.
+ *
+ * @param field The 254-bit elliptic curve scalar field element representing the digest.
+ */
 export struct MerkleTreeDigest { field: Field; }
 
+/**
+ * A single hop along a Merkle tree authentication path.
+ *
+ * @param sibling The digest of the sibling subtree.
+ * @param goes_left True if traversal moves left towards the leaf, false if right.
+ */
 export struct MerkleTreePathEntry {
   sibling: MerkleTreeDigest;
   goes_left: Boolean;
 }
 
+/**
+ * Complete Merkle membership proof path for a leaf value.
+ *
+ * @param leaf The leaf data committed in the Merkle tree.
+ * @param path Vector of Merkle path entries from leaf to root.
+ */
 export struct MerkleTreePath<#n, T> {
   leaf: T;
   path: Vector<n, MerkleTreePathEntry>;
@@ -61,6 +134,12 @@ struct LeafPreimage<T> {
   data: T,
 }
 
+/**
+ * Computes the root digest from a leaf preimage and its Merkle authentication path.
+ *
+ * @param path The Merkle path containing the leaf and sibling path entries.
+ * @return The calculated root `MerkleTreeDigest`.
+ */
 export circuit merkleTreePathRoot<#n, T>(path: MerkleTreePath<n, T>): MerkleTreeDigest {
   return MerkleTreeDigest{
            field: fold(merkleTreePathEntryRoot,
@@ -69,6 +148,12 @@ export circuit merkleTreePathRoot<#n, T>(path: MerkleTreePath<n, T>): MerkleTree
           };
 }
 
+/**
+ * Computes the root digest from a pre-hashed leaf digest and its Merkle authentication path.
+ *
+ * @param path The Merkle path containing the raw leaf hash and sibling path entries.
+ * @return The calculated root `MerkleTreeDigest`.
+ */
 export circuit merkleTreePathRootNoLeafHash<#n>(path: MerkleTreePath<n, Bytes<32>>): MerkleTreeDigest {
   return MerkleTreeDigest{
            field: fold(merkleTreePathEntryRoot,
@@ -77,6 +162,13 @@ export circuit merkleTreePathRootNoLeafHash<#n>(path: MerkleTreePath<n, Bytes<32
          };
 }
 
+/**
+ * Combines an accumulator digest with a Merkle path entry using transient hashing.
+ *
+ * @param recursiveDigest Running digest from prior path hops.
+ * @param entry Current sibling entry and traversal direction.
+ * @return Next field element digest.
+ */
 circuit merkleTreePathEntryRoot(
   recursiveDigest: Field,
   entry: MerkleTreePathEntry
@@ -86,16 +178,38 @@ circuit merkleTreePathEntryRoot(
   return transientHash<Vector<2, Field>>([left, right]);
 }
 
-
+// =========================================================================
 // Midnight kernel types
+// =========================================================================
+
+/**
+ * Cryptographic 32-byte identifier for a deployed Midnight smart contract.
+ *
+ * @param bytes 32-byte hash identifying the contract instance on the ledger.
+ */
 export struct ContractAddress { bytes: Bytes<32>; }
 
+/**
+ * Private coin state for Midnight shielded transactions.
+ *
+ * @param nonce Unique random scalar differentiating coin instances.
+ * @param color 32-byte token identifier differentiating asset types.
+ * @param value The amount of units held in the shielded coin.
+ */
 export struct ShieldedCoinInfo {
   nonce: Bytes<32>;
   color: Bytes<32>;
   value: Uint<128>;
 }
 
+/**
+ * Shielded coin info accompanied by its position in the Merkle commitment tree.
+ *
+ * @param nonce Unique random scalar differentiating coin instances.
+ * @param color 32-byte token identifier.
+ * @param value The amount of units held in the coin.
+ * @param mt_index Leaf index in the ledger state Merkle tree.
+ */
 export struct QualifiedShieldedCoinInfo {
   nonce: Bytes<32>;
   color: Bytes<32>;
@@ -103,22 +217,57 @@ export struct QualifiedShieldedCoinInfo {
   mt_index: Uint<64>;
 }
 
+/**
+ * Public key for receiving zero-knowledge shielded coins via the Zswap swap protocol.
+ *
+ * @param bytes 32-byte public key representation.
+ */
 export struct ZswapCoinPublicKey { bytes: Bytes<32>; }
 
+/**
+ * Outcome of a shielded coin transfer or split operation.
+ *
+ * @param change Optional change coin created and returned to the sender.
+ * @param sent The newly minted shielded coin transferred to the recipient.
+ */
 export struct ShieldedSendResult {
   change: Maybe<ShieldedCoinInfo>;
   sent: ShieldedCoinInfo;
 }
 
+/**
+ * Returns the native DUST asset color identifier (32 zero bytes).
+ *
+ * @return 32-byte identifier for the native token.
+ */
 export circuit nativeToken(): Bytes<32> {
   return pad(32, "") as Bytes<32>;
 }
 
+// =========================================================================
 // Midnight helper circuits
+// =========================================================================
+
+/**
+ * Derives a deterministic token type identifier from a contract address and domain separator.
+ *
+ * @param domain_sep Domain separation tag for the token type.
+ * @param contractAddress Contract generating the token.
+ * @return Derived 32-byte color identifier.
+ */
 export circuit tokenType(domain_sep: Bytes<32>, contractAddress: ContractAddress): Bytes<32> {
   return persistentCommit<Vector<2, Bytes<32>>>([domain_sep, contractAddress.bytes], pad(32, "midnight:derive_token"));
 }
 
+/**
+ * Mints a new shielded token coin into the ledger Zswap commitment tree.
+ *
+ * @param domain_sep Domain separator tag for the token asset class.
+ * @param value Amount to mint.
+ * @param nonce Unique randomness for the new coin commitment.
+ * @param recipient The recipient public key or contract address.
+ * @return The newly minted `ShieldedCoinInfo`.
+ */
 export circuit mintShieldedToken(
   domain_sep: Bytes<32>,
   value: Uint<64>,
@@ -137,6 +286,13 @@ export circuit mintShieldedToken(
   return coin;
 }
 
+/**
+ * Computes the next deterministic nonce evolution using transient hash chaining.
+ *
+ * @param index Sequence index for nonce evolution.
+ * @param nonce Current base nonce.
+ * @return Evolved 32-byte nonce.
+ */
 export circuit evolveNonce(index: Uint<128>, nonce: Bytes<32>): Bytes<32> {
   return upgradeFromTransient(transientHash<Vector<3, Field>>([
     "midnight:kernel:nonce_evolve" as Field,
@@ -145,16 +301,34 @@ export circuit evolveNonce(index: Uint<128>, nonce: Bytes<32>): Bytes<32> {
   ]));
 }
 
+/**
+ * Returns the canonical unspendable burn address for destroying shielded tokens.
+ *
+ * @return The burn address representation.
+ */
 export circuit shieldedBurnAddress(): Either<ZswapCoinPublicKey, ContractAddress> {
   return left<ZswapCoinPublicKey, ContractAddress>(default<ZswapCoinPublicKey>);
 }
 
+/**
+ * Claims receipt of an incoming shielded coin directed to this contract instance.
+ *
+ * @param coin The coin info received.
+ */
 export circuit receiveShielded(coin: ShieldedCoinInfo): [] {
   const recipient = right<ZswapCoinPublicKey, ContractAddress>(kernel.self());
   createZswapOutput(coin, recipient);
   kernel.claimZswapCoinReceive(coinCommitment(coin, recipient));
 }
 
+/**
+ * Spends a qualified shielded coin and produces a new output coin with optional change.
+ *
+ * @param input The coin being spent.
+ * @param recipient The recipient's public key or contract address.
+ * @param value Amount to transfer.
+ * @return A `ShieldedSendResult` containing the transfer output and any returned change.
+ */
 export circuit sendShielded(
   input: QualifiedShieldedCoinInfo,
   recipient: Either<ZswapCoinPublicKey, ContractAddress>,
@@ -193,6 +367,14 @@ export circuit sendShielded(
   }
 }
 
+/**
+ * Sends a shielded coin directly to a recipient without waiting for on-chain spend qualification.
+ *
+ * @param input The coin being transferred.
+ * @param target The recipient destination.
+ * @param value Amount to transfer.
+ * @return A `ShieldedSendResult` containing the transfer output.
+ */
 export circuit sendImmediateShielded(
   input: ShieldedCoinInfo,
   target: Either<ZswapCoinPublicKey, ContractAddress>,
@@ -201,6 +383,13 @@ export circuit sendImmediateShielded(
   return sendShielded(upcastQualifiedCoin(input), target, value);
 }
 
+/**
+ * Merges two qualified shielded coins of the same asset color into a single output coin.
+ *
+ * @param a First coin to merge.
+ * @param b Second coin to merge.
+ * @return The merged `ShieldedCoinInfo`.
+ */
 export circuit mergeCoin(
   a: QualifiedShieldedCoinInfo,
   b: QualifiedShieldedCoinInfo
@@ -223,6 +412,13 @@ export circuit mergeCoin(
   return newCoin;
 }
 
+/**
+ * Merges a qualified shielded coin and an immediate shielded coin of the same asset color.
+ *
+ * @param a Qualified coin.
+ * @param b Immediate coin.
+ * @return The merged `ShieldedCoinInfo`.
+ */
 export circuit mergeCoinImmediate(
   a: QualifiedShieldedCoinInfo,
   b: ShieldedCoinInfo
@@ -272,27 +468,65 @@ circuit coinNullifier(
     });
 }
 
+/**
+ * Asserts whether the current block timestamp is strictly less than the given time.
+ *
+ * @param time The threshold timestamp to compare against.
+ * @return True if current block time is less than `time`.
+ */
 export circuit blockTimeLt(time: Uint<64>): Boolean {
   return kernel.blockTimeLessThan(time);
 }
 
+/**
+ * Asserts whether the current block timestamp is greater than or equal to the given time.
+ *
+ * @param time The threshold timestamp to compare against.
+ * @return True if current block time is greater than or equal to `time`.
+ */
 export circuit blockTimeGte(time: Uint<64>): Boolean {
   return !blockTimeLt(time);
 }
 
+/**
+ * Asserts whether the current block timestamp is strictly greater than the given time.
+ *
+ * @param time The threshold timestamp to compare against.
+ * @return True if current block time is greater than `time`.
+ */
 export circuit blockTimeGt(time: Uint<64>): Boolean {
   return kernel.blockTimeGreaterThan(time);
 }
 
+/**
+ * Asserts whether the current block timestamp is less than or equal to the given time.
+ *
+ * @param time The threshold timestamp to compare against.
+ * @return True if current block time is less than or equal to `time`.
+ */
 export circuit blockTimeLte(time: Uint<64>): Boolean {
   return !blockTimeGt(time);
 }
 
-
+// =========================================================================
 // Utilities for unshielded tokens
+// =========================================================================
 
+/**
+ * Public address of a standard Midnight account or user wallet.
+ *
+ * @param bytes 32-byte public key representation of the user address.
+ */
 export struct UserAddress { bytes: Bytes<32>; }
 
+/**
+ * Mints an unshielded token and credits it to the specified contract or user address.
+ *
+ * @param domainSep Domain separation identifier for the token.
+ * @param amount Number of tokens to mint.
+ * @param recipient Destination contract or user address.
+ * @return 32-byte color identifier for the minted token.
+ */
 export circuit mintUnshieldedToken(
   domainSep: Bytes<32>,
   amount: Uint<64>,
@@ -308,6 +542,13 @@ export circuit mintUnshieldedToken(
   return color;
 }
 
+/**
+ * Transfers unshielded tokens from this contract to another contract or user address.
+ *
+ * @param color 32-byte token identifier.
+ * @param amount Number of tokens to transfer.
+ * @param recipient Destination contract or user address.
+ */
 export circuit sendUnshielded(color: Bytes<32>, amount: Uint<128>, recipient: Either<ContractAddress, UserAddress>): [] {
   kernel.incUnshieldedOutputs(left<Bytes<32>, Bytes<32>>(color), amount);
   kernel.claimUnshieldedCoinSpend(left<Bytes<32>, Bytes<32>>(color), recipient, amount);
@@ -317,44 +558,87 @@ export circuit sendUnshielded(color: Bytes<32>, amount: Uint<128>, recipient: Ei
   }
 }
 
+/**
+ * Claims incoming unshielded tokens transferred to this contract.
+ *
+ * @param color 32-byte token identifier.
+ * @param amount Number of tokens received.
+ */
 export circuit receiveUnshielded(color: Bytes<32>, amount: Uint<128>): [] {
   kernel.incUnshieldedInputs(left<Bytes<32>, Bytes<32>>(color), amount);
 }
 
-// Using the 'unshieldedBalance' function imposes the requirement that the balance for a token at transaction construction
-// time exactly matches the balance for that token when the transaction is applied. Unless you want to require that, prefer
-// to use the balance comparison functions.
-//
-// Also, note that the balance returned is the balance of the contract at the start of the current execution. It is not
-// updated with unshielded send, receive, or mint calls.
-
+/**
+ * Returns the unshielded token balance of this contract for the given asset color.
+ *
+ * Note: The balance returned is the balance at transaction construction time.
+ *
+ * @param color 32-byte token color identifier.
+ * @return Current balance as a 128-bit unsigned integer.
+ */
 export circuit unshieldedBalance(color: Bytes<32>): Uint<128> {
   return kernel.balance(left<Bytes<32>, Bytes<32>>(color));
 }
 
+/**
+ * Checks whether the unshielded token balance is strictly less than the given amount.
+ *
+ * @param color 32-byte token color identifier.
+ * @param amount Threshold amount to compare against.
+ * @return True if balance is less than `amount`.
+ */
 export circuit unshieldedBalanceLt(color: Bytes<32>, amount: Uint<128>): Boolean {
   return kernel.balanceLessThan(left<Bytes<32>, Bytes<32>>(color), amount);
 }
 
+/**
+ * Checks whether the unshielded token balance is greater than or equal to the given amount.
+ *
+ * @param color 32-byte token color identifier.
+ * @param amount Threshold amount to compare against.
+ * @return True if balance is greater than or equal to `amount`.
+ */
 export circuit unshieldedBalanceGte(color: Bytes<32>, amount: Uint<128>): Boolean {
   return !unshieldedBalanceLt(color, amount);
 }
 
+/**
+ * Checks whether the unshielded token balance is strictly greater than the given amount.
+ *
+ * @param color 32-byte token color identifier.
+ * @param amount Threshold amount to compare against.
+ * @return True if balance is greater than `amount`.
+ */
 export circuit unshieldedBalanceGt(color: Bytes<32>, amount: Uint<128>): Boolean {
   return kernel.balanceGreaterThan(left<Bytes<32>, Bytes<32>>(color), amount);
 }
 
+/**
+ * Checks whether the unshielded token balance is less than or equal to the given amount.
+ *
+ * @param color 32-byte token color identifier.
+ * @param amount Threshold amount to compare against.
+ * @return True if balance is less than or equal to `amount`.
+ */
 export circuit unshieldedBalanceLte(color: Bytes<32>, amount: Uint<128>): Boolean {
   return !unshieldedBalanceGt(color, amount);
 }
 
+// =========================================================================
 // Schnorr signature
+// =========================================================================
+
+/**
+ * Schnorr digital signature over the Jubjub embedded elliptic curve.
+ *
+ * @param announcement Point on the Jubjub curve representing the signature commitment.
+ * @param response Scalar value in the Jubjub field satisfying the Schnorr equation.
+ */
 export struct JubjubSchnorrSignature {
   announcement: JubjubPoint,
   response: Field,
 }
 
-// Internal struct definition for hashing in jubjubSchnorrVerify
 struct JubjubSchnorrHashInput<#N> {
   annX: Field,
   annY: Field,
@@ -363,7 +647,14 @@ struct JubjubSchnorrHashInput<#N> {
   msg: Vector<N, Field>
 }
 
-// Verify Schnorr signature over the native curve with a message of size #N.
+/**
+ * Verifies a Jubjub Schnorr digital signature over a message vector of size #N.
+ *
+ * @param msg Vector of field elements containing the signed message.
+ * @param signature The Schnorr signature (announcement and response).
+ * @param pk Public key point on the Jubjub curve.
+ * @return True if the signature is valid, false otherwise.
+ */
 export circuit jubjubSchnorrVerify<#N>(
                  msg: Vector<N, Field>,
                  signature: JubjubSchnorrSignature,

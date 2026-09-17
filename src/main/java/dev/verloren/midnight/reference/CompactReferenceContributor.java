@@ -53,6 +53,8 @@ public class CompactReferenceContributor extends PsiReferenceContributor {
                       new PsiReference[]{new CompactStructFieldReference(memberExpr, range)};
               case CompactImportElementImpl _ ->
                       new PsiReference[]{new CompactImportReference(parent, range, CompactImportReference.Kind.IMPORT_ELEMENT)};
+              case CompactImportDeclarationImpl importDecl when element == importDecl.getModuleIdentifier() ->
+                      new PsiReference[]{new CompactImportReference(element, range, CompactImportReference.Kind.MODULE)};
               case CompactExpression _ -> new PsiReference[]{new CompactValueReference(element, range)};
               default -> PsiReference.EMPTY_ARRAY;
             };

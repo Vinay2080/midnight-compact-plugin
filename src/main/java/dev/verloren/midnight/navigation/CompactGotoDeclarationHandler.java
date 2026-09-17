@@ -6,8 +6,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import dev.verloren.midnight.CompactLanguage;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
+import dev.verloren.midnight.psi.CompactFile;
 import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
+import dev.verloren.midnight.stdlib.CompactStdlibService;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -47,9 +49,16 @@ public class CompactGotoDeclarationHandler implements GotoDeclarationHandler {
       }
     }
 
-    // 3. If sourceElement is an identifier token, resolve through semantic namespaces
+    // 3. If sourceElement is an identifier token, resolve through semantic namespaces or standard library
     if (sourceElement.getNode() != null && sourceElement.getNode().getElementType() == CompactTokenTypes.IDENTIFIER) {
       String name = sourceElement.getText();
+      if ("CompactStandardLibrary".equals(name)) {
+        List<CompactFile> stdlib = CompactStdlibService.getInstance(sourceElement.getProject()).getStandardLibraryFiles();
+        if (!stdlib.isEmpty()) {
+          return new PsiElement[]{stdlib.getFirst()};
+        }
+      }
+
       // Try value resolution (circuits, witnesses, ledgers, variables)
       List<CompactNamedElement> values = CompactResolveUtil.resolveValue(name, sourceElement);
       if (!values.isEmpty()) {

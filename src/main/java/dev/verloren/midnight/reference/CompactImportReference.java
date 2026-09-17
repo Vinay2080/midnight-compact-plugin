@@ -3,9 +3,12 @@ package dev.verloren.midnight.reference;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.psi.*;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
+import dev.verloren.midnight.stdlib.CompactStdlibService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,23 +33,50 @@ public class CompactImportReference extends CompactReferenceBase {
 
   @Override
   protected ResolveResult @NotNull [] resolveInner() {
-    if (kind == Kind.FILE && getElement() instanceof CompactImportDeclarationImpl) {
-      CompactFile file = ((CompactImportDeclarationImpl) getElement()).resolveImportedFile();
+    CompactImportDeclarationImpl importDecl = getImportDeclaration();
+
+    if (kind == Kind.FILE) {
+      if (isStandardLibrary(getValue())) {
+        List<CompactFile> stdlib = CompactStdlibService.getInstance(getElement().getProject()).getStandardLibraryFiles();
+        if (!stdlib.isEmpty()) {
+          return toResults(List.of(stdlib.getFirst()));
+        }
+      }
+      CompactFile file = importDecl != null ? importDecl.resolveImportedFile() : null;
       return file == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(file));
     }
-    if (kind == Kind.MODULE && getElement() instanceof CompactImportDeclarationImpl) {
+    if (kind == Kind.MODULE) {
+      if (isStandardLibrary(getValue())) {
+        List<CompactFile> stdlib = CompactStdlibService.getInstance(getElement().getProject()).getStandardLibraryFiles();
+        if (!stdlib.isEmpty()) {
+          return toResults(List.of(stdlib.getFirst()));
+        }
+      }
       CompactModuleDefinition module = CompactResolveUtil.findModule(getElement(), getValue());
       if (module != null) {
         return toResults(List.of(module));
       }
-      CompactFile file = ((CompactImportDeclarationImpl) getElement()).resolveImportedFile();
+      CompactFile file = importDecl != null ? importDecl.resolveImportedFile() : null;
       return file == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(file));
     }
-    if (kind == Kind.IMPORT_ELEMENT && getElement() instanceof CompactImportElementImpl) {
-      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource((CompactImportElementImpl) getElement());
+    if (kind == Kind.IMPORT_ELEMENT && getElement() instanceof CompactImportElementImpl importElement) {
+      CompactNamedElement target = CompactResolveUtil.resolveImportElementSource(importElement);
       return target == null ? ResolveResult.EMPTY_ARRAY : toResults(List.of(target));
     }
     return ResolveResult.EMPTY_ARRAY;
+  }
+
+  private @Nullable CompactImportDeclarationImpl getImportDeclaration() {
+    if (getElement() instanceof CompactImportDeclarationImpl decl) {
+      return decl;
+    }
+    return PsiTreeUtil.getParentOfType(getElement(), CompactImportDeclarationImpl.class);
+  }
+
+  private static boolean isStandardLibrary(@NotNull String name) {
+    return "CompactStandardLibrary".equals(name)
+        || "standard-library".equals(name)
+        || "standard-library.compact".equals(name);
   }
 
   public enum Kind {

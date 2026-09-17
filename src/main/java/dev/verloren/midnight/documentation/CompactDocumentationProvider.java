@@ -90,6 +90,13 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       doc.append(DocumentationMarkup.CONTENT_START);
       doc.append(docData.renderDescriptionHtml());
       doc.append(DocumentationMarkup.CONTENT_END);
+    } else {
+      String stdlibDesc = getStandardLibraryDescription(element);
+      if (stdlibDesc != null) {
+        doc.append(DocumentationMarkup.CONTENT_START);
+        doc.append(stdlibDesc);
+        doc.append(DocumentationMarkup.CONTENT_END);
+      }
     }
 
     String sectionsHtml = renderSections(element, docData);
@@ -213,6 +220,9 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
         case CompactParameterImpl param when param.getParent() instanceof CompactStructFieldImpl -> {
           return param.getParent();
         }
+        case CompactImportDeclarationImpl importDecl -> {
+          return importDecl;
+        }
         case CompactPatternImpl _, CompactPragmaForm _, CompactNamedElement _ -> {
           return p;
         }
@@ -256,6 +266,23 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
     }
 
     return switch (element) {
+      case CompactFile file -> {
+        String name = file.getName();
+        if ("standard-library.compact".equals(name)) {
+          yield "standard library CompactStandardLibrary";
+        }
+        if ("zkir-v3-library.compact".equals(name)) {
+          yield "standard library zkir-v3-library";
+        }
+        yield "file " + name;
+      }
+      case CompactImportDeclarationImpl importDecl -> {
+        String mod = importDecl.getModuleName();
+        if ("CompactStandardLibrary".equals(mod)) {
+          yield "standard library CompactStandardLibrary";
+        }
+        yield "import " + (mod != null ? mod : (importDecl.getImportPath() != null ? importDecl.getImportPath() : ""));
+      }
       case CompactCircuitDefinition circuit -> {
         String name = circuit.getName() != null ? circuit.getName() : "circuit";
         yield "circuit " + name + getSignatureSuffix(circuit);
@@ -309,6 +336,25 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       }
       default -> null;
     };
+  }
+
+  private static @Nullable String getStandardLibraryDescription(@NotNull PsiElement element) {
+    if (element instanceof CompactImportDeclarationImpl importDecl && "CompactStandardLibrary".equals(importDecl.getModuleName())) {
+      return "<p>The official standard zero-knowledge utility library for the Midnight Compact language.</p>"
+          + "<p>Provides core algebraic data types (<code>Maybe&lt;T&gt;</code>, <code>Either&lt;A, B&gt;</code>), Merkle tree path verification, cryptographic commitments and hashing, and Midnight kernel shielded token operations.</p>";
+    }
+    if (element instanceof CompactFile file) {
+      if ("standard-library.compact".equals(file.getName())) {
+        return "<p><b>Compact Standard Library</b> (<code>standard-library.compact</code>)</p>"
+            + "<p>The official standard zero-knowledge utility library for the Midnight Compact language.</p>"
+            + "<p>Provides core algebraic data types (<code>Maybe&lt;T&gt;</code>, <code>Either&lt;A, B&gt;</code>), Merkle tree path verification, cryptographic commitments and hashing, and Midnight kernel shielded token operations.</p>";
+      }
+      if ("zkir-v3-library.compact".equals(file.getName())) {
+        return "<p><b>ZKIR v3 Library</b> (<code>zkir-v3-library.compact</code>)</p>"
+            + "<p>Low-level zero-knowledge intermediate representation library containing Secp256k1 elliptic curve verification and scalar primitives.</p>";
+      }
+    }
+    return null;
   }
 
   private static @NotNull String formatBindingHeader(@NotNull CompactNamedElement element) {

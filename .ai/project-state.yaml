@@ -5,10 +5,10 @@ project:
   platform_version: "2026.2"
   java_version: "25"
   gradle_version: "8.13"
-  current_version: "1.3.3"
+  current_version: "1.3.4"
 
 metrics:
-  passing_tests: 664
+  passing_tests: 670
   failing_tests: 0
   skipped_tests: 0
   test_suites: 65
@@ -46,6 +46,7 @@ phases:
   dynamic_bundle_migration: complete (v1.3.1)
   external_annotator_shadow_buffer_compilation: complete (v1.3.2)
   quote_auto_completion_and_pairing: complete (v1.3.3 / ADR-031)
+  stdlib_import_navigation_and_documentation: complete (v1.3.4 / ADR-017, ADR-023)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)
@@ -88,5 +89,5 @@ architecture:
     - "ADR-031: Automatic String Literal Quote Pairing, Caret Placement, and Smart Navigation"
 
 tests:
-  last_known_passing: 664
+  last_known_passing: 670
   failures: 0
