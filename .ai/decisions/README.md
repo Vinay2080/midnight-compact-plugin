@@ -8,9 +8,7 @@ This directory contains the formal Architectural Decision Records for the Midnig
 5. **Feature Implementation Map**: Exact file paths, classes, and test suites implementing the decision.
 6. **Consequences & Future Maintenance**: Guidelines for updating or refactoring the design in future phases.
 
----
-
-## ADR Master Index
+---\n## ADR Master Index
 
 | ADR | Title | Status | Primary Implementation | Authoritative References |
 | :--- | :--- | :--- | :--- | :--- |
@@ -44,10 +42,9 @@ This directory contains the formal Architectural Decision Records for the Midnig
 | [**ADR-028**](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-028-prohibit-top-level-export-const-and-grammar-alignment.md) | Prohibit Top-Level Export Const & Strict Compact Grammar Alignment | Accepted | [`CompactCompletionContributor`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactCompletionContributor.java), [`CompactToggleExportIntention`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/intention/CompactToggleExportIntention.java) | `compact/compiler/parser.ss:240-270, 460-480`, `module.compact` |
 | [**ADR-029**](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-029-angle-bracket-pairing-and-parameterized-type-scaffolding.md) | Angle Bracket Pairing, Overtyping, and Parameterized Type Scaffolding | Accepted | [`CompactAngleBraceTypedHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/CompactAngleBraceTypedHandler.java), [`CompactParameterizedTypeInsertHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactParameterizedTypeInsertHandler.java) | `compact/compiler/langs.ss`, `parser.ss`, `intellij-rust` |
 | [**ADR-030**](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-030-universal-delimiter-and-symbol-skipping-during-typing.md) | Universal Delimiter and Structural Symbol Skipping During Editor Typing | Accepted | [`CompactDelimiterTypedHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/CompactDelimiterTypedHandler.java) | `compact/compiler/parser.ss`, `lexer.ss`, `intellij-rust` |
+| [**ADR-031**](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-031-automatic-quote-pairing-and-smart-navigation.md) | Automatic String Literal Quote Pairing, Caret Placement, & Smart Navigation | Accepted | [`CompactQuoteHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/CompactQuoteHandler.java) | `compact/compiler/lexer.ss`, `intellij-scala`, `intellij-rust` |
 
----
-
-## Mandatory Criteria for Architectural Decisions
+---\n## Mandatory Criteria for Architectural Decisions
 
 Whenever proposing or refining a feature:
 1. **Never Hardcode Assumptions**: Do not inject arbitrary defaults (e.g. `: Void` after `:` or `Bytes[]` for byte arrays) that mask developer intent or violate the language specification.
