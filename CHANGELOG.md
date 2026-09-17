@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed false-positive type mismatch errors when returning ternary expressions (cond ? a : b) from circuits and witnesses.
+
 ## [1.3.2] - 2026-09-16
 
 ### Fixed

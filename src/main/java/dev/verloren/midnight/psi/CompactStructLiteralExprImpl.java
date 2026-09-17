@@ -21,8 +21,8 @@ public class CompactStructLiteralExprImpl extends CompactPsiElement implements C
     PsiReference ref = getReference();
     if (ref != null) {
       PsiElement resolved = ref.resolve();
-      if (resolved instanceof CompactTypeElement) {
-        return ((CompactTypeElement) resolved).getType();
+      if (resolved instanceof CompactTypeElement typeElement) {
+        return typeElement.getType();
       }
     }
     return CompactPrimitiveType.UNKNOWN;

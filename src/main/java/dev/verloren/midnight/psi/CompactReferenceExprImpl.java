@@ -1,10 +1,8 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
-
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-
 import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +22,8 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
       PsiReference ref = getReference();
       if (ref != null) {
         PsiElement resolved = ref.resolve();
-        if (resolved instanceof CompactTypeElement) {
-          return ((CompactTypeElement) resolved).getType();
+        if (resolved instanceof CompactTypeElement typeElement) {
+          return typeElement.getType();
         }
       }
       return CompactPrimitiveType.UNKNOWN;

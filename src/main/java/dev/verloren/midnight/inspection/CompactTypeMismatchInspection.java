@@ -31,6 +31,7 @@ import org.jspecify.annotations.Nullable;
  *   <li>Relational comparison operators ({@code <}, {@code >}) are not applied to {@code Boolean} values.</li>
  *   <li>Equality operators ({@code ==}, {@code !=}) compare assignable types.</li>
  *   <li>Initializer expressions in {@code const} bindings match declared type annotations.</li>
+ *   <li>Ternary conditions evaluate to {@code Boolean}, and branch expressions have compatible types.</li>
  * </ul>
  * </p>
  */
@@ -54,6 +55,8 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
           checkBinaryExpr(binaryExpr, holder);
         } else if (element instanceof CompactUnaryExprImpl unaryExpr) {
           checkUnaryExpr(unaryExpr, holder);
+        } else if (element instanceof CompactTernaryExpr ternaryExpr) {
+          checkTernaryExpr(ternaryExpr, holder);
         } else if (element.getNode().getElementType() == CompactElementTypes.IF_STATEMENT) {
           checkIfStatement(element, holder);
         } else if (element instanceof CompactConstBindingImpl constBinding) {
@@ -63,6 +66,37 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  private static void checkTernaryExpr(@NotNull CompactTernaryExpr ternaryExpr, @NotNull ProblemsHolder holder) {
+    CompactExpression condition = ternaryExpr.getCondition();
+    if (condition != null) {
+      CompactType condType = condition.getType();
+      if (!CompactPrimitiveType.UNKNOWN.equals(condType) && !CompactPrimitiveType.BOOLEAN.equals(condType)) {
+        holder.registerProblem(
+            condition,
+            "Boolean expected in ternary condition, got '" + condType.name() + "'",
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        );
+      }
+    }
+
+    CompactExpression thenBranch = ternaryExpr.getThenBranch();
+    CompactExpression elseBranch = ternaryExpr.getElseBranch();
+    if (thenBranch != null && elseBranch != null) {
+      CompactType thenType = thenBranch.getType();
+      CompactType elseType = elseBranch.getType();
+      if (!CompactPrimitiveType.UNKNOWN.equals(thenType)
+          && !CompactPrimitiveType.UNKNOWN.equals(elseType)
+          && !thenType.isAssignableTo(elseType)
+          && !elseType.isAssignableTo(thenType)) {
+        holder.registerProblem(
+            ternaryExpr,
+            "Type mismatch in ternary branches: '" + thenType.name() + "' and '" + elseType.name() + "'",
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        );
+      }
+    }
   }
 
   private static void checkReturnStatement(@NotNull PsiElement returnStatement, @NotNull ProblemsHolder holder) {

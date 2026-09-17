@@ -18,30 +18,30 @@ public class CompactInspectionTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-        CompactLanguage.INSTANCE,
-        new CompactParserDefinition()
+            CompactLanguage.INSTANCE,
+            new CompactParserDefinition()
     );
   }
 
   private void enableAllInspections() {
     myFixture.enableInspections(
-        CompactUnresolvedReferenceInspection.class,
-        CompactDuplicateDeclarationInspection.class,
-        CompactUnusedLocalVariableInspection.class,
-        CompactTypeMismatchInspection.class,
-        CompactPureCircuitInspection.class,
-        CompactSealedFieldMutationInspection.class,
-        CompactRecursiveCircuitInspection.class,
-        CompactConstructorRestrictionInspection.class,
-        CompactUndisclosedWitnessInspection.class
+            CompactUnresolvedReferenceInspection.class,
+            CompactDuplicateDeclarationInspection.class,
+            CompactUnusedLocalVariableInspection.class,
+            CompactTypeMismatchInspection.class,
+            CompactPureCircuitInspection.class,
+            CompactSealedFieldMutationInspection.class,
+            CompactRecursiveCircuitInspection.class,
+            CompactConstructorRestrictionInspection.class,
+            CompactUndisclosedWitnessInspection.class
     );
   }
 
 
   private List<HighlightInfo> filterInspectionWarnings(List<HighlightInfo> highlights) {
     return highlights.stream()
-        .filter(h -> h.getSeverity() == HighlightSeverity.WARNING || h.getSeverity() == HighlightSeverity.WEAK_WARNING)
-        .toList();
+            .filter(h -> h.getSeverity() == HighlightSeverity.WARNING || h.getSeverity() == HighlightSeverity.WEAK_WARNING)
+            .toList();
   }
 
   // =========================================================================
@@ -50,12 +50,12 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testNoFalsePositiveValidCode() {
     String code = """
-        struct Point { x: Field; y: Field; }
-        circuit test(p: Point): [] {
-          const a = p.x;
-          const b = a;
-        }
-        """;
+            struct Point { x: Field; y: Field; }
+            circuit test(p: Point): [] {
+              const a = p.x;
+              const b = a;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> highlights = myFixture.doHighlighting();
@@ -65,23 +65,23 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUnresolvedLocalVariable() {
     String code = """
-        circuit test(): [] {
-          const x = nonExistentVar;
-        }
-        """;
+            circuit test(): [] {
+              const x = nonExistentVar;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> highlights = myFixture.doHighlighting();
     List<HighlightInfo> unresolved = highlights.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved reference 'nonExistentVar'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved reference 'nonExistentVar'"))
+            .toList();
     assertEquals("Should report 1 unresolved reference for nonExistentVar", 1, unresolved.size());
   }
 
   public void testUnresolvedTypeReferenceNotFlagged() {
     String code = """
-        circuit test(a: SomeExternalType): [] {}
-        """;
+            circuit test(a: SomeExternalType): [] {}
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> highlights = myFixture.doHighlighting();
@@ -91,11 +91,11 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testResolvedConstReference() {
     String code = """
-        circuit test(): [] {
-          const a = 1;
-          const b = a;
-        }
-        """;
+            circuit test(): [] {
+              const a = 1;
+              const b = a;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -104,9 +104,9 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testResolvedTypeReference() {
     String code = """
-        struct Data { val: Field; }
-        circuit test(d: Data): [] {}
-        """;
+            struct Data { val: Field; }
+            circuit test(d: Data): [] {}
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -115,11 +115,11 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testResolvedEnumMemberReference() {
     String code = """
-        enum Color { Red, Green, Blue }
-        circuit test(): [] {
-          const c = Color.Green;
-        }
-        """;
+            enum Color { Red, Green, Blue }
+            circuit test(): [] {
+              const c = Color.Green;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -128,23 +128,23 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUnresolvedEnumMemberReference() {
     String code = """
-        enum Color { Red, Green, Blue }
-        circuit test(): [] {
-          const c = Color.Yellow;
-        }
-        """;
+            enum Color { Red, Green, Blue }
+            circuit test(): [] {
+              const c = Color.Yellow;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unresolved = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved enum member 'Yellow'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved enum member 'Yellow'"))
+            .toList();
     assertEquals("Should report 1 unresolved enum member warning", 1, unresolved.size());
   }
 
   public void testBuiltinTypeNotFlagged() {
     String code = """
-        circuit test(a: Boolean, b: Uint<32>, c: Field, d: Bytes<32>): [] {}
-        """;
+            circuit test(a: Boolean, b: Uint<32>, c: Field, d: Bytes<32>): [] {}
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -153,11 +153,11 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testResolvedStructFieldAccess() {
     String code = """
-        struct Point { x: Field; y: Field; }
-        circuit test(p: Point): [] {
-          const v = p.x;
-        }
-        """;
+            struct Point { x: Field; y: Field; }
+            circuit test(p: Point): [] {
+              const v = p.x;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -166,16 +166,16 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUnresolvedStructFieldAccess() {
     String code = """
-        struct Point { x: Field; y: Field; }
-        circuit test(p: Point): [] {
-          const v = p.z;
-        }
-        """;
+            struct Point { x: Field; y: Field; }
+            circuit test(p: Point): [] {
+              const v = p.z;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unresolved = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved struct field 'z'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved struct field 'z'"))
+            .toList();
     assertEquals("Should report 1 unresolved struct field warning", 1, unresolved.size());
   }
 
@@ -195,13 +195,13 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testNestedScopeResolution() {
     String code = """
-        circuit test(): [] {
-          const a = 1;
-          {
-            const b = a;
-          }
-        }
-        """;
+            circuit test(): [] {
+              const a = 1;
+              {
+                const b = a;
+              }
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -210,26 +210,26 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testTopLevelLedgerForwardReferenceNoUnresolvedWarning() {
     String code = """
-        export circuit clear(): [] {
-          round.increment(1);
-        }
-
-        circuit publicKey(round: Field, sk: Bytes<32>): Field {
-          return round;
-        }
-
-        constructor(sk: Bytes<32>, v: Uint<64>) {
-          authority = disclose(publicKey(round, sk));
-        }
-
-        export ledger round: Counter;
-        """;
+            export circuit clear(): [] {
+              round.increment(1);
+            }
+            
+            circuit publicKey(round: Field, sk: Bytes<32>): Field {
+              return round;
+            }
+            
+            constructor(sk: Bytes<32>, v: Uint<64>) {
+              authority = disclose(publicKey(round, sk));
+            }
+            
+            export ledger round: Counter;
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> roundUnresolved = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("round"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("round"))
+            .toList();
     if (!roundUnresolved.isEmpty()) {
       StringBuilder sb = new StringBuilder("Found unresolved references:");
       for (HighlightInfo h : roundUnresolved) {
@@ -247,13 +247,13 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testNoDuplicateValidCode() {
     String code = """
-        struct A {}
-        struct B {}
-        circuit test(): [] {
-          const x = 1;
-          const y = 2;
-        }
-        """;
+            struct A {}
+            struct B {}
+            circuit test(): [] {
+              const x = 1;
+              const y = 2;
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -262,80 +262,80 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testDuplicateConstInBlock() {
     String code = """
-        circuit test(): [] {
-          const x = 1;
-          const x = 2;
-        }
-        """;
+            circuit test(): [] {
+              const x = 1;
+              const x = 2;
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'x'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'x'"))
+            .toList();
     assertEquals("Should report 1 duplicate declaration for 'x'", 1, duplicates.size());
   }
 
   public void testDuplicateCircuitTopLevel() {
     String code = """
-        circuit foo(): [] {}
-        circuit foo(): [] {}
-        """;
+            circuit foo(): [] {}
+            circuit foo(): [] {}
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'foo'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'foo'"))
+            .toList();
     assertEquals("Should report 1 duplicate declaration for top-level circuit 'foo'", 1, duplicates.size());
   }
 
   public void testDuplicateStruct() {
     String code = """
-        struct S {}
-        struct S {}
-        """;
+            struct S {}
+            struct S {}
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'S'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'S'"))
+            .toList();
     assertEquals("Should report 1 duplicate declaration for struct 'S'", 1, duplicates.size());
   }
 
   public void testDuplicateEnum() {
     String code = """
-        enum E { A }
-        enum E { B }
-        """;
+            enum E { A }
+            enum E { B }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'E'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'E'"))
+            .toList();
     assertEquals("Should report 1 duplicate declaration for enum 'E'", 1, duplicates.size());
   }
 
   public void testDuplicateTypeAlias() {
     String code = """
-        type A = Field;
-        type A = Boolean;
-        """;
+            type A = Field;
+            type A = Boolean;
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'A'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'A'"))
+            .toList();
     assertEquals("Should report 1 duplicate declaration for type alias 'A'", 1, duplicates.size());
   }
 
   public void testShadowingIsNotDuplicate() {
     String code = """
-        circuit test(): [] {
-          const x = 1;
-          {
-            const x = 2;
-          }
-        }
-        """;
+            circuit test(): [] {
+              const x = 1;
+              {
+                const x = 2;
+              }
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -344,9 +344,9 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSameNameDifferentNamespace() {
     String code = """
-        struct Item { id: Field; }
-        const Item = 42;
-        """;
+            struct Item { id: Field; }
+            const Item = 42;
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -355,37 +355,37 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testDuplicateParameter() {
     String code = """
-        circuit test(a: Field, a: Boolean): [] {}
-        """;
+            circuit test(a: Field, a: Boolean): [] {}
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'a'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'a'"))
+            .toList();
     assertEquals("Should report 1 duplicate parameter warning for 'a'", 1, duplicates.size());
   }
 
   public void testDuplicateStructField() {
     String code = """
-        struct Point { x: Field; x: Boolean; }
-        """;
+            struct Point { x: Field; x: Boolean; }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'x'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'x'"))
+            .toList();
     assertEquals("Should report 1 duplicate struct field warning for 'x'", 1, duplicates.size());
   }
 
   public void testDuplicateEnumMember() {
     String code = """
-        enum Color { Red, Green, Red }
-        """;
+            enum Color { Red, Green, Red }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> duplicates = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'Red'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Duplicate declaration 'Red'"))
+            .toList();
     assertEquals("Should report 1 duplicate enum member warning for 'Red'", 1, duplicates.size());
   }
 
@@ -398,11 +398,11 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSameParamNameAcrossDifferentCircuits() {
     String code = """
-        circuit foo(x: Field, amount: Uint<64>): Void {
-        }
-        circuit bar(x: Field, amount: Uint<64>): Void {
-        }
-        """;
+            circuit foo(x: Field, amount: Uint<64>): Void {
+            }
+            circuit bar(x: Field, amount: Uint<64>): Void {
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -411,9 +411,9 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSameParamNameAcrossDifferentWitnesses() {
     String code = """
-        witness getSecretA(id: Field): Boolean;
-        witness getSecretB(id: Field): Boolean;
-        """;
+            witness getSecretA(id: Field): Boolean;
+            witness getSecretB(id: Field): Boolean;
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -422,14 +422,14 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSameVarNameInSiblingBlocks() {
     String code = """
-        circuit test(c: Boolean): Void {
-          if (c) {
-            const x = 1;
-          } else {
-            const x = 2;
-          }
-        }
-        """;
+            circuit test(c: Boolean): Void {
+              if (c) {
+                const x = 1;
+              } else {
+                const x = 2;
+              }
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -438,10 +438,10 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testTopLevelConstAndParamSameName() {
     String code = """
-        const x: Field = 42;
-        circuit test(x: Field): Void {
-        }
-        """;
+            const x: Field = 42;
+            circuit test(x: Field): Void {
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -450,10 +450,10 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testParamAndLocalShadowing() {
     String code = """
-        circuit test(x: Field): Void {
-          const x = 1;
-        }
-        """;
+            circuit test(x: Field): Void {
+              const x = 1;
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -462,15 +462,15 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSameFieldNameAcrossDifferentStructs() {
     String code = """
-        struct Point {
-          x: Field,
-          y: Field
-        }
-        struct Vector {
-          x: Field,
-          y: Field
-        }
-        """;
+            struct Point {
+              x: Field,
+              y: Field
+            }
+            struct Vector {
+              x: Field,
+              y: Field
+            }
+            """;
     myFixture.enableInspections(CompactDuplicateDeclarationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -483,81 +483,81 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testNoUnusedValidCode() {
     String code = """
-        circuit test(): [] {
-          const x = 1;
-          const y = x;
-        }
-        """;
+            circuit test(): [] {
+              const x = 1;
+              const y = x;
+            }
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     // Here y is unused, but x is used
     List<HighlightInfo> unused = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable 'x'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable 'x'"))
+            .toList();
     assertTrue("Variable 'x' is used, should not be reported", unused.isEmpty());
   }
 
   public void testUnusedConstBinding() {
     String code = """
-        circuit test(): [] {
-          const unusedVar = 42;
-        }
-        """;
+            circuit test(): [] {
+              const unusedVar = 42;
+            }
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unused = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable 'unusedVar'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable 'unusedVar'"))
+            .toList();
     assertEquals("Should report unused variable 'unusedVar'", 1, unused.size());
   }
 
   public void testTopLevelConstNotFlagged() {
     String code = """
-        const GLOBAL_CONST = 100;
-        """;
+            const GLOBAL_CONST = 100;
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unused = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
+            .toList();
     assertTrue("Top-level consts should not be reported as unused local variables", unused.isEmpty());
   }
 
   public void testParameterNotFlagged() {
     String code = """
-        circuit test(param: Field): [] {}
-        """;
+            circuit test(param: Field): [] {}
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unused = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
+            .toList();
     assertTrue("Parameters should not be reported as unused local variables", unused.isEmpty());
   }
 
   public void testStructFieldNotFlagged() {
     String code = """
-        struct Point { x: Field; y: Field; }
-        """;
+            struct Point { x: Field; y: Field; }
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unused = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
+            .toList();
     assertTrue("Struct fields should not be reported as unused local variables", unused.isEmpty());
   }
 
   public void testUnderscorePrefixedVariableNotFlagged() {
     String code = """
-        circuit test(): [] {
-          const _ignored = 42;
-        }
-        """;
+            circuit test(): [] {
+              const _ignored = 42;
+            }
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unused = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unused local variable"))
+            .toList();
     assertTrue("Underscore-prefixed variables should be ignored", unused.isEmpty());
   }
 
@@ -570,11 +570,11 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testQuickFixRemovesUnusedVariable() {
     String code = """
-        circuit test(): [] {
-          const <caret>unusedVar = 42;
-          const y = 10;
-        }
-        """;
+            circuit test(): [] {
+              const <caret>unusedVar = 42;
+              const y = 10;
+            }
+            """;
     myFixture.enableInspections(CompactUnusedLocalVariableInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     myFixture.doHighlighting();
@@ -594,10 +594,10 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testNoMismatchValidLogical() {
     String code = """
-        circuit test(): [] {
-          const x = true && false;
-        }
-        """;
+            circuit test(): [] {
+              const x = true && false;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -606,66 +606,66 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testLogicalAndWithNonBoolean() {
     String code = """
-        circuit test(): [] {
-          const x = 1 && true;
-        }
-        """;
+            circuit test(): [] {
+              const x = 1 && true;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected, got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected, got 'Field'"))
+            .toList();
     assertEquals("Should report 1 Boolean expected warning for '1'", 1, mismatches.size());
   }
 
   public void testLogicalOrWithNonBoolean() {
     String code = """
-        circuit test(): [] {
-          const x = true || 42;
-        }
-        """;
+            circuit test(): [] {
+              const x = true || 42;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected, got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected, got 'Field'"))
+            .toList();
     assertEquals("Should report 1 Boolean expected warning for '42'", 1, mismatches.size());
   }
 
   public void testNegationOfNonBoolean() {
     String code = """
-        circuit test(): [] {
-          const x = !42;
-        }
-        """;
+            circuit test(): [] {
+              const x = !42;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected, got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected, got 'Field'"))
+            .toList();
     assertEquals("Should report 1 Boolean expected warning for '!42'", 1, mismatches.size());
   }
 
   public void testEqualityTypeMismatch() {
     String code = """
-        circuit test(): [] {
-          const x = true == 1;
-        }
-        """;
+            circuit test(): [] {
+              const x = true == 1;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare 'Boolean' with 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare 'Boolean' with 'Field'"))
+            .toList();
     assertEquals("Should report 1 cannot compare warning for 'true == 1'", 1, mismatches.size());
   }
 
   public void testEqualityTypesMatch() {
     String code = """
-        circuit test(): [] {
-          const x = 1 == 2;
-        }
-        """;
+            circuit test(): [] {
+              const x = 1 == 2;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -674,10 +674,10 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUnknownTypeNotFlagged() {
     String code = """
-        circuit test(): [] {
-          const x = unknownVar && true;
-        }
-        """;
+            circuit test(): [] {
+              const x = unknownVar && true;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -686,10 +686,10 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testArithmeticNotFlagged() {
     String code = """
-        circuit test(): [] {
-          const x = 1 + 2;
-        }
-        """;
+            circuit test(): [] {
+              const x = 1 + 2;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -705,28 +705,28 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testIfConditionNonBoolean() {
     String code = """
-        circuit test(): [] {
-          if (42) {
-            const x = 1;
-          }
-        }
-        """;
+            circuit test(): [] {
+              if (42) {
+                const x = 1;
+              }
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected in 'if' condition, got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected in 'if' condition, got 'Field'"))
+            .toList();
     assertEquals("Should report 1 warning for non-boolean condition", 1, mismatches.size());
   }
 
   public void testIfConditionBoolean() {
     String code = """
-        circuit test(flag: Boolean): [] {
-          if (flag) {
-            const x = 1;
-          }
-        }
-        """;
+            circuit test(flag: Boolean): [] {
+              if (flag) {
+                const x = 1;
+              }
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -735,24 +735,24 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testConstDeclarationTypeMismatch() {
     String code = """
-        circuit test(): [] {
-          const x: Boolean = 42;
-        }
-        """;
+            circuit test(): [] {
+              const x: Boolean = 42;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Boolean', got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Boolean', got 'Field'"))
+            .toList();
     assertEquals("Should report 1 type mismatch warning for const initializer", 1, mismatches.size());
   }
 
   public void testConstDeclarationTypeMatch() {
     String code = """
-        circuit test(): [] {
-          const x: Field = 42;
-        }
-        """;
+            circuit test(): [] {
+              const x: Field = 42;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -761,52 +761,52 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testRelationalComparisonWithBoolean() {
     String code = """
-        circuit test(): [] {
-          const x = true < false;
-        }
-        """;
+            circuit test(): [] {
+              const x = true < false;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Relational operator not applicable to 'Boolean'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Relational operator not applicable to 'Boolean'"))
+            .toList();
     assertEquals("Should report warning for relational comparison with boolean", 2, mismatches.size());
   }
 
   public void testArithmeticWithBoolean() {
     String code = """
-        circuit test(): [] {
-          const x = true + 1;
-        }
-        """;
+            circuit test(): [] {
+              const x = true + 1;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Arithmetic operator not applicable to 'Boolean'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Arithmetic operator not applicable to 'Boolean'"))
+            .toList();
     assertEquals("Should report warning for arithmetic on boolean", 1, mismatches.size());
   }
 
   public void testUnaryMinusOnBoolean() {
     String code = """
-        circuit test(): [] {
-          const x = -true;
-        }
-        """;
+            circuit test(): [] {
+              const x = -true;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unary minus not applicable to 'Boolean'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unary minus not applicable to 'Boolean'"))
+            .toList();
     assertEquals("Should report warning for unary minus on boolean", 1, mismatches.size());
   }
 
   public void testUint8ComparisonWithIntegerLiterals() {
     String code = """
-        export circuit player2Shoot(x: Uint<8>): [] {
-          assert(x > 0 && x <= 20, "Shot out of bounds");
-        }
-        """;
+            export circuit player2Shoot(x: Uint<8>): [] {
+              assert(x > 0 && x <= 20, "Shot out of bounds");
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -815,14 +815,14 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUint8BoundaryValues() {
     String code = """
-        circuit testBounds(x: Uint<8>): [] {
-          const minBound = x >= 0;
-          const maxBound = x <= 255;
-          const belowMax = x < 256;
-          const leftZero = 0 <= x;
-          const leftMax = 255 >= x;
-        }
-        """;
+            circuit testBounds(x: Uint<8>): [] {
+              const minBound = x >= 0;
+              const maxBound = x <= 255;
+              const belowMax = x < 256;
+              const leftZero = 0 <= x;
+              const leftMax = 255 >= x;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -831,14 +831,14 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUintConstInitializationBounds() {
     String code = """
-        circuit testConstInit(): [] {
-          const valid1: Uint<8> = 0;
-          const valid2: Uint<8> = 20;
-          const valid3: Uint<8> = 255;
-          const valid4: Uint<16> = 65535;
-          const valid5: Uint<32> = 4294967295;
-        }
-        """;
+            circuit testConstInit(): [] {
+              const valid1: Uint<8> = 0;
+              const valid2: Uint<8> = 20;
+              const valid3: Uint<8> = 255;
+              const valid4: Uint<16> = 65535;
+              const valid5: Uint<32> = 4294967295;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -847,31 +847,31 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUintConstInitializationOutOfBounds() {
     String code = """
-        circuit testConstInitOOB(): [] {
-          const oob1: Uint<8> = 256;
-          const oob2: Uint<8> = 300;
-          const oob3: Uint<16> = 65536;
-        }
-        """;
+            circuit testConstInitOOB(): [] {
+              const oob1: Uint<8> = 256;
+              const oob2: Uint<8> = 300;
+              const oob3: Uint<16> = 65536;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch"))
+            .toList();
     assertEquals("Should report 3 type mismatch warnings for out-of-bounds Uint initializers", 3, mismatches.size());
   }
 
   public void testUintOtherBitWidthsComparisons() {
     String code = """
-        circuit testOtherWidths(a: Uint<16>, b: Uint<32>, c: Uint<64>, d: Uint): [] {
-          const c1 = a > 0 && a <= 1000;
-          const c2 = b >= 0 && b < 1000000;
-          const c3 = c > 42;
-          const c4 = d >= 10;
-          const c5 = 0 < a && 100 >= b;
-          const c6 = a < b;
-        }
-        """;
+            circuit testOtherWidths(a: Uint<16>, b: Uint<32>, c: Uint<64>, d: Uint): [] {
+              const c1 = a > 0 && a <= 1000;
+              const c2 = b >= 0 && b < 1000000;
+              const c3 = c > 42;
+              const c4 = d >= 10;
+              const c5 = 0 < a && 100 >= b;
+              const c6 = a < b;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -880,15 +880,15 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUintArithmeticWithNumericLiterals() {
     String code = """
-        circuit testArithmetic(x: Uint<8>, y: Uint<32>): [] {
-          const a = x + 1;
-          const b = 1 + x;
-          const c = y - 10;
-          const d = x * 2;
-          const e = y / 4;
-          const f = x % 5;
-        }
-        """;
+            circuit testArithmetic(x: Uint<8>, y: Uint<32>): [] {
+              const a = x + 1;
+              const b = 1 + x;
+              const c = y - 10;
+              const d = x * 2;
+              const e = y / 4;
+              const f = x % 5;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -897,15 +897,15 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUintEqualityWithLiteralsAndOtherUints() {
     String code = """
-        circuit testEquality(x: Uint<8>, y: Uint<16>, z: Uint<8>): [] {
-          const e1 = x == 0;
-          const e2 = x != 20;
-          const e3 = 0 == x;
-          const e4 = 20 != x;
-          const e5 = x == z;
-          const e6 = x == y;
-        }
-        """;
+            circuit testEquality(x: Uint<8>, y: Uint<16>, z: Uint<8>): [] {
+              const e1 = x == 0;
+              const e2 = x != 20;
+              const e3 = 0 == x;
+              const e4 = 20 != x;
+              const e5 = x == z;
+              const e6 = x == y;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -914,71 +914,71 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUintIncompatibleComparisonsNegative() {
     String code = """
-        circuit testIncompatible(x: Uint<8>, flag: Boolean, b: Bytes<32>, f: Field): [] {
-          const bad1 = x == flag;
-          const bad2 = x == b;
-          const bad3 = x == f;
-          const bad4 = x < b;
-          const bad5 = x < f;
-        }
-        """;
+            circuit testIncompatible(x: Uint<8>, flag: Boolean, b: Bytes<32>, f: Field): [] {
+              const bad1 = x == flag;
+              const bad2 = x == b;
+              const bad3 = x == f;
+              const bad4 = x < b;
+              const bad5 = x < f;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare"))
+            .toList();
     assertEquals("Should report 5 cannot compare warnings for incompatible Uint comparisons", 5, mismatches.size());
   }
 
   public void testFieldIncompatibleRelationalNegative() {
     String code = """
-        circuit testFieldRelational(f1: Field, f2: Field): [] {
-          const bad1 = f1 < f2;
-          const bad2 = f1 > 10;
-        }
-        """;
+            circuit testFieldRelational(f1: Field, f2: Field): [] {
+              const bad1 = f1 < f2;
+              const bad2 = f1 > 10;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot compare"))
+            .toList();
     assertEquals("Should report 2 cannot compare warnings for Field relational comparisons", 2, mismatches.size());
   }
 
   public void testReturnTypeMismatchNumericIntoBoolean() {
     String code = """
-        circuit testZkir(): Boolean {
-          return 0;
-        }
-        """;
+            circuit testZkir(): Boolean {
+              return 0;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Boolean', got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Boolean', got 'Field'"))
+            .toList();
     assertEquals("Should report 1 type mismatch for return 0 in Boolean circuit", 1, mismatches.size());
   }
 
   public void testReturnTypeMismatchBooleanIntoField() {
     String code = """
-        circuit test(): Field {
-          return true;
-        }
-        """;
+            circuit test(): Field {
+              return true;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Field', got 'Boolean'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Field', got 'Boolean'"))
+            .toList();
     assertEquals("Should report 1 type mismatch for return true in Field circuit", 1, mismatches.size());
   }
 
   public void testReturnTypeMatchValidBoolean() {
     String code = """
-        circuit test(): Boolean {
-          return true;
-        }
-        """;
+            circuit test(): Boolean {
+              return true;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -987,28 +987,102 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testReturnTypeMismatchVoidWithValue() {
     String code = """
-        circuit test(): [] {
-          return 10;
-        }
-        """;
+            circuit test(): [] {
+              return 10;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Void', got 'Field'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Void', got 'Field'"))
+            .toList();
     assertEquals("Should report 1 type mismatch for non-empty return in Void callable", 1, mismatches.size());
   }
 
   public void testReturnTypeValidVoidEmptyReturn() {
     String code = """
-        circuit test(): [] {
-          return;
-        }
-        """;
+            circuit test(): [] {
+              return;
+            }
+            """;
     myFixture.enableInspections(CompactTypeMismatchInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     assertTrue("Valid empty return in void callable should produce zero warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testReturnTypeMatchSimpleTernaryExpression() {
+    String code = """
+            circuit test(cond: Boolean): Field {
+              return cond ? 1 : 2;
+            }
+            """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Valid ternary return of Field should produce zero warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testReturnTypeMatchTernaryExpressionGenericStruct() {
+    String code = """
+            struct Either<T1, T2> {
+              is_left: Boolean;
+              left: T1;
+              right: T2;
+            }
+            
+            export pure circuit canonicalize<T1, T2>(value: Either<T1, T2>): Either<T1, T2> {
+              return value.is_left
+                  ? Either<T1, T2> { is_left: true, left: value.left, right: default<T2> }
+                  : Either<T1, T2> { is_left: false, left: default<T1>, right: value.right };
+            }
+            """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Valid ternary return of struct should produce zero warnings: " + warnings, warnings.isEmpty());
+  }
+
+  public void testReturnTypeMismatchTernaryExpression() {
+    String code = """
+            circuit test(cond: Boolean): Field {
+              return cond ? true : false;
+            }
+            """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch: expected 'Field', got 'Boolean'"))
+            .toList();
+    assertEquals("Should report 1 type mismatch for return boolean ternary in Field circuit", 1, mismatches.size());
+  }
+
+  public void testTernaryConditionNonBooleanFails() {
+    String code = """
+            circuit test(cond: Field): Field {
+              return cond ? 1 : 2;
+            }
+            """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Boolean expected in ternary condition, got 'Field'"))
+            .toList();
+    assertEquals("Should report boolean expected in ternary condition", 1, mismatches.size());
+  }
+
+  public void testTernaryBranchesTypeMismatchFails() {
+    String code = """
+            circuit test(cond: Boolean): Boolean {
+              return cond ? true : 10;
+            }
+            """;
+    myFixture.enableInspections(CompactTypeMismatchInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> mismatches = myFixture.doHighlighting().stream()
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Type mismatch in ternary branches"))
+            .toList();
+    assertEquals("Should report branch mismatch between Boolean and numeric literal", 1, mismatches.size());
   }
 
   // =========================================================================
@@ -1018,33 +1092,33 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testCompleteValidContractNoWarnings() {
     String code = """
-        struct Point {
-          x: Field;
-          y: Field;
-        }
-
-        enum Status {
-          Active,
-          Inactive
-        }
-
-        circuit calculate(p: Point, s: Status): [] {
-          const xVal = p.x;
-          const isMatch = s == Status.Active;
-          const combined = isMatch && (xVal == 0);
-        }
-        """;
+            struct Point {
+              x: Field;
+              y: Field;
+            }
+            
+            enum Status {
+              Active,
+              Inactive
+            }
+            
+            circuit calculate(p: Point, s: Status): [] {
+              const xVal = p.x;
+              const isMatch = s == Status.Active;
+              const combined = isMatch && (xVal == 0);
+            }
+            """;
     enableAllInspections();
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> highlights = myFixture.doHighlighting();
     List<HighlightInfo> criticalWarnings = highlights.stream()
-        .filter(h -> h.getDescription() != null && (
-            h.getDescription().contains("Unresolved")
-            || h.getDescription().contains("Duplicate")
-            || h.getDescription().contains("Cannot compare")
-            || h.getDescription().contains("Boolean expected")
-        ))
-        .toList();
+            .filter(h -> h.getDescription() != null && (
+                    h.getDescription().contains("Unresolved")
+                            || h.getDescription().contains("Duplicate")
+                            || h.getDescription().contains("Cannot compare")
+                            || h.getDescription().contains("Boolean expected")
+            ))
+            .toList();
     assertTrue("Complete valid contract should have zero critical semantic errors: " + criticalWarnings, criticalWarnings.isEmpty());
   }
 
@@ -1057,83 +1131,83 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testCrossFileImportedEnumMemberValidNoWarnings() {
     myFixture.addFileToProject(
-        "GameState.compact",
-        """
-        export enum GameState {
-            WAITING,
-            PLAYING,
-            FINISHED,
-        }
-        """
+            "GameState.compact",
+            """
+                    export enum GameState {
+                        WAITING,
+                        PLAYING,
+                        FINISHED,
+                    }
+                    """
     );
     String code = """
-        import { GameState } from './GameState';
-
-        export circuit checkGame(): [] {
-            assert(
-                GameState.PLAYING == GameState.PLAYING,
-                "Game is not currently playing"
-            );
-        }
-        """;
+            import { GameState } from './GameState';
+            
+            export circuit checkGame(): [] {
+                assert(
+                    GameState.PLAYING == GameState.PLAYING,
+                    "Game is not currently playing"
+                );
+            }
+            """;
     enableAllInspections();
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> highlights = myFixture.doHighlighting();
     List<HighlightInfo> criticalWarnings = highlights.stream()
-        .filter(h -> h.getDescription() != null && (
-            h.getDescription().contains("Unresolved")
-            || h.getDescription().contains("Duplicate")
-            || h.getDescription().contains("Cannot compare")
-        ))
-        .toList();
+            .filter(h -> h.getDescription() != null && (
+                    h.getDescription().contains("Unresolved")
+                            || h.getDescription().contains("Duplicate")
+                            || h.getDescription().contains("Cannot compare")
+            ))
+            .toList();
     assertTrue("Cross-file imported enum comparison should produce zero warnings: " + criticalWarnings, criticalWarnings.isEmpty());
   }
 
   public void testCrossFileUnresolvedImportedSymbol() {
     myFixture.addFileToProject(
-        "GameState.compact",
-        """
-        export enum GameState {
-            WAITING,
-            PLAYING,
-            FINISHED,
-        }
-        """
+            "GameState.compact",
+            """
+                    export enum GameState {
+                        WAITING,
+                        PLAYING,
+                        FINISHED,
+                    }
+                    """
     );
     String code = """
-        import { NonExistentState } from './GameState';
-        """;
+            import { NonExistentState } from './GameState';
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unresolved = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved imported symbol 'NonExistentState'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved imported symbol 'NonExistentState'"))
+            .toList();
     assertEquals("Should report 1 unresolved imported symbol error", 1, unresolved.size());
   }
 
   public void testCrossFileUnresolvedEnumMember() {
     myFixture.addFileToProject(
-        "GameState.compact",
-        """
-        export enum GameState {
-            WAITING,
-            PLAYING,
-            FINISHED,
-        }
-        """
+            "GameState.compact",
+            """
+                    export enum GameState {
+                        WAITING,
+                        PLAYING,
+                        FINISHED,
+                    }
+                    """
     );
     String code = """
-        import { GameState } from './GameState';
-
-        export circuit checkGame(): [] {
-            const state = GameState.DOES_NOT_EXIST;
-        }
-        """;
+            import { GameState } from './GameState';
+            
+            export circuit checkGame(): [] {
+                const state = GameState.DOES_NOT_EXIST;
+            }
+            """;
     myFixture.enableInspections(CompactUnresolvedReferenceInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> unresolved = myFixture.doHighlighting().stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved enum member 'DOES_NOT_EXIST'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Unresolved enum member 'DOES_NOT_EXIST'"))
+            .toList();
     assertEquals("Should report 1 unresolved enum member error for cross-file enum", 1, unresolved.size());
   }
 
@@ -1143,10 +1217,10 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testPureCircuitValidMathAllowed() {
     String code = """
-        pure circuit add(x: Field, y: Field): Field {
-          return x + y;
-        }
-        """;
+            pure circuit add(x: Field, y: Field): Field {
+              return x + y;
+            }
+            """;
     myFixture.enableInspections(CompactPureCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -1155,88 +1229,88 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testPureCircuitCallingWitnessFails() {
     String code = """
-        witness secretKey(): Field;
-
-        pure circuit deriveKey(): Field {
-          return secretKey();
-        }
-        """;
+            witness secretKey(): Field;
+            
+            pure circuit deriveKey(): Field {
+              return secretKey();
+            }
+            """;
     myFixture.enableInspections(CompactPureCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot invoke witness 'secretKey'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot invoke witness 'secretKey'"))
+            .toList();
     assertEquals("Pure circuit calling witness should be flagged", 1, matched.size());
   }
 
   public void testPureCircuitAccessingLedgerFails() {
     String code = """
-        ledger count: Field;
-
-        pure circuit getCount(): Field {
-          return count;
-        }
-        """;
+            ledger count: Field;
+            
+            pure circuit getCount(): Field {
+              return count;
+            }
+            """;
     myFixture.enableInspections(CompactPureCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot access ledger state 'count'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot access ledger state 'count'"))
+            .toList();
     assertEquals("Pure circuit reading ledger state should be flagged", 1, matched.size());
   }
 
   public void testPureCircuitEmittingEventFails() {
     String code = """
-        pure circuit trigger(): [] {
-          emit(1);
-        }
-        """;
+            pure circuit trigger(): [] {
+              emit(1);
+            }
+            """;
     myFixture.enableInspections(CompactPureCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot emit events"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot emit events"))
+            .toList();
     assertEquals("Pure circuit emitting events should be flagged", 1, matched.size());
   }
 
   public void testPureCircuitCallingImpureCircuitFails() {
     String code = """
-        circuit impureHelper(): Field {
-          return 1;
-        }
-
-        pure circuit compute(): Field {
-          return impureHelper();
-        }
-        """;
+            circuit impureHelper(): Field {
+              return 1;
+            }
+            
+            pure circuit compute(): Field {
+              return impureHelper();
+            }
+            """;
     myFixture.enableInspections(CompactPureCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot invoke non-pure circuit 'impureHelper'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot invoke non-pure circuit 'impureHelper'"))
+            .toList();
     assertEquals("Pure circuit calling non-pure circuit should be flagged", 1, matched.size());
   }
 
   public void testPureCircuitRemoveModifierQuickFix() {
     String code = """
-        witness secretKey(): Field;
-
-        pure circuit deriveKey(): Field {
-          return <caret>secretKey();
-        }
-        """;
+            witness secretKey(): Field;
+            
+            pure circuit deriveKey(): Field {
+              return <caret>secretKey();
+            }
+            """;
     myFixture.enableInspections(CompactPureCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     myFixture.doHighlighting();
     List<IntentionAction> fixes = myFixture.getAllQuickFixes();
     IntentionAction fix = fixes.stream()
-        .filter(f -> f.getText().contains("Remove 'pure' modifier"))
-        .findFirst()
-        .orElse(null);
+            .filter(f -> f.getText().contains("Remove 'pure' modifier"))
+            .findFirst()
+            .orElse(null);
     assertNotNull("Remove 'pure' modifier quick-fix should be available", fix);
     myFixture.launchAction(fix);
     assertFalse("Code should no longer contain 'pure'", myFixture.getFile().getText().contains("pure"));
@@ -1249,12 +1323,12 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSealedFieldMutationInConstructorAllowed() {
     String code = """
-        sealed ledger owner: Field;
-
-        constructor(initialOwner: Field) {
-          owner = initialOwner;
-        }
-        """;
+            sealed ledger owner: Field;
+            
+            constructor(initialOwner: Field) {
+              owner = initialOwner;
+            }
+            """;
     myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -1263,29 +1337,29 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testSealedFieldMutationOutsideConstructorFails() {
     String code = """
-        sealed ledger owner: Field;
-
-        circuit transfer(newOwner: Field): [] {
-          owner = newOwner;
-        }
-        """;
+            sealed ledger owner: Field;
+            
+            circuit transfer(newOwner: Field): [] {
+              owner = newOwner;
+            }
+            """;
     myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot modify sealed ledger field 'owner' outside constructor"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Cannot modify sealed ledger field 'owner' outside constructor"))
+            .toList();
     assertEquals("Mutating sealed field outside constructor should be flagged", 1, matched.size());
   }
 
   public void testUnsealedFieldMutationAllowed() {
     String code = """
-        ledger round: Field;
-
-        circuit step(): [] {
-          round = 2;
-        }
-        """;
+            ledger round: Field;
+            
+            circuit step(): [] {
+              round = 2;
+            }
+            """;
     myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -1298,9 +1372,9 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testNonRecursiveCircuitAllowed() {
     String code = """
-        circuit helper(): Field { return 1; }
-        circuit compute(): Field { return helper(); }
-        """;
+            circuit helper(): Field { return 1; }
+            circuit compute(): Field { return helper(); }
+            """;
     myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -1309,58 +1383,58 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testDirectRecursiveCircuitFails() {
     String code = """
-        circuit fib(n: Field): Field {
-          return fib(n);
-        }
-        """;
+            circuit fib(n: Field): Field {
+              return fib(n);
+            }
+            """;
     myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot be recursive"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("cannot be recursive"))
+            .toList();
     assertEquals("Directly recursive circuit should be flagged", 1, matched.size());
   }
 
   public void testMutualRecursiveCircuitFails() {
     String code = """
-        circuit ping(): Field {
-          return pong();
-        }
-
-        circuit pong(): Field {
-          return ping();
-        }
-        """;
+            circuit ping(): Field {
+              return pong();
+            }
+            
+            circuit pong(): Field {
+              return ping();
+            }
+            """;
     myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("recursion"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("recursion"))
+            .toList();
     assertFalse("Mutual recursion should be flagged", matched.isEmpty());
   }
 
   public void testWrapperCircuitCallingImportedCircuitWithSameNameNotFlagged() {
     myFixture.addFileToProject(
-        "Base.compact",
-        """
-        export circuit grantRole(): Void {}
-        """
+            "Base.compact",
+            """
+                    export circuit grantRole(): Void {}
+                    """
     );
     String code = """
-        import "./Base" prefix Base_;
-
-        export circuit grantRole(): Void {
-          Base_grantRole();
-        }
-        """;
+            import "./Base" prefix Base_;
+            
+            export circuit grantRole(): Void {
+              Base_grantRole();
+            }
+            """;
     myFixture.enableInspections(CompactRecursiveCircuitInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> recursionWarnings = warnings.stream()
-        .filter(h -> h.getDescription() != null && (h.getDescription().contains("cannot be recursive") || h.getDescription().contains("recursion")))
-        .toList();
+            .filter(h -> h.getDescription() != null && (h.getDescription().contains("cannot be recursive") || h.getDescription().contains("recursion")))
+            .toList();
     assertTrue("Forwarding wrapper circuit calling imported circuit with same name should not be flagged as recursive: " + recursionWarnings, recursionWarnings.isEmpty());
   }
   // =========================================================================
@@ -1369,12 +1443,12 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testConstructorValidCodeAllowed() {
     String code = """
-        ledger count: Field;
-
-        constructor(c: Field) {
-          count = c;
-        }
-        """;
+            ledger count: Field;
+            
+            constructor(c: Field) {
+              count = c;
+            }
+            """;
     myFixture.enableInspections(CompactConstructorRestrictionInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -1383,16 +1457,16 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testConstructorEmitFails() {
     String code = """
-        constructor() {
-          emit(1);
-        }
-        """;
+            constructor() {
+              emit(1);
+            }
+            """;
     myFixture.enableInspections(CompactConstructorRestrictionInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("Constructor cannot emit events"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("Constructor cannot emit events"))
+            .toList();
     assertEquals("Constructor emitting events should be flagged", 1, matched.size());
   }
 
@@ -1402,14 +1476,14 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testDisclosedWitnessAssignmentAllowed() {
     String code = """
-        ledger authority: Field;
-        witness secretKey(): Field;
-
-        circuit set(): [] {
-          const sk = secretKey();
-          authority = disclose(sk);
-        }
-        """;
+            ledger authority: Field;
+            witness secretKey(): Field;
+            
+            circuit set(): [] {
+              const sk = secretKey();
+              authority = disclose(sk);
+            }
+            """;
     myFixture.enableInspections(CompactUndisclosedWitnessInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
@@ -1418,38 +1492,38 @@ public class CompactInspectionTest extends BasePlatformTestCase {
 
   public void testUndisclosedWitnessDirectAssignmentFails() {
     String code = """
-        ledger authority: Field;
-        witness secretKey(): Field;
-
-        circuit set(): [] {
-          authority = secretKey();
-        }
-        """;
+            ledger authority: Field;
+            witness secretKey(): Field;
+            
+            circuit set(): [] {
+              authority = secretKey();
+            }
+            """;
     myFixture.enableInspections(CompactUndisclosedWitnessInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("without 'disclose(...)'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("without 'disclose(...)'"))
+            .toList();
     assertEquals("Direct undisclosed witness assignment should be flagged", 1, matched.size());
   }
 
   public void testUndisclosedWitnessVariableAssignmentFails() {
     String code = """
-        ledger authority: Field;
-        witness secretKey(): Field;
-
-        circuit set(): [] {
-          const sk = secretKey();
-          authority = sk;
-        }
-        """;
+            ledger authority: Field;
+            witness secretKey(): Field;
+            
+            circuit set(): [] {
+              const sk = secretKey();
+              authority = sk;
+            }
+            """;
     myFixture.enableInspections(CompactUndisclosedWitnessInspection.class);
     myFixture.configureByText(CompactFileType.INSTANCE, code);
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     List<HighlightInfo> matched = warnings.stream()
-        .filter(h -> h.getDescription() != null && h.getDescription().contains("without 'disclose(...)'"))
-        .toList();
+            .filter(h -> h.getDescription() != null && h.getDescription().contains("without 'disclose(...)'"))
+            .toList();
     assertEquals("Undisclosed witness assignment via variable should be flagged", 1, matched.size());
   }
 }
