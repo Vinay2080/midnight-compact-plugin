@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-18 | inspection / sealed ledger / modules | False-positive sealed ledger mutation warning inside modules | [2026-09-18-inspection-sealed-ledger-module-mutation.md](2026-09-18-inspection-sealed-ledger-module-mutation.md) | High | Resolved |
 | 2026-09-18 | inspection / type system / PSI | False-positive type mismatch error on ternary return statements | [2026-09-18-inspection-ternary-return-type-mismatch.md](2026-09-18-inspection-ternary-return-type-mismatch.md) | High | Resolved |
 | 2026-09-16 | annotator / editor | Caret jump and trailing whitespace stripping on spacebar or indented empty lines | [2026-09-16-annotator-trailing-space-caret-jump.md](2026-09-16-annotator-trailing-space-caret-jump.md) | High | Resolved |
 | 2026-09-16 | annotator / compiler | External annotator lag, stale underlines, and WSL path mapping | [2026-09-16-external-annotator-lag-and-stale-underlines.md](2026-09-16-external-annotator-lag-and-stale-underlines.md) | High | Resolved |

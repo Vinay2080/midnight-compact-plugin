@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed false-positive warnings reporting that sealed ledger fields cannot be modified outside constructors when initializing state inside Compact library modules.
 - Fixed false-positive type mismatch errors when returning ternary expressions (cond ? a : b) from circuits and witnesses.
 
 ## [1.3.2] - 2026-09-16

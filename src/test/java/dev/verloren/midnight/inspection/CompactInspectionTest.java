@@ -1365,6 +1365,21 @@ public class CompactInspectionTest extends BasePlatformTestCase {
     List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
     assertTrue("Mutating unsealed field should produce no sealed field warnings", warnings.isEmpty());
   }
+  public void testSealedFieldMutationInsideModuleAllowed() {
+    String code = """
+            module ShieldedAccessControl {
+              export sealed ledger _instanceSalt: Bytes<32>;
+
+              export circuit initialize(instanceSalt: Bytes<32>): [] {
+                _instanceSalt = instanceSalt;
+              }
+            }
+            """;
+    myFixture.enableInspections(CompactSealedFieldMutationInspection.class);
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> warnings = filterInspectionWarnings(myFixture.doHighlighting());
+    assertTrue("Mutating sealed field inside module should produce no sealed field warnings: " + warnings, warnings.isEmpty());
+  }
 
   // =========================================================================
   // 7. Recursive Circuit Inspection Tests

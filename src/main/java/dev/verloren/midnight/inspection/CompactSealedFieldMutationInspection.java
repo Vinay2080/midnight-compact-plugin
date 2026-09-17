@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import dev.verloren.midnight.psi.CompactConstructorDeclaration;
 import dev.verloren.midnight.psi.CompactLedgerDeclaration;
+import dev.verloren.midnight.psi.CompactModuleDefinition;
 import dev.verloren.midnight.psi.CompactReferenceExprImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,13 @@ public class CompactSealedFieldMutationInspection extends LocalInspectionTool {
       return;
     }
 
+    // In Compact, modules cannot declare constructors (syntax restricts constructor to top-level contracts).
+    // Library modules (e.g. OpenZeppelin contracts) encapsulate sealed field initialisation inside module
+    // circuits (such as initialize) intended to be called during the importing contract's constructor.
+    if (PsiTreeUtil.getParentOfType(assignExpr, CompactModuleDefinition.class) != null) {
+      return;
+    }
+
     // Find the target on the LHS
     PsiElement firstChild = assignExpr.getFirstChild();
     if (firstChild == null) {
@@ -56,23 +64,21 @@ public class CompactSealedFieldMutationInspection extends LocalInspectionTool {
     }
 
     CompactReferenceExprImpl targetRef;
-    if (firstChild instanceof CompactReferenceExprImpl) {
-      targetRef = (CompactReferenceExprImpl) firstChild;
+    if (firstChild instanceof CompactReferenceExprImpl ref) {
+      targetRef = ref;
     } else {
       targetRef = PsiTreeUtil.findChildOfType(firstChild, CompactReferenceExprImpl.class);
     }
 
     if (targetRef != null) {
       PsiElement resolved = targetRef.resolve();
-      if (resolved instanceof CompactLedgerDeclaration ledger) {
-        if (ledger.isSealed()) {
-          String fieldName = ledger.getName() != null ? ledger.getName() : "field";
-          holder.registerProblem(
-              targetRef,
-              "Cannot modify sealed ledger field '" + fieldName + "' outside constructor",
-              ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-          );
-        }
+      if (resolved instanceof CompactLedgerDeclaration ledger && ledger.isSealed()) {
+        String fieldName = ledger.getName() != null ? ledger.getName() : "field";
+        holder.registerProblem(
+            targetRef,
+            "Cannot modify sealed ledger field '" + fieldName + "' outside constructor",
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+        );
       }
     }
   }
