@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Caret Jump & Whitespace Stripping Fix, Universal Delimiter Skipping)
+Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement, In-Memory Shadow Buffer Compilation, Universal Delimiter Skipping)
 
 ---
 
@@ -10,6 +10,11 @@ Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Care
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Quote Auto-Completion & Pairing (v1.3.3 / ADR-031)**:
+  - `CompactQuoteHandler`: `SimpleTokenSetQuoteHandler` registered in `plugin.xml` managing automatic quotation mark insertion, pairing, and cursor positioning between quotes (`"<caret>"`, `'<caret>'`).
+  - Strict token categorization: `isOpeningQuote` returns `true` only for `CompactTokenTypes.UNTERMINATED_STRING` at `offset == iterator.getStart()`, triggering automatic closing quote insertion without corrupting typing in front of existing string literals.
+  - Strict closing quote validation: `isClosingQuote` returns `true` only for closed `CompactTokenTypes.STRING_LITERAL` of length $\ge 2$ at `offset == iterator.getEnd() - 1`.
+  - Context isolation: quote pairing is strictly suppressed inside line comments (`//`), block comments (`/* ... */`), and within existing closed strings. Respects user platform preferences (`CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE`).
 - **In-Memory Shadow Buffer Compilation & Caret Jump Prevention (v1.3.2)**:
   - Eliminated forced document saves (`FileDocumentManager.saveDocument`) and EDT `invokeLater` dispatch from `CompactExternalAnnotator.collectInformation()`.
   - Captures unsaved editor text dynamically in `InitialInfo.unsavedContent()` on the read thread.
@@ -80,7 +85,7 @@ Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Care
 - **Compiler Version Management**:
   - Isolated multi-version directory structure under `~/.compact/versions/<version>/`.
   - Automated binary download and installation with progress indicators and platform archive unpacking.
-  - "Compile Current Contract" action triggering background compilation and problem reporting.
+  - \"Compile Current Contract\" action triggering background compilation and problem reporting.
 - **Phase 27: Status Bar Toolchain & Environment Widget (v1.2.2 / ADR-014)**:
   - `CompactStatusBarWidgetFactory`: Registered in `plugin.xml` on editor status bar.
   - `CompactStatusBarWidget`: Lightweight, non-blocking widget displaying active Compact version with language version mapping.
@@ -96,14 +101,14 @@ Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Care
     - `CompactSpecifyTypeExplicitlyIntention`
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
-  - Fully maintained index in `.ai/decisions/README.md` covering all 30 major architectural subsystems (**ADR-001 through ADR-030**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
+  - Fully maintained index in `.ai/decisions/README.md` covering all 31 major architectural subsystems (**ADR-001 through ADR-031**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
 
 ---
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **646 passing tests** (0 failures, 0 skipped, 100% success rate)
-- **Active Test Suites**: **64 test classes**
+- **Total Tests**: **664 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Active Test Suites**: **65 test classes**
 - **Execution Time**: ~2m 30s via `./gradlew test`
 
 ### Test Suite Breakdown
@@ -116,10 +121,11 @@ Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Care
 | `dev.verloren.midnight.editor.CompactDelimiterTypingTest` | 30 | Passed |
 | `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | 24 | Passed |
 | `dev.verloren.midnight.resolve.CompactResolveTest` | 21 | Passed |
+| `dev.verloren.midnight.editor.CompactQuoteTypingTest` | 18 | Passed |
 | `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | 17 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | 17 | Passed |
 | `dev.verloren.midnight.documentation.CompactDocumentationTest` | 16 | Passed |
-| `dev.verloren.midnight.highlighter.CompactHighlightingTest` | 16 | Passed |
+| `dev.verloren.midnight.highlighter.CompactHighlightTest` | 16 | Passed |
 | `dev.verloren.midnight.editor.CompactSmartEnterTest` | 15 | Passed |
 | `dev.verloren.midnight.type.CompactTypeInferenceTest` | 15 | Passed |
 | `dev.verloren.midnight.navigation.CompactTypeDeclarationProviderTest` | 14 | Passed |
@@ -138,51 +144,3 @@ Last Updated: September 2026 (v1.3.2 / In-Memory Shadow Buffer Compilation, Care
 | `dev.verloren.midnight.editor.CompactLineMarkerTest` | 7 | Passed |
 | `dev.verloren.midnight.version.CompactVersionManagerTest` | 7 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | 6 | Passed |
-| `dev.verloren.midnight.parser.ErrorRecoveryParserTest` | 6 | Passed |
-| `dev.verloren.midnight.run.CompactToolchainUtilTest` | 6 | Passed |
-| `dev.verloren.midnight.editor.CompactSurroundWithTest` | 5 | Passed |
-| `dev.verloren.midnight.run.CompactRunConfigurationTest` | 5 | Passed |
-| `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest` | 5 | Passed |
-| `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | 5 | Passed |
-| `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | 4 | Passed |
-| `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
-| `dev.verloren.midnight.editor.CompactFoldingTest` | 4 | Passed |
-| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 4 | Passed |
-| `dev.verloren.midnight.version.CompactSemVerUtilTest` | 4 | Passed |
-| `dev.verloren.midnight.CompactBundleTest` | 3 | Passed |
-| `dev.verloren.midnight.CompactTestUtilsTest` | 3 | Passed |
-| `dev.verloren.midnight.editor.CompactInlayHintsTest` | 3 | Passed |
-| `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest` | 3 | Passed |
-| `dev.verloren.midnight.lexer.PragmaTest` | 3 | Passed |
-| `dev.verloren.midnight.parser.PragmaParserTest` | 3 | Passed |
-| `dev.verloren.midnight.parser.StatementParserTest` | 3 | Passed |
-| `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | 3 | Passed |
-| `dev.verloren.midnight.settings.MidnightSettingsTest` | 3 | Passed |
-| `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | 3 | Passed |
-| `dev.verloren.midnight.symbol.CompactSymbolTest` | 3 | Passed |
-| `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 3 | Passed |
-| `dev.verloren.midnight.completion.CompactInsertHandlersTest` | 2 | Passed |
-| `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | 2 | Passed |
-| `dev.verloren.midnight.intention.CompactPragmaIntentionTest` | 2 | Passed |
-| `dev.verloren.midnight.navigation.CompactChooseByNameTest` | 2 | Passed |
-| `dev.verloren.midnight.parser.CompactParserDefinitionTest` | 2 | Passed |
-| `dev.verloren.midnight.parser.EndToEndParserTest` | 2 | Passed |
-| `dev.verloren.midnight.psi.DeclarationPsiTest` | 2 | Passed |
-| `dev.verloren.midnight.run.CompactRunConfigurationProducerTest` | 2 | Passed |
-| `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | 1 | Passed |
-| `dev.verloren.midnight.parser.DeclarationParserTest` | 1 | Passed |
-| `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
-| `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
-| `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
-| **Total Across 64 Suites** | **646** | **100% Passed** |
-
----
-
-## 3. Roadmap & Evolution (Phases 31–36)
-
-- **Phase 31: Stub Indexing & Large Workspace Caching**
-- **Phase 32: Advanced Refactorings (Rename, Extract Variable, Change Signature)**
-- **Phase 33: Remix Blockchain Explorer & Local Node Sandbox**
-- **Phase 34: Ledger Storage & ZK Constraint Profiler**
-- **Phase 35: In-IDE Language Server / PSI-MCP Bridge**
-- **Phase 36: Polyglot Compact/TypeScript Integration & Test Framework**

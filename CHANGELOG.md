@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
+
 ### Fixed
 - Fixed false-positive warnings reporting that sealed ledger fields cannot be modified outside constructors when initializing state inside Compact library modules.
 - Fixed false-positive type mismatch errors when returning ternary expressions (cond ? a : b) from circuits and witnesses.
@@ -38,13 +41,3 @@
 - Optimized editor change notifications and compiler panel responsiveness to eliminate unnecessary card re-renders while typing in the editor.
 - Fixed editor threading exceptions when completing sized types or assert statements within active live templates.
 - Fixed deprecated platform message bundle initialization to ensure compatibility with future IntelliJ platform releases.
-- Fixed 'assert' completion and 'ass' live template to insert enclosing parentheses ('assert()'), position the caret inside for condition and message input, avoid duplicate parentheses, and register a tab-out scope.
-- Fixed sized type completion inserting bare type names without required size parameter brackets.
-- Fixed issue where data type completion was incorrectly suppressed in exported declaration headers.
-- Fixed automatic declaration numbering to skip existing numbered declarations and reuse deleted numbers.
-- Fixed compiler diagnostic range mapping when running under WSL on Windows.
-- Fixed duplicate `export export` insertion when autocompleting declarations after an existing `export` keyword.
-- Fixed invalid top-level `export const` suggestions in code completion and intention actions.
-
-## [1.3.0] - 2026-09-16 [Withdrawn]
-- Superseded by 1.3.1 due to editor responsiveness fix. See 1.3.1 for full notes.
