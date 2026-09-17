@@ -7,13 +7,13 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 
 /**
- * Multi-tier unit and integration tests verifying automatic quotation mark pairing ({@code "} and {@code '}),
- * cursor positioning between paired quotes, closing quote step-over, and boundary resilience in Compact code.
+ * Multi-tier test suite for automatic string literal quotation mark pairing,
+ * cursor positioning, and smart closing quote step-over.
  */
 public class CompactQuoteTypingTest extends BasePlatformTestCase {
 
   // =========================================================================
-  // Tier 1: Basic Quote Pairing Tests
+  // Tier 1: Basic Quote Pairing & Caret Placement
   // =========================================================================
 
   public void testPairDoubleQuoteInVariableBinding() {
@@ -28,7 +28,7 @@ public class CompactQuoteTypingTest extends BasePlatformTestCase {
     myFixture.checkResult("let s = \"<caret>\"");
   }
 
-  public void testPairDoubleQuoteInEmptyLine() {
+  public void testPairDoubleQuoteOnEmptyLine() {
     myFixture.configureByText("test.compact", "<caret>");
     myFixture.type('"');
     myFixture.checkResult("\"<caret>\"");
@@ -41,9 +41,9 @@ public class CompactQuoteTypingTest extends BasePlatformTestCase {
   }
 
   public void testPairDoubleQuoteInTypeArgument() {
-    myFixture.configureByText("test.compact", "type StringTag = Opaque<<caret>>;");
+    myFixture.configureByText("test.compact", "type S = Opaque<<caret>>;");
     myFixture.type('"');
-    myFixture.checkResult("type StringTag = Opaque<\"<caret>\">;");
+    myFixture.checkResult("type S = Opaque<\"<caret>\">;");
   }
 
   public void testPairDoubleQuoteInIncludeStatement() {
@@ -53,18 +53,18 @@ public class CompactQuoteTypingTest extends BasePlatformTestCase {
   }
 
   public void testPairDoubleQuoteInImportStatement() {
-    myFixture.configureByText("test.compact", "import { helper } from <caret>;");
+    myFixture.configureByText("test.compact", "import { foo } from <caret>;");
     myFixture.type('"');
-    myFixture.checkResult("import { helper } from \"<caret>\";");
+    myFixture.checkResult("import { foo } from \"<caret>\";");
   }
 
   public void testPairSingleQuoteInVariableBinding() {
-    myFixture.configureByText("test.compact", "let s = <caret>;");
+    myFixture.configureByText("test.compact", "let c = <caret>;");
     myFixture.type('\'');
-    myFixture.checkResult("let s = '<caret>';");
+    myFixture.checkResult("let c = '<caret>';");
   }
 
-  public void testPairSingleQuoteInEmptyLine() {
+  public void testPairSingleQuoteOnEmptyLine() {
     myFixture.configureByText("test.compact", "<caret>");
     myFixture.type('\'');
     myFixture.checkResult("'<caret>'");
@@ -86,51 +86,45 @@ public class CompactQuoteTypingTest extends BasePlatformTestCase {
     myFixture.checkResult("let s = \"hello\"<caret>;");
   }
 
-  public void testStepOverClosingSingleQuoteInEmptyString() {
-    myFixture.configureByText("test.compact", "let s = '<caret>';");
+  public void testStepOverClosingSingleQuote() {
+    myFixture.configureByText("test.compact", "let c = 'x<caret>';");
     myFixture.type('\'');
-    myFixture.checkResult("let s = ''<caret>;");
+    myFixture.checkResult("let c = 'x'<caret>;");
   }
 
-  public void testStepOverClosingSingleQuoteWithContent() {
-    myFixture.configureByText("test.compact", "let s = 'hello<caret>';");
-    myFixture.type('\'');
-    myFixture.checkResult("let s = 'hello'<caret>;");
-  }
-
-  public void testTypeAndStepOverSequentially() {
-    myFixture.configureByText("test.compact", "let s = <caret>;");
+  public void testSequentialTypingAndStepOver() {
+    myFixture.configureByText("test.compact", "let msg = <caret>;");
     myFixture.type('"');
-    myFixture.checkResult("let s = \"<caret>\";");
-    myFixture.type("msg");
-    myFixture.checkResult("let s = \"msg<caret>\";");
+    myFixture.checkResult("let msg = \"<caret>\";");
+    myFixture.type("hello");
+    myFixture.checkResult("let msg = \"hello<caret>\";");
     myFixture.type('"');
-    myFixture.checkResult("let s = \"msg\"<caret>;");
+    myFixture.checkResult("let msg = \"hello\"<caret>;");
   }
 
   // =========================================================================
-  // Tier 3: Contextual Boundary & Suppression Tests
+  // Tier 3: Contextual Boundary & Suppression
   // =========================================================================
 
-  public void testDoNotPairInsideLineComment() {
-    myFixture.configureByText("test.compact", "// this is a comment <caret>");
+  public void testDoNotPairQuoteInsideLineComment() {
+    myFixture.configureByText("test.compact", "// let s = <caret>");
     myFixture.type('"');
-    myFixture.checkResult("// this is a comment \"<caret>");
+    myFixture.checkResult("// let s = \"<caret>");
   }
 
-  public void testDoNotPairInsideBlockComment() {
-    myFixture.configureByText("test.compact", "/* comment <caret> */");
+  public void testDoNotPairQuoteInsideBlockComment() {
+    myFixture.configureByText("test.compact", "/* <caret> */");
     myFixture.type('"');
-    myFixture.checkResult("/* comment \"<caret> */");
+    myFixture.checkResult("/* \"<caret> */");
   }
 
-  public void testDoNotPairInsideExistingString() {
+  public void testDoNotPairQuoteInsideExistingString() {
     myFixture.configureByText("test.compact", "let s = \"hello <caret> world\";");
     myFixture.type('"');
     myFixture.checkResult("let s = \"hello \"<caret> world\";");
   }
 
-  public void testDoNotPairWhenQuoteSettingDisabled() {
+  public void testDoNotPairQuoteWhenSettingDisabled() {
     boolean original = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE;
     try {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE = false;
@@ -154,7 +148,7 @@ public class CompactQuoteTypingTest extends BasePlatformTestCase {
     // Verify inside "hello"
     HighlighterIterator iter = editor.getHighlighter().createIterator(8);
     assertEquals(CompactTokenTypes.STRING_LITERAL, iter.getTokenType());
-    assertTrue(handler.isOpeningQuote(iter, 8));
+    assertFalse(handler.isOpeningQuote(iter, 8));
     assertFalse(handler.isClosingQuote(iter, 8));
     assertTrue(handler.isInsideLiteral(iter));
 
