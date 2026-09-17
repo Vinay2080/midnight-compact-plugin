@@ -1275,4 +1275,65 @@ public class CompactCompletionTest extends BasePlatformTestCase {
       );
     }
   }
+
+  public void testAfterPragmaContextClassification() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        pragma <caret>
+        """
+    );
+    PsiElement pos = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(pos);
+    assertEquals(CompactCompletionContext.Kind.AFTER_PRAGMA, CompactCompletionContext.classify(pos));
+  }
+
+  public void testPragmaCompletionDirectivesSuggested() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        pragma <caret>
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'language_version'", lookupStrings.contains("language_version"));
+    assertTrue("Should suggest 'compiler_version'", lookupStrings.contains("compiler_version"));
+    assertFalse("Should NOT suggest 'circuit'", lookupStrings.contains("circuit"));
+    assertFalse("Should NOT suggest 'import'", lookupStrings.contains("import"));
+  }
+
+  public void testPragmaCompletionFilteringAndInsertion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        pragma lang<caret>
+        """
+    );
+    myFixture.completeBasic();
+    String text = myFixture.getFile().getText();
+    assertTrue("File should contain 'pragma language_version ' but was:\n" + text,
+        text.contains("pragma language_version "));
+  }
+
+  public void testPragmaCompilerVersionInsertion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        pragma comp<caret>
+        """
+    );
+    myFixture.completeBasic();
+    String text = myFixture.getFile().getText();
+    assertTrue("File should contain 'pragma compiler_version ' but was:\n" + text,
+        text.contains("pragma compiler_version "));
+  }
+
+  public void testPragmaContextWithPrefixInsideForm() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        pragma langu<caret>
+        """
+    );
+    PsiElement pos = myFixture.getFile().findElementAt(myFixture.getCaretOffset() - 1);
+    assertNotNull(pos);
+    assertEquals(CompactCompletionContext.Kind.AFTER_PRAGMA, CompactCompletionContext.classify(pos));
+  }
 }

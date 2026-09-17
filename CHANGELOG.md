@@ -5,6 +5,8 @@
 ## [Unreleased]
 
 ### Added
+- Added contextual code completion for `language_version` and `compiler_version` directives immediately after the `pragma` keyword at top level and inside incomplete pragma forms, with automatic trailing space insertion.
+- Added rich HTML quick documentation (`Ctrl+Q` / `F1`) for pragma directives (`language_version` and `compiler_version`) both on declaration hover and within completion lookup popups, explaining semantic version constraints, supported comparison operators (`>=`, `>`, `^`, `~`, `==`), and tooling requirements.
 - Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
 ### Fixed

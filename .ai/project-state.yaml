@@ -5,10 +5,10 @@ project:
   platform_version: "2026.2"
   java_version: "25"
   gradle_version: "8.13"
-  current_version: "1.3.3"
+  current_version: "1.3.4"
 
 metrics:
-  passing_tests: 664
+  passing_tests: 679
   failing_tests: 0
   skipped_tests: 0
   test_suites: 65
@@ -86,7 +86,8 @@ architecture:
     - "ADR-029: Angle Bracket Pairing, Overtyping, and Parameterized Type Scaffolding"
     - "ADR-030: Universal Delimiter and Structural Symbol Skipping During Editor Typing"
     - "ADR-031: Automatic String Literal Quote Pairing, Caret Placement, and Smart Navigation"
+    - "ADR-032: Pragma Version Directives Code Completion and Quick Documentation"
 
 tests:
-  last_known_passing: 664
+  last_known_passing: 679
   failures: 0

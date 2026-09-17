@@ -52,6 +52,18 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
   }
 
   @Override
+  public @Nullable PsiElement getDocumentationElementForLookupItem(
+      @NotNull PsiManager psiManager,
+      @Nullable Object object,
+      @Nullable PsiElement element
+  ) {
+    if (object instanceof String str && ("language_version".equals(str) || "compiler_version".equals(str))) {
+      return CompactElementFactory.createPragmaForm(psiManager.getProject(), "pragma " + str + ";");
+    }
+    return super.getDocumentationElementForLookupItem(psiManager, object, element);
+  }
+
+  @Override
   public @Nullable String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     if (element == null) {
       return null;
@@ -70,12 +82,16 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       return null;
     }
 
+    ParsedDoc docData = extractAndParseDoc(element);
+
+    if (element instanceof CompactPragmaForm pragma) {
+      return generatePragmaDoc(pragma, docData);
+    }
+
     StringBuilder doc = new StringBuilder();
     doc.append(DocumentationMarkup.DEFINITION_START);
     doc.append(escapeHtml(header));
     doc.append(DocumentationMarkup.DEFINITION_END);
-
-    ParsedDoc docData = extractAndParseDoc(element);
 
     // If element is a parameter and has no own doc, look up @param from enclosing function
     if ((docData == null || docData.isEmpty()) && isParameter(element)) {
@@ -98,6 +114,61 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       doc.append(sectionsHtml);
       doc.append(DocumentationMarkup.SECTIONS_END);
     }
+
+    return doc.toString();
+  }
+
+  private static @NotNull String generatePragmaDoc(@NotNull CompactPragmaForm pragma, @Nullable ParsedDoc docData) {
+    StringBuilder doc = new StringBuilder();
+    doc.append(DocumentationMarkup.DEFINITION_START);
+    doc.append(escapeHtml(pragma.getText().trim()));
+    doc.append(DocumentationMarkup.DEFINITION_END);
+
+    String pragmaName = pragma.getPragmaName();
+    doc.append(DocumentationMarkup.CONTENT_START);
+
+    if (docData != null && docData.hasDescription()) {
+      doc.append(docData.renderDescriptionHtml());
+    }
+
+    if ("language_version".equals(pragmaName)) {
+      doc.append("<p>Specifies the required version of the Compact language specification for this contract. ")
+          .append("The compiler validates this constraint against the language version supported by the toolchain.</p>");
+    } else if ("compiler_version".equals(pragmaName)) {
+      doc.append("<p>Specifies the required version of the Compact compiler (<code>compactc</code>) for this contract. ")
+          .append("The compiler validates this constraint against its own build version.</p>");
+    } else {
+      doc.append("<p>Pragma directive configuring compilation settings for this contract. ")
+          .append("Allowed pragma directives in Compact are <code>language_version</code> and <code>compiler_version</code>.</p>");
+    }
+    doc.append(DocumentationMarkup.CONTENT_END);
+
+    doc.append(DocumentationMarkup.SECTIONS_START);
+    if (pragmaName != null) {
+      doc.append(DocumentationMarkup.SECTION_HEADER_START)
+          .append("Directive:")
+          .append(DocumentationMarkup.SECTION_SEPARATOR)
+          .append("<p><code>").append(escapeHtml(pragmaName)).append("</code></p>")
+          .append(DocumentationMarkup.SECTION_END);
+    }
+    String constraint = pragma.getConstraintText();
+    if (constraint != null) {
+      doc.append(DocumentationMarkup.SECTION_HEADER_START)
+          .append("Constraint:")
+          .append(DocumentationMarkup.SECTION_SEPARATOR)
+          .append("<p><code>").append(escapeHtml(constraint)).append("</code></p>")
+          .append(DocumentationMarkup.SECTION_END);
+    }
+    doc.append(DocumentationMarkup.SECTION_HEADER_START)
+        .append("Allowed Settings:")
+        .append(DocumentationMarkup.SECTION_SEPARATOR)
+        .append("<p><code>language_version</code>, <code>compiler_version</code></p>")
+        .append(DocumentationMarkup.SECTION_END);
+
+    if (docData != null) {
+      appendDocTagSections(doc, docData);
+    }
+    doc.append(DocumentationMarkup.SECTIONS_END);
 
     return doc.toString();
   }

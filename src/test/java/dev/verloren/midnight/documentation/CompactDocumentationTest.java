@@ -360,5 +360,70 @@ public class CompactDocumentationTest extends BasePlatformTestCase {
     assertTrue(doc.contains("circuit helper"));
     assertTrue(doc.contains("Secret helper"));
   }
-}
 
+  public void testLanguageVersionPragmaDocumentation() {
+    String code = """
+        pragma <caret>language_version >= 0.26.0;
+        """;
+    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, code);
+    PsiElement element = docProvider.getCustomDocumentationElement(myFixture.getEditor(), file, file.findElementAt(myFixture.getCaretOffset()), myFixture.getCaretOffset());
+    assertNotNull(element);
+
+    String doc = docProvider.generateDoc(element, null);
+    assertNotNull(doc);
+    assertTrue(doc.contains("language_version"));
+    assertTrue(doc.contains("Specifies the required version of the Compact language specification"));
+    assertTrue(doc.contains("Directive:"));
+    assertTrue(doc.contains("Constraint:"));
+    assertTrue(doc.contains("&gt;= 0.26.0"));
+    assertTrue(doc.contains("Allowed Settings:"));
+  }
+
+  public void testCompilerVersionPragmaDocumentation() {
+    String code = """
+        pragma <caret>compiler_version >= 0.26.0;
+        """;
+    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, code);
+    PsiElement element = docProvider.getCustomDocumentationElement(myFixture.getEditor(), file, file.findElementAt(myFixture.getCaretOffset()), myFixture.getCaretOffset());
+    assertNotNull(element);
+
+    String doc = docProvider.generateDoc(element, null);
+    assertNotNull(doc);
+    assertTrue(doc.contains("compiler_version"));
+    assertTrue(doc.contains("Specifies the required version of the Compact compiler"));
+    assertTrue(doc.contains("compactc"));
+    assertTrue(doc.contains("Directive:"));
+    assertTrue(doc.contains("Constraint:"));
+  }
+
+  public void testPragmaWithDocCommentDocumentation() {
+    String code = """
+        /// Target compiler version for production rollout
+        pragma <caret>compiler_version >= 0.26.0;
+        """;
+    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, code);
+    PsiElement element = docProvider.getCustomDocumentationElement(myFixture.getEditor(), file, file.findElementAt(myFixture.getCaretOffset()), myFixture.getCaretOffset());
+    assertNotNull(element);
+
+    String doc = docProvider.generateDoc(element, null);
+    assertNotNull(doc);
+    assertTrue(doc.contains("Target compiler version for production rollout"));
+    assertTrue(doc.contains("compiler_version"));
+  }
+
+  public void testDocumentationElementForLookupItem() {
+    PsiElement langElement = docProvider.getDocumentationElementForLookupItem(getPsiManager(), "language_version", null);
+    assertNotNull(langElement);
+    String langDoc = docProvider.generateDoc(langElement, null);
+    assertNotNull(langDoc);
+    assertTrue(langDoc.contains("language_version"));
+    assertTrue(langDoc.contains("Specifies the required version of the Compact language specification"));
+
+    PsiElement compElement = docProvider.getDocumentationElementForLookupItem(getPsiManager(), "compiler_version", null);
+    assertNotNull(compElement);
+    String compDoc = docProvider.generateDoc(compElement, null);
+    assertNotNull(compDoc);
+    assertTrue(compDoc.contains("compiler_version"));
+    assertTrue(compDoc.contains("Specifies the required version of the Compact compiler"));
+  }
+}

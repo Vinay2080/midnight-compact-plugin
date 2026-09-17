@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Factory for creating Compact PSI elements from AST nodes and generating synthetic PSI fragments.
@@ -160,6 +161,12 @@ public final class CompactElementFactory {
       throw new IllegalArgumentException("Invalid Compact identifier: " + text);
     }
     return typeDefinition.getNameIdentifier();
+  }
+
+  public static @Nullable CompactPragmaForm createPragmaForm(@NotNull Project project, @NotNull String text) {
+    CompactFile file = (CompactFile) PsiFileFactory.getInstance(project)
+        .createFileFromText("pragma.compact", CompactFileType.INSTANCE, text);
+    return PsiTreeUtil.findChildOfType(file, CompactPragmaForm.class);
   }
 
   public static boolean hasDedicatedElement(@NotNull IElementType elementType) {

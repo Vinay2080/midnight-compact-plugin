@@ -1,33 +1,32 @@
 # Current Handoff
 
 ## Current Feature
-Automatic String Literal Quote Pairing, Caret Placement, and Smart Navigation (`ai/quote-completion`).
+Pragma Version Directives Code Completion and Quick Documentation (`ai/pragma-completion`).
 
 ## Status
 - **Accomplished**:
-  - **ADR-031**: Authored [`ADR-031: Automatic String Literal Quote Pairing, Caret Placement, and Smart Navigation`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-031-automatic-quote-pairing-and-smart-navigation.md) and indexed it in [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md).
+  - **ADR-032**: Authored [`ADR-032: Pragma Version Directives Code Completion and Quick Documentation`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-032-pragma-version-completion-and-documentation.md) and indexed it in [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md).
   - **Modern Java 25 Implementation**:
-    - Refactored [`CompactQuoteHandler`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/CompactQuoteHandler.java) extending `SimpleTokenSetQuoteHandler`:
-      - Configured literal token set to include both `STRING_LITERAL` and `UNTERMINATED_STRING`.
-      - Overrode `isOpeningQuote` to match `UNTERMINATED_STRING` when `offset == iterator.getStart()`, enabling immediate closing quote insertion when typing `"` or `'` on unclosed quotes.
-      - Overrode `isClosingQuote` to match only closed `STRING_LITERAL` with `end - start >= 2 && offset == end - 1`, preventing opening quotes from being misinterpreted as closing quotes.
-      - Implemented `hasNonClosedLiteral` to scan forward on the current line and detect `UNTERMINATED_STRING` tokens.
-      - Implemented `isNonClosedLiteral` and `isInsideLiteral`.
+    - [`CompactElementFactory.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/psi/CompactElementFactory.java): Added `createPragmaForm(@NotNull Project project, @NotNull String text)`.
+    - [`CompactCompletionContext.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactCompletionContext.java): Added `Kind.AFTER_PRAGMA` classification and `isAfterPragma` context detector supporting both bare top-level `pragma <caret>` and partial forms `pragma langu<caret>`.
+    - [`CompactCompletionContributor.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactCompletionContributor.java): Added `addAfterPragmaCompletions` suggesting `language_version` and `compiler_version` with bold styling, `"pragma"` type text, tail text `" >= <version>"`, and `createPragmaInsertHandler()` inserting a space when not followed by whitespace.
+    - [`CompactDocumentationProvider.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/documentation/CompactDocumentationProvider.java): Implemented `getDocumentationElementForLookupItem` resolving pragma items to synthetic `CompactPragmaForm` elements, and `generatePragmaDoc` producing formatted HTML quick documentation with version constraints, comparisons (`>=`, `>`, `^`, `~`, `==`), and tooling requirements.
   - **Multi-Tier Test Verification**:
-    - Implemented [`CompactQuoteTypingTest`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/editor/CompactQuoteTypingTest.java) with 18 comprehensive tests covering:
-      - Double quote pairing in variable bindings, EOF, empty lines, assert statements, type arguments, includes, and imports.
-      - Single quote pairing.
-      - Overtyping / step-over closing quotes in empty strings and strings with content.
-      - Sequential typing and step-over.
-      - Non-pairing inside line comments and block comments.
-      - Non-pairing inside existing strings.
-      - Respect for `CodeInsightSettings.AUTOINSERT_PAIR_QUOTE = false`.
-      - Direct contract tests on `CompactQuoteHandler` methods.
-    - Verified all 30 tests in [`CompactDelimiterTypingTest`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/editor/CompactDelimiterTypingTest.java) remain 100% passing without regressions.
-    - Total test suite: **664 passing tests across 65 test suites** (0 failures, 0 errors, 0 skipped).
+    - Added pragma completion tests in [`CompactCompletionTest.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/completion/CompactCompletionTest.java):
+      - `testAfterPragmaContextClassification`
+      - `testPragmaCompletionDirectivesSuggested`
+      - `testPragmaCompletionFilteringAndInsertion`
+      - `testPragmaCompilerVersionInsertion`
+      - `testPragmaContextWithPrefixInsideForm`
+    - Added pragma quick documentation tests in [`CompactDocumentationTest.java`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/documentation/CompactDocumentationTest.java):
+      - `testLanguageVersionPragmaDocumentation`
+      - `testCompilerVersionPragmaDocumentation`
+      - `testPragmaWithDocCommentDocumentation`
+      - `testDocumentationElementForLookupItem`
+    - Total test suite: **679 passing tests across 65 test suites** (0 failures, 0 errors, 0 skipped).
   - **Continuous Code Quality Inspections**:
-    - `get_file_problems` $\to$ 0 errors on all modified and newly created files.
-    - `lint_files` $\to$ 0 warnings / 0 items on all modified and newly created files.
+    - `get_file_problems` -> 0 errors across all modified files.
+    - `lint_files` -> 0 errors across all modified files.
   - **State & Documentation Synchronization**:
     - Updated [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) under `## [Unreleased]` -> `### Added`.
     - Updated [`.ai/context/current-state.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md) and [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml).
@@ -35,15 +34,15 @@ Automatic String Literal Quote Pairing, Caret Placement, and Smart Navigation (`
 
 ## Relevant Context
 - Master AI Router: [.ai/README.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/README.md)
-- Architectural Decision: [.ai/decisions/ADR-031-automatic-quote-pairing-and-smart-navigation.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-031-automatic-quote-pairing-and-smart-navigation.md)
-- Implementation: [CompactQuoteHandler.java](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/editor/CompactQuoteHandler.java)
-- Unit Tests: [CompactQuoteTypingTest.java](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/editor/CompactQuoteTypingTest.java)
+- Architectural Decision: [.ai/decisions/ADR-032-pragma-version-completion-and-documentation.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/ADR-032-pragma-version-completion-and-documentation.md)
+- Implementation: [CompactCompletionContributor.java](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/completion/CompactCompletionContributor.java), [CompactDocumentationProvider.java](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/main/java/dev/verloren/midnight/documentation/CompactDocumentationProvider.java)
+- Unit Tests: [CompactCompletionTest.java](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/completion/CompactCompletionTest.java), [CompactDocumentationTest.java](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/src/test/java/dev/verloren/midnight/documentation/CompactDocumentationTest.java)
 - User-Facing Changelog: [CHANGELOG.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md)
 - Machine State: [.ai/project-state.yaml](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml)
 - Current State: [.ai/context/current-state.md](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md)
 
 ## Immediate Next Priorities
-1. Commit changes on `ai/quote-completion`.
-2. Checkout `master` and merge `ai/quote-completion`.
+1. Commit changes on `ai/pragma-completion`.
+2. Checkout `master` and merge `ai/pragma-completion`.
 3. Verify test suite on `master`.
-4. Delete branch `ai/quote-completion`.
+4. Delete branch `ai/pragma-completion`.

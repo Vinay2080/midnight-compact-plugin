@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement, In-Memory Shadow Buffer Compilation, Universal Delimiter Skipping)
+Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Quick Documentation, Automatic Quote Pairing & Caret Placement, In-Memory Shadow Buffer Compilation)
 
 ---
 
@@ -10,6 +10,11 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Pragma Version Directives Completion & Quick Documentation (v1.3.4 / ADR-032)**:
+  - `CompactCompletionContext`: Classifies the caret as `Kind.AFTER_PRAGMA` when preceded by a top-level `pragma` keyword token or inside a `CompactPragmaForm`.
+  - Directives completion: Prioritized completion suggestions for `language_version` (priority 100.0) and `compiler_version` (priority 90.0) with bold styling, `"pragma"` type text, and tail text `" >= <version>"`.
+  - Non-destructive insertion: `createPragmaInsertHandler()` automatically appends a trailing space if not followed by whitespace, placing the cursor directly in position for the version constraint.
+  - `CompactDocumentationProvider`: Implements `getDocumentationElementForLookupItem` to synthesize a documentation element for pragma items via `CompactElementFactory.createPragmaForm`, and renders rich HTML documentation (`generatePragmaDoc`) explaining semantic version constraints, supported comparison operators (`>=`, `>`, `^`, `~`, `==`), differences between source language specification and compiler binary versions, and concrete examples.
 - **Quote Auto-Completion & Pairing (v1.3.3 / ADR-031)**:
   - `CompactQuoteHandler`: `SimpleTokenSetQuoteHandler` registered in `plugin.xml` managing automatic quotation mark insertion, pairing, and cursor positioning between quotes (`"<caret>"`, `'<caret>'`).
   - Strict token categorization: `isOpeningQuote` returns `true` only for `CompactTokenTypes.UNTERMINATED_STRING` at `offset == iterator.getStart()`, triggering automatic closing quote insertion without corrupting typing in front of existing string literals.
@@ -101,13 +106,13 @@ Last Updated: September 2026 (v1.3.3 / Automatic Quote Pairing & Caret Placement
     - `CompactSpecifyTypeExplicitlyIntention`
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
-  - Fully maintained index in `.ai/decisions/README.md` covering all 31 major architectural subsystems (**ADR-001 through ADR-031**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
+  - Fully maintained index in `.ai/decisions/README.md` covering all 31 major architectural subsystems (**ADR-001 through ADR-032**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
 
 ---
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **664 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Total Tests**: **679 passing tests** (0 failures, 0 skipped, 100% success rate)
 - **Active Test Suites**: **65 test classes**
 - **Execution Time**: ~2m 30s via `./gradlew test`
 

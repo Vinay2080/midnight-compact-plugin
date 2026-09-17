@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Inspects preceding AST tokens and containing PSI elements to distinguish between
  * top-level declaration keywords, block statements, type positions (after {@code :}, {@code as}, {@code <}),
  * parameterized type sizes (inside {@code Bytes<...>} or {@code Uint<...>}), member access (after {@code .}),
- * and general value expressions.</p>
+ * pragma directives (after {@code pragma}), and general value expressions.</p>
  */
 public final class CompactCompletionContext {
   private CompactCompletionContext() {
@@ -49,6 +49,10 @@ public final class CompactCompletionContext {
     PsiElement previous = prevNonCommentLeaf(position);
     if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.DOT) {
       return Kind.MEMBER;
+    }
+
+    if (isAfterPragma(position, previous)) {
+      return Kind.AFTER_PRAGMA;
     }
 
     Kind sizeKind = checkParameterizedTypeSizeContext(previous);
@@ -109,6 +113,18 @@ public final class CompactCompletionContext {
       return Kind.MEMBER;
     }
     return Kind.VALUE;
+  }
+
+  public static boolean isAfterPragma(@NotNull PsiElement position, @Nullable PsiElement previous) {
+    if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.PRAGMA) {
+      return true;
+    }
+    CompactPragmaForm pragma = PsiTreeUtil.getParentOfType(position, CompactPragmaForm.class, false);
+    if (pragma != null) {
+      PsiElement id = pragma.getPragmaIdentifier();
+      return id == null || id == position || PsiTreeUtil.isAncestor(id, position, false);
+    }
+    return false;
   }
 
   private static @Nullable Kind checkParameterizedTypeSizeContext(@Nullable PsiElement previous) {
@@ -286,6 +302,7 @@ public final class CompactCompletionContext {
     AFTER_SEALED,
     AFTER_PURE,
     AFTER_NEW,
+    AFTER_PRAGMA,
     TYPE,
     BYTES_SIZE,
     UINT_SIZE,
