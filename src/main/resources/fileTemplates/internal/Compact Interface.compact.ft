@@ -1,5 +1,13 @@
 #* @vtlvariable name="NAME" type="java.lang.String" *#
-pragma language_version >= 0.20.0;
+#* @vtlvariable name="COMPACT_LANGUAGE_VERSION" type="java.lang.String" *#
+#* @vtlvariable name="LANGUAGE_VERSION" type="java.lang.String" *#
+#if (${COMPACT_LANGUAGE_VERSION} && ${COMPACT_LANGUAGE_VERSION} != "")
+pragma language_version >= ${COMPACT_LANGUAGE_VERSION};
+#elseif (${LANGUAGE_VERSION} && ${LANGUAGE_VERSION} != "")
+pragma language_version >= ${LANGUAGE_VERSION};
+#else
+pragma language_version >= 0.26.0;
+#end
 
 contract ${NAME} {
   circuit ping(): [];

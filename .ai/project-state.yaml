@@ -48,6 +48,7 @@ phases:
   quote_auto_completion_and_pairing: complete (v1.3.3 / ADR-031)
   stdlib_import_navigation_and_documentation: complete (v1.3.4 / ADR-017, ADR-023)
   pragma_version_completion_and_documentation: complete (v1.3.4 / ADR-032)
+  dynamic_file_template_pragma_version: complete (v1.3.4 / ADR-033)
   stub_indexing: planned (Phase 31)
   advanced_refactorings: planned (Phase 32)
   remix_blockchain_explorer: planned (Phase 33)

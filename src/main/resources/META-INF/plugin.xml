@@ -362,6 +362,9 @@
             <categoryKey>intention.category.compact</categoryKey>
         </intentionAction>
 
+        <defaultTemplatePropertiesProvider
+                implementation="dev.verloren.midnight.ide.fileTemplates.CompactDefaultTemplatePropertiesProvider"/>
+
         <fileTemplateGroup
                 implementation="dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory"/>
 

@@ -11,12 +11,26 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.actions.CompactCreateFileAction;
 import dev.verloren.midnight.psi.*;
+import dev.verloren.midnight.settings.MidnightProjectSettings;
+import dev.verloren.midnight.version.CompactVersionManager;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Properties;
 
 public class CompactFileTemplateTest extends BasePlatformTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion = "";
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion = "";
+    super.tearDown();
+  }
 
   public void testFileTemplateGroupDescriptor() {
     CompactFileTemplateGroupFactory factory = new CompactFileTemplateGroupFactory();
@@ -35,6 +49,9 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     Properties props = new Properties();
     props.setProperty(FileTemplate.ATTRIBUTE_NAME, "MyContract");
     String text = template.getText(props);
+
+    assertTrue("Contract template text should contain pragma language_version >= 0.26.0 by default",
+        text.contains("pragma language_version >= 0.26.0;"));
 
     PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
     assertFalse("Contract template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
@@ -75,6 +92,9 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     props.setProperty(FileTemplate.ATTRIBUTE_NAME, "MyModule");
     String text = template.getText(props);
 
+    assertTrue("Module template text should contain pragma language_version >= 0.26.0 by default",
+        text.contains("pragma language_version >= 0.26.0;"));
+
     PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
     assertFalse("Module template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
 
@@ -91,6 +111,9 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     Properties props = new Properties();
     props.setProperty(FileTemplate.ATTRIBUTE_NAME, "MyInterface");
     String text = template.getText(props);
+
+    assertTrue("Interface template text should contain pragma language_version >= 0.26.0 by default",
+        text.contains("pragma language_version >= 0.26.0;"));
 
     PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
     assertFalse("Interface template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
@@ -109,8 +132,61 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     props.setProperty(FileTemplate.ATTRIBUTE_NAME, "Empty");
     String text = template.getText(props);
 
+    assertTrue("Empty file template text should contain pragma language_version >= 0.26.0 by default",
+        text.contains("pragma language_version >= 0.26.0;"));
+
     PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
     assertFalse("Empty file template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
+  }
+
+  public void testTemplateEvaluatesWithCustomProperties() throws IOException {
+    FileTemplate template = FileTemplateManager.getInstance(getProject())
+        .getInternalTemplate(CompactFileTemplateGroupFactory.COMPACT_CONTRACT);
+    assertNotNull(template);
+
+    Properties props = new Properties();
+    props.setProperty(FileTemplate.ATTRIBUTE_NAME, "CustomVersionContract");
+    props.setProperty(CompactDefaultTemplatePropertiesProvider.COMPACT_LANGUAGE_VERSION, "0.22.0");
+    String text = template.getText(props);
+
+    assertTrue("Template should render custom COMPACT_LANGUAGE_VERSION: " + text,
+        text.contains("pragma language_version >= 0.22.0;"));
+
+    props.clear();
+    props.setProperty(FileTemplate.ATTRIBUTE_NAME, "CustomVersionContract2");
+    props.setProperty(CompactDefaultTemplatePropertiesProvider.LANGUAGE_VERSION, "0.24.0");
+    String text2 = template.getText(props);
+
+    assertTrue("Template should render custom LANGUAGE_VERSION fallback: " + text2,
+        text2.contains("pragma language_version >= 0.24.0;"));
+  }
+
+  public void testDefaultTemplatePropertiesProvider() {
+    CompactDefaultTemplatePropertiesProvider provider = new CompactDefaultTemplatePropertiesProvider();
+    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.26.0;");
+    PsiDirectory dir = dummy.getContainingDirectory();
+    assertNotNull(dir);
+
+    Properties props = new Properties();
+    provider.fillProperties(dir, props);
+
+    assertEquals(CompactDefaultTemplatePropertiesProvider.DEFAULT_FALLBACK_LANGUAGE_VERSION,
+        props.getProperty(CompactDefaultTemplatePropertiesProvider.COMPACT_LANGUAGE_VERSION));
+    assertEquals(CompactDefaultTemplatePropertiesProvider.DEFAULT_FALLBACK_LANGUAGE_VERSION,
+        props.getProperty(CompactDefaultTemplatePropertiesProvider.LANGUAGE_VERSION));
+    assertEquals(CompactDefaultTemplatePropertiesProvider.DEFAULT_FALLBACK_COMPILER_VERSION,
+        props.getProperty(CompactDefaultTemplatePropertiesProvider.COMPACT_COMPILER_VERSION));
+    assertEquals(CompactDefaultTemplatePropertiesProvider.DEFAULT_FALLBACK_COMPILER_VERSION,
+        props.getProperty(CompactDefaultTemplatePropertiesProvider.COMPILER_VERSION));
+
+    // Test with active project toolchain setting
+    MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion = "0.30.0";
+    Properties configuredProps = new Properties();
+    provider.fillProperties(dir, configuredProps);
+
+    String expectedLang = CompactVersionManager.getLanguageVersionForToolchain("0.30.0"); // 0.22.0
+    assertEquals(expectedLang, configuredProps.getProperty(CompactDefaultTemplatePropertiesProvider.COMPACT_LANGUAGE_VERSION));
+    assertEquals("0.30.0", configuredProps.getProperty(CompactDefaultTemplatePropertiesProvider.COMPACT_COMPILER_VERSION));
   }
 
   public void testCreateFileAction() {
@@ -122,7 +198,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
   }
 
   public void testCreateFileActionCreatesFile() {
-    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.20.0;");
+    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.26.0;");
     PsiDirectory dir = dummy.getContainingDirectory();
     assertNotNull(dir);
 
@@ -131,10 +207,29 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertNotNull(created);
     assertEquals("Token.compact", created.getName());
     assertFalse("Created file should not have parse errors: " + getErrors(created), hasErrorElement(created));
+    assertTrue("Created contract should contain default pragma language_version >= 0.26.0",
+        created.getText().contains("pragma language_version >= 0.26.0;"));
+  }
+
+  public void testCreateFileActionWithConfiguredToolchainVersion() {
+    MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion = "0.31.1";
+    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.23.0;");
+    PsiDirectory dir = dummy.getContainingDirectory();
+    assertNotNull(dir);
+
+    CompactCreateFileAction action = new CompactCreateFileAction();
+    PsiFile created = action.createFile("ConfiguredContract", CompactFileTemplateGroupFactory.COMPACT_CONTRACT, dir);
+    assertNotNull(created);
+    assertEquals("ConfiguredContract.compact", created.getName());
+    assertFalse("Created file should not have parse errors: " + getErrors(created), hasErrorElement(created));
+
+    String expectedLangVer = CompactVersionManager.getLanguageVersionForToolchain("0.31.1"); // "0.23.0"
+    assertTrue("Created file should use configured language version " + expectedLangVer + ": " + created.getText(),
+        created.getText().contains("pragma language_version >= " + expectedLangVer + ";"));
   }
 
   public void testCreateFileActionCreatesFileInNestedSubdirectory() {
-    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.20.0;");
+    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.26.0;");
     PsiDirectory dir = dummy.getContainingDirectory();
     assertNotNull(dir);
 
@@ -146,10 +241,11 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertEquals("contracts", Objects.requireNonNull(created.getContainingDirectory().getParentDirectory()).getName());
     assertFalse("Nested created file should not have parse errors: " + getErrors(created), hasErrorElement(created));
     assertTrue("Content should declare NestedToken module", created.getText().contains("export module NestedToken"));
+    assertTrue("Content should have dynamic pragma", created.getText().contains("pragma language_version >= 0.26.0;"));
   }
 
   public void testCreateFileActionStripsSuffixForContractName() {
-    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.20.0;");
+    PsiFile dummy = myFixture.configureByText("dummy.compact", "pragma language_version >= 0.26.0;");
     PsiDirectory dir = dummy.getContainingDirectory();
     assertNotNull(dir);
 
@@ -161,6 +257,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertTrue("Content should declare TokenSuffix contract interface", created.getText().contains("contract TokenSuffix"));
     assertFalse("Content should not export top-level contract", created.getText().contains("export contract"));
     assertFalse("Content should not contain .compact in contract identifier", created.getText().contains("contract TokenSuffix.compact"));
+    assertTrue("Content should have dynamic pragma", created.getText().contains("pragma language_version >= 0.26.0;"));
   }
 
   public void testExtractSimpleName() {

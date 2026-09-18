@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.icons.MidnightIcons;
+import dev.verloren.midnight.ide.fileTemplates.CompactDefaultTemplatePropertiesProvider;
 import dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory;
 import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.refactoring.CompactNamesValidator;
@@ -108,8 +109,15 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     String cleanName = trimmed.endsWith(".compact") ? trimmed.substring(0, trimmed.length() - ".compact".length()) : trimmed;
     String simpleName = extractSimpleName(cleanName);
 
+    String langVer = CompactDefaultTemplatePropertiesProvider.resolveLanguageVersion(project);
+    String compilerVer = CompactDefaultTemplatePropertiesProvider.resolveCompilerVersion(project);
+
     Map<String, String> extraProperties = new HashMap<>();
     extraProperties.put(FileTemplate.ATTRIBUTE_NAME, simpleName);
+    extraProperties.put(CompactDefaultTemplatePropertiesProvider.COMPACT_LANGUAGE_VERSION, langVer);
+    extraProperties.put(CompactDefaultTemplatePropertiesProvider.LANGUAGE_VERSION, langVer);
+    extraProperties.put(CompactDefaultTemplatePropertiesProvider.COMPACT_COMPILER_VERSION, compilerVer);
+    extraProperties.put(CompactDefaultTemplatePropertiesProvider.COMPILER_VERSION, compilerVer);
 
     try {
       return createFileFromTemplate(
@@ -118,7 +126,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
           dir,
           getDefaultTemplateProperty(),
           true,
-          Collections.emptyMap(),
+          extraProperties,
           extraProperties
       );
     } catch (Exception e) {
