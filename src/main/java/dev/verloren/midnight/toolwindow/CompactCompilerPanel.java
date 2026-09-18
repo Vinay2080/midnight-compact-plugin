@@ -175,7 +175,11 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     });
 
     // Listen to compiler version changes or project-level switches
-    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, (CompactCompilerEventListener) () -> updateActiveFileInfo(null));
+    project.getMessageBus().connect(this).subscribe(CompactCompilerEventListener.TOPIC, (CompactCompilerEventListener) () -> {
+      updateCardSelection();
+      updateActiveFileInfo(null);
+      refreshCards();
+    });
 
     // Listen to document edits in open .compact files so pragma changes update live
     // Debounced and filtered so general typing never blocks EDT or triggers card churn
@@ -353,6 +357,26 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   }
 
   /**
+   * Instantly synchronizes the visual active state across all displayed version cards on EDT.
+   */
+  public void updateCardSelection() {
+    MidnightProjectSettings settings = MidnightProjectSettings.getInstance(project);
+    String selectedVer = (settings != null && settings.selectedCompilerVersion != null)
+        ? settings.selectedCompilerVersion.trim()
+        : "";
+    String activeCompilerVer = CompactToolchainUtil.getActiveCompilerVersion(project);
+    String effectiveActive = !selectedVer.isEmpty()
+        ? selectedVer
+        : (activeCompilerVer != null ? activeCompilerVer : "");
+
+    for (Component c : cardsPanel.getComponents()) {
+      if (c instanceof CompactVersionCard card) {
+        card.setActive(card.getVersion().equals(effectiveActive));
+      }
+    }
+  }
+
+  /**
    * Instantly updates UI selection on EDT with zero perceived latency,
    * then updates settings and triggers background reparsing.
    */
@@ -368,11 +392,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     }
 
     // Immediately update active status on all card components
-    for (Component c : cardsPanel.getComponents()) {
-      if (c instanceof CompactVersionCard card) {
-        card.setActive(version.equals(card.getVersion()));
-      }
-    }
+    updateCardSelection();
 
     updateActiveFileInfo();
     restartDaemon();
@@ -479,6 +499,8 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
           ? preferredFile
           : findTargetCompactFile();
 
+      updateCardSelection();
+
       if (file == null) {
         activeFileNameLabel.setText("No Compact contract");
         pragmaBadge.setText("Open or create .compact");
@@ -523,7 +545,14 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
           currentPragmaIsCompilerVersion = isCompilerVer;
           pragmaBadge.setText("pragma " + constraint);
 
-          String activeVer = CompactToolchainUtil.getActiveCompilerVersion(project);
+          MidnightProjectSettings settings = MidnightProjectSettings.getInstance(project);
+          String selectedVer = (settings != null && settings.selectedCompilerVersion != null)
+              ? settings.selectedCompilerVersion.trim()
+              : "";
+          String activeVer = !selectedVer.isEmpty()
+              ? selectedVer
+              : CompactToolchainUtil.getActiveCompilerVersion(project);
+
           if (activeVer != null) {
             String targetVer = currentPragmaIsCompilerVersion
                 ? activeVer
