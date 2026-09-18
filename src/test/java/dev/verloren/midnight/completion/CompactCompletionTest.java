@@ -192,7 +192,9 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNotNull("Lookup strings should not be null", lookupStrings);
     assertTrue("Should suggest 'secretKey'", lookupStrings.contains("secretKey"));
     assertTrue("Should suggest 'multiplier'", lookupStrings.contains("multiplier"));
-    assertFalse("Should NOT suggest 'publicAddress'", lookupStrings.contains("publicAddress"));
+    assertTrue("Should suggest in-scope parameter 'publicAddress' even if different type", lookupStrings.contains("publicAddress"));
+    assertTrue("Type-matching 'secretKey' should be prioritized before 'publicAddress'", lookupStrings.indexOf("secretKey") < lookupStrings.indexOf("publicAddress"));
+    assertTrue("Type-matching 'multiplier' should be prioritized before 'publicAddress'", lookupStrings.indexOf("multiplier") < lookupStrings.indexOf("publicAddress"));
     assertFalse("Should NOT suggest 'true'", lookupStrings.contains("true"));
     assertFalse("Should NOT suggest 'false'", lookupStrings.contains("false"));
     assertFalse("Should NOT suggest 'circuit'", lookupStrings.contains("circuit"));
@@ -214,7 +216,9 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertTrue("Should suggest 'publicAddress'", lookupStrings.contains("publicAddress"));
     assertTrue("Should suggest 'count'", lookupStrings.contains("count"));
     assertTrue("Should suggest 'multiplier'", lookupStrings.contains("multiplier"));
-    assertFalse("Should NOT suggest 'secretKey'", lookupStrings.contains("secretKey"));
+    assertTrue("Should suggest in-scope parameter 'secretKey' even if different type", lookupStrings.contains("secretKey"));
+    assertTrue("Type-matching 'publicAddress' should be prioritized before 'secretKey'", lookupStrings.indexOf("publicAddress") < lookupStrings.indexOf("secretKey"));
+    assertTrue("Type-matching 'count' should be prioritized before 'secretKey'", lookupStrings.indexOf("count") < lookupStrings.indexOf("secretKey"));
     assertFalse("Should NOT suggest 'true'", lookupStrings.contains("true"));
   }
 
@@ -232,7 +236,10 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertTrue("Should suggest 'isActive'", lookupStrings.contains("isActive"));
     assertTrue("Should suggest 'true'", lookupStrings.contains("true"));
     assertTrue("Should suggest 'false'", lookupStrings.contains("false"));
-    assertFalse("Should NOT suggest 'secretKey'", lookupStrings.contains("secretKey"));
+    assertTrue("Should suggest in-scope parameter 'secretKey' even if different type", lookupStrings.contains("secretKey"));
+    assertTrue("Type-matching 'isActive' should be prioritized before 'secretKey'", lookupStrings.indexOf("isActive") < lookupStrings.indexOf("secretKey"));
+    assertTrue("Type-matching 'true' should be prioritized before 'secretKey'", lookupStrings.indexOf("true") < lookupStrings.indexOf("secretKey"));
+    assertTrue("Type-matching 'false' should be prioritized before 'secretKey'", lookupStrings.indexOf("false") < lookupStrings.indexOf("secretKey"));
   }
 
   public void testReturnCompletionBooleanKeywordsPrioritized() {
@@ -266,7 +273,38 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     List<String> lookupStrings = myFixture.getLookupElementStrings();
     assertNotNull("Lookup strings should not be null", lookupStrings);
     assertTrue("Should suggest 'p'", lookupStrings.contains("p"));
-    assertFalse("Should NOT suggest 'c'", lookupStrings.contains("c"));
+    assertTrue("Should suggest in-scope parameter 'c' even if different type", lookupStrings.contains("c"));
+    assertTrue("Type-matching 'p' should be prioritized before 'c'", lookupStrings.indexOf("p") < lookupStrings.indexOf("c"));
+  }
+
+  public void testReturnValueCompletionSuggestsParameterInReturnUnaryExpr() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export pure circuit isContractAddress(keyOrAddress: Either<ZswapCoinPublicKey, ContractAddress>): Boolean {
+            return !<caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest parameter 'keyOrAddress' in return expression",
+        lookupStrings.contains("keyOrAddress"));
+  }
+
+  public void testReturnValueCompletionSuggestsParameterInDirectReturn() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export pure circuit isContractAddress(keyOrAddress: Either<ZswapCoinPublicKey, ContractAddress>): Boolean {
+            return <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest parameter 'keyOrAddress' in return expression",
+        lookupStrings.contains("keyOrAddress"));
   }
 
   public void testStatementContextClassification() {

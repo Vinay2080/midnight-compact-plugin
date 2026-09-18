@@ -278,7 +278,7 @@ public class CompactCompletionContributor extends CompletionContributor {
       int tailOffset = context.getTailOffset();
       Document doc = context.getDocument();
       CharSequence chars = doc.getCharsSequence();
-      if (tailOffset >= chars.length() || !Character.isWhitespace(chars.charAt(tailOffset))) {
+      if (tailOffset >= chars.length() || chars.charAt(tailOffset) != ' ') {
         doc.insertString(tailOffset, " ");
         context.getEditor().getCaretModel().moveToOffset(tailOffset + 1);
       }
@@ -546,10 +546,12 @@ public class CompactCompletionContributor extends CompletionContributor {
 
       for (CompactNamedElement decl : allDecls) {
         CompactType declType = getCandidateType(decl);
-        if (isTypeCompatible(declType, expectedType)) {
-          String name = decl.getName();
-          if (name != null && seen.add(name)) {
-            addNamed(result, decl);
+        String name = decl.getName();
+        if (name != null && seen.add(name)) {
+          if (isTypeCompatible(declType, expectedType)) {
+            addNamed(result, decl, 110.0);
+          } else {
+            addNamed(result, decl, 20.0);
           }
         }
       }
@@ -566,6 +568,16 @@ public class CompactCompletionContributor extends CompletionContributor {
             LookupElementBuilder.create("default"), 50.0));
         result.addElement(PrioritizedLookupElement.withPriority(
             LookupElementBuilder.create("disclose"), 50.0));
+      }
+
+      // Also provide prefixed imports and general value keywords in value context
+      addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
+      for (String keyword : VALUE_KEYWORDS) {
+        if ("true".equals(keyword) || "false".equals(keyword)
+            || "default".equals(keyword) || "disclose".equals(keyword)) {
+          continue;
+        }
+        result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(keyword), 10.0));
       }
       return;
     }
@@ -698,6 +710,10 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   private static void addNamed(@NotNull CompletionResultSet result, @NotNull CompactNamedElement element) {
+    addNamed(result, element, 0.0);
+  }
+
+  private static void addNamed(@NotNull CompletionResultSet result, @NotNull CompactNamedElement element, double priority) {
     String name = element.getName();
     if (name == null || name.isEmpty()) {
       return;
@@ -715,7 +731,11 @@ public class CompactCompletionContributor extends CompletionContributor {
       case CompactConstBindingImpl _ -> builder.withTypeText("const");
       default -> builder;
     };
-    result.addElement(builder);
+    if (priority != 0.0) {
+      result.addElement(PrioritizedLookupElement.withPriority(builder, priority));
+    } else {
+      result.addElement(builder);
+    }
   }
 
   public static @NotNull LookupElement createAssertLookupElement() {

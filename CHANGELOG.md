@@ -13,6 +13,7 @@
 - Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
 ### Fixed
+- Fixed an issue where circuit parameters and in-scope variables were omitted from autocompletion inside return statements if their type differed from the return type.
 - Fixed false-positive warnings reporting that sealed ledger fields cannot be modified outside constructors when initializing state inside Compact library modules.
 - Fixed false-positive type mismatch errors when returning ternary expressions (cond ? a : b) from circuits and witnesses.
 
