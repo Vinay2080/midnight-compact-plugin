@@ -19,32 +19,54 @@ import org.jetbrains.annotations.Nullable;
 public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implements LocalQuickFix {
   private final String targetVersion;
   private final boolean isCompilerPragma;
+  private final @Nullable String explicitToolchainVersion;
 
   public CompactSwitchCompilerQuickFix(@NotNull String targetVersion) {
-    this(targetVersion, false);
+    this(targetVersion, false, null);
   }
 
   public CompactSwitchCompilerQuickFix(@NotNull String targetVersion, boolean isCompilerPragma) {
+    this(targetVersion, isCompilerPragma, null);
+  }
+
+  public CompactSwitchCompilerQuickFix(
+      @NotNull String targetVersion,
+      boolean isCompilerPragma,
+      @Nullable String explicitToolchainVersion
+  ) {
     this.targetVersion = targetVersion;
     this.isCompilerPragma = isCompilerPragma;
+    this.explicitToolchainVersion = explicitToolchainVersion;
+  }
+
+  public @NotNull String getToolchainVersion() {
+    if (explicitToolchainVersion != null && !explicitToolchainVersion.isBlank()) {
+      return CompactVersionManager.cleanVersion(explicitToolchainVersion);
+    }
+    return isCompilerPragma
+        ? CompactVersionManager.cleanVersion(targetVersion)
+        : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
   }
 
   @Override
   public @NotNull String getText() {
-    String toolchainVer = isCompilerPragma
-        ? CompactVersionManager.cleanVersion(targetVersion)
-        : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
+    String toolchainVer = getToolchainVersion();
+    String displayVer = isCompilerPragma
+        ? toolchainVer
+        : (explicitToolchainVersion != null
+            ? CompactVersionManager.getLanguageVersionForToolchain(toolchainVer)
+            : targetVersion);
 
     if (CompactVersionManager.isVersionInstalled(toolchainVer)) {
-      if (toolchainVer.equals(targetVersion)) {
-        return "Switch project compiler to Compact " + targetVersion;
+      if (toolchainVer.equals(displayVer)) {
+        return "Switch project compiler to Compact " + displayVer;
       }
-      return "Switch project compiler to Compact v" + toolchainVer + " (Language v" + targetVersion + ")";
+      return "Switch project compiler to Compact v" + toolchainVer + " (Language v" + displayVer + ")";
     }
-    if (toolchainVer.equals(targetVersion)) {
-      return "Download and switch project compiler to Compact " + targetVersion;
+    if (toolchainVer.equals(displayVer)) {
+      return "Download and switch project compiler to Compact " + displayVer;
     }
-    return "Download and switch project compiler to Compact v" + toolchainVer + " (Language v" + targetVersion + ")";
+    return "Download and switch project compiler to Compact v" + toolchainVer + " (Language v" + displayVer + ")";
   }
 
   @Override
@@ -73,9 +95,7 @@ public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implement
     if (IntentionPreviewUtils.isIntentionPreviewActive()) {
       return;
     }
-    String toolchainVer = isCompilerPragma
-        ? CompactVersionManager.cleanVersion(targetVersion)
-        : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
+    String toolchainVer = getToolchainVersion();
     CompactVersionManager.ensureAndSwitchVersion(project, toolchainVer, file != null ? file.getVirtualFile() : null);
   }
 

@@ -13,9 +13,9 @@ import dev.verloren.midnight.run.CompactToolchainUtil;
 import dev.verloren.midnight.version.CompactSemVerUtil;
 import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Inspection validating that the project's configured Compact compiler satisfies
@@ -57,10 +57,7 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
     String reqVer = pragma.getRequiredVersion();
 
     if (activeVer == null || activeVer.trim().isEmpty()) {
-      List<LocalQuickFix> fixes = new ArrayList<>();
-      if (reqVer != null && !reqVer.isEmpty()) {
-        fixes.add(new CompactSwitchCompilerQuickFix(reqVer, isCompilerPragma));
-      }
+      List<LocalQuickFix> fixes = buildCompilerQuickFixes(constraint, reqVer, isCompilerPragma, null);
       holder.registerProblem(
           pragma,
           "No Compact compiler configured or installed satisfying pragma '" + constraint + "'",
@@ -74,10 +71,7 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
     boolean satisfies = CompactSemVerUtil.satisfiesConstraint(effectiveActiveVer, constraint);
 
     if (!satisfies) {
-      List<LocalQuickFix> fixes = new ArrayList<>();
-      if (reqVer != null && !reqVer.isEmpty()) {
-        fixes.add(new CompactSwitchCompilerQuickFix(reqVer, isCompilerPragma));
-      }
+      List<LocalQuickFix> fixes = buildCompilerQuickFixes(constraint, reqVer, isCompilerPragma, activeVer);
       fixes.add(new CompactUpdatePragmaQuickFix(activeVer));
 
       String desc = isCompilerPragma
@@ -91,5 +85,54 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
           fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
       );
     }
+  }
+
+  private static @NotNull List<LocalQuickFix> buildCompilerQuickFixes(
+      @NotNull String constraint,
+      @Nullable String reqVer,
+      boolean isCompilerPragma,
+      @Nullable String activeVer
+  ) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    Set<String> addedToolchains = new HashSet<>();
+    Set<String> addedLanguageVersions = new HashSet<>();
+
+    // 1. Prioritize already downloaded/installed versions that satisfy the constraint, sorted newest first
+    SequencedMap<String, String> installed = CompactVersionManager.getInstalledVersions();
+    List<String> sortedToolchains = new ArrayList<>(installed.keySet());
+    sortedToolchains.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
+
+    for (String installedToolchain : sortedToolchains) {
+      String cleanToolchain = CompactVersionManager.cleanVersion(installedToolchain);
+      if (activeVer != null && cleanToolchain.equals(CompactVersionManager.cleanVersion(activeVer))) {
+        continue; // Active compiler already failed the constraint
+      }
+
+      String targetCheckVer = isCompilerPragma
+          ? cleanToolchain
+          : CompactVersionManager.getLanguageVersionForToolchain(cleanToolchain);
+
+      // Avoid duplicate suggestions for the same language version if multiple patch toolchains are installed
+      if (!isCompilerPragma && !addedLanguageVersions.add(targetCheckVer)) {
+        continue;
+      }
+
+      if (CompactSemVerUtil.satisfiesConstraint(targetCheckVer, constraint)) {
+        fixes.add(new CompactSwitchCompilerQuickFix(targetCheckVer, isCompilerPragma, cleanToolchain));
+        addedToolchains.add(cleanToolchain);
+      }
+    }
+
+    // 2. Offer to download and switch to the exact required version if not already installed and offered
+    if (reqVer != null && !reqVer.isBlank()) {
+      String reqToolchain = isCompilerPragma
+          ? CompactVersionManager.cleanVersion(reqVer)
+          : CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
+      if (!addedToolchains.contains(reqToolchain)) {
+        fixes.add(new CompactSwitchCompilerQuickFix(reqVer, isCompilerPragma));
+      }
+    }
+
+    return fixes;
   }
 }

@@ -16,11 +16,22 @@ import dev.verloren.midnight.version.CompactSemVerUtil;
 import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SequencedMap;
 
 /**
  * Context action to switch or download the required Compact compiler version based on pragma.
  */
 public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntentionAction {
+
+  private record TargetVersionResolution(
+      @NotNull String toolchainVer,
+      @NotNull String displayVer,
+      boolean isInstalled
+  ) {}
 
   @Override
   public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getFamilyName() {
@@ -61,21 +72,18 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
       }
     }
 
-    String toolchainVer = isCompilerPragma
-        ? CompactVersionManager.cleanVersion(reqVer)
-        : CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
-
-    if (CompactVersionManager.isVersionInstalled(toolchainVer)) {
-      if (toolchainVer.equals(reqVer)) {
-        setText("Switch project compiler to Compact " + reqVer);
+    TargetVersionResolution target = resolveTarget(pragma, activeVer, reqVer, isCompilerPragma);
+    if (target.isInstalled()) {
+      if (target.toolchainVer().equals(target.displayVer())) {
+        setText("Switch project compiler to Compact " + target.displayVer());
       } else {
-        setText("Switch project compiler to Compact " + reqVer + " (v" + toolchainVer + ")");
+        setText("Switch project compiler to Compact " + target.displayVer() + " (v" + target.toolchainVer() + ")");
       }
     } else {
-      if (toolchainVer.equals(reqVer)) {
-        setText("Download and use Compact " + reqVer);
+      if (target.toolchainVer().equals(target.displayVer())) {
+        setText("Download and use Compact " + target.displayVer());
       } else {
-        setText("Download and use Compact " + reqVer + " (v" + toolchainVer + ")");
+        setText("Download and use Compact " + target.displayVer() + " (v" + target.toolchainVer() + ")");
       }
     }
     return true;
@@ -98,13 +106,49 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
     PsiElement id = pragma.getPragmaIdentifier();
     String idText = id != null ? id.getText() : "language_version";
     boolean isCompilerPragma = "compiler_version".equals(idText);
+    String activeVer = CompactToolchainUtil.getActiveCompilerVersion(project);
 
-    String toolchainVer = isCompilerPragma
+    TargetVersionResolution target = resolveTarget(pragma, activeVer, reqVer, isCompilerPragma);
+    VirtualFile vFile = element.getContainingFile() != null ? element.getContainingFile().getVirtualFile() : null;
+    CompactVersionManager.ensureAndSwitchVersion(project, target.toolchainVer(), vFile);
+  }
+
+  private static @NotNull TargetVersionResolution resolveTarget(
+      @NotNull CompactPragmaForm pragma,
+      @Nullable String activeVer,
+      @NotNull String reqVer,
+      boolean isCompilerPragma
+  ) {
+    String directToolchain = isCompilerPragma
         ? CompactVersionManager.cleanVersion(reqVer)
         : CompactVersionManager.resolveToolchainVersionForLanguage(reqVer);
 
-    VirtualFile vFile = element.getContainingFile() != null ? element.getContainingFile().getVirtualFile() : null;
-    CompactVersionManager.ensureAndSwitchVersion(project, toolchainVer, vFile);
+    if (CompactVersionManager.isVersionInstalled(directToolchain)) {
+      return new TargetVersionResolution(directToolchain, reqVer, true);
+    }
+
+    // Check if any installed toolchain satisfies the pragma constraint (highest version first)
+    String constraint = pragma.getConstraintText();
+    if (constraint == null || constraint.isBlank()) {
+      constraint = reqVer;
+    }
+
+    SequencedMap<String, String> installed = CompactVersionManager.getInstalledVersions();
+    List<String> sortedToolchains = new ArrayList<>(installed.keySet());
+    sortedToolchains.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
+
+    for (String instToolchain : sortedToolchains) {
+      String cleanInst = CompactVersionManager.cleanVersion(instToolchain);
+      if (activeVer != null && cleanInst.equals(CompactVersionManager.cleanVersion(activeVer))) {
+        continue;
+      }
+      String checkVer = isCompilerPragma ? cleanInst : CompactVersionManager.getLanguageVersionForToolchain(cleanInst);
+      if (CompactSemVerUtil.satisfiesConstraint(checkVer, constraint)) {
+        return new TargetVersionResolution(cleanInst, checkVer, true);
+      }
+    }
+
+    return new TargetVersionResolution(directToolchain, reqVer, false);
   }
 
   @Override

@@ -21,6 +21,7 @@ import dev.verloren.midnight.settings.MidnightProjectSettings;
 import dev.verloren.midnight.settings.MidnightSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.net.URI;
@@ -54,6 +55,7 @@ public final class CompactVersionManager {
   private static final Map<String, String> EXECUTABLE_VERSION_CACHE = new ConcurrentHashMap<>();
   private static final Set<String> PENDING_DETECTIONS = ConcurrentHashMap.newKeySet();
   private static final AtomicBoolean MIGRATION_DONE = new AtomicBoolean(false);
+  private static volatile SequencedMap<String, String> TEST_INSTALLED_VERSIONS = null;
 
   /**
    * Officially supported Midnight toolchain releases.
@@ -73,6 +75,11 @@ public final class CompactVersionManager {
   );
 
   private CompactVersionManager() {
+  }
+
+  @TestOnly
+  public static void setInstalledVersionsForTesting(@Nullable SequencedMap<String, String> versions) {
+    TEST_INSTALLED_VERSIONS = versions;
   }
 
   public static void cacheExecutableVersion(@NotNull String executablePath, @NotNull String version) {
@@ -182,12 +189,16 @@ public final class CompactVersionManager {
   }
 
   /**
-   * Discovers all locally installed Compact compiler versions.
+   * Discovers all locally installed Compact compiler versions sorted descending by SemVer.
    *
    * @return SequencedMap of cleaned version string to an executable path.
    */
   public static @NotNull SequencedMap<String, String> getInstalledVersions() {
-    SequencedMap<String, String> versions = new TreeMap<>(Comparator.reverseOrder());
+    SequencedMap<String, String> versions = new TreeMap<>(CompactSemVerUtil.DESCENDING_COMPARATOR);
+    if (TEST_INSTALLED_VERSIONS != null) {
+      versions.putAll(TEST_INSTALLED_VERSIONS);
+      return versions;
+    }
     File baseDir = getVersionsDirectory();
     if (!baseDir.isDirectory()) {
       return versions;
@@ -216,6 +227,9 @@ public final class CompactVersionManager {
    * Checks whether a specific compiler version is installed and has a runnable executable.
    */
   public static boolean isVersionInstalled(@NotNull String version) {
+    if (TEST_INSTALLED_VERSIONS != null) {
+      return TEST_INSTALLED_VERSIONS.containsKey(cleanVersion(version));
+    }
     File dir = getVersionDirectory(version);
     if (!dir.isDirectory()) {
       return false;
@@ -228,6 +242,9 @@ public final class CompactVersionManager {
    * Returns the executable path for a specific installed version, or {@code null} if not found.
    */
   public static @Nullable String getInstalledExecutable(@NotNull String version) {
+    if (TEST_INSTALLED_VERSIONS != null) {
+      return TEST_INSTALLED_VERSIONS.get(cleanVersion(version));
+    }
     File dir = getVersionDirectory(version);
     if (!dir.isDirectory()) {
       return null;

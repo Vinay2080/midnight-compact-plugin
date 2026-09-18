@@ -10,6 +10,12 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Prioritized Installed Compiler Suggestions for Pragma Constraints (v1.3.4 / ADR-034)**:
+  - `CompactPragmaVersionInspection`: Evaluates whether locally installed compiler toolchains (`CompactVersionManager.getInstalledVersions()`) satisfy pragma constraints. Discovered satisfying toolchains are sorted descending (newest first via `CompactSemVerUtil.DESCENDING_COMPARATOR`) and offered as immediate, offline quick-fixes before external download options.
+  - Locked vs Open Constraint Precision: Open constraints (`>= 0.20`, `0.20`) suggest higher compatible versions (such as toolchain `0.34.0` / language `0.26.0`), while locked/pinned constraints (`^0.20`, `~0.20`, `< 0.22`) strictly enforce SemVer upper bounds and suppress incompatible versions.
+  - Redundancy Elimination: Eliminates duplicate download options when the exact required version is already installed locally, and de-duplicates multiple patch toolchains targeting the same language version.
+  - `CompactSwitchCompilerVersionIntention`: Intention context action dynamically resolves whether the highest satisfying compiler is already installed, updating intention text and switching compilers directly without triggering background downloads.
+  - `CompactSwitchCompilerQuickFix`: Enhanced with an explicit toolchain version parameter to cleanly configure selected compilers.
 - **Dynamic File Template Pragma Version Resolution (v1.3.4 / ADR-033)**:
   - `CompactDefaultTemplatePropertiesProvider`: Registered under `<defaultTemplatePropertiesProvider>` in `plugin.xml` implementing IntelliJ platform `DefaultTemplatePropertiesProvider`. Dynamically extracts the active compiler toolchain version (`CompactToolchainUtil.getActiveCompilerVersion(project)`) and maps it to the source language version via `CompactVersionManager.getLanguageVersionForToolchain`.
   - Velocity Template Integration: Updated all 4 internal file templates (`Compact File`, `Compact Contract`, `Compact Module`, `Compact Interface`) with conditional Velocity directives: `#if ( &&  != \x22\x22)pragma language_version >= ;#else...#end`.
@@ -123,7 +129,7 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **679 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Total Tests**: **697 passing tests** (0 failures, 0 skipped, 100% success rate)
 - **Active Test Suites**: **65 test classes**
 - **Execution Time**: ~2m 30s via `./gradlew test`
 
