@@ -10,6 +10,11 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Dynamic File Template Pragma Version Resolution (v1.3.4 / ADR-033)**:
+  - `CompactDefaultTemplatePropertiesProvider`: Registered under `<defaultTemplatePropertiesProvider>` in `plugin.xml` implementing IntelliJ platform `DefaultTemplatePropertiesProvider`. Dynamically extracts the active compiler toolchain version (`CompactToolchainUtil.getActiveCompilerVersion(project)`) and maps it to the source language version via `CompactVersionManager.getLanguageVersionForToolchain`.
+  - Velocity Template Integration: Updated all 4 internal file templates (`Compact File`, `Compact Contract`, `Compact Module`, `Compact Interface`) with conditional Velocity directives: `#if ( &&  != \x22\x22)pragma language_version >= ;#else...#end`.
+  - Resilient Fallback: Defaults gracefully to language version `0.26.0` (compiler `0.34.0`) when no custom toolchain is configured or when the project has not yet initialized.
+  - `CompactCreateFileAction`: Injects `COMPACT_LANGUAGE_VERSION`, `LANGUAGE_VERSION`, `COMPACT_COMPILER_VERSION`, and `COMPILER_VERSION` into template creation parameters.
 - **Pragma Version Directives Completion & Quick Documentation (v1.3.4 / ADR-032)**:
   - `CompactCompletionContext`: Classifies the caret as `Kind.AFTER_PRAGMA` when preceded by a top-level `pragma` keyword token or inside a `CompactPragmaForm`.
   - Directives completion: Prioritized completion suggestions for `language_version` (priority 100.0) and `compiler_version` (priority 90.0) with bold styling, `"pragma"` type text, and tail text `" >= <version>"`.
