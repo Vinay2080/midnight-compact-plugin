@@ -6,7 +6,7 @@
 
 ### Added
 - Added prioritized suggestions for already installed Compact compilers satisfying pragma constraints (`pragma language_version` and `pragma compiler_version`) in inspections and context intentions, presenting satisfying local versions sorted descending before external download options and eliminating redundant downloads when the required version is installed.
-- Added dynamic file template pragma version resolution via `CompactDefaultTemplatePropertiesProvider` and `CompactCreateFileAction`, automatically resolving `COMPACT_LANGUAGE_VERSION` and `COMPILER_VERSION` from active project toolchain configurations with robust `0.26.0` fallback.
+- Added dynamic pragma version resolution to newly created Compact file templates, automatically populating the required language version directive based on your currently configured project compiler toolchain.
 - Added contextual code completion for `language_version` and `compiler_version` directives immediately after the `pragma` keyword at top level and inside incomplete pragma forms, with automatic trailing space insertion.
 - Added rich HTML quick documentation (`Ctrl+Q` / `F1`) for pragma directives (`language_version` and `compiler_version`) both on declaration hover and within completion lookup popups, explaining semantic version constraints, supported comparison operators (`>=`, `>`, `^`, `~`, `==`), and tooling requirements.
 - Added Ctrl+Click and Go to Declaration navigation for `CompactStandardLibrary` in import statements (`import CompactStandardLibrary;`), jumping directly to the bundled `standard-library.compact` source file.
