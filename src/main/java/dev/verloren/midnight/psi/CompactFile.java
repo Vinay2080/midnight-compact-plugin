@@ -29,10 +29,6 @@ public class CompactFile extends PsiFileBase {
     return CompactFileType.INSTANCE;
   }
 
-  public @NotNull PsiElement[] getProgramElements() {
-    return getChildren();
-  }
-
   public @NotNull List<CompactNamedElement> getTopLevelDeclarations() {
     List<CompactNamedElement> result = new java.util.ArrayList<>();
     for (PsiElement child : getChildren()) {

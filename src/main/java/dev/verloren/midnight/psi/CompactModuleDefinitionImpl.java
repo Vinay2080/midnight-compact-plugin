@@ -1,7 +1,6 @@
 package dev.verloren.midnight.psi;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,9 +18,5 @@ public class CompactModuleDefinitionImpl extends CompactNamedElementImpl impleme
 
   public @NotNull Collection<CompactNamedElement> getMembers() {
     return PsiTreeUtil.findChildrenOfType(this, CompactNamedElement.class);
-  }
-
-  public @NotNull PsiElement[] getBodyElements() {
-    return getChildren();
   }
 }

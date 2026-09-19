@@ -258,7 +258,7 @@ public final class CompactResolveUtil {
       }
       if (scope instanceof CompactModuleDefinition) {
         // Enclosing module members (all top-level declarations in module available regardless of order)
-        layers.add(collectModuleDeclarations((CompactModuleDefinition) scope, namespace, place));
+        layers.add(collectModuleDeclarations((CompactModuleDefinition) scope, namespace));
       }
       if (scope instanceof CompactFile) {
         // Handle incomplete declarations directly preceding place at file level (e.g., during completion)
@@ -275,10 +275,10 @@ public final class CompactResolveUtil {
 
         // File-level top declarations (all top-level declarations in file available regardless of order),
         // then selective imports, then included files, then standard library
-        layers.add(collectFileDeclarations((CompactFile) scope, namespace, place));
+        layers.add(collectFileDeclarations((CompactFile) scope, namespace));
         layers.add(collectSelectionImports((CompactFile) scope, namespace));
-        layers.add(collectIncludedDeclarations((CompactFile) scope, namespace, place));
-        layers.add(collectStandardLibraryDeclarations(place.getProject(), namespace, place));
+        layers.add(collectIncludedDeclarations((CompactFile) scope, namespace));
+        layers.add(collectStandardLibraryDeclarations(place.getProject(), namespace));
         break;
       }
     }
@@ -287,8 +287,7 @@ public final class CompactResolveUtil {
 
   private static @NotNull List<CompactNamedElement> collectStandardLibraryDeclarations(
       @NotNull com.intellij.openapi.project.Project project,
-      @NotNull Namespace namespace,
-      @NotNull PsiElement place
+      @NotNull Namespace namespace
   ) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactFile stdFile : dev.verloren.midnight.stdlib.CompactStdlibService.getInstance(project).getStandardLibraryFiles()) {
@@ -317,8 +316,7 @@ public final class CompactResolveUtil {
 
   private static @NotNull List<CompactNamedElement> collectIncludedDeclarations(
       @NotNull CompactFile file,
-      @NotNull Namespace namespace,
-      @NotNull PsiElement place
+      @NotNull Namespace namespace
   ) {
     List<CompactNamedElement> result = new ArrayList<>();
     Set<CompactFile> visited = new HashSet<>();
@@ -420,7 +418,7 @@ public final class CompactResolveUtil {
     return result;
   }
 
-  private static @NotNull List<CompactNamedElement> collectModuleDeclarations(@NotNull CompactModuleDefinition module, @NotNull Namespace namespace, @NotNull PsiElement place) {
+  private static @NotNull List<CompactNamedElement> collectModuleDeclarations(@NotNull CompactModuleDefinition module, @NotNull Namespace namespace) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(module, CompactNamedElement.class)) {
       if (isDirectModuleDeclaration(declaration, module) && isInNamespace(declaration, namespace)) {
@@ -430,7 +428,7 @@ public final class CompactResolveUtil {
     return result;
   }
 
-  private static @NotNull List<CompactNamedElement> collectFileDeclarations(@NotNull CompactFile file, @NotNull Namespace namespace, @NotNull PsiElement place) {
+  private static @NotNull List<CompactNamedElement> collectFileDeclarations(@NotNull CompactFile file, @NotNull Namespace namespace) {
     List<CompactNamedElement> result = new ArrayList<>();
     for (CompactNamedElement declaration : file.getTopLevelDeclarations()) {
       if (isInNamespace(declaration, namespace)) {
@@ -564,10 +562,6 @@ public final class CompactResolveUtil {
       }
     }
     return false;
-  }
-
-  private static boolean hasToken(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType tokenType) {
-    return element.getNode().findChildByType(tokenType) != null;
   }
 
   private static @Nullable CompactModuleDefinition nearestModule(@NotNull PsiElement element) {

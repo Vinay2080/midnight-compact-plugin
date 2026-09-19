@@ -65,27 +65,24 @@ public class CompactPhase28IntentionsTest extends BasePlatformTestCase {
   }
 
   public void testSurroundWithDisclose() {
-    myFixture.configureByText("test.compact",
-        "circuit verify(): Void {\n" +
-        "  const x = sec<caret>retKey;\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit verify(): Void {
+          const x = sec<caret>retKey;
+        }""");
     IntentionAction intention = myFixture.findSingleIntention("Surround with disclose(...)");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult(
-        "circuit verify(): Void {\n" +
-        "  const x = disclose(secretKey);\n" +
-        "}"
-    );
+    myFixture.checkResult("""
+        circuit verify(): Void {
+          const x = disclose(secretKey);
+        }""");
   }
 
   public void testGeneralAndSpecificSuggestionsCoexistOnLine() {
-    myFixture.configureByText("test.compact",
-        "circuit verify(): Void {\n" +
-        "  const x = 1<caret>00;\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit verify(): Void {
+          const x = 1<caret>00;
+        }""");
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
     boolean hasDisclose = intentions.stream().anyMatch(it -> it.getText().equals("Surround with disclose(...)"));
     boolean hasSpecifyType = intentions.stream().anyMatch(it -> it.getText().startsWith("Specify type explicitly"));
@@ -94,49 +91,45 @@ public class CompactPhase28IntentionsTest extends BasePlatformTestCase {
   }
 
   public void testInvertIf() {
-    myFixture.configureByText("test.compact",
-        "circuit check(a: Field, b: Field): Void {\n" +
-        "  i<caret>f (a == b) {\n" +
-        "    return 1;\n" +
-        "  } else {\n" +
-        "    return 2;\n" +
-        "  }\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit check(a: Field, b: Field): Void {
+          i<caret>f (a == b) {
+            return 1;
+          } else {
+            return 2;
+          }
+        }""");
     IntentionAction intention = myFixture.findSingleIntention("Invert 'if' condition");
     assertNotNull(intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult(
-        "circuit check(a: Field, b: Field): Void {\n" +
-        "  if (a != b) {\n" +
-        "    return 2;\n" +
-        "  } else {\n" +
-        "    return 1;\n" +
-        "  }\n" +
-        "}"
-    );
+    myFixture.checkResult("""
+        circuit check(a: Field, b: Field): Void {
+          if (a != b) {
+            return 2;
+          } else {
+            return 1;
+          }
+        }""");
   }
 
   public void testInvertIfFromConditionExpression() {
-    myFixture.configureByText("test.compact",
-        "circuit check(a: Field, b: Field): Void {\n" +
-        "  if (a ==<caret> b) {\n" +
-        "    return 1;\n" +
-        "  } else {\n" +
-        "    return 2;\n" +
-        "  }\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit check(a: Field, b: Field): Void {
+          if (a ==<caret> b) {
+            return 1;
+          } else {
+            return 2;
+          }
+        }""");
     IntentionAction intention = myFixture.findSingleIntention("Invert 'if' condition");
     assertNotNull("Should be available anywhere on if line", intention);
   }
 
   public void testSpecifyTypeExplicitlyFromConstKeyword() {
-    myFixture.configureByText("test.compact",
-        "circuit test(): Void {\n" +
-        "  co<caret>nst amount = 100;\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit test(): Void {
+          co<caret>nst amount = 100;
+        }""");
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
     IntentionAction intention = intentions.stream()
         .filter(it -> it.getText().startsWith("Specify type explicitly"))
@@ -148,18 +141,16 @@ public class CompactPhase28IntentionsTest extends BasePlatformTestCase {
   }
 
   public void testRemoveRedundantTypeFromConstKeyword() {
-    myFixture.configureByText("test.compact",
-        "circuit test(): Void {\n" +
-        "  co<caret>nst amount: Uint<64> = 100;\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit test(): Void {
+          co<caret>nst amount: Uint<64> = 100;
+        }""");
     IntentionAction intention = myFixture.findSingleIntention("Remove type annotation");
     assertNotNull("Should find remove type annotation from 'const' keyword on the line", intention);
     myFixture.launchAction(intention);
-    myFixture.checkResult(
-        "circuit test(): Void {\n" +
-        "  const amount = 100;\n" +
-        "}"
-    );
+    myFixture.checkResult("""
+        circuit test(): Void {
+          const amount = 100;
+        }""");
   }
 }

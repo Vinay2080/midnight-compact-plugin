@@ -8,14 +8,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.reference.CompactImportReference;
 import dev.verloren.midnight.stdlib.CompactStdlibService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 public class CompactImportDeclarationImpl extends CompactPsiElement implements CompactImportDeclaration {
@@ -75,10 +73,6 @@ public class CompactImportDeclarationImpl extends CompactPsiElement implements C
     }
     ASTNode identifier = prefixNode.findChildByType(CompactTokenTypes.IDENTIFIER);
     return identifier == null ? null : identifier.getText();
-  }
-
-  public @NotNull Collection<CompactImportElementImpl> getImportElements() {
-    return PsiTreeUtil.findChildrenOfType(this, CompactImportElementImpl.class);
   }
 
   public @Nullable CompactFile resolveImportedFile() {

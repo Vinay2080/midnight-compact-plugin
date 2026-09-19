@@ -1,10 +1,12 @@
 package dev.verloren.midnight.statusbar;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
 import kotlinx.coroutines.GlobalScope;
@@ -16,7 +18,10 @@ public class CompactStatusBarWidgetTest extends BasePlatformTestCase {
     assertEquals("CompactStatusBarWidget", factory.getId());
     assertNotNull(factory.getDisplayName());
     assertTrue(factory.isAvailable(getProject()));
-    assertTrue(factory.canBeEnabledOn(null));
+    StatusBar statusBar = WindowManager.getInstance().getStatusBar(getProject());
+    if (statusBar != null) {
+      assertTrue(factory.canBeEnabledOn(statusBar));
+    }
     assertTrue(factory.isConfigurable());
 
     StatusBarWidget widget = factory.createWidget(getProject(), GlobalScope.INSTANCE);
@@ -77,7 +82,7 @@ public class CompactStatusBarWidgetTest extends BasePlatformTestCase {
     CompactStatusBarPopup.SwitchCompilerVersionAction action =
         new CompactStatusBarPopup.SwitchCompilerVersionAction(getProject(), "0.34.0", false);
 
-    action.actionPerformed(null);
+    action.actionPerformed(TestActionEvent.createTestEvent(action));
     // Directly invoking action logic updates settings
     assertEquals("0.34.0", settings.selectedCompilerVersion);
   }

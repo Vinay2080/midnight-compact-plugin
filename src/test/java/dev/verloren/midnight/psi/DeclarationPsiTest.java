@@ -93,6 +93,19 @@ public class DeclarationPsiTest extends ParsingTestCase {
     assertNotNull(circuitDef.getReturnTypeElement());
   }
 
+  public void testModulePsiAccessors() {
+    PsiFile file = parseFile("ModuleAccessors", """
+        module Math {
+          circuit helper(): Void {}
+        }
+        """);
+
+    CompactModuleDefinition moduleDef = PsiTreeUtil.findChildOfType(file, CompactModuleDefinition.class);
+    assertNotNull(moduleDef);
+    assertEquals("Math", moduleDef.getName());
+    assertEquals(1, moduleDef.getMembers().size());
+  }
+
   private static <T extends CompactNamedElement> void assertNamed(T element, String name, Class<?> implementationClass) {
     assertNotNull(element);
     assertInstanceOf(element, implementationClass);

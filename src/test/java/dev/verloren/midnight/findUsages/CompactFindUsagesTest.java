@@ -47,10 +47,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
                     }
                     """
     );
-    PsiElement element = myFixture.getElementAtCaret();
-    CompactNamedElement namedElement = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
-    assertNotNull(namedElement);
-    Collection<UsageInfo> usages = myFixture.findUsages(namedElement);
+    Collection<UsageInfo> usages = findUsagesAtCaret();
     assertEquals(2, usages.size());
   }
 
@@ -63,10 +60,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
                     }
                     """
     );
-    PsiElement element = myFixture.getElementAtCaret();
-    CompactNamedElement namedElement = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
-    assertNotNull(namedElement);
-    Collection<UsageInfo> usages = myFixture.findUsages(namedElement);
+    Collection<UsageInfo> usages = findUsagesAtCaret();
     assertEquals(2, usages.size());
   }
 
@@ -79,10 +73,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
                     }
                     """
     );
-    PsiElement element = myFixture.getElementAtCaret();
-    CompactNamedElement namedElement = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
-    assertNotNull(namedElement);
-    Collection<UsageInfo> usages = myFixture.findUsages(namedElement);
+    Collection<UsageInfo> usages = findUsagesAtCaret();
     assertEquals(2, usages.size());
   }
 
@@ -97,10 +88,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
                     }
                     """
     );
-    PsiElement element = myFixture.getElementAtCaret();
-    CompactNamedElement namedElement = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
-    assertNotNull(namedElement);
-    Collection<UsageInfo> usages = myFixture.findUsages(namedElement);
+    Collection<UsageInfo> usages = findUsagesAtCaret();
     assertEquals("Should find exactly 1 code usage reference, ignoring comment and string literal", 1, usages.size());
   }
 
@@ -108,7 +96,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
     CompactFindUsagesProvider provider = new CompactFindUsagesProvider();
 
     myFixture.configureByText(CompactFileType.INSTANCE,
-            "struct <caret>Point { x: Field }\n"
+            "struct <caret>Point { x: Field }"
     );
     PsiElement element = myFixture.getElementAtCaret();
     assertTrue(provider.canFindUsagesFor(element));
@@ -125,10 +113,7 @@ public class CompactFindUsagesTest extends BasePlatformTestCase {
                     }
                     """
     );
-    PsiElement element = myFixture.getElementAtCaret();
-    CompactNamedElement namedElement = PsiTreeUtil.getParentOfType(element, CompactNamedElement.class, false);
-    assertNotNull(namedElement);
-    Collection<UsageInfo> usages = myFixture.findUsages(namedElement);
+    Collection<UsageInfo> usages = findUsagesAtCaret();
     assertEquals(1, usages.size());
   }
 

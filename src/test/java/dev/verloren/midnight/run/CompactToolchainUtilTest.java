@@ -34,7 +34,7 @@ public class CompactToolchainUtilTest extends BasePlatformTestCase {
       fail(e.getMessage());
     } finally {
       if (temp != null) {
-        temp.delete();
+        com.intellij.openapi.util.io.FileUtil.delete(temp);
       }
       state.compilerPath = "";
     }
@@ -48,6 +48,16 @@ public class CompactToolchainUtilTest extends BasePlatformTestCase {
     assertEquals("/home/verloren/project/contract.compact", CompactToolchainUtil.toWslPath("/home/verloren/project/contract.compact"));
     assertEquals("gen", CompactToolchainUtil.toWslPath("gen"));
     assertEquals("--vscode", CompactToolchainUtil.toWslPath("--vscode"));
+  }
+
+  public void testToWindowsPathConversions() {
+    assertEquals("C:\\Users\\shaki\\contract.compact", CompactToolchainUtil.toWindowsPath("/mnt/c/Users/shaki/contract.compact"));
+    assertEquals("D:\\projects\\output", CompactToolchainUtil.toWindowsPath("/mnt/d/projects/output"));
+    assertEquals("C:\\", CompactToolchainUtil.toWindowsPath("/mnt/c"));
+    assertEquals("C:\\", CompactToolchainUtil.toWindowsPath("/mnt/c/"));
+    assertEquals("/home/verloren/project/contract.compact", CompactToolchainUtil.toWindowsPath("/home/verloren/project/contract.compact"));
+    assertEquals("/mnt/shared/data", CompactToolchainUtil.toWindowsPath("/mnt/shared/data"));
+    assertEquals("gen", CompactToolchainUtil.toWindowsPath("gen"));
   }
 
   public void testParseConfiguredWslPaths() {
@@ -128,7 +138,7 @@ public class CompactToolchainUtilTest extends BasePlatformTestCase {
       fail("Unexpected exception: " + e.getMessage());
     } finally {
       if (tempMock != null) {
-        tempMock.delete();
+        com.intellij.openapi.util.io.FileUtil.delete(tempMock);
       }
       if (state != null) {
         state.compilerPath = "";

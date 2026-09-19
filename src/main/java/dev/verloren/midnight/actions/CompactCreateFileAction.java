@@ -23,8 +23,6 @@ import dev.verloren.midnight.refactoring.CompactNamesValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -109,15 +107,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     String cleanName = trimmed.endsWith(".compact") ? trimmed.substring(0, trimmed.length() - ".compact".length()) : trimmed;
     String simpleName = extractSimpleName(cleanName);
 
-    String langVer = CompactDefaultTemplatePropertiesProvider.resolveLanguageVersion(project);
-    String compilerVer = CompactDefaultTemplatePropertiesProvider.resolveCompilerVersion(project);
-
-    Map<String, String> extraProperties = new HashMap<>();
-    extraProperties.put(FileTemplate.ATTRIBUTE_NAME, simpleName);
-    extraProperties.put(CompactDefaultTemplatePropertiesProvider.COMPACT_LANGUAGE_VERSION, langVer);
-    extraProperties.put(CompactDefaultTemplatePropertiesProvider.LANGUAGE_VERSION, langVer);
-    extraProperties.put(CompactDefaultTemplatePropertiesProvider.COMPACT_COMPILER_VERSION, compilerVer);
-    extraProperties.put(CompactDefaultTemplatePropertiesProvider.COMPILER_VERSION, compilerVer);
+    Map<String, String> extraProperties = buildTemplateProperties(project, simpleName);
 
     try {
       return createFileFromTemplate(
@@ -133,6 +123,18 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
       LOG.warn("Failed to create Compact file from template " + templateName, e);
       return null;
     }
+  }
+
+  private static @NotNull Map<String, String> buildTemplateProperties(@NotNull Project project, @NotNull String simpleName) {
+    String langVer = CompactDefaultTemplatePropertiesProvider.resolveLanguageVersion(project);
+    String compilerVer = CompactDefaultTemplatePropertiesProvider.resolveCompilerVersion(project);
+    return Map.of(
+        FileTemplate.ATTRIBUTE_NAME, simpleName,
+        CompactDefaultTemplatePropertiesProvider.COMPACT_LANGUAGE_VERSION, langVer,
+        CompactDefaultTemplatePropertiesProvider.LANGUAGE_VERSION, langVer,
+        CompactDefaultTemplatePropertiesProvider.COMPACT_COMPILER_VERSION, compilerVer,
+        CompactDefaultTemplatePropertiesProvider.COMPILER_VERSION, compilerVer
+    );
   }
 
   @Override

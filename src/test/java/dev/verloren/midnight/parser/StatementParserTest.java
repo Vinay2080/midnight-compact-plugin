@@ -67,7 +67,6 @@ public class StatementParserTest extends ParsingTestCase {
 
     PsiFile file = parseFile("DiscloseAndPatternDestructuring", text);
     String tree = DebugUtil.psiToString(file, true);
-    System.out.println("STATEMENT TREE:\n" + tree);
 
     assertEquals(text, file.getText());
     assertFalse(tree, tree.contains("PsiErrorElement"));

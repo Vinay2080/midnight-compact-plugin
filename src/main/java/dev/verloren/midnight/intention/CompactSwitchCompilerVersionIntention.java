@@ -73,18 +73,13 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
     }
 
     TargetVersionResolution target = resolveTarget(pragma, activeVer, reqVer, isCompilerPragma);
+    String versionLabel = target.toolchainVer().equals(target.displayVer())
+        ? target.displayVer()
+        : target.displayVer() + " (v" + target.toolchainVer() + ")";
     if (target.isInstalled()) {
-      if (target.toolchainVer().equals(target.displayVer())) {
-        setText("Switch project compiler to Compact " + target.displayVer());
-      } else {
-        setText("Switch project compiler to Compact " + target.displayVer() + " (v" + target.toolchainVer() + ")");
-      }
+      setText("Switch project compiler to Compact " + versionLabel);
     } else {
-      if (target.toolchainVer().equals(target.displayVer())) {
-        setText("Download and use Compact " + target.displayVer());
-      } else {
-        setText("Download and use Compact " + target.displayVer() + " (v" + target.toolchainVer() + ")");
-      }
+      setText("Download and use Compact " + versionLabel);
     }
     return true;
   }

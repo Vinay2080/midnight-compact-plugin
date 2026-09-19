@@ -13,7 +13,6 @@ import dev.verloren.midnight.version.CompactSemVerUtil;
 import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jspecify.annotations.NonNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -298,13 +297,13 @@ public final class CompactToolchainUtil {
    * Converts a Linux WSL path (e.g. /mnt/c/path) to its Windows file path equivalent.
    */
   public static @NotNull String toWindowsPath(@NotNull String path) {
-    if (path.isEmpty() || !path.startsWith("/mnt/")) {
+    if (!path.startsWith("/mnt/")) {
       return path;
     }
-    if (path.length() >= 6 && path.charAt(4) == '/' && Character.isLetter(path.charAt(5))) {
+    if (path.length() >= 6 && Character.isLetter(path.charAt(5)) && (path.length() == 6 || path.charAt(6) == '/')) {
       char drive = Character.toUpperCase(path.charAt(5));
       String rest = path.substring(6);
-      if (rest.isEmpty()) {
+      if (rest.isEmpty() || rest.equals("/")) {
         return drive + ":\\";
       }
       return drive + ":" + rest.replace('/', '\\');
@@ -427,14 +426,13 @@ public final class CompactToolchainUtil {
               if (versionsDir.isDirectory()) {
                 File[] verDirs = versionsDir.listFiles(File::isDirectory);
                 if (verDirs != null && verDirs.length > 0) {
-                  List<File> sortedVerDirs = new ArrayList<>(Arrays.asList(verDirs));
-                  sortedVerDirs.sort((d1, d2) -> {
+                  Arrays.sort(verDirs, (d1, d2) -> {
                     CompactSemVerUtil.SemVer s1 = CompactSemVerUtil.parse(d1.getName());
                     CompactSemVerUtil.SemVer s2 = CompactSemVerUtil.parse(d2.getName());
                     if (s1 != null && s2 != null) return s2.compareTo(s1);
                     return d2.getName().compareTo(d1.getName());
                   });
-                  for (File vd : sortedVerDirs) {
+                  for (File vd : verDirs) {
                     File exe = CompactVersionManager.findExecutableInVersionDir(vd);
                     if (exe != null) {
                       String linuxPath = toWslPath(exe.getAbsolutePath());
@@ -690,14 +688,14 @@ public final class CompactToolchainUtil {
     return base + "/" + path;
   }
 
-  private static @NonNull String getBase(@org.jspecify.annotations.Nullable String baseOutputDir) {
-    String base = (baseOutputDir != null && !baseOutputDir.trim().isEmpty())
+  private static @NotNull String getBase(@Nullable String baseOutputDir) {
+    String base = (baseOutputDir != null && !baseOutputDir.isBlank())
         ? baseOutputDir.trim().replace('\\', '/')
         : null;
 
     if (base == null) {
       MidnightSettingsState state = MidnightSettingsState.getInstance();
-      if (state != null && state.defaultOutputDir != null && !state.defaultOutputDir.trim().isEmpty()) {
+      if (state != null && state.defaultOutputDir != null && !state.defaultOutputDir.isBlank()) {
         base = state.defaultOutputDir.trim().replace('\\', '/');
       } else {
         base = "gen";

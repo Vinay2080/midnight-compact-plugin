@@ -108,11 +108,10 @@ public class CompactSmartEnterTest extends BasePlatformTestCase {
   }
 
   public void testIfStatementCompletionUnclosedParen() {
-    myFixture.configureByText("test.compact",
-        "circuit test(): Void {\n" +
-        "  if (x == y<caret>\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit test(): Void {
+          if (x == y<caret>
+        }""");
     new CompactSmartEnterProcessor().process(getProject(), myFixture.getEditor(), myFixture.getFile());
     String text = myFixture.getEditor().getDocument().getText();
     assertTrue("Should complete closing paren and braces",
@@ -123,11 +122,10 @@ public class CompactSmartEnterTest extends BasePlatformTestCase {
   }
 
   public void testConstStatementWithoutInitializerAppendsAssignment() {
-    myFixture.configureByText("test.compact",
-        "circuit test(): Void {\n" +
-        "  const x<caret>\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit test(): Void {
+          const x<caret>
+        }""");
     new CompactSmartEnterProcessor().process(getProject(), myFixture.getEditor(), myFixture.getFile());
     String text = myFixture.getEditor().getDocument().getText();
     assertFalse("Const without initializer must never append semicolon", text.contains("const x;"));
@@ -135,11 +133,10 @@ public class CompactSmartEnterTest extends BasePlatformTestCase {
   }
 
   public void testConstStatementWithExplicitTypeWithoutInitializerAppendsAssignment() {
-    myFixture.configureByText("test.compact",
-        "circuit test(): Void {\n" +
-        "  const x: Field<caret>\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit test(): Void {
+          const x: Field<caret>
+        }""");
     new CompactSmartEnterProcessor().process(getProject(), myFixture.getEditor(), myFixture.getFile());
     String text = myFixture.getEditor().getDocument().getText();
     assertFalse("Const without initializer must never append semicolon", text.contains("const x: Field;"));
@@ -147,11 +144,10 @@ public class CompactSmartEnterTest extends BasePlatformTestCase {
   }
 
   public void testConstStatementSemicolonCompletion() {
-    myFixture.configureByText("test.compact",
-        "circuit test(): Void {\n" +
-        "  const x = 10<caret>\n" +
-        "}"
-    );
+    myFixture.configureByText("test.compact", """
+        circuit test(): Void {
+          const x = 10<caret>
+        }""");
     new CompactSmartEnterProcessor().process(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertTrue("Should append semicolon to const statement with value",
         myFixture.getEditor().getDocument().getText().contains("const x = 10;"));

@@ -223,7 +223,7 @@ public class CompactCrossFileResolveTest extends BasePlatformTestCase {
         const VAL = 42;
         """
     );
-    PsiFile file = myFixture.configureByText(
+    myFixture.configureByText(
         CompactFileType.INSTANCE,
         """
         include "<caret>Target.compact";

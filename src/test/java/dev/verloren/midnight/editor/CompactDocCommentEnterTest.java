@@ -27,11 +27,10 @@ public class CompactDocCommentEnterTest extends BasePlatformTestCase {
   }
 
   public void testDocCommentContinuation() {
-    myFixture.configureByText("test.compact",
-        "/**\n" +
-        " * Hello world<caret>\n" +
-        " */"
-    );
+    myFixture.configureByText("test.compact", """
+        /**
+         * Hello world<caret>
+         */""");
     myFixture.type('\n');
     String text = myFixture.getEditor().getDocument().getText();
     assertFalse("Should never contain duplicate asterisks", text.contains("* *"));
@@ -40,11 +39,10 @@ public class CompactDocCommentEnterTest extends BasePlatformTestCase {
   }
 
   public void testDocCommentMultipleEntersNoDuplicateStars() {
-    myFixture.configureByText("test.compact",
-        "/**\n" +
-        " * Line 1<caret>\n" +
-        " */"
-    );
+    myFixture.configureByText("test.compact", """
+        /**
+         * Line 1<caret>
+         */""");
     myFixture.type('\n');
     myFixture.type("Line 2");
     myFixture.type('\n');
@@ -55,11 +53,10 @@ public class CompactDocCommentEnterTest extends BasePlatformTestCase {
   }
 
   public void testBlockCommentEnterDoesNotDuplicateExistingClosing() {
-    myFixture.configureByText("test.compact",
-        "/*\n" +
-        " * Existing line<caret>\n" +
-        " */"
-    );
+    myFixture.configureByText("test.compact", """
+        /*
+         * Existing line<caret>
+         */""");
     myFixture.type('\n');
     String text = myFixture.getEditor().getDocument().getText();
     assertFalse("Should never duplicate closing comment", text.contains("*/\n */"));
@@ -76,10 +73,9 @@ public class CompactDocCommentEnterTest extends BasePlatformTestCase {
   }
 
   public void testBlockCommentOpeningAfterMultilineClosingOnSameLine() {
-    myFixture.configureByText("test.compact",
-        "/*\n" +
-        " * but */ /*<caret>"
-    );
+    myFixture.configureByText("test.compact", """
+        /*
+         * but */ /*<caret>""");
     myFixture.type('\n');
     String text = myFixture.getEditor().getDocument().getText();
     assertTrue("Should continue with star prefix on newline", text.contains(" * but */ /*\n * "));

@@ -25,12 +25,10 @@ public class CompactFormatterTest extends BasePlatformTestCase {
     );
     com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions indentOptions =
         com.intellij.application.options.CodeStyle.getSettings(getProject()).getIndentOptions(CompactFileType.INSTANCE);
-    if (indentOptions != null) {
-      indentOptions.INDENT_SIZE = 2;
-      indentOptions.TAB_SIZE = 2;
-      indentOptions.CONTINUATION_INDENT_SIZE = 2;
-      indentOptions.USE_TAB_CHARACTER = false;
-    }
+    indentOptions.INDENT_SIZE = 2;
+    indentOptions.TAB_SIZE = 2;
+    indentOptions.CONTINUATION_INDENT_SIZE = 2;
+    indentOptions.USE_TAB_CHARACTER = false;
   }
 
   private void doFormatTest(@NotNull String input, @NotNull String expected) {
@@ -582,6 +580,22 @@ public class CompactFormatterTest extends BasePlatformTestCase {
         
         export circuit increment(): [] {
           round.increment(1);
+        }
+        """
+    );
+  }
+
+  public void testIdempotenceComplex() {
+    doIdempotenceTest(
+        """
+        export { vote$commit, vote$reveal, advance, set_topic, add_voter };
+        
+        import CompactStandardLibrary;
+        
+        enum PublicState { setup, commit, reveal, final, }
+        
+        circuit ballot_repr(ballot: PermissibleVotes): Bytes<32> {
+          return ballot == PermissibleVotes.yes ? pad(32, "yes") : pad(32, "no");
         }
         """
     );
