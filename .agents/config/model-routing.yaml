@@ -1,0 +1,43 @@
+version: "1.0.0"
+project: "midnight-plugin"
+description: "Asymmetric local model routing strategy based on task complexity and token budget"
+
+routing_tiers:
+  utility:
+    parameter_range: "7B - 8B"
+    recommended_models:
+      - "Qwen2.5-Coder-7B-Instruct"
+      - "Llama-3.1-8B-Instruct"
+    tasks:
+      - "AST symbol extraction"
+      - "Compiler error parsing and formatting"
+      - "Git conventional commit message generation"
+      - "Bug knowledge base deduplication search"
+    context_window_limit: 8192
+    inference_priority: "low_latency"
+
+  workhorse:
+    parameter_range: "14B - 32B"
+    recommended_models:
+      - "Qwen2.5-Coder-32B-Instruct"
+      - "DeepSeek-Coder-V2-Lite-Instruct"
+    tasks:
+      - "Modern Java 25 method and class synthesis"
+      - "Unit and integration test implementation"
+      - "PSI element wrapper and inspection creation"
+      - "Targeted bug fixing and regression test writing"
+    context_window_limit: 16384
+    inference_priority: "balanced"
+
+  reasoner:
+    parameter_range: "70B+ / MoE / Reasoning"
+    recommended_models:
+      - "DeepSeek-R1"
+      - "Qwen2.5-72B-Instruct"
+    tasks:
+      - "Architectural Decision Record (ADR) option evaluation"
+      - "Type system precedence and soundness proofs"
+      - "Threading and concurrency deadlock analysis"
+      - "Quarterly engineering practices re-audits"
+    context_window_limit: 32768
+    inference_priority: "high_precision"

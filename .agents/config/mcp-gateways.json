@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "description": "Model Context Protocol Tool Gateway & Security Manifest for midnight-plugin",
+  "servers": {
+    "idea": {
+      "transport": "dynamic_executor",
+      "command": "execute_tool",
+      "status": "active",
+      "tools": {
+        "get_file_problems": {
+          "capability": "Static Analysis / Diagnostics",
+          "access": "read_only",
+          "risk": "none",
+          "token_cost": "very_low",
+          "scope": "always_available",
+          "description": "Checks IntelliJ live problem highlighter for target file; mandatory after every edit."
+        },
+        "lint_files": {
+          "capability": "Code Inspection & Style",
+          "access": "read_only",
+          "risk": "none",
+          "token_cost": "low",
+          "scope": "always_available",
+          "description": "Evaluates full IntelliJ inspection profile against specified files."
+        },
+        "search_symbol": {
+          "capability": "AST Symbol Discovery",
+          "access": "read_only",
+          "risk": "none",
+          "token_cost": "very_low",
+          "scope": "always_available",
+          "description": "Queries IntelliJ index for symbol declarations without token dumping."
+        },
+        "get_symbol_info": {
+          "capability": "Signature & Doc Inspection",
+          "access": "read_only",
+          "risk": "none",
+          "token_cost": "very_low",
+          "scope": "always_available",
+          "description": "Returns precise method/class signature and JavaDoc at offset."
+        },
+        "reformat_file": {
+          "capability": "Code Style Formatting",
+          "access": "write",
+          "risk": "low",
+          "token_cost": "low",
+          "scope": "task_scoped",
+          "description": "Applies repository code formatting rules to targeted files."
+        },
+        "rename_refactoring": {
+          "capability": "AST Rename Refactoring",
+          "access": "write",
+          "risk": "medium",
+          "token_cost": "medium",
+          "scope": "task_scoped",
+          "description": "Performs cross-file symbol renaming across declarations and usages."
+        },
+        "execute_run_configuration": {
+          "capability": "Execution / Verification",
+          "access": "execute",
+          "risk": "high",
+          "token_cost": "medium",
+          "scope": "supervised",
+          "description": "Executes predefined IntelliJ run configuration (tests or sandbox)."
+        }
+      },
+      "security_policies": {
+        "prohibit_destructive_writes": true,
+        "enforce_read_only_default": true,
+        "require_human_confirmation_for_execute": false,
+        "block_external_network_tools": true
+      }
+    }
+  }
+}

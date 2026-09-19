@@ -581,3 +581,48 @@ Once inspections pass and `CHANGELOG.md` is verified:
    git push origin master
    git push origin vX.Y.Z
    ```
+
+---
+
+## 13. System Governance, MCP Security & Protected Artifacts Guard
+
+### 13.1 Path-Scoped Subsystem Rules
+In addition to the global invariants in this document, agents MUST consult and adhere to path-scoped rule contracts located in [`.agents/rules/`](.agents/rules/):
+- **PSI & Parser**: [`.agents/rules/psi-parser.rules.md`](.agents/rules/psi-parser.rules.md) (token advancement, incomplete code tolerance, namespace separation)
+- **Threading & Memory**: [`.agents/rules/threading.rules.md`](.agents/rules/threading.rules.md) (ReadAction, WriteCommandAction, static PSI prohibition)
+- **Modern Java 25**: [`.agents/rules/modern-java25.rules.md`](.agents/rules/modern-java25.rules.md) (records, sequenced collections, pattern matching, unnamed `_`)
+- **Inspections & Annotators**: [`.agents/rules/inspections-annotators.rules.md`](.agents/rules/inspections-annotators.rules.md) (SideEffectGuard in previews, 3-phase annotator)
+- **Toolchain & WSL**: [`.agents/rules/toolchain-wsl.rules.md`](.agents/rules/toolchain-wsl.rules.md) (Windows `compact.exe` filter, WSL path translation)
+
+### 13.2 Living Operational & Architectural Knowledge Subsystems
+- **Bug Escalation & Recurring Patterns**: [`.ai/bugs/recurring-patterns.md`](.ai/bugs/recurring-patterns.md) (Tracks chronic anti-patterns across incidents)
+- **Test Inventory & Execution Tiers**: [`.ai/testing/test-inventory.md`](.ai/testing/test-inventory.md)
+- **Flakiness Register & Quarantine Log**: [`.ai/testing/flakiness-log.md`](.ai/testing/flakiness-log.md)
+- **Security Boundaries & Threat Model**: [`.ai/security/threat-boundaries.md`](.ai/security/threat-boundaries.md)
+- **Banned Patterns & Vulnerability Rules**: [`.ai/security/vulnerability-rules.md`](.ai/security/vulnerability-rules.md)
+- **Deployment & Operational Runbooks**: [`.ai/operations/deployment-runbooks.md`](.ai/operations/deployment-runbooks.md)
+- **Architecture Drift Ledger**: [`.ai/meta/drift-audit-ledger.md`](.ai/meta/drift-audit-ledger.md)
+- **Platform Deprecation Register**: [`.ai/meta/deprecation-register.md`](.ai/meta/deprecation-register.md)
+
+### 13.3 Automated Multi-Gate Verification Runner
+Local and pre-commit verification can be run via the PowerShell automation script:
+```powershell
+# Fast compilation and plugin structure check
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -Quick
+
+# Targeted test verification
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern dev.verloren.midnight.CompactBundleTest
+```
+Outputs machine-readable JSON status at `build/verification-report.json`.
+
+### 13.4 Tool Execution Gateways & Model Routing
+- **MCP Tool Manifest & Scopes**: [`.agents/config/mcp-gateways.json`](.agents/config/mcp-gateways.json)
+- **Asymmetric Local Model Routing**: [`.agents/config/model-routing.yaml`](.agents/config/model-routing.yaml)
+
+### 13.5 Immutable Protected Artifacts Guard
+The following files and contracts are **PROTECTED ARTIFACTS**. AI agents are **STRICTLY PROHIBITED** from automatically modifying, deleting, or weakening them without explicit user consent:
+1. **Core Architectural Invariants** in [`AGENTS.md`](AGENTS.md) Section 3 and Section 6.
+2. **Accepted Architectural Decision Records** in [`.ai/decisions/`](.ai/decisions/) (`ADR-001` through `ADR-034`). ADRs can be superseded by new ADRs, never edited retrospectively.
+3. **Security Boundaries & Vulnerability Policies** in [`.ai/security/`](.ai/security/).
+4. **Tool Gateway Manifest** in [`.agents/config/mcp-gateways.json`](.agents/config/mcp-gateways.json).
+5. **Existing Unit / Integration Tests**: AI agents must never delete or `@Disabled`-annotate failing tests to artificially pass verification gates.
