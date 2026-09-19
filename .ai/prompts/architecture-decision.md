@@ -11,7 +11,10 @@ When instructing an AI agent to design a subsystem or formalize an architectural
 ```text
 You are tasked with evaluating an architectural decision and authoring an Architectural Decision Record (ADR) in midnight-compact-plugin following the official ADR Protocol. Execute these steps sequentially with zero exceptions:
 
-1. ARCHITECTURAL CONTEXT & PROBLEM FORMULATION:
+1. WORKSPACE CONTEXT & PROBLEM FORMULATION:
+   - Check `git status` in the workspace root.
+   - For isolated authoring, switch to an in-workspace branch:
+     git checkout -b ai/adr-<slug>
    - Identify the subsystem being designed or modified (e.g. Parser, Lexer, PSI, Resolver, Indexing, Completion, Linter, Run Configurations, Daemon).
    - Formulate the architectural problem, scalability constraints, threading challenges, and IntelliJ Platform integration requirements.
    - Review existing ADRs in `.ai/decisions/` to avoid contradicting established patterns or re-litigating settled decisions.
@@ -33,8 +36,8 @@ You are tasked with evaluating an architectural decision and authoring an Archit
      * Maintainability and alignment with modern Java 25 standards.
 
 4. AUTHOR THE ADR FILE:
-   - Determine the next sequential ADR number (e.g. `ADR-029`).
-   - Create `.ai/decisions/NNN-<subsystem>-<title>.md` matching the standard ADR schema:
+   - Determine the next sequential ADR number (e.g. `ADR-035`).
+   - Create `.ai/decisions/ADR-NNN-<subsystem>-<title>.md` matching the standard ADR schema:
      * Status: Proposed / Accepted
      * Date: YYYY-MM-DD
      * Context & Problem Statement
@@ -52,8 +55,21 @@ You are tasked with evaluating an architectural decision and authoring an Archit
 
 6. SYNCHRONIZE PROJECT DOCUMENTATION:
    - If the decision modifies plugin architecture, update `.ai/context/architecture.md`.
-   - Update `.ai/project-state.yaml` with the newly registered ADR.
+   - Update BOTH `architecture.adrs` and `architecture.decisions` dictionaries in `.ai/project-state.yaml`.
    - Re-read all updated files using `client_view_file` to confirm formatting, links, and integrity.
+
+7. ATOMIC COMMIT, MERGE & PUSH TO REMOTE:
+   - Stage and commit the ADR, index, and architecture documentation:
+     git add .ai/decisions/ .ai/context/architecture.md .ai/project-state.yaml
+     git commit -m "docs(adr): add ADR-NNN <title> and synchronize architecture catalog"
+   - If operating on an in-workspace task branch (`ai/adr-<slug>`):
+     git checkout master
+     git merge ai/adr-<slug>
+     git branch -d ai/adr-<slug>
+   - Verify `git status` on master is clean.
+   - Push verified commit to remote:
+     git push origin master
+   - Present a concise ADR Summary in the final response.
 ```
 
 ---
@@ -98,4 +114,22 @@ You are tasked with evaluating an architectural decision and authoring an Archit
 ## 7. Consequences & Trade-Offs
 - Positive impacts.
 - Negative impacts or limitations.
+```
+
+---
+
+## 3. ADR Authoring Checklist
+
+```text
+ADR COMPLETION CHECKLIST:
+[ ] 1. Workspace status inspected & in-workspace branch established if isolating?
+[ ] 2. Architectural problem formulated with threading and PSI constraints?
+[ ] 3. Compiler ground truth & reference plugins cited?
+[ ] 4. At least 2–3 alternatives evaluated with pros and cons?
+[ ] 5. ADR file authored in .ai/decisions/ADR-NNN-...md?
+[ ] 6. Registered in .ai/decisions/README.md chronological table & subsystem matrix?
+[ ] 7. Synchronized architecture.md and .ai/project-state.yaml (both adrs & decisions)?
+[ ] 8. Anti-assumption re-read executed on all modified markdown files?
+[ ] 9. Atomic commit created: docs(adr): add ADR-NNN <title>?
+[ ] 10. Merged to master (if branched) and pushed to remote (git push origin master)?
 ```

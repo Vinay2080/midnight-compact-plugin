@@ -11,10 +11,11 @@ When instructing an AI agent to diagnose and fix a bug, use the following prompt
 ```text
 You are tasked with diagnosing, fixing, verifying, and documenting a bug in midnight-compact-plugin following the official Bug Resolution Protocol. Execute these steps sequentially with zero exceptions:
 
-1. WORKTREE ISOLATION & PRE-DEBUG SEARCH:
+1. WORKSPACE ISOLATION & PRE-DEBUG SEARCH:
    - Check `git status` on master; do not discard or overwrite existing user work.
-   - Create and switch to an isolated Git worktree:
-     git worktree add -b ai/fix-<defect-slug> ../midnight-plugin-wt-fix-<defect-slug> master
+   - Switch to a dedicated in-workspace task branch:
+     git checkout -b ai/fix-<defect-slug>
+     (Note: Operate directly in the workspace or within an in-workspace .worktrees/fix-<defect-slug> directory so IntelliJ MCP live inspections and client file tools retain workspace access. Avoid external ../ directories).
    - Mandatory Pre-Debug Search: Search `.ai/bugs/` by subsystem, class, error message, or symptom to see if a related defect was previously investigated. Never guess when documented past solutions exist.
 
 2. REPRODUCE WITH AUTOMATED TEST:
@@ -46,7 +47,7 @@ You are tasked with diagnosing, fixing, verifying, and documenting a bug in midn
    - Fix all detected issues immediately before moving to the next edit.
 
 6. TEST VERIFICATION & ZERO REGRESSIONS:
-   - Run `./gradlew test` inside the worktree.
+   - Run `./gradlew test`.
    - Confirm that the reproducing test passes AND the full test suite passes 100% with zero failures and zero compiler warnings.
 
 7. PERSISTENT BUG KNOWLEDGE BASE RECORD:
@@ -63,12 +64,20 @@ You are tasked with diagnosing, fixing, verifying, and documenting a bug in midn
    - Strictly answer "What changed for me?".
    - NEVER include Java class names, method signatures, test counts, ADR IDs, or internal AI restructuring notes.
 
-9. COMMIT, MERGE TO MASTER & WORKTREE CLEANUP:
-   - Commit all changes on the task branch: `git commit -m "fix(<subsystem>): <concise descriptive message>"`
-   - Switch to master checkout, merge branch: `git merge ai/fix-<defect-slug>`
+9. ATOMIC COMMITS, MERGE TO MASTER, PUSH & CLEANUP:
+   - Stage and commit changes using atomic, conventional commits on the task branch:
+     * Code fix & reproducing test:
+       git add src/ && git commit -m "fix(<subsystem>): <concise descriptive message>"
+     * Bug knowledge base record:
+       git add .ai/bugs/ && git commit -m "docs(bugs): record <defect> root cause and resolution in knowledge base"
+     * Clean user changelog update:
+       git add CHANGELOG.md && git commit -m "docs(changelog): note <defect> fix in unreleased notes"
+   - Switch to master: `git checkout master`
+   - Non-destructive merge: `git merge ai/fix-<defect-slug>`
    - Run `./gradlew test` on master to confirm post-merge integrity.
-   - Remove worktree: `git worktree remove ../midnight-plugin-wt-fix-<defect-slug>`
-   - Delete task branch: `git branch -d ai/fix-<defect-slug>`
+   - Push verified commits to remote:
+     git push origin master
+   - Delete temporary task branch: `git branch -d ai/fix-<defect-slug>`
    - Verify master is clean and report status in the Final Artifact Completion Table.
 ```
 
@@ -80,10 +89,10 @@ You are tasked with diagnosing, fixing, verifying, and documenting a bug in midn
 BUG REPORT / DEFECT DETECTED
   │
   ▼
-[1. Worktree Creation] ─────────── Create isolated branch ai/fix-<slug> & worktree
+[1. In-Workspace Branch] ────────── Create isolated branch ai/fix-<slug> in workspace
   │
   ▼
-[2. Search Prior Bug KB] ──────── Search .ai/bugs/ for similar symptoms or previous fixes
+[2. Search Prior Bug KB] ────────── Search .ai/bugs/ for similar symptoms or previous fixes
   │
   ▼
 [3. Minimal Reproducing Test] ──── Write failing automated test in src/test/
@@ -107,7 +116,7 @@ BUG REPORT / DEFECT DETECTED
 [9. Clean User Changelog] ──────── Add minimal human-centric bullet to CHANGELOG.md
   │
   ▼
-[10. Merge to Master & Cleanup] ── Commit, merge, verify on master, remove worktree
+[10. Atomic Commits & Push] ────── Commit fix, docs, merge to master, verify & git push origin master
   │
   ▼
 DEFECT RESOLVED & VERIFIED
@@ -192,7 +201,7 @@ When updating [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plug
 
 ```text
 BUG COMPLETION CHECKLIST:
-[ ] 1. Dedicated Git worktree and branch created?
+[ ] 1. Workspace status inspected and in-workspace task branch created (ai/fix-<defect-slug>)?
 [ ] 2. Prior bug records searched in .ai/bugs/ before debugging?
 [ ] 3. Failing automated test created in src/test/ reproducing the defect?
 [ ] 4. Root cause verified against compiler ground truth or reference plugins?
@@ -202,6 +211,7 @@ BUG COMPLETION CHECKLIST:
 [ ] 8. Bug record written to .ai/bugs/YYYY-MM-DD-...md matching standard schema?
 [ ] 9. .ai/bugs/README.md index table updated with link to new record?
 [ ] 10. CHANGELOG.md updated with clean, minimal user note (zero technical noise)?
-[ ] 11. Worktree branch merged to master, master verified, and worktree cleaned up?
-[ ] 12. Final Artifact Completion Table included in response?
+[ ] 11. Atomic commits created on task branch (fix(...), docs(bugs), docs(changelog))?
+[ ] 12. Task branch merged to master, master verified, and pushed to remote (git push origin master)?
+[ ] 13. Temporary task branch deleted and Final Artifact Completion Table included in response?
 ```

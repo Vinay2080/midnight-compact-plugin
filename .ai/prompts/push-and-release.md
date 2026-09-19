@@ -11,6 +11,9 @@ When instructing an AI agent or executing a release/push session, use the follow
 ```text
 You are tasked with executing the Midnight Plugin Code Inspection, Clean Changelog, Semantic Tagging, and Push Protocol. Execute these 4 mandatory steps sequentially with zero exceptions:
 
+0. PRE-FLIGHT DRIFT CHECK (PREREQUISITE):
+   - Run `.ai/prompts/sync-context-and-decisions.md` to ensure project-state.yaml, current-state.md, architecture.md, and ADR registries are 100% synchronized with the latest tests and codebase before cutting a release.
+
 1. COMPREHENSIVE PROJECT INSPECTION & FIX:
    - Run IDE inspection tools (`get_file_problems` and `lint_files` via `execute_tool`) on all modified, added, and referenced files, plus run `./gradlew test` and `./gradlew check`.
    - The project MUST NOT contain ANY kind of:
@@ -92,25 +95,25 @@ execute_tool --command "lint_files --files [\"<absolute_path>\"]"
 ```text
 ┌────────────────────────────────────────────────────────┐
 │               Trigger Inspection Phase                 │
-└───────────────────────────┬────────────────────────────┘
-                            │
-                            ▼
-           Run get_file_problems & lint_files
-                            │
-                            ▼
-                Issues Found in Output?
-                 ├── YES ──► Fix all detected issues immediately
-                 │           │
-                 │           ▼
-                 │           Re-inspect file (Loop until 0 issues remain)
-                 │
-                 └── NO (100% Clean)
-                            │
-                            ▼
-              Run `./gradlew test` & Verify
-                            │
-                            ▼
-             Proceed to Changelog & Tagging
+└─────────────────────────────┬──────────────────────────┘
+                              │
+                              ▼
+             Run get_file_problems & lint_files
+                              │
+                              ▼
+                  Issues Found in Output?
+                   ├── YES ──► Fix all detected issues immediately
+                   │           │
+                   │           ▼
+                   │           Re-inspect file (Loop until 0 issues remain)
+                   │
+                   └── NO (100% Clean)
+                              │
+                              ▼
+                Run `./gradlew test` & Verify
+                              │
+                              ▼
+               Proceed to Changelog & Tagging
 ```
 
 - **Before doing changes**: Verify baseline cleanliness.
@@ -181,18 +184,14 @@ execute_tool --command "lint_files --files [\"<absolute_path>\"]"
 
 #### 4.3 Git Commit, Tagging, and Push Commands
 ```bash
-# 1. Commit release changes to branch
+# 1. Commit release changes directly to master (or merge from task branch)
 git add gradle.properties src/main/resources/META-INF/plugin.xml CHANGELOG.md .ai/
 git commit -m "chore(release): prepare v1.2.7"
 
-# 2. Merge to master (if operating in a worktree)
-git checkout master
-git merge --ff-only ai/<task-slug>
-
-# 3. Create annotated tag
+# 2. Create annotated tag
 git tag -a v1.2.7 -m "Release v1.2.7: <concise user-facing feature summary>"
 
-# 4. Push code and tag to remote
+# 3. Push code and tag to remote
 git push origin master
 git push origin v1.2.7
 ```
@@ -205,6 +204,7 @@ Before pushing any commit or tag, confirm every checkbox:
 
 ```text
 RELEASE & PUSH CHECKLIST:
+[ ] 0. Pre-flight drift audit completed via sync-context-and-decisions.md?
 [ ] 1. All modified/new files inspected via get_file_problems and lint_files?
 [ ] 2. Zero errors (0 ERROR)?
 [ ] 3. Zero warnings (0 WARNING)?

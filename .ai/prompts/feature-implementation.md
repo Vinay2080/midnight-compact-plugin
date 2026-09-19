@@ -11,10 +11,11 @@ When instructing an AI agent to design and implement a feature, use the followin
 ```text
 You are tasked with implementing a new feature in midnight-compact-plugin following the official Feature Implementation Protocol. Execute these steps sequentially with zero exceptions:
 
-1. WORKTREE ISOLATION & SPECIFICATION CHECK:
+1. WORKSPACE ISOLATION & SPECIFICATION CHECK:
    - Check `git status` on master; never overwrite or discard uncommitted user work.
-   - Create and switch to a dedicated Git worktree and branch:
-     git worktree add -b ai/<feature-slug> ../midnight-plugin-wt-<feature-slug> master
+   - Switch to a dedicated in-workspace task branch:
+     git checkout -b ai/<feature-slug>
+     (Note: Operate directly in the workspace or within an in-workspace .worktrees/<feature-slug> directory so IntelliJ MCP tools like get_file_problems and client file tools operate with full workspace access. Avoid external ../ worktree paths).
    - Review feature requirements against Compact compiler ground truth (`compact/compiler/parser.ss`, `standard-library.compact`) and reference plugins (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
 
 2. ARCHITECTURAL ALIGNMENT & ADR CHECK:
@@ -51,23 +52,29 @@ You are tasked with implementing a new feature in midnight-compact-plugin follow
    - Fix all detected issues immediately before moving to the next edit.
 
 6. TEST VERIFICATION:
-   - Run `./gradlew test` inside the worktree.
+   - Run `./gradlew test`.
    - Confirm 100% pass rate with zero failures and zero compiler warnings.
 
 7. STATE & DOCUMENTATION SYNCHRONIZATION:
-   - Update `.ai/context/current-state.md`: update capability snapshot, completed phase status, and test metrics.
+   - Update `.ai/context/current-state.md`: update capability snapshot, completed phase status, and test metrics table.
    - Update `.ai/project-state.yaml`: update passing test counts, test suites, and phase statuses.
    - Update `CHANGELOG.md` under `## [Unreleased]` -> `### Added` / `### Changed`:
      * Write clean, minimal, human-centric user notes answering "What changed for me?".
      * NEVER include internal class names, method signatures, test counts, or ADR numbers.
    - Update `.ai/handoff.md` with active session status and next priorities.
 
-8. COMMIT, MERGE TO MASTER & CLEANUP:
-   - Commit all changes on the task branch: `git commit -m "feat(<subsystem>): <descriptive message>"`
-   - Switch to master checkout, merge branch: `git merge ai/<feature-slug>`
+8. ATOMIC COMMITS, MERGE TO MASTER, PUSH & CLEANUP:
+   - Stage and commit changes using atomic, conventional commits on the task branch:
+     * Feature & Tests:
+       git add src/ && git commit -m "feat(<subsystem>): <concise descriptive message>"
+     * Context & State Synchronization:
+       git add .ai/ CHANGELOG.md && git commit -m "docs(context): record <feature> implementation and update test metrics"
+   - Switch to master: `git checkout master`
+   - Non-destructive merge: `git merge ai/<feature-slug>`
    - Run `./gradlew test` on master to confirm post-merge integrity.
-   - Remove worktree: `git worktree remove ../midnight-plugin-wt-<feature-slug>`
-   - Delete task branch: `git branch -d ai/<feature-slug>`
+   - Push verified commits to remote:
+     git push origin master
+   - Delete temporary task branch: `git branch -d ai/<feature-slug>`
    - Report status in the Final Artifact Completion Table.
 ```
 
@@ -77,7 +84,7 @@ You are tasked with implementing a new feature in midnight-compact-plugin follow
 
 ```text
 FEATURE COMPLETION CHECKLIST:
-[ ] 1. Dedicated Git worktree and branch created?
+[ ] 1. Workspace status inspected and in-workspace task branch created (ai/<feature-slug>)?
 [ ] 2. Compact language ground truth verified in compact/compiler/?
 [ ] 3. Reference plugins inspected for IntelliJ platform idioms?
 [ ] 4. Modern Java 25 implemented (records, sequenced collections, pattern matching, unnamed variables)?
@@ -86,6 +93,7 @@ FEATURE COMPLETION CHECKLIST:
 [ ] 7. Multi-tier tests added and ./gradlew test passes 100%?
 [ ] 8. .ai/context/current-state.md and .ai/project-state.yaml updated with new status and test counts?
 [ ] 9. CHANGELOG.md updated under ## [Unreleased] with clean, minimal user note?
-[ ] 10. Task branch merged to master, verified, and worktree cleaned up?
-[ ] 11. Final Artifact Completion Table provided?
+[ ] 10. Atomic commits created on task branch (feat(...) and docs(...))?
+[ ] 11. Task branch merged to master, post-merge tests verified, and pushed to remote (git push origin master)?
+[ ] 12. Task branch cleaned up and Final Artifact Completion Table provided?
 ```
