@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation, Standard Library Import Navigation & Documentation, Automatic Quote Pairing & Caret Placement)
+Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation, Standard Library Import Navigation & Documentation, Automatic Quote Pairing & Caret Placement, Prioritized Installed Compiler Suggestions)
 
 ---
 
@@ -10,6 +10,11 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Compiler Tool Window Selection Synchronization (v1.3.4)**:
+  - `CompactCompilerPanel`: Synchronizes active compiler version card selection with `MidnightProjectSettings` and active editor files.
+  - Updates selection highlights cleanly when project settings change or when switching files without triggering unwanted background compilation tasks or causing UI freezes.
+- **Return Value Scope Completion (v1.3.4)**:
+  - `CompactCompletionContributor`: Prioritizes and suggests in-scope circuit parameters and local bindings inside `return` statements and expressions, preventing unwarranted filtering when inferred types differ during active typing.
 - **Prioritized Installed Compiler Suggestions for Pragma Constraints (v1.3.4 / ADR-034)**:
   - `CompactPragmaVersionInspection`: Evaluates whether locally installed compiler toolchains (`CompactVersionManager.getInstalledVersions()`) satisfy pragma constraints. Discovered satisfying toolchains are sorted descending (newest first via `CompactSemVerUtil.DESCENDING_COMPARATOR`) and offered as immediate, offline quick-fixes before external download options.
   - Locked vs Open Constraint Precision: Open constraints (`>= 0.20`, `0.20`) suggest higher compatible versions (such as toolchain `0.34.0` / language `0.26.0`), while locked/pinned constraints (`^0.20`, `~0.20`, `< 0.22`) strictly enforce SemVer upper bounds and suppress incompatible versions.
@@ -18,7 +23,7 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
   - `CompactSwitchCompilerQuickFix`: Enhanced with an explicit toolchain version parameter to cleanly configure selected compilers.
 - **Dynamic File Template Pragma Version Resolution (v1.3.4 / ADR-033)**:
   - `CompactDefaultTemplatePropertiesProvider`: Registered under `<defaultTemplatePropertiesProvider>` in `plugin.xml` implementing IntelliJ platform `DefaultTemplatePropertiesProvider`. Dynamically extracts the active compiler toolchain version (`CompactToolchainUtil.getActiveCompilerVersion(project)`) and maps it to the source language version via `CompactVersionManager.getLanguageVersionForToolchain`.
-  - Velocity Template Integration: Updated all 4 internal file templates (`Compact File`, `Compact Contract`, `Compact Module`, `Compact Interface`) with conditional Velocity directives: `#if ( &&  != \x22\x22)pragma language_version >= ;#else...#end`.
+  - Velocity Template Integration: Updated all 4 internal file templates (`Compact File`, `Compact Contract`, `Compact Module`, `Compact Interface`) with conditional Velocity directives: `#if ($COMPACT_LANGUAGE_VERSION && $COMPACT_LANGUAGE_VERSION != "")pragma language_version >= $COMPACT_LANGUAGE_VERSION;#else...#end`.
   - Resilient Fallback: Defaults gracefully to language version `0.26.0` (compiler `0.34.0`) when no custom toolchain is configured or when the project has not yet initialized.
   - `CompactCreateFileAction`: Injects `COMPACT_LANGUAGE_VERSION`, `LANGUAGE_VERSION`, `COMPACT_COMPILER_VERSION`, and `COMPILER_VERSION` into template creation parameters.
 - **Pragma Version Directives Completion & Quick Documentation (v1.3.4 / ADR-032)**:
@@ -54,15 +59,10 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
   - Negative context suppression: prevents pairing after comparison operators (`<`), inside comments, inside string literals, and in the middle of identifiers.
 - **Parameterized Type Completion & Sizing Options (v1.3.0 / ADR-029)**:
   - `CompactParameterizedTypeInsertHandler`: `InsertHandler<LookupElement>` automatically appending `<>`, placing the caret inside `<|>`, registering empty tab-out scope with `TabOutScopesTracker`, and scheduling auto-popup lookup for size options.
-  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<\”\”>`.
+  - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<\"\">`.
   - Concurrency & live template coordination: schedules caret repositioning via `ApplicationManager.getApplication().invokeLater(...)` when an active `TemplateState` is present, preventing premature live template completion from ejecting the caret.
 - **Code Completion & Comprehensive Export System (v1.3.0 / ADR-019, ADR-026, ADR-028)**:
-  - Contextual classification in `CompactCompletionContext`:
-    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`). Prohibits invalid top-level `export const` per upstream compiler specification (ADR-028).
-    - `Kind.AFTER_SEALED`: Suggests `ledger`.
-    - `Kind.AFTER_PURE`: Suggests `circuit`.
-    - `Kind.AFTER_NEW`: Suggests `type`.
-    - `Kind.NONE` for comment and docstring contexts (`isComment`).
+  - Contextual classification in `CompactCompletionContext`:\n    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`). Prohibits invalid top-level `export const` per upstream compiler specification (ADR-028).\n    - `Kind.AFTER_SEALED`: Suggests `ledger`.\n    - `Kind.AFTER_PURE`: Suggests `circuit`.\n    - `Kind.AFTER_NEW`: Suggests `type`.\n    - `Kind.NONE` for comment and docstring contexts (`isComment`).
   - Top-level declaration completion offering both bare and exported variants with `CompactDeclarationInsertHandler` interactive live template scaffolding.
   - `CompactLedgerInsertHandler`: Interactive live template tab-stops (`$NAME$`, `$TYPE$`), automatic `export ` prefix injection, and non-destructive lookahead preservation.
   - **Comment Completion Suppression (v1.3.0)**:
@@ -123,7 +123,7 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
     - `CompactSpecifyTypeExplicitlyIntention`
     - `CompactRemoveRedundantTypeIntention`
 - **Architectural Decision Records (ADRs)**:
-  - Fully maintained index in `.ai/decisions/README.md` covering all 31 major architectural subsystems (**ADR-001 through ADR-032**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
+  - Fully maintained index in `.ai/decisions/README.md` covering all 34 major architectural subsystems (**ADR-001 through ADR-034**) with 100% coverage across all registered `plugin.xml` extension points, strict upstream compiler references, workspace reference plugin benchmarks, and anti-hardcoding evaluation.
 
 ---
 
@@ -137,21 +137,21 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 
 | Subsystem / Test Class | Test Count | Status |
 | :--- | :--- | :--- |
-| `dev.verloren.midnight.inspection.CompactInspectionTest` | 93 | Passed |
-| `dev.verloren.midnight.completion.CompactCompletionTest` | 75 | Passed |
+| `dev.verloren.midnight.inspection.CompactInspectionTest` | 99 | Passed |
+| `dev.verloren.midnight.completion.CompactCompletionTest` | 80 | Passed |
 | `dev.verloren.midnight.formatter.CompactFormatterTest` | 39 | Passed |
 | `dev.verloren.midnight.editor.CompactDelimiterTypingTest` | 30 | Passed |
 | `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | 24 | Passed |
+| `dev.verloren.midnight.documentation.CompactDocumentationTest` | 22 | Passed |
 | `dev.verloren.midnight.resolve.CompactResolveTest` | 21 | Passed |
-| `dev.verloren.midnight.documentation.CompactDocumentationTest` | 18 | Passed |
+| `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | 19 | Passed |
 | `dev.verloren.midnight.editor.CompactQuoteTypingTest` | 18 | Passed |
 | `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | 17 | Passed |
-| `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | 17 | Passed |
-| `dev.verloren.midnight.highlighter.CompactHighlightTest` | 16 | Passed |
-| `dev.verloren.midnight.editor.CompactSmartEnterTest` | 15 | Passed |
+| `dev.verloren.midnight.highlighter.CompactHighlightingTest` | 16 | Passed |
+| `dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest` | 15 | Passed |
 | `dev.verloren.midnight.type.CompactTypeInferenceTest` | 15 | Passed |
+| `dev.verloren.midnight.editor.CompactSmartEnterTest` | 15 | Passed |
 | `dev.verloren.midnight.navigation.CompactTypeDeclarationProviderTest` | 14 | Passed |
-| `dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateTest` | 12 | Passed |
 | `dev.verloren.midnight.intention.CompactPhase28IntentionsTest` | 12 | Passed |
 | `dev.verloren.midnight.lexer.LexerTest` | 12 | Passed |
 | `dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest` | 12 | Passed |
@@ -159,11 +159,75 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 | `dev.verloren.midnight.findUsages.CompactFindUsagesTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest` | 10 | Passed |
+| `dev.verloren.midnight.reference.CompactReferenceTest` | 9 | Passed |
 | `dev.verloren.midnight.editor.CompactDocCommentEnterTest` | 9 | Passed |
 | `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | 9 | Passed |
-| `dev.verloren.midnight.refactoring.CompactRenameTest` | 9 | Passed |
-| `dev.verloren.midnight.reference.CompactReferenceTest` | 9 | Passed |
 | `dev.verloren.midnight.structure.CompactStructureViewTest` | 9 | Passed |
-| `dev.verloren.midnight.editor.CompactLineMarkerTest` | 7 | Passed |
+| `dev.verloren.midnight.refactoring.CompactRenameTest` | 9 | Passed |
+| `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest` | 8 | Passed |
 | `dev.verloren.midnight.version.CompactVersionManagerTest` | 7 | Passed |
+| `dev.verloren.midnight.editor.CompactLineMarkerTest` | 7 | Passed |
+| `dev.verloren.midnight.run.CompactToolchainUtilTest` | 6 | Passed |
+| `dev.verloren.midnight.parser.ErrorRecoveryParserTest` | 6 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | 6 | Passed |
+| `dev.verloren.midnight.editor.CompactSurroundWithTest` | 5 | Passed |
+| `dev.verloren.midnight.run.CompactRunConfigurationTest` | 5 | Passed |
+| `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest` | 5 | Passed |
+| `dev.verloren.midnight.editor.CompactFoldingTest` | 4 | Passed |
+| `dev.verloren.midnight.completion.CompactInsertHandlersTest` | 4 | Passed |
+| `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 4 | Passed |
+| `dev.verloren.midnight.version.CompactSemVerUtilTest` | 4 | Passed |
+| `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | 4 | Passed |
+| `dev.verloren.midnight.symbol.CompactSymbolTest` | 3 | Passed |
+| `dev.verloren.midnight.settings.MidnightSettingsTest` | 3 | Passed |
+| `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | 3 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 3 | Passed |
+| `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | 3 | Passed |
+| `dev.verloren.midnight.CompactTestUtilsTest` | 3 | Passed |
+| `dev.verloren.midnight.lexer.PragmaTest` | 3 | Passed |
+| `dev.verloren.midnight.parser.StatementParserTest` | 3 | Passed |
+| `dev.verloren.midnight.parser.PragmaParserTest` | 3 | Passed |
+| `dev.verloren.midnight.editor.CompactInlayHintsTest` | 3 | Passed |
+| `dev.verloren.midnight.intention.CompactPragmaIntentionTest` | 3 | Passed |
+| `dev.verloren.midnight.run.CompactRunConfigurationProducerTest` | 2 | Passed |
+| `dev.verloren.midnight.psi.DeclarationPsiTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.EndToEndParserTest` | 2 | Passed |
+| `dev.verloren.midnight.CompactBundleTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.CompactParserDefinitionTest` | 2 | Passed |
+| `dev.verloren.midnight.navigation.CompactChooseByNameTest` | 2 | Passed |
+| `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | 2 | Passed |
+| `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
+| `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
+| `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
+| `dev.verloren.midnight.parser.DeclarationParserTest` | 1 | Passed |
+| `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | 1 | Passed |
+| **Total Across 65 Suites** | **697** | **100% Passed** |
+
+---
+
+## 3. Known Limitations & Roadmap
+
+### Known Limitations
+1. **Multi-Module Project-Wide Indexing**: Currently, symbol resolution across multiple modules relies on explicit `include` and `import` AST navigation. Full workspace-wide stub indexing (`CompactStubIndex`) across unreferenced files is planned for Phase 31.
+2. **Deep Flow Type Inference**: Type inference is structural and AST-driven (`CompactTypeInferenceUtil`). Full bidirectional flow analysis across complex higher-order expressions will be augmented alongside the language server PSI bridge (Phase 35).
+
+### Roadmap & Evolution (Phases 31–36)
+- **Phase 31: Stub Indexing & Symbol Search**
+  - Project-wide stub index (`CompactStubIndex`) for cross-file declarations without parsing full AST.
+  - Fast global Go to Symbol (`Ctrl+Alt+Shift+N`) across large Compact repositories.
+- **Phase 32: Advanced Refactorings**
+  - Safe Delete refactoring for unused circuits, witnesses, and types.
+  - Extract Variable (`Ctrl+Alt+V`) and Extract Circuit/Function (`Ctrl+Alt+M`).
+  - Introduce Parameter refactoring.
+- **Phase 33: Remix-Style Blockchain & State Explorer**
+  - Integrated contract simulation panel and ZK proving state inspector.
+  - Contract deployment artifact viewer (`.compact.json` / ABI).
+- **Phase 34: Ledger Storage & ZK Proving Profiler**
+  - Real-time constraint counter for circuits (estimating R1CS / Plonk constraint count).
+  - Ledger state layout visualization and storage slot cost analysis.
+- **Phase 35: In-IDE Language Server / PSI Bridge**
+  - Direct bridge between handwritten PSI AST and upstream Compact compiler AST representations.
+- **Phase 36: Polyglot Compact / TypeScript Integration**
+  - Midnight JS / Compact client bindings code generation from contracts.
+  - Cross-language navigation between Compact contracts and TypeScript client test suites.
