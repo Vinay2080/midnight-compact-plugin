@@ -1,217 +1,213 @@
-# Custom AI Prompt: Bug Investigation, Resolution & Knowledge Base Protocol
+# Executable Protocol: Bug Investigation, Resolution & Knowledge Escalation
 
-This document defines the standardized prompt and execution playbook for investigating, fixing, verifying, and documenting bugs in `midnight-compact-plugin`.
+This document defines the mandatory, deterministic execution protocol for diagnosing, fixing, testing, verifying, and documenting defects in `midnight-compact-plugin`.
 
 ---
 
-## 1. Copy-Pasteable Master Prompt
+## 1. Preconditions
 
-When instructing an AI agent to diagnose and fix a bug, use the following prompt:
+Before executing any bug fix actions, the AI agent **MUST** verify:
+1. `git status` is clean on `master` (no unstaged or uncommitted user edits).
+2. The IntelliJ project is open and the `idea` MCP server is responsive.
+3. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
+
+---
+
+## 2. Sequential Steps (The 13-Step Protocol)
+
+The agent must execute these 13 steps in exact chronological order without skipping any step:
 
 ```text
-You are tasked with diagnosing, fixing, verifying, and documenting a bug in midnight-compact-plugin following the official Bug Resolution Protocol. Execute these steps sequentially with zero exceptions:
-
-1. WORKSPACE ISOLATION & PRE-DEBUG SEARCH:
-   - Check `git status` on master; do not discard or overwrite existing user work.
-   - Switch to a dedicated in-workspace task branch:
-     git checkout -b ai/fix-<defect-slug>
-     (Note: Operate directly in the workspace or within an in-workspace .worktrees/fix-<defect-slug> directory so IntelliJ MCP live inspections and client file tools retain workspace access. Avoid external ../ directories).
-   - Mandatory Pre-Debug Search: Search `.ai/bugs/` by subsystem, class, error message, or symptom to see if a related defect was previously investigated. Never guess when documented past solutions exist.
-
-2. REPRODUCE WITH AUTOMATED TEST:
-   - Before touching production code, write a minimal, targeted failing test reproducing the defect in `src/test/java/dev/verloren/midnight/...`.
-   - Ensure the test validates the exact failure scenario (AST tree, error recovery, type resolution, completion context, or threading cancellation).
-   - Run the test to confirm it reproduces the failure reliably.
-
-3. TRACE ROOT CAUSE AGAINST COMPILER GROUND TRUTH:
-   - Never apply superficial heuristics or hardcoded hacks.
-   - Cite upstream compiler source (`compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`) or reference plugin implementations (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
-   - Identify the exact mechanism causing the defect (e.g. incorrect PSI parent traversal, missing token advancement, namespace collision, ReadAction violation, or premature cache eviction).
-
-4. IMPLEMENT FIX USING MODERN JAVA 25:
-   - Write clean, modern Java 25:
-     * Records for immutable data carriers and cache keys.
-     * Sequenced collections: `getFirst()`, `getLast()`, `reversed()` (forbidden: `get(0)`).
-     * Pattern matching for `switch` and `instanceof`, with record deconstruction.
-     * Unnamed patterns and variables `_` for unused exceptions, patterns, or lambda arguments.
-     * Immutable collections: `List.of()`, `Set.of()`, `Map.of()`.
-     * No raw casts, no dead code, no unchecked suppressions.
-   - Guard against `null` and `PsiErrorElement` nodes.
-   - Obey threading invariants: PSI reads inside ReadAction; mutations on EDT inside WriteCommandAction; never block EDT.
-
-5. CONTINUOUS POST-EDIT INSPECTION LOOP:
-   - Immediately after EVERY file edit, run IntelliJ inspections via MCP:
-     * `get_file_problems --filePath <absolute_path>`
-     * `lint_files --files [\"<absolute_path>\"]`
-   - Strict Zero-Tolerance: 0 errors (`ERROR`), 0 warnings (`WARNING`), 0 weak warnings (`WEAK WARNING`), 0 grammar/spelling mistakes, and all language-level change suggestions applied.
-   - Fix all detected issues immediately before moving to the next edit.
-
-6. TEST VERIFICATION & ZERO REGRESSIONS:
-   - Run `./gradlew test`.
-   - Confirm that the reproducing test passes AND the full test suite passes 100% with zero failures and zero compiler warnings.
-
-7. PERSISTENT BUG KNOWLEDGE BASE RECORD:
-   - Create a permanent bug report in `.ai/bugs/YYYY-MM-DD-<feature>-<title>.md` following the standard schema:
-     * Subsystem, Symptoms, Trigger Conditions
-     * Root Cause (citing code lines & compiler ground truth)
-     * Investigation & Failed Approaches
-     * Solution & Verification (tests added)
-     * Prevention & Key Lessons Learned
-   - Register the new record in `.ai/bugs/README.md` index table.
-
-8. CLEAN USER CHANGELOG UPDATE:
-   - Add a concise, minimal user-facing entry under `## [Unreleased]` -> `### Fixed` in `CHANGELOG.md`.
-   - Strictly answer "What changed for me?".
-   - NEVER include Java class names, method signatures, test counts, ADR IDs, or internal AI restructuring notes.
-
-9. ATOMIC COMMITS, MERGE TO MASTER, PUSH & CLEANUP:
-   - Stage and commit changes using atomic, conventional commits on the task branch:
-     * Code fix & reproducing test:
-       git add src/ && git commit -m "fix(<subsystem>): <concise descriptive message>"
-     * Bug knowledge base record:
-       git add .ai/bugs/ && git commit -m "docs(bugs): record <defect> root cause and resolution in knowledge base"
-     * Clean user changelog update:
-       git add CHANGELOG.md && git commit -m "docs(changelog): note <defect> fix in unreleased notes"
-   - Switch to master: `git checkout master`
-   - Non-destructive merge: `git merge ai/fix-<defect-slug>`
-   - Run `./gradlew test` on master to confirm post-merge integrity.
-   - Push verified commits to remote:
-     git push origin master
-   - Delete temporary task branch: `git branch -d ai/fix-<defect-slug>`
-   - Verify master is clean and report status in the Final Artifact Completion Table.
+[Step 1: Workspace Isolation] ─── Create dedicated branch ai/fix-<slug>
+        │
+        ▼
+[Step 2: Pre-Debug Search] ──── Query .ai/bugs/ & recurring-patterns.md
+        │
+        ▼
+[Step 3: Reproduction Test] ─── Write minimal failing test in src/test/
+        │
+        ▼
+[Step 4: Root Cause Trace] ──── Cite compiler ground truth & affected code
+        │
+        ▼
+[Step 5: Implement Fix] ─────── Modern Java 25, PSI/threading invariants
+        │
+        ▼
+[Step 6: Post-Edit Inspection] ─ get_file_problems & lint_files via MCP
+        │
+        ▼
+[Step 7: Test Verification] ─── scripts/verify-patch.ps1 (reproducing test passes)
+        │
+        ▼
+[Step 8: Bug Knowledge Record] ─ Create .ai/bugs/YYYY-MM-DD-...md & update index
+        │
+        ▼
+[Step 9: Pattern Escalation] ── Check .ai/bugs/recurring-patterns.md ladder
+        │
+        ▼
+[Step 10: User Changelog] ───── Update CHANGELOG.md under ## [Unreleased] -> ### Fixed
+        │
+        ▼
+[Step 11: Atomic Commits] ───── Stage & commit fix, docs, and changelog
+        │
+        ▼
+[Step 12: Merge to Master] ──── Checkout master, merge --ff-only, run verify-patch.ps1
+        │
+        ▼
+[Step 13: Cleanup & Artifact] ─ Delete task branch, emit Final Completion Table
 ```
 
----
+### Step 1: Workspace Isolation
+- Inspect `git status`.
+- Create and switch to a dedicated in-workspace task branch:
+  ```bash
+  git checkout -b ai/fix-<defect-slug>
+  ```
+  *(Never edit production files directly on `master`.)*
 
-## 2. Detailed Bug Resolution Workflow
+### Step 2: Pre-Debug Search
+- Search [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) and [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md) using `grep_search` or `find_by_name`.
+- Search terms must include: affected class name, subsystem, error message/symptom.
+- Record whether matching or related patterns were found.
 
-```text
-BUG REPORT / DEFECT DETECTED
-  │
-  ▼
-[1. In-Workspace Branch] ────────── Create isolated branch ai/fix-<slug> in workspace
-  │
-  ▼
-[2. Search Prior Bug KB] ────────── Search .ai/bugs/ for similar symptoms or previous fixes
-  │
-  ▼
-[3. Minimal Reproducing Test] ──── Write failing automated test in src/test/
-  │
-  ▼
-[4. Ground Truth Investigation] ── Inspect compact/compiler/ and reference plugins
-  │
-  ▼
-[5. Implement Fix (Java 25)] ───── Modern Java 25 conforming to threading & PSI models
-  │
-  ▼
-[6. Continuous Inspection Loop] ── get_file_problems & lint_files after EVERY edit (0 issues)
-  │
-  ▼
-[7. Full Test Suite Validation] ── ./gradlew test (100% pass, 0 failures, 0 warnings)
-  │
-  ▼
-[8. Create Bug Record] ─────────── Write .ai/bugs/YYYY-MM-DD-...md & register in index
-  │
-  ▼
-[9. Clean User Changelog] ──────── Add minimal human-centric bullet to CHANGELOG.md
-  │
-  ▼
-[10. Atomic Commits & Push] ────── Commit fix, docs, merge to master, verify & git push origin master
-  │
-  ▼
-DEFECT RESOLVED & VERIFIED
-```
+### Step 3: Reproduction Test
+- Before editing production code, write a minimal, targeted failing test in `src/test/java/dev/verloren/midnight/...`.
+- Execute the test:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<FullClassName>.<testMethodName>"
+  ```
+- Confirm that the test fails with the reported defect symptom.
 
----
+### Step 4: Root Cause Investigation
+- Trace the defect mechanism citing:
+  - Affected production class and lines.
+  - Upstream Compact compiler ground truth (`compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`) or reference plugins (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
+  - The precise flaw (e.g. non-advancing token loop, null on incomplete AST, EDT thread blocking, WSL path mismatch).
 
-## 3. Pre-Debug Knowledge Base Search
+### Step 5: Implementation (Modern Java 25)
+- Apply the minimal surgical fix in `src/main/java/dev/verloren/midnight/...`.
+- Adhere to path-scoped rules in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
+  - Records for DTOs and cache keys.
+  - Sequenced collections (`getFirst()`, `getLast()`, `reversed()`).
+  - Pattern matching switch expressions and record patterns.
+  - Unnamed variables `_` for unused parameters/exceptions.
+  - Threading: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI writes; zero blocking `waitFor()` on EDT.
+  - AST resilience: Guard against `null` and `PsiErrorElement`. Loops must advance lexer/builder.
 
-Before writing any fix or theorizing about a bug, agents **MUST** search `.ai/bugs/`:
+### Step 6: Post-Edit Inspection Loop via MCP
+- Immediately after editing each file, run IntelliJ MCP inspection:
+  ```text
+  execute_tool get_file_problems --filePath "<absolute-path>"
+  execute_tool lint_files --files [\"<absolute-path>\"]
+  ```
+- Verify 0 errors, 0 warnings, 0 weak warnings, and 0 unapplied language modernization hints. Fix any flagged issues immediately.
 
-```bash
-# Example queries to search previous bug records
-# Search by subsystem or feature
-find_by_name Pattern="*completion*" SearchDirectory="<project>/.ai/bugs"
-# Search by error string or symptom
-grep_search Query="SideEffectGuard" SearchPath="<project>/.ai/bugs"
-grep_search Query="IndexOutOfBoundsException" SearchPath="<project>/.ai/bugs"
-```
+### Step 7: Test Verification
+- Run the automated verification harness:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<FullClassName>"
+  ```
+- Verify that:
+  - Gate 1 (Compilation): SUCCESS.
+  - Gate 2 (Plugin Structure): SUCCESS.
+  - Gate 3 (Tests): The reproduction test now PASSES with 0 failures.
+  - Machine-readable report [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) is generated with status `"PASSED"`.
 
-### Why Pre-Debugging Search is Mandatory
-- Many bugs are recurring variants of platform edge cases (e.g. `SideEffectGuard: INVOKE_LATER` during intention preview, WSL virtual file path translation, or lexer lookahead starvation).
-- Reviewing past records provides verified root causes, avoiding wasted time re-discovering known platform subtleties.
+### Step 8: Bug Knowledge Base Record
+- Write a permanent record to `.ai/bugs/YYYY-MM-DD-<feature>-<title>.md` following the standard schema in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md):
+  1. Symptoms & Failure Behavior
+  2. Root Cause Analysis (citing code lines & compiler ground truth)
+  3. Investigation & Evaluated Approaches
+  4. Solution & Implementation
+  5. Verification & Tests Added
+  6. Prevention & Key Lessons Learned
+- Register the new record in the chronological table in [`.ai/bugs/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/README.md).
 
----
+### Step 9: Pattern Escalation Check
+- Inspect [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md):
+  - If 1st occurrence $\to$ Documented in bug record.
+  - If 2nd occurrence of similar mechanism $\to$ Register as *Emerging Pattern* in `recurring-patterns.md`.
+  - If $\ge 3$ occurrences $\to$ Escalate to a mandatory path rule in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/) or [`AGENTS.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md).
 
-## 4. Bug Record Standard Schema
+### Step 10: User Changelog Translation
+- Add a user-facing entry under `## [Unreleased]` -> `### Fixed` in [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md).
+- Strict Rule: Answer *"What changed for me?"*. Zero class names, method signatures, test counts, or internal AST jargon.
 
-Every resolved bug that alters production behavior must be recorded in `.ai/bugs/YYYY-MM-DD-<feature>-<title>.md` matching this exact schema:
+### Step 11: Atomic Commits on Task Branch
+- Stage and commit changes atomically:
+  ```bash
+  git add src/ && git commit -m "fix(<subsystem>): <concise descriptive message>"
+  git add .ai/bugs/ && git commit -m "docs(bugs): record <defect> root cause and resolution in knowledge base"
+  git add CHANGELOG.md && git commit -m "docs(changelog): note <defect> fix in unreleased notes"
+  ```
 
-```markdown
-# Bug Record: <Title>
+### Step 12: Merge to Master & Post-Merge Verification
+- Switch to master and merge:
+  ```bash
+  git checkout master
+  git merge --ff-only ai/fix-<defect-slug>
+  ```
+- Re-run verification directly on `master`:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -Quick
+  ```
 
-- **Date**: YYYY-MM-DD
-- **Subsystem**: [Lexer / Parser / PSI / Resolver / Semantic / Completion / Inspections / Annotator / Run / LiveTemplates]
-- **Affected Files**:
-  - `src/main/java/.../AffectedClass.java`
-- **Related ADRs**: ADR-XXX (or None)
-- **Severity**: [Critical / Major / Moderate / Minor]
-
----
-
-## 1. Symptoms & Failure Behavior
-- Concise description of the observed defect or error message.
-- Step-by-step reproduction sequence in IntelliJ IDEA.
-
-## 2. Root Cause Analysis
-- Detailed technical explanation of why the bug occurred.
-- Citation of code lines, AST structures, threading constraints, or compiler differences (`compact/compiler/`).
-
-## 3. Investigation & Evaluated Approaches
-- What was investigated, what theories were tested, and what failed or was discarded (and why).
-
-## 4. Solution & Implementation
-- Exact architectural and code solution applied using modern Java 25.
-- Key invariants preserved (threading, namespace separation, null-safety).
-
-## 5. Verification & Tests Added
-- Tests created or updated in `src/test/` to reproduce and prevent regression.
-- Confirmation of `./gradlew test` execution and passing count.
-
-## 6. Prevention & Key Lessons Learned
-- Concrete guidelines for future AI agents and developers to prevent similar defects from occurring.
-```
-
----
-
-## 5. User Changelog Translation Rules for Bug Fixes
-
-When updating [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) under `## [Unreleased]` -> `### Fixed`:
-
-| Forbidden Internal Detail                                                   | Required User-Facing Phrasing                                                                        |
-|:----------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------|
-| `Fixed aggressive isExportPreceding check in CompactCompletionContributor.` | `Fixed issue where data type completion was incorrectly suppressed in exported declaration headers.` |
-| `Fixed SideEffectGuard: INVOKE_LATER in CompactSwitchCompilerQuickFix.`     | `Fixed editor crash when previewing compiler switch quick-fixes and intention actions.`              |
-| `Fixed WSL /mnt/ path translation in CompactExternalAnnotator.`             | `Fixed external compiler diagnostic range mapping when running under WSL on Windows.`                |
-| `Fixed missing null check on getFirstChild() in CompactResolveUtil.`        | `Fixed intermittent IDE freeze when resolving symbols in incomplete contract files.`                 |
+### Step 13: Cleanup & Final Artifact Emission
+- Delete temporary task branch:
+  ```bash
+  git branch -d ai/fix-<defect-slug>
+  ```
+- Verify `git status` is clean on `master`.
+- Emit the Final Artifact Completion Table.
 
 ---
 
-## 6. Final Bug Completion Checklist
+## 3. Mandatory Gates & Evidence Requirements
 
-```text
-BUG COMPLETION CHECKLIST:
-[ ] 1. Workspace status inspected and in-workspace task branch created (ai/fix-<defect-slug>)?
-[ ] 2. Prior bug records searched in .ai/bugs/ before debugging?
-[ ] 3. Failing automated test created in src/test/ reproducing the defect?
-[ ] 4. Root cause verified against compiler ground truth or reference plugins?
-[ ] 5. Modern Java 25 implementation with strict threading and PSI invariants?
-[ ] 6. get_file_problems and lint_files report 0 errors, 0 warnings, 0 weak warnings, 0 grammar errors?
-[ ] 7. Full test suite passes 100% (./gradlew test)?
-[ ] 8. Bug record written to .ai/bugs/YYYY-MM-DD-...md matching standard schema?
-[ ] 9. .ai/bugs/README.md index table updated with link to new record?
-[ ] 10. CHANGELOG.md updated with clean, minimal user note (zero technical noise)?
-[ ] 11. Atomic commits created on task branch (fix(...), docs(bugs), docs(changelog))?
-[ ] 12. Task branch merged to master, master verified, and pushed to remote (git push origin master)?
-[ ] 13. Temporary task branch deleted and Final Artifact Completion Table included in response?
-```
+An AI agent **CANNOT** declare completion without producing the following verifiable evidence:
+
+| Gate | Requirement | Mandatory Evidence in Agent Output |
+|:---|:---|:---|
+| **Gate 0: Isolation** | Branch created from master | Output of `git rev-parse --abbrev-ref HEAD` showing `ai/fix-...` |
+| **Gate 1: Pre-Debug Search** | Query executed in `.ai/bugs/` | Explicit statement of search query and citing matching bug ID or confirming `0 prior matching records found` |
+| **Gate 2: Reproduction** | Failing test executed before fix | Exact test method name and copy of failure assertion output |
+| **Gate 3: Code & Threading** | Java 25 & path-scoped rules | Summary of records, sequenced collections, and `ReadAction`/`WriteCommandAction` guards used |
+| **Gate 4: MCP Inspection** | 0 errors, 0 warnings | Tool output of `get_file_problems` (`errors: []`) and `lint_files` (`items: []`) |
+| **Gate 5: Verification Harness** | All gates pass | Contents of [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) (`overall_status: "PASSED"`) |
+| **Gate 6: Bug Record** | File created & indexed | Path to `.ai/bugs/YYYY-MM-DD-...md` and updated line in `.ai/bugs/README.md` |
+| **Gate 7: Changelog** | User-facing entry | Quoted user note under `## [Unreleased]` in `CHANGELOG.md` |
+| **Gate 8: Post-Merge Check** | Master verified | Exit code 0 from post-merge verification run on `master` |
+
+---
+
+## 4. Failure Conditions
+
+The workflow **MUST HALT IMMEDIATELY** if any of the following occur:
+1. `git status` on `master` has dirty, uncommitted user changes before starting.
+2. The reproduction test cannot be made to fail (indicates invalid reproduction assumptions).
+3. `get_file_problems` or `lint_files` returns unresolved compiler errors or warnings after editing.
+4. `scripts/verify-patch.ps1` returns exit code 1 or fails any gate.
+5. Merge conflict occurs when merging to `master`.
+
+---
+
+## 5. Recovery Rules
+
+- **If Reproduction Test Passes Unexpectedly**: Stop. Re-read bug report, inspect compiler ground truth, and adjust the test input to reflect the exact reported AST or runtime conditions.
+- **If MCP Inspection Flags Warnings**: Do NOT ignore them. Apply the requested Java 25 idiom or fix the warning immediately before running test suites.
+- **If `verify-patch.ps1` Fails**: Inspect `build/verification-report.json`, fix the failing test or compilation error, and re-run until status is `"PASSED"`.
+- **If Merge to Master Fails**: Do NOT force merge. Check git log, resolve branch divergence cleanly, or abort merge and report blocker.
+
+---
+
+## 6. Completion Conditions
+
+The task is complete **ONLY** when:
+1. Production code is fixed with 0 compiler warnings and 0 inspection items.
+2. The reproduction test passes reliably.
+3. Bug record is written and indexed in `.ai/bugs/`.
+4. `CHANGELOG.md` is updated.
+5. All changes are committed and fast-forward merged to `master`.
+6. `master` branch verification passes.
+7. Temporary task branch is deleted.
+8. The Final Artifact Completion Table is presented with every artifact accounted for.

@@ -38,14 +38,29 @@ This document maps all automated test suites across the `dev.verloren.midnight` 
 
 ## 3. Fast Targeted Test Execution Guide
 
-To quickly verify a patch without running the entire 500+ test suite:
-```bash
+To quickly verify a patch without running the entire test suite:
+```powershell
 # Verify a single test class
-.\gradlew.bat test --tests dev.verloren.midnight.CompactBundleTest
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern dev.verloren.midnight.CompactBundleTest
 
 # Verify all parser and lexer changes
-.\gradlew.bat test --tests dev.verloren.midnight.parser.*
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "dev.verloren.midnight.parser.*"
 
 # Full suite pre-merge verification
-.\gradlew.bat test
+powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -AllTests
 ```
+
+---
+
+## 4. Static Analysis & Qodana SARIF Integration
+
+Qodana static code inspection is configured via [`qodana.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/qodana.yaml) targeting `projectJDK: "25"` with `profile: qodana.starter`.
+
+### SARIF Ingestion Protocol
+When Qodana analysis runs (locally via Qodana CLI or in periodic static analysis workflows):
+1. **SARIF Output**: Results are written to `build/reports/qodana/qodana.sarif.json`.
+2. **Knowledge Mapping**:
+   - High-severity security issues (taint analysis, path traversal) $\to$ Escalate directly to [`.ai/security/threat-boundaries.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/security/threat-boundaries.md) or [`.ai/security/vulnerability-rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/security/vulnerability-rules.md).
+   - Deprecated IntelliJ platform API usages $\to$ Log into [`.ai/meta/deprecation-register.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/meta/deprecation-register.md).
+   - Threading / `ReadAction` warnings $\to$ Add to [`.agents/rules/threading.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/threading.rules.md).
+3. **Single Authoritative Record**: Do not duplicate individual SARIF findings across multiple `.ai/` files. Update only the single authoritative file as defined by the mapping above.

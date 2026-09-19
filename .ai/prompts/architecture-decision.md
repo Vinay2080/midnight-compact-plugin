@@ -1,135 +1,142 @@
-# Custom AI Prompt: Architectural Decision Record (ADR) Creation & Evaluation Protocol
+# Executable Protocol: Architectural Decision Record (ADR) Creation & Evaluation
 
-This document defines the standardized prompt and execution playbook for analyzing architectural trade-offs, designing new subsystems, evaluating reference plugin implementations, and authoring Architectural Decision Records (ADRs) in `midnight-compact-plugin`.
+This document defines the mandatory, deterministic execution protocol for analyzing architectural trade-offs, designing new subsystems, evaluating reference plugin implementations, and authoring Architectural Decision Records (ADRs) in `midnight-compact-plugin`.
 
 ---
 
-## 1. Copy-Pasteable Master Prompt
+## 1. Preconditions
 
-When instructing an AI agent to design a subsystem or formalize an architectural decision, use the following prompt:
+Before authoring or modifying architectural records, the AI agent **MUST** verify:
+1. `git status` is clean on `master` (no unstaged or uncommitted user edits).
+2. Existing ADRs in [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/) have been reviewed to prevent duplicating or violating established designs (ADR-001 through ADR-034).
+3. The proposed architectural change is grounded in upstream Compact compiler sources (`compact/compiler/`) or IntelliJ Platform SDK standards.
+
+---
+
+## 2. Sequential Steps
+
+The agent must execute these 7 steps in exact order:
 
 ```text
-You are tasked with evaluating an architectural decision and authoring an Architectural Decision Record (ADR) in midnight-compact-plugin following the official ADR Protocol. Execute these steps sequentially with zero exceptions:
-
-1. WORKSPACE CONTEXT & PROBLEM FORMULATION:
-   - Check `git status` in the workspace root.
-   - For isolated authoring, switch to an in-workspace branch:
-     git checkout -b ai/adr-<slug>
-   - Identify the subsystem being designed or modified (e.g. Parser, Lexer, PSI, Resolver, Indexing, Completion, Linter, Run Configurations, Daemon).
-   - Formulate the architectural problem, scalability constraints, threading challenges, and IntelliJ Platform integration requirements.
-   - Review existing ADRs in `.ai/decisions/` to avoid contradicting established patterns or re-litigating settled decisions.
-
-2. GROUND TRUTH & REFERENCE PLUGIN CITATIONS:
-   - Upstream Compiler Ground Truth: Cite specific compiler sources (`compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`, `midnight-ledger.ss`) or official Compact specifications.
-   - Local Reference Plugin Benchmarks: Compare against proven patterns in local reference codebases:
-     * `intellij-elixir/`: Handwritten Lexer/Parser, `LexerBase`, PSI wrappers, element factory.
-     * `intellij-rust/`: Contextual completion scoping, `ExternalAnnotator`, cargo run configurations.
-     * `intellij-scala/`: Subsystem completion contributors, compiler daemon IPC, REPL.
-     * `Rplugin/`: Toolchain discovery, WSL path translation, project generators.
-
-3. OPTION ANALYSIS & TRADE-OFF EVALUATION:
-   - Evaluate at least 2–3 concrete implementation alternatives.
-   - Score each alternative against:
-     * Correctness and AST fidelity.
-     * Threading safety (ReadAction, cancellation, UI thread responsiveness).
-     * Performance and memory footprint (avoiding static PSI leaks, leveraging CachedValuesManager).
-     * Maintainability and alignment with modern Java 25 standards.
-
-4. AUTHOR THE ADR FILE:
-   - Determine the next sequential ADR number (e.g. `ADR-035`).
-   - Create `.ai/decisions/ADR-NNN-<subsystem>-<title>.md` matching the standard ADR schema:
-     * Status: Proposed / Accepted
-     * Date: YYYY-MM-DD
-     * Context & Problem Statement
-     * Decision Drivers & Invariants
-     * Evaluated Options & Trade-Offs
-     * Decision Outcome & Justification
-     * Compiler Ground Truth & Reference Repo Citations
-     * Implementation Map (files created/modified, PSI wrappers, tests)
-     * Scalability, Memory & Threading Impact
-
-5. REGISTER IN ADR MASTER INDEX:
-   - Update `.ai/decisions/README.md`:
-     * Add the new ADR to the master chronological table.
-     * Add the new ADR to the subsystem classification matrix.
-
-6. SYNCHRONIZE PROJECT DOCUMENTATION:
-   - If the decision modifies plugin architecture, update `.ai/context/architecture.md`.
-   - Update BOTH `architecture.adrs` and `architecture.decisions` dictionaries in `.ai/project-state.yaml`.
-   - Re-read all updated files using `client_view_file` to confirm formatting, links, and integrity.
-
-7. ATOMIC COMMIT, MERGE & PUSH TO REMOTE:
-   - Stage and commit the ADR, index, and architecture documentation:
-     git add .ai/decisions/ .ai/context/architecture.md .ai/project-state.yaml
-     git commit -m "docs(adr): add ADR-NNN <title> and synchronize architecture catalog"
-   - If operating on an in-workspace task branch (`ai/adr-<slug>`):
-     git checkout master
-     git merge ai/adr-<slug>
-     git branch -d ai/adr-<slug>
-   - Verify `git status` on master is clean.
-   - Push verified commit to remote:
-     git push origin master
-   - Present a concise ADR Summary in the final response.
+[Step 1: Workspace Isolation] ── Create branch ai/adr-<slug>
+        │
+        ▼
+[Step 2: Ground Truth Review] ─ Inspect compact/compiler/ & local reference plugins
+        │
+        ▼
+[Step 3: Option Trade-Offs] ─── Evaluate 2-3 alternatives (correctness, threading, memory)
+        │
+        ▼
+[Step 4: Author ADR File] ───── Create .ai/decisions/ADR-NNN-...md with standard schema
+        │
+        ▼
+[Step 5: Register in Index] ─── Update .ai/decisions/README.md (chronological & matrix)
+        │
+        ▼
+[Step 6: Sync State & Docs] ─── Update architecture.md & project-state.yaml
+        │
+        ▼
+[Step 7: Commit, Merge & Clean] Stage, commit docs(adr), merge to master, delete branch
 ```
+
+### Step 1: Workspace Isolation
+- Create and switch to a dedicated branch:
+  ```bash
+  git checkout -b ai/adr-<slug>
+  ```
+
+### Step 2: Ground Truth & Reference Plugin Benchmarks
+- Inspect upstream Compact compiler ground truth:
+  - `compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`, or `standard-library.compact`.
+- Benchmark against proven local reference plugin architectures:
+  - `intellij-elixir/`: Handwritten Lexer/Parser, `LexerBase`, PSI wrappers, element factory.
+  - `intellij-rust/`: Contextual completion scoping, `ExternalAnnotator`, cargo execution.
+  - `intellij-scala/`: Subsystem completion contributors, compiler daemon IPC, REPL.
+  - `Rplugin/`: Toolchain discovery, WSL path translation, project generators.
+
+### Step 3: Option Analysis & Trade-Off Evaluation
+- Evaluate at least 2–3 concrete implementation alternatives against:
+  - **AST Fidelity**: Golden syntax tree preservation and error recovery.
+  - **Threading Safety**: `ReadAction`, UI thread responsiveness, cancellation checks.
+  - **Memory & Lifecycle**: Prohibition of static PSI leaks, use of `CachedValuesManager`.
+  - **Java 25 Alignment**: Idiomatic records, sequenced collections, pattern matching.
+
+### Step 4: Author the ADR File
+- Determine next sequential ADR number (e.g. `ADR-035`).
+- Create `.ai/decisions/ADR-NNN-<subsystem>-<title>.md` matching the standard schema:
+  - Status: Proposed / Accepted
+  - Date: YYYY-MM-DD
+  - Context & Problem Statement
+  - Decision Drivers & Constraints
+  - Evaluated Options & Trade-Offs
+  - Decision Outcome & Justification
+  - Compiler Ground Truth & Reference Repo Citations
+  - Implementation Map
+  - Consequences & Trade-Offs
+
+### Step 5: Register in ADR Master Index
+- Update [`.ai/decisions/README.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/README.md):
+  - Add to the master chronological table.
+  - Add to the subsystem classification matrix.
+
+### Step 6: Synchronize Project Documentation
+- If modifying core architecture, update [`.ai/context/architecture.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md).
+- Update both `architecture.adrs` and `architecture.decisions` dictionaries in [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml).
+- Execute the anti-assumption re-read verification on all modified files.
+
+### Step 7: Atomic Commit, Merge to Master, & Cleanup
+- Stage and commit documentation:
+  ```bash
+  git add .ai/decisions/ .ai/context/architecture.md .ai/project-state.yaml
+  git commit -m "docs(adr): add ADR-NNN <title> and synchronize architecture catalog"
+  ```
+- Switch to master and merge:
+  ```bash
+  git checkout master
+  git merge --ff-only ai/adr-<slug>
+  ```
+- Delete temporary task branch:
+  ```bash
+  git branch -d ai/adr-<slug>
+  ```
+- Verify `git status` on master is clean.
 
 ---
 
-## 2. Standard ADR Schema
+## 3. Mandatory Gates & Evidence Requirements
 
-```markdown
-# ADR-NNN: <Title>
-
-- **Status**: Accepted
-- **Date**: YYYY-MM-DD
-- **Subsystem**: [Lexer / Parser / PSI / Resolve / Completion / Semantic / Annotator / Indexing / Run]
-- **Related ADRs**: ADR-XXX (or None)
-
----
-
-## 1. Context & Problem Statement
-- Describe the engineering problem, platform requirement, or language feature necessitating this architectural decision.
-
-## 2. Decision Drivers & Constraints
-- Platform threading rules (ReadAction, WriteCommandAction).
-- Compact compiler grammar rules and standard library specifications.
-- Memory constraints (no static PSI references) and caching requirements.
-
-## 3. Evaluated Options
-- **Option 1**: <Description, Pros, Cons>
-- **Option 2**: <Description, Pros, Cons>
-- **Option 3**: <Description, Pros, Cons>
-
-## 4. Decision Outcome
-- Selected option and detailed technical rationale.
-
-## 5. Compiler Ground Truth & Reference Plugin Citations
-- Upstream Compact compiler source lines.
-- Reference plugin files (`intellij-rust`, `intellij-elixir`, `intellij-scala`, `Rplugin`).
-
-## 6. Implementation Map
-- Files to create or modify.
-- Threading and lifecycle model.
-- Test suites required for validation.
-
-## 7. Consequences & Trade-Offs
-- Positive impacts.
-- Negative impacts or limitations.
-```
+| Gate | Requirement | Mandatory Evidence in Agent Output |
+|:---|:---|:---|
+| **Gate 0: Isolation** | Branch created | Branch name `ai/adr-...` |
+| **Gate 1: Ground Truth** | Compiler / plugin cited | Specific file paths and lines from `compact/compiler/` or reference plugins |
+| **Gate 2: Trade-Offs** | $\ge 2$ alternatives evaluated | Summary of pros and cons for each alternative |
+| **Gate 3: File Authoring** | Schema compliant ADR | Path to `.ai/decisions/ADR-NNN-...md` |
+| **Gate 4: Index Registration** | Master index updated | Diff or updated line in `.ai/decisions/README.md` |
+| **Gate 5: State Synchronization** | Machine state updated | Entry in `.ai/project-state.yaml` and `architecture.md` |
+| **Gate 6: Re-Read Verification** | Anti-assumption check | Explicit confirmation that all updated files were re-read and validated |
 
 ---
 
-## 3. ADR Authoring Checklist
+## 4. Failure Conditions
 
-```text
-ADR COMPLETION CHECKLIST:
-[ ] 1. Workspace status inspected & in-workspace branch established if isolating?
-[ ] 2. Architectural problem formulated with threading and PSI constraints?
-[ ] 3. Compiler ground truth & reference plugins cited?
-[ ] 4. At least 2–3 alternatives evaluated with pros and cons?
-[ ] 5. ADR file authored in .ai/decisions/ADR-NNN-...md?
-[ ] 6. Registered in .ai/decisions/README.md chronological table & subsystem matrix?
-[ ] 7. Synchronized architecture.md and .ai/project-state.yaml (both adrs & decisions)?
-[ ] 8. Anti-assumption re-read executed on all modified markdown files?
-[ ] 9. Atomic commit created: docs(adr): add ADR-NNN <title>?
-[ ] 10. Merged to master (if branched) and pushed to remote (git push origin master)?
-```
+The workflow **MUST HALT** if:
+1. The proposed decision violates any of the Immutable Invariants in `AGENTS.md` (e.g. replacing handwritten parser with Grammar-Kit, introducing static PSI references).
+2. The ADR modifies or overwrites an existing accepted ADR in place rather than superseding it.
+3. Git working tree is dirty before branch creation.
+
+---
+
+## 5. Recovery Rules
+
+- **If an Invariant is Violated**: Redesign the option to preserve the invariant (e.g. keep handwritten parser structure, use weak references or `CachedValuesManager`).
+- **If an Existing ADR Conflicts**: Mark the new ADR as `Supersedes ADR-XXX` and update the status of the superseded ADR to `Superseded by ADR-NNN`.
+
+---
+
+## 6. Completion Conditions
+
+The task is complete **ONLY** when:
+1. The ADR is authored and conforms to the standard schema.
+2. Both `.ai/decisions/README.md` tables are updated.
+3. `project-state.yaml` and `architecture.md` are synchronized.
+4. All files are committed, merged cleanly to `master`, and task branch deleted.

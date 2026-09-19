@@ -5,18 +5,27 @@
     Runs compilation, plugin structure verification, and unit tests.
     Outputs machine-readable JSON report at build/verification-report.json.
 .PARAMETER Quick
-    Runs compilation and structure verification, skipping long-running test suites.
+    Runs compilation and structure verification, skipping test execution.
+.PARAMETER AllTests
+    Runs the complete test suite (./gradlew test).
 .PARAMETER TestPattern
     Specifies a specific test class or pattern to run (e.g. dev.verloren.midnight.CompactBundleTest).
+.PARAMETER StrictBranch
+    Fails Gate 0 if running directly on the master branch.
 #>
 param(
     [switch]$Quick,
-    [string]$TestPattern = ""
+    [switch]$AllTests,
+    [string]$TestPattern = "",
+    [switch]$StrictBranch
 )
 
 $ErrorActionPreference = "Continue"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
+
+# Cross-platform Gradle wrapper detection
+$gradleCmd = if ($IsWindows -or ($env:OS -like "*Windows*")) { ".\gradlew.bat" } else { "./gradlew" }
 
 $report = @{
     timestamp = (Get-Date).ToString("o")
@@ -26,7 +35,7 @@ $report = @{
         git_boundary = @{ passed = $false; detail = "" }
         compilation = @{ passed = $false; detail = "" }
         plugin_structure = @{ passed = $false; detail = "" }
-        tests = @{ passed = $false; detail = "" }
+        tests = @{ passed = $false; detail = ""; test_target = "" }
     }
     overall_status = "FAILED"
 }
@@ -41,19 +50,26 @@ Write-Host "========================================================`n" -Foregro
 Write-Host "[Gate 0] Checking Git Isolation & Modified Files..." -ForegroundColor Yellow
 $currentBranch = git rev-parse --abbrev-ref HEAD
 if ($currentBranch -eq "master") {
-    Write-Host "  WARNING: Running verification directly on 'master'. Dedicated task branch recommended." -ForegroundColor Magenta
-    $report.gates.git_boundary.detail = "On master branch (caution recommended)"
+    if ($StrictBranch) {
+        Write-Host "  FAILED: Running directly on 'master' with -StrictBranch active." -ForegroundColor Red
+        $report.gates.git_boundary.passed = $false
+        $report.gates.git_boundary.detail = "Rejected: running directly on master branch"
+    } else {
+        Write-Host "  WARNING: Running verification directly on 'master'. Dedicated task branch recommended." -ForegroundColor Magenta
+        $report.gates.git_boundary.passed = $true
+        $report.gates.git_boundary.detail = "On master branch (warning issued)"
+    }
 } else {
     Write-Host "  Branch: $currentBranch (Isolated Task Branch)" -ForegroundColor Green
+    $report.gates.git_boundary.passed = $true
     $report.gates.git_boundary.detail = "Branch $currentBranch verified"
 }
-$report.gates.git_boundary.passed = $true
 
 # ----------------------------------------------------
 # Gate 1: Compilation Check (Java 25)
 # ----------------------------------------------------
 Write-Host "`n[Gate 1] Verifying Compilation (Java 25)..." -ForegroundColor Yellow
-$compileOutput = .\gradlew.bat compileJava compileTestJava --console=plain 2>&1
+$compileOutput = & $gradleCmd compileJava compileTestJava --console=plain 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "  Compilation: SUCCESS" -ForegroundColor Green
     $report.gates.compilation.passed = $true
@@ -69,7 +85,7 @@ if ($LASTEXITCODE -eq 0) {
 # ----------------------------------------------------
 if ($report.gates.compilation.passed) {
     Write-Host "`n[Gate 2] Verifying Plugin Structure..." -ForegroundColor Yellow
-    $structOutput = .\gradlew.bat verifyPluginStructure --console=plain 2>&1
+    $structOutput = & $gradleCmd verifyPluginStructure --console=plain 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Plugin Structure: SUCCESS" -ForegroundColor Green
         $report.gates.plugin_structure.passed = $true
@@ -89,17 +105,23 @@ if ($report.gates.compilation.passed) {
 if ($report.gates.compilation.passed -and -not $Quick) {
     Write-Host "`n[Gate 3] Running Automated Tests..." -ForegroundColor Yellow
     $gradleArgs = @("test", "--console=plain")
-    if ($TestPattern -ne "") {
+    
+    if ($AllTests) {
+        Write-Host "  Running complete test suite (all tests)..." -ForegroundColor Cyan
+        $report.gates.tests.test_target = "ALL"
+    } elseif ($TestPattern -ne "") {
         $gradleArgs += "--tests"
         $gradleArgs += $TestPattern
         Write-Host "  Running targeted test: $TestPattern" -ForegroundColor Cyan
+        $report.gates.tests.test_target = $TestPattern
     } else {
         Write-Host "  Running quick unit smoke test (CompactBundleTest)..." -ForegroundColor Cyan
         $gradleArgs += "--tests"
         $gradleArgs += "dev.verloren.midnight.CompactBundleTest"
+        $report.gates.tests.test_target = "CompactBundleTest"
     }
 
-    $testOutput = .\gradlew.bat @gradleArgs 2>&1
+    $testOutput = & $gradleCmd @gradleArgs 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "  Tests: SUCCESS" -ForegroundColor Green
         $report.gates.tests.passed = $true
@@ -113,6 +135,7 @@ if ($report.gates.compilation.passed -and -not $Quick) {
     Write-Host "`n[Gate 3] Skipped (Quick mode active)." -ForegroundColor Gray
     $report.gates.tests.passed = $true
     $report.gates.tests.detail = "Skipped via -Quick flag"
+    $report.gates.tests.test_target = "NONE (Quick)"
 }
 
 # ----------------------------------------------------
@@ -121,7 +144,7 @@ if ($report.gates.compilation.passed -and -not $Quick) {
 $allPassed = $report.gates.git_boundary.passed -and 
              $report.gates.compilation.passed -and 
              $report.gates.plugin_structure.passed -and 
-             ($report.gates.tests.passed -or $Quick)
+             $report.gates.tests.passed
 
 if ($allPassed) {
     $report.overall_status = "PASSED"

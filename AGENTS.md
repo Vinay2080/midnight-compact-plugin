@@ -8,46 +8,46 @@
 refactorings):
 > 1. **VERIFY ISOLATION**:
 >    - Check `git status` on `master`. Never overwrite, stash destructively, or discard existing user work.
-    >    - Create and enter a dedicated worktree on a dedicated branch (`ai/<task-slug>`):
-    >      - **Standard Worktree**: `git worktree add -b ai/<task-slug> ../midnight-plugin-wt-<task-slug> master`
-        >      - **Sandbox / Tool-Restricted Worktree**: When operating inside environments where file tools are
+>    - Create and enter a dedicated worktree on a dedicated branch (`ai/<task-slug>`):
+>      - **Standard Worktree**: `git worktree add -b ai/<task-slug> ../midnight-plugin-wt-<task-slug> master`
+>      - **Sandbox / Tool-Restricted Worktree**: When operating inside environments where file tools are
                  restricted to the workspace root, use the gitignored worktree directory:
                  `git worktree add -b ai/<task-slug> .worktrees/<task-slug> master` (or switch to dedicated branch
                  `git checkout -b ai/<task-slug>`).
 > 2. **STRICT ENFORCEMENT OF ALL CONSTRAINTS**:
-     > Every rule in this document is **MANDATORY, CONTINUOUS, AND NON-NEGOTIABLE**:
+> Every rule in this document is **MANDATORY, CONTINUOUS, AND NON-NEGOTIABLE**:
 >    - **Zero Direct-to-Master Edits**: All implementation, tests, docs, and `.ai/` updates must occur on the task
        branch before merging to `master`.
-    >    - **Threading Strictness**: PSI reads strictly within `ReadAction`; PSI mutations strictly on EDT in
+>    - **Threading Strictness**: PSI reads strictly within `ReadAction`; PSI mutations strictly on EDT in
            `WriteCommandAction`; zero `process.waitFor()` on EDT.
-    >    - **PSI / AST Robustness**: Guard all PSI accesses against `null` and `PsiErrorElement`. Parser loops must
+>    - **PSI / AST Robustness**: Guard all PSI accesses against `null` and `PsiErrorElement`. Parser loops must
            advance tokens on every step to prevent UI thread freezes.
-    >    - **Dual Namespace Separation**: Never collide `CompactResolveUtil.Namespace.VALUE` and
+>    - **Dual Namespace Separation**: Never collide `CompactResolveUtil.Namespace.VALUE` and
            `CompactResolveUtil.Namespace.TYPE`.
-    >    - **Comprehensive Modern Java up to Java 25**: Mandate the full spectrum of modern Java features (Java 14
+>    - **Comprehensive Modern Java up to Java 25**: Mandate the full spectrum of modern Java features (Java 14
            through Java 25: records, sequenced collections with `getFirst()`/`getLast()`, pattern matching for `switch`
            and `instanceof`, record deconstruction patterns, unnamed patterns `_`, sealed hierarchies, text blocks,
            modern streams, and immutable collection factories). Old pre-modern Java idioms are strictly forbidden.
-    >    - **Mandatory Strict Inspection After Every Edit & Before Every Push**: After EVERY file edit and prior to
+>    - **Mandatory Strict Inspection After Every Edit & Before Every Push**: After EVERY file edit and prior to
            pushing code/tags, run IntelliJ inspections (`get_file_problems` and `lint_files` via `execute_tool`).
            Resolve all reported problems: errors, warnings, weak warnings, grammar/spelling errors, and language-level
            change suggestions (e.g. Java 25 modernization, redundant casts/types), looping continuously until zero
            remain.
-    >    - **Continuous Fix Loop**: Before doing work, during edits, after edits, and before release: whenever an issue
+>    - **Continuous Fix Loop**: Before doing work, during edits, after edits, and before release: whenever an issue
            is flagged or code is touched, fix it immediately. Never leave warnings, weak warnings, or suggestions
            unresolved.
-    >    - **Compiler Ground Truth**: Never invent syntax or heuristics; verify against `compact/compiler/` and local
+>    - **Compiler Ground Truth**: Never invent syntax or heuristics; verify against `compact/compiler/` and local
            reference plugins (`intellij-rust`, `intellij-elixir`, `intellij-scala`, `Rplugin`).
-    >    - **Multi-Tier Testing**: Zero failures and zero compiler warnings on `./gradlew test`.
-    >    - **Anti-Assumption Re-Read**: Always re-read edited files with `client_view_file` to verify edits before
+>    - **Multi-Tier Testing**: Zero failures and zero compiler warnings on `./gradlew test`.
+>    - **Anti-Assumption Re-Read**: Always re-read edited files with `client_view_file` to verify edits before
            claiming task completion.
-    >    - **Bug Knowledge Base**: Every concrete resolved defect MUST be documented in `.ai/bugs/` and indexed in
+>    - **Bug Knowledge Base**: Every concrete resolved defect MUST be documented in `.ai/bugs/` and indexed in
            `.ai/bugs/README.md`.
-    >    - **User-Facing Changelog Hygiene vs. AI/Developer Knowledge**: [
+>    - **User-Facing Changelog Hygiene vs. AI/Developer Knowledge**: [
            `CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md) is written strictly for
            plugin users and must remain clean and minimal; internal engineering details, AST mechanics, and compiler
            line citations belong exclusively in `.ai/`, git commits, and code comments.
-    >    - **Semantic Tagging & Push Protocol**: Release tags (`vX.Y.Z`) must strictly reflect the nature of changes
+>    - **Semantic Tagging & Push Protocol**: Release tags (`vX.Y.Z`) must strictly reflect the nature of changes
            (Major, Minor, Patch). Never push code or tags without executing the release checklist and inspection gate
            defined in Section 12 and [
            `.ai/prompts/push-and-release.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/push-and-release.md).
@@ -584,9 +584,19 @@ Once inspections pass and `CHANGELOG.md` is verified:
 
 ---
 
-## 13. System Governance, MCP Security & Protected Artifacts Guard
+## 13. System Governance, Execution Hierarchy & Protected Artifacts Guard
 
-### 13.1 Path-Scoped Subsystem Rules
+### 13.1 Execution Hierarchy & Rule Precedence
+When executing tasks in this repository, rules and workflows apply according to this strict, unambiguous hierarchy:
+1. **Global Engineering Rules & Invariants**: [`AGENTS.md`](AGENTS.md) (invariants, threading model, strict inspection bar, non-pollution of master).
+2. **Path-Scoped Subsystem Rules**: [`.agents/rules/`](.agents/rules/) (contract rules enforced for specific glob patterns).
+3. **General Development Lifecycle**: [`.ai/workflow.md`](.ai/workflow.md) (13-step lifecycle, documentation decision rules, completion gates).
+4. **Task-Specific Execution Playbooks**: [`.ai/prompts/`](.ai/prompts/) routed via [`.ai/prompts/README.md`](.ai/prompts/README.md) (10 task classes: BUG, FEATURE, REFACTOR, ARCHITECTURE, DEPENDENCY, TESTING, SECURITY, RELEASE, DOCUMENTATION, MAINTENANCE).
+5. **Deterministic Multi-Gate Verification**: [`scripts/verify-patch.ps1`](scripts/verify-patch.ps1) emitting machine-readable [`build/verification-report.json`](build/verification-report.json).
+6. **Living Knowledge Loops**: Updates to [`.ai/bugs/`](.ai/bugs/), [`.ai/decisions/`](.ai/decisions/), [`.ai/context/`](.ai/context/) triggered by development events.
+7. **Protected Artifacts Governance**: Immutable contracts requiring explicit human approval to modify.
+
+### 13.2 Path-Scoped Subsystem Rules
 In addition to the global invariants in this document, agents MUST consult and adhere to path-scoped rule contracts located in [`.agents/rules/`](.agents/rules/):
 - **PSI & Parser**: [`.agents/rules/psi-parser.rules.md`](.agents/rules/psi-parser.rules.md) (token advancement, incomplete code tolerance, namespace separation)
 - **Threading & Memory**: [`.agents/rules/threading.rules.md`](.agents/rules/threading.rules.md) (ReadAction, WriteCommandAction, static PSI prohibition)
@@ -594,7 +604,7 @@ In addition to the global invariants in this document, agents MUST consult and a
 - **Inspections & Annotators**: [`.agents/rules/inspections-annotators.rules.md`](.agents/rules/inspections-annotators.rules.md) (SideEffectGuard in previews, 3-phase annotator)
 - **Toolchain & WSL**: [`.agents/rules/toolchain-wsl.rules.md`](.agents/rules/toolchain-wsl.rules.md) (Windows `compact.exe` filter, WSL path translation)
 
-### 13.2 Living Operational & Architectural Knowledge Subsystems
+### 13.3 Living Operational & Architectural Knowledge Subsystems
 - **Bug Escalation & Recurring Patterns**: [`.ai/bugs/recurring-patterns.md`](.ai/bugs/recurring-patterns.md) (Tracks chronic anti-patterns across incidents)
 - **Test Inventory & Execution Tiers**: [`.ai/testing/test-inventory.md`](.ai/testing/test-inventory.md)
 - **Flakiness Register & Quarantine Log**: [`.ai/testing/flakiness-log.md`](.ai/testing/flakiness-log.md)
@@ -604,7 +614,7 @@ In addition to the global invariants in this document, agents MUST consult and a
 - **Architecture Drift Ledger**: [`.ai/meta/drift-audit-ledger.md`](.ai/meta/drift-audit-ledger.md)
 - **Platform Deprecation Register**: [`.ai/meta/deprecation-register.md`](.ai/meta/deprecation-register.md)
 
-### 13.3 Automated Multi-Gate Verification Runner
+### 13.4 Automated Multi-Gate Verification Runner
 Local and pre-commit verification can be run via the PowerShell automation script:
 ```powershell
 # Fast compilation and plugin structure check
@@ -615,11 +625,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern
 ```
 Outputs machine-readable JSON status at `build/verification-report.json`.
 
-### 13.4 Tool Execution Gateways & Model Routing
+### 13.5 Tool Execution Gateways & Model Routing
 - **MCP Tool Manifest & Scopes**: [`.agents/config/mcp-gateways.json`](.agents/config/mcp-gateways.json)
 - **Asymmetric Local Model Routing**: [`.agents/config/model-routing.yaml`](.agents/config/model-routing.yaml)
 
-### 13.5 Immutable Protected Artifacts Guard
+### 13.6 Immutable Protected Artifacts Guard
 The following files and contracts are **PROTECTED ARTIFACTS**. AI agents are **STRICTLY PROHIBITED** from automatically modifying, deleting, or weakening them without explicit user consent:
 1. **Core Architectural Invariants** in [`AGENTS.md`](AGENTS.md) Section 3 and Section 6.
 2. **Accepted Architectural Decision Records** in [`.ai/decisions/`](.ai/decisions/) (`ADR-001` through `ADR-034`). ADRs can be superseded by new ADRs, never edited retrospectively.
