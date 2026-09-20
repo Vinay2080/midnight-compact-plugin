@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation, Standard Library Import Navigation & Documentation, Automatic Quote Pairing & Caret Placement, Prioritized Installed Compiler Suggestions)
+Last Updated: September 2026 (v1.3.5 / Generic Struct Type Resolution & Field Substitution, Typed Generic Either Helper Completions, Smart Struct Literal Completions, Architecture Guardrails & Modularity)
 
 ---
 
@@ -10,6 +10,25 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
+- **Generic Struct Field Resolution & Type Substitution (v1.3.5)**:
+  - `CompactTypeInferenceUtil`: Enhanced with structural type parameter substitution across generic and parameterized struct types (`CompactParameterizedType`).
+  - `CompactMemberExprImpl` & `CompactStructFieldReference`: Resolves generic struct fields (such as `is_left`, `left`, `right` for `Either<Bytes<32>, ContractAddress>`) and substitutes generic type variables with concrete instantiated type arguments.
+  - `CompactStructLiteralExprImpl` & `CompactCallExprImpl`: Type checks struct literal fields and generic circuit invocations against expected and substituted parameter types without false-positive type mismatches.
+- **Member Autocompletion for Generic Struct Variables (v1.3.5)**:
+  - `CompactCompletionContributor`: Automatically suggests struct members (`target.<caret>`) for parameterized struct instances, dynamically deriving field names and types from substituted generic types.
+- **Smart Typed & Generic Struct Literal Completions (v1.3.5)**:
+  - `CompactCompletionContributor`: Detects contextual expected types (assignments, circuit returns, call arguments) and offers smart typed struct literal completions (`Either<T1, T2> { is_left: true, left: ..., right: default<T2> }`).
+  - `CompactEitherInsertHandler`: Interactive multi-tab live template across type arguments (`$L$`, `$R$`) and field values (`is_left: $IS_LEFT$`, `left: $LEFT$`, `right: $RIGHT$`).
+  - Bracket-aware type argument parsing and automatic type inferencing for `default<Type>` expressions.
+- **Typed Generic Constructor Helper Completions (v1.3.5)**:
+  - `CompactEitherHelperInsertHandler`: Offers `right<L, R>(...)` and `left<L, R>(...)` constructor helper completions when returning or assigning to `Either<L, R>` types, automatically inferring and populating concrete type arguments, positioning the caret within parentheses, and registering tab-out scopes.
+  - Contextual `default<Type>` completion with angle brackets, type parameter assistance, and smart type inference in expression contexts (`CompactParenthesesInsertHandler`).
+  - Contextual prioritization for `true` and `false` boolean literals in condition contexts (`if (...)`, `assert(...)`, `is_left:` fields).
+- **Architecture, Modularity & Generalization Guardrails (v1.3.5)**:
+  - Codified architecture guardrails in `.agents/rules/architecture.rules.md` enforcing strict layer hierarchy (`[UI]` -> `[Resolution]` -> `[Type Engine]` -> `[PSI]`), the Rule of Generalization (anti-hardcoding invariant), mandatory User-Defined Mirror testing for standard library features, class size budget ($\le 400$ lines), and single source of truth for types.
+  - `CompactArchitectureTest`: Automated architectural tests verifying package dependency rules, cycle prevention, and class budget limits.
+- **Create File Action Formatting Guard (v1.3.5)**:
+  - `CompactCreateFileAction`: Wrapped template post-creation formatting in `WriteCommandAction` to prevent `IncorrectOperationException`. Verified by `CompactCreateFileActionTest`.
 - **Compiler Tool Window Selection Synchronization (v1.3.4)**:
   - `CompactCompilerPanel`: Synchronizes active compiler version card selection with `MidnightProjectSettings` and active editor files.
   - Updates selection highlights cleanly when project settings change or when switching files without triggering unwanted background compilation tasks or causing UI freezes.
@@ -62,7 +81,12 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
   - Built-in type sizing completions: `Uint` suggests `8`, `16`, `32`, `64`, `128`, `256`; `Bytes` suggests `32`; `Opaque` inserts `<\"\">`.
   - Concurrency & live template coordination: schedules caret repositioning via `ApplicationManager.getApplication().invokeLater(...)` when an active `TemplateState` is present, preventing premature live template completion from ejecting the caret.
 - **Code Completion & Comprehensive Export System (v1.3.0 / ADR-019, ADR-026, ADR-028)**:
-  - Contextual classification in `CompactCompletionContext`:\n    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`). Prohibits invalid top-level `export const` per upstream compiler specification (ADR-028).\n    - `Kind.AFTER_SEALED`: Suggests `ledger`.\n    - `Kind.AFTER_PURE`: Suggests `circuit`.\n    - `Kind.AFTER_NEW`: Suggests `type`.\n    - `Kind.NONE` for comment and docstring contexts (`isComment`).
+  - Contextual classification in `CompactCompletionContext`:
+    - `Kind.AFTER_EXPORT`: Disallows invalid file headers (`pragma`, `import`, `include`, `export`) and provides all exportable constructs (`circuit`, `ledger`, `struct`, `enum`, `type`, `module`, `contract`, `witness`), modifiers (`pure`, `sealed`, `new`), and selection export (`{`). Prohibits invalid top-level `export const` per upstream compiler specification (ADR-028).
+    - `Kind.AFTER_SEALED`: Suggests `ledger`.
+    - `Kind.AFTER_PURE`: Suggests `circuit`.
+    - `Kind.AFTER_NEW`: Suggests `type`.
+    - `Kind.NONE` for comment and docstring contexts (`isComment`).
   - Top-level declaration completion offering both bare and exported variants with `CompactDeclarationInsertHandler` interactive live template scaffolding.
   - `CompactLedgerInsertHandler`: Interactive live template tab-stops (`$NAME$`, `$TYPE$`), automatic `export ` prefix injection, and non-destructive lookahead preservation.
   - **Comment Completion Suppression (v1.3.0)**:
@@ -129,17 +153,17 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **697 passing tests** (0 failures, 0 skipped, 100% success rate)
-- **Active Test Suites**: **65 test classes**
-- **Execution Time**: ~2m 30s via `./gradlew test`
+- **Total Tests**: **721 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Active Test Suites**: **67 test classes**
+- **Execution Time**: ~2m 40s via `./gradlew test`
 
 ### Test Suite Breakdown
 
 | Subsystem / Test Class | Test Count | Status |
 | :--- | :--- | :--- |
-| `dev.verloren.midnight.inspection.CompactInspectionTest` | 99 | Passed |
-| `dev.verloren.midnight.completion.CompactCompletionTest` | 80 | Passed |
-| `dev.verloren.midnight.formatter.CompactFormatterTest` | 39 | Passed |
+| `dev.verloren.midnight.inspection.CompactInspectionTest` | 100 | Passed |
+| `dev.verloren.midnight.completion.CompactCompletionTest` | 95 | Passed |
+| `dev.verloren.midnight.formatter.CompactFormatterTest` | 40 | Passed |
 | `dev.verloren.midnight.editor.CompactDelimiterTypingTest` | 30 | Passed |
 | `dev.verloren.midnight.editor.CompactAngleBraceTypingTest` | 24 | Passed |
 | `dev.verloren.midnight.documentation.CompactDocumentationTest` | 22 | Passed |
@@ -159,50 +183,52 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 | `dev.verloren.midnight.findUsages.CompactFindUsagesTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTemplateTriggerTest` | 10 | Passed |
+| `dev.verloren.midnight.structure.CompactStructureViewTest` | 9 | Passed |
+| `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | 9 | Passed |
 | `dev.verloren.midnight.reference.CompactReferenceTest` | 9 | Passed |
 | `dev.verloren.midnight.editor.CompactDocCommentEnterTest` | 9 | Passed |
-| `dev.verloren.midnight.stdlib.CompactStandardLibraryTest` | 9 | Passed |
-| `dev.verloren.midnight.structure.CompactStructureViewTest` | 9 | Passed |
 | `dev.verloren.midnight.refactoring.CompactRenameTest` | 9 | Passed |
 | `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest` | 8 | Passed |
+| `dev.verloren.midnight.run.CompactToolchainUtilTest` | 7 | Passed |
 | `dev.verloren.midnight.version.CompactVersionManagerTest` | 7 | Passed |
 | `dev.verloren.midnight.editor.CompactLineMarkerTest` | 7 | Passed |
-| `dev.verloren.midnight.run.CompactToolchainUtilTest` | 6 | Passed |
 | `dev.verloren.midnight.parser.ErrorRecoveryParserTest` | 6 | Passed |
+| `dev.verloren.midnight.completion.CompactInsertHandlersTest` | 6 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | 6 | Passed |
-| `dev.verloren.midnight.editor.CompactSurroundWithTest` | 5 | Passed |
 | `dev.verloren.midnight.run.CompactRunConfigurationTest` | 5 | Passed |
 | `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest` | 5 | Passed |
+| `dev.verloren.midnight.editor.CompactSurroundWithTest` | 5 | Passed |
 | `dev.verloren.midnight.editor.CompactFoldingTest` | 4 | Passed |
-| `dev.verloren.midnight.completion.CompactInsertHandlersTest` | 4 | Passed |
-| `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
-| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 4 | Passed |
 | `dev.verloren.midnight.version.CompactSemVerUtilTest` | 4 | Passed |
+| `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
 | `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | 4 | Passed |
-| `dev.verloren.midnight.symbol.CompactSymbolTest` | 3 | Passed |
-| `dev.verloren.midnight.settings.MidnightSettingsTest` | 3 | Passed |
-| `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | 3 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 4 | Passed |
 | `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 3 | Passed |
-| `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | 3 | Passed |
-| `dev.verloren.midnight.CompactTestUtilsTest` | 3 | Passed |
-| `dev.verloren.midnight.lexer.PragmaTest` | 3 | Passed |
-| `dev.verloren.midnight.parser.StatementParserTest` | 3 | Passed |
-| `dev.verloren.midnight.parser.PragmaParserTest` | 3 | Passed |
 | `dev.verloren.midnight.editor.CompactInlayHintsTest` | 3 | Passed |
+| `dev.verloren.midnight.lexer.PragmaTest` | 3 | Passed |
+| `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | 3 | Passed |
+| `dev.verloren.midnight.symbol.CompactSymbolTest` | 3 | Passed |
+| `dev.verloren.midnight.stdlib.CompactStdlibServiceTest` | 3 | Passed |
+| `dev.verloren.midnight.settings.MidnightSettingsTest` | 3 | Passed |
 | `dev.verloren.midnight.intention.CompactPragmaIntentionTest` | 3 | Passed |
-| `dev.verloren.midnight.run.CompactRunConfigurationProducerTest` | 2 | Passed |
-| `dev.verloren.midnight.psi.DeclarationPsiTest` | 2 | Passed |
-| `dev.verloren.midnight.parser.EndToEndParserTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.PragmaParserTest` | 3 | Passed |
+| `dev.verloren.midnight.psi.DeclarationPsiTest` | 3 | Passed |
+| `dev.verloren.midnight.CompactTestUtilsTest` | 3 | Passed |
+| `dev.verloren.midnight.parser.StatementParserTest` | 3 | Passed |
 | `dev.verloren.midnight.CompactBundleTest` | 2 | Passed |
-| `dev.verloren.midnight.parser.CompactParserDefinitionTest` | 2 | Passed |
+| `dev.verloren.midnight.run.CompactRunConfigurationProducerTest` | 2 | Passed |
+| `dev.verloren.midnight.architecture.CompactArchitectureTest` | 2 | Passed |
 | `dev.verloren.midnight.navigation.CompactChooseByNameTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.CompactParserDefinitionTest` | 2 | Passed |
+| `dev.verloren.midnight.parser.EndToEndParserTest` | 2 | Passed |
 | `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | 2 | Passed |
+| `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | 1 | Passed |
+| `dev.verloren.midnight.actions.CompactCreateFileActionTest` | 1 | Passed |
 | `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.DeclarationParserTest` | 1 | Passed |
-| `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | 1 | Passed |
-| **Total Across 65 Suites** | **697** | **100% Passed** |
+| **Total Across 67 Suites** | **721** | **100% Passed** |
 
 ---
 
@@ -213,10 +239,10 @@ Last Updated: September 2026 (v1.3.4 / Pragma Version Completion & Documentation
 2. **Deep Flow Type Inference**: Type inference is structural and AST-driven (`CompactTypeInferenceUtil`). Full bidirectional flow analysis across complex higher-order expressions will be augmented alongside the language server PSI bridge (Phase 35).
 
 ### Roadmap & Evolution (Phases 31–36)
-- **Phase 31: Stub Indexing & Symbol Search**
+- **Phase 31: First-Class Type Hierarchy & Substitutor / Stub Indexing**
   - Project-wide stub index (`CompactStubIndex`) for cross-file declarations without parsing full AST.
   - Fast global Go to Symbol (`Ctrl+Alt+Shift+N`) across large Compact repositories.
-- **Phase 32: Advanced Refactorings**
+- **Phase 32: Modular Completion Providers & Advanced Refactorings**
   - Safe Delete refactoring for unused circuits, witnesses, and types.
   - Extract Variable (`Ctrl+Alt+V`) and Extract Circuit/Function (`Ctrl+Alt+M`).
   - Introduce Parameter refactoring.

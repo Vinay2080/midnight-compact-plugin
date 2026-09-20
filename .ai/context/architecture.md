@@ -300,13 +300,13 @@ All subsystems must adhere to [`.agents/rules/architecture.rules.md`](file:///C:
 
 ## 4. Test Structure & Strategy
 
-All 65 test suites extend IntelliJ test base classes (`ParsingTestCase` or `BasePlatformTestCase`):
+All 67 test suites extend IntelliJ test base classes (`ParsingTestCase` or `BasePlatformTestCase`):
 
 | Test Class                                                                  | Category                | Base Class             | Test Count |
 |:----------------------------------------------------------------------------|:------------------------|:-----------------------|:-----------|
-| `dev.verloren.midnight.inspection.CompactInspectionTest`                    | Inspections & Fixes     | `BasePlatformTestCase` | 99         |
-| `dev.verloren.midnight.completion.CompactCompletionTest`                    | Code Completion         | `BasePlatformTestCase` | 80         |
-| `dev.verloren.midnight.formatter.CompactFormatterTest`                      | Formatter & Indent      | `BasePlatformTestCase` | 39         |
+| `dev.verloren.midnight.inspection.CompactInspectionTest`                    | Inspections & Fixes     | `BasePlatformTestCase` | 100        |
+| `dev.verloren.midnight.completion.CompactCompletionTest`                    | Code Completion         | `BasePlatformTestCase` | 95         |
+| `dev.verloren.midnight.formatter.CompactFormatterTest`                      | Formatter & Indent      | `BasePlatformTestCase` | 40         |
 | `dev.verloren.midnight.editor.CompactDelimiterTypingTest`                   | Delimiter Skipping      | `BasePlatformTestCase` | 30         |
 | `dev.verloren.midnight.editor.CompactAngleBraceTypingTest`                  | Angle Bracket Typing    | `BasePlatformTestCase` | 24         |
 | `dev.verloren.midnight.documentation.CompactDocumentationTest`              | Hover Documentation     | `BasePlatformTestCase` | 22         |
@@ -332,16 +332,16 @@ All 65 test suites extend IntelliJ test base classes (`ParsingTestCase` or `Base
 | `dev.verloren.midnight.structure.CompactStructureViewTest`                  | Structure View          | `BasePlatformTestCase` | 9          |
 | `dev.verloren.midnight.refactoring.CompactRenameTest`                       | Refactoring & Rename    | `BasePlatformTestCase` | 9          |
 | `dev.verloren.midnight.inspection.CompactPragmaVersionInspectionTest`       | Inspections & Fixes     | `BasePlatformTestCase` | 8          |
+| `dev.verloren.midnight.run.CompactToolchainUtilTest`                        | Toolchain Discovery     | `BasePlatformTestCase` | 7          |
 | `dev.verloren.midnight.version.CompactVersionManagerTest`                   | Version Manager         | `BasePlatformTestCase` | 7          |
 | `dev.verloren.midnight.editor.CompactLineMarkerTest`                        | Gutter Line Markers     | `BasePlatformTestCase` | 7          |
-| `dev.verloren.midnight.run.CompactToolchainUtilTest`                        | Toolchain Discovery     | `BasePlatformTestCase` | 6          |
 | `dev.verloren.midnight.parser.ErrorRecoveryParserTest`                      | Parsing & AST           | `ParsingTestCase`      | 6          |
+| `dev.verloren.midnight.completion.CompactInsertHandlersTest`                | Completion Handlers     | `BasePlatformTestCase` | 6          |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | Trigger Resolver        | `BasePlatformTestCase` | 6          |
 | `dev.verloren.midnight.editor.CompactSurroundWithTest`                      | Surround With           | `BasePlatformTestCase` | 5          |
 | `dev.verloren.midnight.run.CompactRunConfigurationTest`                     | Run Configurations      | `BasePlatformTestCase` | 5          |
 | `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest`                | Status Bar Widget       | `BasePlatformTestCase` | 5          |
 | `dev.verloren.midnight.editor.CompactFoldingTest`                           | Code Folding            | `BasePlatformTestCase` | 4          |
-| `dev.verloren.midnight.completion.CompactInsertHandlersTest`                | Completion Handlers     | `BasePlatformTestCase` | 4          |
 | `dev.verloren.midnight.editor.CompactEditorFeaturesTest`                    | Quote & Brace Matching  | `BasePlatformTestCase` | 4          |
 | `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest`                 | Remix Compiler UI       | `BasePlatformTestCase` | 4          |
 | `dev.verloren.midnight.version.CompactSemVerUtilTest`                       | SemVer Evaluator        | `BasePlatformTestCase` | 4          |
@@ -357,19 +357,21 @@ All 65 test suites extend IntelliJ test base classes (`ParsingTestCase` or `Base
 | `dev.verloren.midnight.parser.PragmaParserTest`                             | Parsing & AST           | `ParsingTestCase`      | 3          |
 | `dev.verloren.midnight.editor.CompactInlayHintsTest`                        | Inlay Parameter Hints   | `BasePlatformTestCase` | 3          |
 | `dev.verloren.midnight.intention.CompactPragmaIntentionTest`                | Pragma Intentions       | `BasePlatformTestCase` | 3          |
+| `dev.verloren.midnight.psi.DeclarationPsiTest`                              | PSI Structure           | `BasePlatformTestCase` | 3          |
 | `dev.verloren.midnight.run.CompactRunConfigurationProducerTest`             | Run Configurations      | `BasePlatformTestCase` | 2          |
-| `dev.verloren.midnight.psi.DeclarationPsiTest`                              | PSI Structure           | `BasePlatformTestCase` | 2          |
+| `dev.verloren.midnight.architecture.CompactArchitectureTest`                | Architecture Rules      | `BasePlatformTestCase` | 2          |
 | `dev.verloren.midnight.parser.EndToEndParserTest`                           | Parsing & AST           | `ParsingTestCase`      | 2          |
 | `dev.verloren.midnight.CompactBundleTest`                                   | Message Bundle          | `BasePlatformTestCase` | 2          |
 | `dev.verloren.midnight.parser.CompactParserDefinitionTest`                  | Parsing & AST           | `ParsingTestCase`      | 2          |
 | `dev.verloren.midnight.navigation.CompactChooseByNameTest`                  | Symbol Navigation       | `BasePlatformTestCase` | 2          |
 | `dev.verloren.midnight.editor.CompactBreadcrumbsTest`                       | Scope Breadcrumbs       | `BasePlatformTestCase` | 2          |
+| `dev.verloren.midnight.actions.CompactCreateFileActionTest`                 | File Creation Action    | `BasePlatformTestCase` | 1          |
 | `dev.verloren.midnight.psi.ElementFactoryConsistencyTest`                   | PSI Structure           | `BasePlatformTestCase` | 1          |
 | `dev.verloren.midnight.parser.TypePatternParserTest`                        | Parsing & AST           | `ParsingTestCase`      | 1          |
 | `dev.verloren.midnight.parser.ExpressionParserTest`                         | Parsing & AST           | `ParsingTestCase`      | 1          |
 | `dev.verloren.midnight.parser.DeclarationParserTest`                        | Parsing & AST           | `ParsingTestCase`      | 1          |
 | `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest`            | Color Settings          | `BasePlatformTestCase` | 1          |
-| **Total Across 65 Suites**                                                  |                         |                        | **697**    |
+| **Total Across 67 Suites**                                                  |                         |                        | **721**    |
 
 ---
 
@@ -387,7 +389,7 @@ The following architectural components are mature, verified, and **MUST NOT be r
    - Never execute external compiler processes or blocking disk operations on the EDT.
    - Never mutate PSI or VFS state outside a `WriteCommandAction` on the EDT.
 5. **Zero Test Regressions**:
-   - All **697 unit tests** across all **65 test suites** must pass (`./gradlew test`) before any task or feature is marked complete.
+   - All **721 unit tests** across all **67 test suites** must pass (`./gradlew test`) before any task or feature is marked complete.
 6. **Reference Code Discipline**:
    - Reference repositories (`compact/`, `intellij-rust/`, `intellij-elixir/`, `intellij-scala/`, `Rplugin/`) are read-only references. Never edit them or import them wholesale into the plugin build.
 7. **Architectural Decision Rigour**:
