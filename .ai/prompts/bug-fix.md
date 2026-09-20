@@ -8,8 +8,15 @@ This document defines the mandatory, deterministic execution protocol for diagno
 
 Before executing any bug fix actions, the AI agent **MUST** verify:
 1. `git status` is clean on `master` (no unstaged or uncommitted user edits).
-2. The IntelliJ project is open and the `idea` MCP server is responsive.
-3. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
+2. Read and strictly follow all contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
+   - [`architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) (Layer isolation, generalization, $\le$ 400-line limit)
+   - [`threading.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/threading.rules.md) (PSI Read vs Write, background vs EDT)
+   - [`psi-parser.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/psi-parser.rules.md) (AST resilience, token advancement, namespace separation)
+   - [`modern-java25.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/modern-java25.rules.md) (Java 25 records, pattern matching, sequenced collections)
+   - [`inspections-annotators.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/inspections-annotators.rules.md) (3-phase annotator lifecycle, quick-fix previews)
+   - [`toolchain-wsl.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/toolchain-wsl.rules.md) (WSL translation, timeout sandboxing)
+3. The IntelliJ project is open and the `idea` MCP server is responsive.
+4. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
 
 ---
 
@@ -21,40 +28,40 @@ The agent must execute these 13 steps in exact chronological order without skipp
 [Step 1: Workspace Isolation] ─── Create dedicated branch ai/fix-<slug>
         │
         ▼
-[Step 2: Pre-Debug Search] ──── Query .ai/bugs/ & recurring-patterns.md
+[Step 2: Pre-Debug & Rules Load]  Read .agents/rules/ & query .ai/bugs/
         │
         ▼
-[Step 3: Reproduction Test] ─── Write minimal failing test in src/test/
+[Step 3: Reproduction & Mirror Test] Write failing stdlib + user-defined mirror tests
         │
         ▼
-[Step 4: Root Cause Trace] ──── Cite compiler ground truth & affected code
+[Step 4: Architectural Root Cause] Trace defect to root semantic layer (Type/Scope/UI)
         │
         ▼
-[Step 5: Implement Fix] ─────── Modern Java 25, PSI/threading invariants
+[Step 5: Modular Java 25 Fix] ─── Fix at root layer; enforce <= 400-line limits & records
         │
         ▼
-[Step 6: Post-Edit Inspection] ─ get_file_problems & lint_files via MCP
+[Step 6: Post-Edit Inspection] ── get_file_problems & lint_files via MCP
         │
         ▼
-[Step 7: Test Verification] ─── scripts/verify-patch.ps1 (reproducing test passes)
+[Step 7: Test & Arch Verification] scripts/verify-patch.ps1 & CompactArchitectureTest
         │
         ▼
-[Step 8: Bug Knowledge Record] ─ Create .ai/bugs/YYYY-MM-DD-...md & update index
+[Step 8: Bug Knowledge Record] ── Create .ai/bugs/YYYY-MM-DD-...md & update index
         │
         ▼
-[Step 9: Pattern Escalation] ── Check .ai/bugs/recurring-patterns.md ladder
+[Step 9: Pattern Escalation] ─── Check .ai/bugs/recurring-patterns.md ladder
         │
         ▼
-[Step 10: User Changelog] ───── Update CHANGELOG.md under ## [Unreleased] -> ### Fixed
+[Step 10: User Changelog] ────── Update CHANGELOG.md under ## [Unreleased] -> ### Fixed
         │
         ▼
-[Step 11: Atomic Commits] ───── Stage & commit fix, docs, and changelog
+[Step 11: Atomic Commits] ────── Stage & commit fix, docs, and changelog
         │
         ▼
-[Step 12: Merge to Master] ──── Checkout master, merge --ff-only, run verify-patch.ps1
+[Step 12: Merge to Master] ───── Checkout master, merge --ff-only, run verify-patch.ps1
         │
         ▼
-[Step 13: Cleanup & Artifact] ─ Delete task branch, emit Final Completion Table
+[Step 13: Cleanup & Artifact] ── Delete task branch, emit Final Completion Table
 ```
 
 ### Step 1: Workspace Isolation
@@ -65,34 +72,36 @@ The agent must execute these 13 steps in exact chronological order without skipp
   ```
   *(Never edit production files directly on `master`.)*
 
-### Step 2: Pre-Debug Search
+### Step 2: Pre-Debug Search & Rules Context Loading
+- Load and adhere to all active contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/).
 - Search [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) and [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md) using `grep_search` or `find_by_name`.
 - Search terms must include: affected class name, subsystem, error message/symptom.
 - Record whether matching or related patterns were found.
 
-### Step 3: Reproduction Test
+### Step 3: Reproduction Test & "User-Defined Mirror" Test
 - Before editing production code, write a minimal, targeted failing test in `src/test/java/dev/verloren/midnight/...`.
+- **Mandatory Generalization Guard**: If the defect involves a standard library construct (`Either`, `Maybe`, `Vector`, `default`), write a companion **User-Defined Mirror Test** exercising identical behavior on a user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
 - Execute the test:
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<FullClassName>.<testMethodName>"
   ```
 - Confirm that the test fails with the reported defect symptom.
 
-### Step 4: Root Cause Investigation
-- Trace the defect mechanism citing:
-  - Affected production class and lines.
-  - Upstream Compact compiler ground truth (`compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`) or reference plugins (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
-  - The precise flaw (e.g. non-advancing token loop, null on incomplete AST, EDT thread blocking, WSL path mismatch).
+### Step 4: Architectural Root Cause Investigation
+- Trace the defect to its **Root Semantic Layer**:
+  - *Type System defect* (`dev.verloren.midnight.type`) -> Fix in type system; **NEVER** patch around type issues in `completion/` or `editor/`.
+  - *Scope / Symbol Resolution defect* (`dev.verloren.midnight.resolve`) -> Fix in resolver.
+  - *Presentation / Completion UI defect* (`dev.verloren.midnight.completion`) -> Fix in completion provider.
+- Cite affected production class, lines, and upstream Compact compiler ground truth (`compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`) or reference plugins (`intellij-rust`, `intellij-solidity`, `intellij-scala`).
 
-### Step 5: Implementation (Modern Java 25)
+### Step 5: Modular Implementation (Modern Java 25)
 - Apply the minimal surgical fix in `src/main/java/dev/verloren/midnight/...`.
-- Adhere to path-scoped rules in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
-  - Records for DTOs and cache keys.
-  - Sequenced collections (`getFirst()`, `getLast()`, `reversed()`).
-  - Pattern matching switch expressions and record patterns.
-  - Unnamed variables `_` for unused parameters/exceptions.
-  - Threading: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI writes; zero blocking `waitFor()` on EDT.
-  - AST resilience: Guard against `null` and `PsiErrorElement`. Loops must advance lexer/builder.
+- Adhere strictly to [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) and all path-scoped rules in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
+  - **Modularity**: File length must remain $\le$ 400 lines; method length $\le$ 40 lines. Decompose large classes into dedicated providers/visitors.
+  - **Zero Stdlib Special-Casing**: Never hardcode type names (`"Either"`, `"Maybe"`) in general resolvers or providers.
+  - **Java 25 Standards**: Records for DTOs and cache keys; sequenced collections (`getFirst()`, `getLast()`); pattern matching switch expressions; unnamed variables `_`.
+  - **Threading**: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI writes; zero blocking `waitFor()` on EDT.
+  - **AST resilience**: Guard against `null` and `PsiErrorElement`. Loops must advance lexer/builder.
 
 ### Step 6: Post-Edit Inspection Loop via MCP
 - Immediately after editing each file, run IntelliJ MCP inspection:
@@ -102,15 +111,15 @@ The agent must execute these 13 steps in exact chronological order without skipp
   ```
 - Verify 0 errors, 0 warnings, 0 weak warnings, and 0 unapplied language modernization hints. Fix any flagged issues immediately.
 
-### Step 7: Test Verification
-- Run the automated verification harness:
+### Step 7: Test & Architectural Verification
+- Run the automated verification harness including architecture compliance:
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<FullClassName>"
   ```
 - Verify that:
   - Gate 1 (Compilation): SUCCESS.
   - Gate 2 (Plugin Structure): SUCCESS.
-  - Gate 3 (Tests): The reproduction test now PASSES with 0 failures.
+  - Gate 3 (Tests): Both reproduction test and companion User-Defined Mirror test PASS with 0 failures.
   - Machine-readable report [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) is generated with status `"PASSED"`.
 
 ### Step 8: Bug Knowledge Base Record

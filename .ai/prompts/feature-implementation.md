@@ -8,9 +8,16 @@ This document defines the mandatory, deterministic execution protocol for planni
 
 Before executing any feature implementation actions, the AI agent **MUST** verify:
 1. `git status` is clean on `master` (no unstaged or uncommitted user edits).
-2. The feature requirements are grounded in Compact compiler sources (`compact/compiler/`) or language specifications.
-3. The IntelliJ project is open and the `idea` MCP server is responsive.
-4. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
+2. Read and strictly follow all contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
+   - [`architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) (Layer isolation, generalization, $\le$ 400-line limit)
+   - [`threading.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/threading.rules.md) (PSI Read vs Write, background vs EDT)
+   - [`psi-parser.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/psi-parser.rules.md) (AST resilience, token advancement, namespace separation)
+   - [`modern-java25.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/modern-java25.rules.md) (Java 25 records, pattern matching, sequenced collections)
+   - [`inspections-annotators.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/inspections-annotators.rules.md) (3-phase annotator lifecycle, quick-fix previews)
+   - [`toolchain-wsl.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/toolchain-wsl.rules.md) (WSL translation, timeout sandboxing)
+3. The feature requirements are grounded in Compact compiler sources (`compact/compiler/`) or language specifications.
+4. The IntelliJ project is open and the `idea` MCP server is responsive.
+5. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
 
 ---
 
@@ -22,19 +29,19 @@ The agent must execute these 8 steps in exact chronological order:
 [Step 1: Workspace Isolation] ─── Create dedicated branch ai/<feature-slug>
         │
         ▼
-[Step 2: Ground Truth & ADR] ─── Inspect compact/compiler/ & existing ADRs (001-034)
+[Step 2: Ground Truth & Arch Pre-Flight] Load .agents/rules/, check layer boundaries & ADRs
         │
         ▼
-[Step 3: Java 25 Implementation] Modern Java 25, PSI/threading invariants, records
+[Step 3: Modular Java 25 Implementation] Modern Java 25, <= 400 lines/file, SRP
         │
         ▼
-[Step 4: Multi-Tier Testing] ──── Golden AST, error recovery, semantic resolve tests
+[Step 4: Multi-Tier & Mirror Testing] Golden AST, error recovery, stdlib + user-defined mirror tests
         │
         ▼
-[Step 5: Post-Edit Inspection] ─ get_file_problems & lint_files via MCP
+[Step 5: Post-Edit Inspection] ── get_file_problems & lint_files via MCP
         │
         ▼
-[Step 6: Test Verification] ─── scripts/verify-patch.ps1 (all gates pass)
+[Step 6: Test & Arch Verification] scripts/verify-patch.ps1 (all gates & arch tests pass)
         │
         ▼
 [Step 7: State Sync & Changelog] Update project-state.yaml, current-state.md, CHANGELOG.md
@@ -51,16 +58,22 @@ The agent must execute these 8 steps in exact chronological order:
   ```
   *(Never edit production files directly on `master`.)*
 
-### Step 2: Ground Truth & Architectural Alignment
+### Step 2: Ground Truth & Architectural Alignment (Architectural Pre-Flight)
+- Load and adhere to all active contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/).
 - Ground the feature in authoritative sources:
   - Official Compact compiler source in `compact/compiler/` (e.g. `parser.ss`, `standard-library.compact`, or `.ai/context/compact-semantics.md`).
-  - Production reference plugins (`intellij-rust`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
+  - Production reference plugins (`intellij-rust`, `intellij-solidity`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
+- **Architectural Pre-Flight Gate**:
+  - *Layer Identification*: Is this a Type (`dev.verloren.midnight.type`), Scope (`resolve`), or UI (`completion`) feature? Place code strictly in its semantic layer.
+  - *Generalization Rule*: Verify the feature applies universally to **all** structs and types. Never special-case standard library names (`Either`, `Maybe`, `Vector`, `default`).
+  - *Modularity Budget*: Ensure new classes remain $\le$ 400 lines and methods $\le$ 40 lines. Split large contributors into dedicated `CompletionProvider` subclasses.
 - Review existing ADRs in [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/):
   - If the feature introduces a new subsystem, non-trivial AST restructure, or stub indexing model, draft an ADR first via [`.ai/prompts/architecture-decision.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/architecture-decision.md).
 
-### Step 3: Implementation (Modern Java 25)
+### Step 3: Implementation (Modern Java 25 & Modularity Standards)
 - Implement production code in `src/main/java/dev/verloren/midnight/...`.
-- Adhere to path-scoped rules in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
+- Adhere to [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) and all path-scoped rules in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
+  - **Modularity & SRP**: File length $\le$ 400 lines; method length $\le$ 40 lines. Completion contributors only register providers; handlers only mutate documents.
   - Records (`record`) for immutable data structures, AST node pairs, resolver cache keys, and DTOs.
   - Sequenced Collections (`getFirst()`, `getLast()`, `reversed()`). Forbidden: legacy `get(0)`.
   - Pattern matching switch expressions with arrow syntax (`->`) and record deconstruction patterns.
@@ -70,12 +83,13 @@ The agent must execute these 8 steps in exact chronological order:
   - Threading: PSI reads inside `ReadAction`; PSI mutations on EDT inside `WriteCommandAction`; zero `process.waitFor()` on EDT.
   - AST resilience: Guard against `null` and `PsiErrorElement`. Loops must advance tokens.
 
-### Step 4: Multi-Tier Test Implementation
+### Step 4: Multi-Tier & "User-Defined Mirror" Test Implementation
 - Implement comprehensive automated tests in `src/test/java/dev/verloren/midnight/...`:
   - **Tier 1**: Golden AST tree tests (`.compact` -> `.txt`) asserting structure conformance.
   - **Tier 2**: Incomplete/broken code recovery (deliberately malformed syntax must produce `PsiErrorElement` without throwing exceptions or freezing editor).
   - **Tier 3**: Semantic resolution, type checking, or scope visibility (`VALUE` vs `TYPE` namespace separation).
   - **Tier 4**: Concurrency, cancellation, and stress resilience.
+  - **Mandatory Generalization Guard**: If testing a standard library feature (`Either`, `Maybe`, `Vector`, `default`), implement a parallel **User-Defined Mirror Test** exercising identical behavior on a user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
 
 ### Step 5: Continuous Post-Edit Inspection Loop via MCP
 - Immediately after EVERY file edit, run IntelliJ inspections via MCP:
@@ -86,7 +100,7 @@ The agent must execute these 8 steps in exact chronological order:
 - Strict Zero-Tolerance: 0 errors (`ERROR`), 0 warnings (`WARNING`), 0 weak warnings (`WEAK WARNING`), 0 grammar/spelling errors, and all modern Java 25 suggestions applied.
 - Fix all detected issues immediately before moving to the next edit.
 
-### Step 6: Multi-Gate Verification Harness
+### Step 6: Multi-Gate & Architectural Verification Harness
 - Run the automated verification harness:
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<NewFeatureTestClass>"
@@ -95,6 +109,7 @@ The agent must execute these 8 steps in exact chronological order:
   - Gate 1 (Java 25 Compilation): SUCCESS.
   - Gate 2 (Plugin Structure): SUCCESS (validates `plugin.xml` extension points and template bindings).
   - Gate 3 (Tests): 100% pass rate with zero failures.
+  - Architectural Invariant Gate: `CompactArchitectureTest` passes with 0 violations.
   - Generated [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) has status `"PASSED"`.
 
 ### Step 7: State Synchronization & Clean Changelog
