@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-20 | actions / file-templates / threading | IncorrectOperationException during template postProcess reformatting | [2026-09-20-create-file-postprocess-write-command.md](2026-09-20-create-file-postprocess-write-command.md) | High | Resolved |
 | 2026-09-19 | toolchain / psi / inspection-cleanup | Toolchain WSL path translation hardening and codebase inspection cleanup | [2026-09-19-toolchain-wsl-path-and-inspection-cleanup.md](2026-09-19-toolchain-wsl-path-and-inspection-cleanup.md) | Medium | Resolved |
 | 2026-09-18 | toolwindow / version / quick-fix | Compact compiler tool window version selection out of sync after quick-fix | [2026-09-18-toolwindow-version-selection-sync.md](2026-09-18-toolwindow-version-selection-sync.md) | High | Resolved |
 | 2026-09-18 | completion / type system / return expressions | Parameter and in-scope variable autocompletion suppressed in return statements | [2026-09-18-completion-return-value-declaration-filtering.md](2026-09-18-completion-return-value-declaration-filtering.md) | High | Resolved |

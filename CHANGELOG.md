@@ -15,6 +15,7 @@
 - Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
 ### Fixed
+- Fixed an issue where creating a new Compact file from a template could fail with an `IncorrectOperationException` during post-creation formatting.
 - Fixed an issue where WSL compiler paths with short root mount locations were not correctly translated back to local Windows paths.
 - Fixed an issue where changing the Compact compiler version via quick-fix (Alt+Enter) in the editor did not update the active version highlight and cards in the Compact Compiler tool window side panel.
 - Fixed an issue where circuit parameters and in-scope variables were omitted from autocompletion inside return statements if their type differed from the return type.

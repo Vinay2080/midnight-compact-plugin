@@ -8,7 +8,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import dev.verloren.midnight.CompactFileType;
 import dev.verloren.midnight.actions.CompactCreateFileAction;
 import dev.verloren.midnight.psi.*;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
@@ -53,7 +52,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertTrue("Contract template text should contain pragma language_version >= 0.26.0 by default",
         text.contains("pragma language_version >= 0.26.0;"));
 
-    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
+    PsiFile file = myFixture.configureByText("MyContract.compact", text);
     assertFalse("Contract template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
 
     CompactLedgerDeclaration ledger = PsiTreeUtil.findChildOfType(file, CompactLedgerDeclaration.class);
@@ -95,7 +94,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertTrue("Module template text should contain pragma language_version >= 0.26.0 by default",
         text.contains("pragma language_version >= 0.26.0;"));
 
-    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
+    PsiFile file = myFixture.configureByText("MyModule.compact", text);
     assertFalse("Module template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
 
     CompactModuleDefinition module = PsiTreeUtil.findChildOfType(file, CompactModuleDefinition.class);
@@ -115,7 +114,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertTrue("Interface template text should contain pragma language_version >= 0.26.0 by default",
         text.contains("pragma language_version >= 0.26.0;"));
 
-    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
+    PsiFile file = myFixture.configureByText("MyInterface.compact", text);
     assertFalse("Interface template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
 
     CompactExternalContractDeclaration contract = PsiTreeUtil.findChildOfType(file, CompactExternalContractDeclaration.class);
@@ -135,7 +134,7 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
     assertTrue("Empty file template text should contain pragma language_version >= 0.26.0 by default",
         text.contains("pragma language_version >= 0.26.0;"));
 
-    PsiFile file = myFixture.configureByText(CompactFileType.INSTANCE, text);
+    PsiFile file = myFixture.configureByText("Empty.compact", text);
     assertFalse("Empty file template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
   }
 

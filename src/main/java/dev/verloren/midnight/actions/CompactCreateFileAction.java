@@ -4,6 +4,7 @@ import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -145,7 +146,9 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
   ) {
     super.postProcess(createdElement, templateName, customProperties);
     Project project = createdElement.getProject();
-    CodeStyleManager.getInstance(project).reformat(createdElement);
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      CodeStyleManager.getInstance(project).reformat(createdElement);
+    });
 
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null && editor.getDocument() == createdElement.getViewProvider().getDocument()) {
