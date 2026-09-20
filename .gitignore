@@ -15,6 +15,7 @@ build
 /intellij-elixir/
 /intellij-rust/
 /intellij-scala/
+/intellij-solidity/
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/zkir/_move.zkir
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/zkir/allowance.zkir
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/zkir/approve.zkir

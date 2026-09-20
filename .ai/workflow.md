@@ -91,9 +91,9 @@ Before proposing or editing anything, the agent **MUST** route the task using th
 
 | Task Type | Mandatory Context Reading |
 |:---|:---|
-| **`BUG`** | [`.ai/prompts/bug-fix.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/bug-fix.md), [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/), [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md), relevant `src/test/` fixture, Compact compiler ground truth |
-| **`FEATURE`** | [`.ai/prompts/feature-implementation.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/feature-implementation.md), [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml), [`.ai/context/current-state.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md), [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/), reference plugins |
-| **`ARCHITECTURE`** | [`.ai/prompts/architecture-decision.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/architecture-decision.md), [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/), [`.ai/context/architecture.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md) |
+| **`BUG`** | [`.ai/prompts/bug-fix.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/bug-fix.md), [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/), [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md), [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md), relevant `src/test/` fixture, Compact compiler ground truth |
+| **`FEATURE`** | [`.ai/prompts/feature-implementation.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/feature-implementation.md), [`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml), [`.ai/context/current-state.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/current-state.md), [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md), [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/), reference plugins |
+| **`ARCHITECTURE`** | [`.ai/prompts/architecture-decision.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/architecture-decision.md), [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/), [`.ai/context/architecture.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/context/architecture.md), [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) |
 | **`RELEASE`** | [`.ai/prompts/push-and-release.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/push-and-release.md), [`CHANGELOG.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/CHANGELOG.md), [`gradle.properties`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/gradle.properties) |
 | **`MAINTENANCE`** | [`.ai/prompts/sync-context-and-decisions.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/sync-context-and-decisions.md), [`.ai/meta/drift-audit-ledger.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/meta/drift-audit-ledger.md) |
 
@@ -106,8 +106,11 @@ Before proposing or editing anything, the agent **MUST** route the task using th
 - Read targeted production classes and existing test fixtures before proposing edits.
 - For bug fixes: **Search `.ai/bugs/` first**. Query by feature, class, or symptom.
 
-### Phase 3: Plan & Architectural Alignment
-- Verify that the plan obeys all Critical Invariants in `AGENTS.md` (no replacing handwritten parser, reuse `CompactResolveUtil`, strict namespace separation, incomplete AST resilience, changelog hygiene).
+### Phase 3: Plan & Architectural Alignment (Architectural Pre-Flight)
+- **1. Semantic Root Layer**: Verify logic is placed in the correct layer (`type/` for types, `resolve/` for scopes, `completion/` for UI). Never fix a type issue in the completion layer.
+- **2. The Generalization Rule**: Verify that the solution applies universally to **all** structs and types. Never special-case standard library names (`Either`, `Maybe`, `Vector`) in general compiler/completion logic.
+- **3. Modularity & Size Threshold**: Verify the design keeps class files $\le$ 400 lines and methods $\le$ 40 lines. Split large contributors into dedicated `CompletionProvider` subclasses.
+- **4. Invariant Verification**: Verify the plan obeys all Critical Invariants in `AGENTS.md` and [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md).
 
 ### Phase 4: Implementation (Modern Java 25)
 - Follow path-scoped rules in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/):
@@ -119,6 +122,7 @@ Before proposing or editing anything, the agent **MUST** route the task using th
   - Robustness: Guard against `null` and `PsiErrorElement`. Loops must advance lexer tokens.
 
 ### Phase 5: Test & Validate
+- **Mandatory "User-Defined Mirror" Test**: If testing a stdlib construct (`Either`, `Maybe`), write an identical parallel test using a custom user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
 - **Mandatory Post-Edit Code Inspection (Every Edit)**:
   - Run IntelliJ inspections via MCP immediately after EVERY edit:
     ```text
@@ -135,9 +139,10 @@ Before proposing or editing anything, the agent **MUST** route the task using th
   - Verify [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) has status `"PASSED"`.
 
 ### Phase 6: Code Review Self-Check
-- Evaluate changes against the anti-bikeshedding bar in `AGENTS.md`:
+- Evaluate changes against [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) and the anti-bikeshedding bar in `AGENTS.md`:
   - No cosmetic rewrites or subjective renames.
-  - Only introduce changes justified by correctness, threading safety, or bug fixes.
+  - No unauthorized hardcoded type string checks.
+  - Only introduce changes justified by correctness, threading safety, generalization, or bug fixes.
 
 ---
 
