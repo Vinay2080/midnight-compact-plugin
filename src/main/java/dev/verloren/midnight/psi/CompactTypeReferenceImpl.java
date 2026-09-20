@@ -18,6 +18,10 @@ public class CompactTypeReferenceImpl extends CompactPsiElement implements Compa
 
   @Override
   public @NotNull CompactType getType() {
+    String text = getText();
+    if (text.contains("<")) {
+      return new CompactPrimitiveType(text);
+    }
     PsiReference ref = getReference();
     if (ref != null) {
       PsiElement resolved = ref.resolve();
@@ -26,10 +30,10 @@ public class CompactTypeReferenceImpl extends CompactPsiElement implements Compa
       }
     }
     // Handle builtin types by text if resolution fails
-    String text = getText();
     if ("Boolean".equals(text)) return CompactPrimitiveType.BOOLEAN;
     if ("Field".equals(text)) return CompactPrimitiveType.FIELD;
-    if (text.startsWith("Uint") || text.startsWith("Bytes") || text.startsWith("Vector")) {
+    if (text.startsWith("Uint") || text.startsWith("Bytes") || text.startsWith("Vector")
+        || text.startsWith("Either") || text.startsWith("Maybe")) {
       return new CompactPrimitiveType(text);
     }
 

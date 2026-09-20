@@ -111,8 +111,9 @@ public class CompactInsertHandlersTest extends BasePlatformTestCase {
         false
     );
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () ->
-        CompactEitherInsertHandler.INSTANCE.handleInsert(context, item));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      CompactEitherInsertHandler.INSTANCE.handleInsert(context, item);
+    });
 
     assertTrue(myFixture.getEditor().getDocument().getText().contains("Either { is_left: true, left: , right: default }"));
   }

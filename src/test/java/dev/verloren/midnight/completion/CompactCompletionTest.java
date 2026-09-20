@@ -1606,4 +1606,53 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertTrue("left should be suggested when Either expected", leftIndex >= 0);
     assertTrue("right should be suggested when Either expected", rightIndex >= 0);
   }
+
+  public void testTypedEitherStructCompletionInExpectedTypeContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export pure circuit zeroAccount(): Either<Bytes<32>, ContractAddress> {
+          return Eith<caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement eitherTyped = null;
+    for (LookupElement el : elements) {
+      if ("Either<Bytes<32>, ContractAddress>".equals(el.getLookupString())
+          || "Either".equals(el.getLookupString())) {
+        eitherTyped = el;
+        break;
+      }
+    }
+    assertNotNull("Should find typed Either lookup element", eitherTyped);
+    myFixture.getLookup().setCurrentItem(eitherTyped);
+    myFixture.type('\n');
+    String text = myFixture.getFile().getText();
+    assertTrue("File should contain expanded typed Either struct literal but was:\n" + text,
+        text.contains("return Either<Bytes<32>, ContractAddress> { is_left: true, left: , right: default<ContractAddress> }"));
+  }
+
+  public void testGenericEitherTypeArgsParser() {
+    CompactCompletionContributor.TypeArgs args1 =
+        CompactCompletionContributor.parseEitherTypeArgs("Either<Bytes<32>, ContractAddress>");
+    assertNotNull(args1);
+    assertEquals("Bytes<32>", args1.left());
+    assertEquals("ContractAddress", args1.right());
+
+    CompactCompletionContributor.TypeArgs args2 =
+        CompactCompletionContributor.parseEitherTypeArgs("Either<T1, T2>");
+    assertNotNull(args2);
+    assertEquals("T1", args2.left());
+    assertEquals("T2", args2.right());
+
+    CompactCompletionContributor.TypeArgs args3 =
+        CompactCompletionContributor.parseEitherTypeArgs("Either<Vector<2, Field>, Either<Boolean, Field>>");
+    assertNotNull(args3);
+    assertEquals("Vector<2, Field>", args3.left());
+    assertEquals("Either<Boolean, Field>", args3.right());
+
+    assertNull(CompactCompletionContributor.parseEitherTypeArgs("Field"));
+    assertNull(CompactCompletionContributor.parseEitherTypeArgs("Either"));
+  }
 }

@@ -618,7 +618,7 @@ public class CompactCompletionContributor extends CompletionContributor {
 
       // Either struct literal and left/right helper completions
       boolean isEitherExpected = expectedType.name().startsWith("Either");
-      addEitherAndHelperCompletions(result, isEitherExpected ? 95.0 : 30.0);
+      addEitherAndHelperCompletions(result, isEitherExpected ? expectedType : null, isEitherExpected ? 95.0 : 30.0);
 
       // Also provide prefixed imports and general value keywords in value context
       addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
@@ -656,7 +656,7 @@ public class CompactCompletionContributor extends CompletionContributor {
     addCommonDefaultCompletions(result);
 
     // Either struct literal and left/right helper completions
-    addEitherAndHelperCompletions(result, 45.0);
+    addEitherAndHelperCompletions(result, null, 45.0);
 
     addAll(result, VALUE_KEYWORDS);
     result.addElement(createAssertLookupElement());
@@ -675,16 +675,94 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void addEitherAndHelperCompletions(@NotNull CompletionResultSet result, double priority) {
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("Either")
-            .withPresentableText("Either")
-            .withTailText(" { is_left: true, left: ..., right: default }", true)
-            .withTypeText("struct")
-            .bold()
-            .withInsertHandler(CompactEitherInsertHandler.INSTANCE),
-        priority
-    ));
+  public record TypeArgs(String left, String right) {}
+
+  public static @Nullable TypeArgs parseEitherTypeArgs(@NotNull String typeName) {
+    if (!typeName.startsWith("Either<") || !typeName.endsWith(">")) {
+      return null;
+    }
+    String inner = typeName.substring("Either<".length(), typeName.length() - 1).trim();
+    int depth = 0;
+    int commaIndex = -1;
+    for (int i = 0; i < inner.length(); i++) {
+      char c = inner.charAt(i);
+      if (c == '<' || c == '(' || c == '[') {
+        depth++;
+      } else if (c == '>' || c == ')' || c == ']') {
+        depth--;
+      } else if (c == ',' && depth == 0) {
+        commaIndex = i;
+        break;
+      }
+    }
+    if (commaIndex == -1) {
+      return null;
+    }
+    String left = inner.substring(0, commaIndex).trim();
+    String right = inner.substring(commaIndex + 1).trim();
+    if (left.isEmpty() || right.isEmpty()) {
+      return null;
+    }
+    return new TypeArgs(left, right);
+  }
+
+  private static void addEitherAndHelperCompletions(
+      @NotNull CompletionResultSet result,
+      @Nullable CompactType expectedType,
+      double priority
+  ) {
+    TypeArgs args = expectedType != null ? parseEitherTypeArgs(expectedType.name()) : null;
+    if (args != null) {
+      String fullType = "Either<" + args.left() + ", " + args.right() + ">";
+      CompactEitherInsertHandler typedHandler = new CompactEitherInsertHandler(args.left(), args.right());
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(fullType)
+              .withPresentableText(fullType)
+              .withTailText(" { is_left: true, left: ..., right: default<" + args.right() + "> }", true)
+              .withTypeText("struct")
+              .bold()
+              .withInsertHandler(typedHandler),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("Either")
+              .withPresentableText(fullType)
+              .withTailText(" { is_left: true, left: ..., right: default<" + args.right() + "> }", true)
+              .withTypeText("struct")
+              .bold()
+              .withInsertHandler(typedHandler),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("Either")
+              .withPresentableText("Either")
+              .withTailText(" { is_left: true, left: ..., right: default }", true)
+              .withTypeText("struct")
+              .bold()
+              .withInsertHandler(CompactEitherInsertHandler.INFERRED),
+          priority - 5.0
+      ));
+    } else {
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("Either<Left, Right>")
+              .withPresentableText("Either<Left, Right>")
+              .withTailText(" { is_left: true, left: ..., right: default }", true)
+              .withTypeText("struct")
+              .bold()
+              .withInsertHandler(CompactEitherInsertHandler.GENERIC_PARAMETERIZED),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("Either")
+              .withPresentableText("Either")
+              .withTailText(" { is_left: true, left: ..., right: default }", true)
+              .withTypeText("struct")
+              .bold()
+              .withInsertHandler(CompactEitherInsertHandler.INFERRED),
+          priority
+      ));
+    }
+
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("left")
             .withPresentableText("left")
