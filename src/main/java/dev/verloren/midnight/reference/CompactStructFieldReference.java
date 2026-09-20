@@ -9,6 +9,7 @@ import dev.verloren.midnight.psi.CompactStructDefinitionImpl;
 import dev.verloren.midnight.psi.CompactStructFieldImpl;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
 import dev.verloren.midnight.type.CompactType;
+import dev.verloren.midnight.type.CompactTypeInferenceUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,8 +34,9 @@ public class CompactStructFieldReference extends CompactReferenceBase {
 
     CompactType baseType = element.getBaseExpression().getType();
     String typeName = baseType.name();
+    String rawTypeName = CompactTypeInferenceUtil.getRawTypeName(typeName);
 
-    List<CompactNamedElement> typeDefs = CompactResolveUtil.resolveType(typeName, element);
+    List<CompactNamedElement> typeDefs = CompactResolveUtil.resolveType(rawTypeName, element);
     List<CompactNamedElement> fields = new ArrayList<>();
 
     for (CompactNamedElement typeDef : typeDefs) {
@@ -46,7 +48,8 @@ public class CompactStructFieldReference extends CompactReferenceBase {
       }
       if (typeDef instanceof dev.verloren.midnight.psi.CompactTypeDefinitionImpl typeAlias) {
         CompactType targetType = typeAlias.getType();
-        List<CompactNamedElement> aliasTargets = CompactResolveUtil.resolveType(targetType.name(), element);
+        String rawTargetName = CompactTypeInferenceUtil.getRawTypeName(targetType.name());
+        List<CompactNamedElement> aliasTargets = CompactResolveUtil.resolveType(rawTargetName, element);
         for (CompactNamedElement aliasTarget : aliasTargets) {
           if (aliasTarget instanceof dev.verloren.midnight.psi.CompactImportElementImpl aliasImport) {
             CompactNamedElement source = CompactResolveUtil.resolveImportElementSource(aliasImport);

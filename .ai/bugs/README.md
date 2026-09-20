@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-09-20 | inspection / type system / PSI | False-positive unresolved struct field and type mismatch errors on generic structs and circuits | [2026-09-20-inspection-generic-struct-type-and-field-resolution.md](2026-09-20-inspection-generic-struct-type-and-field-resolution.md) | High | Resolved |
 | 2026-09-20 | actions / file-templates / threading | IncorrectOperationException during template postProcess reformatting | [2026-09-20-create-file-postprocess-write-command.md](2026-09-20-create-file-postprocess-write-command.md) | High | Resolved |
 | 2026-09-19 | toolchain / psi / inspection-cleanup | Toolchain WSL path translation hardening and codebase inspection cleanup | [2026-09-19-toolchain-wsl-path-and-inspection-cleanup.md](2026-09-19-toolchain-wsl-path-and-inspection-cleanup.md) | Medium | Resolved |
 | 2026-09-18 | toolwindow / version / quick-fix | Compact compiler tool window version selection out of sync after quick-fix | [2026-09-18-toolwindow-version-selection-sync.md](2026-09-18-toolwindow-version-selection-sync.md) | High | Resolved |

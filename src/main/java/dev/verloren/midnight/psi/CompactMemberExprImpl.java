@@ -24,8 +24,27 @@ public class CompactMemberExprImpl extends CompactPsiElement implements CompactE
     PsiReference ref = getReference();
     if (ref != null) {
       PsiElement resolved = ref.resolve();
+      CompactType rawType = null;
       if (resolved instanceof CompactTypeElement typeElement) {
-        return typeElement.getType();
+        rawType = typeElement.getType();
+      } else if (resolved instanceof CompactNamedElement named) {
+        rawType = named.getType();
+      }
+      if (rawType != null) {
+        CompactExpression base = getBaseExpression();
+        if (base != null) {
+          CompactType baseType = base.getType();
+          java.util.List<String> genericArgs = dev.verloren.midnight.type.CompactTypeInferenceUtil.parseGenericArgs(baseType.name());
+          PsiElement container = resolved instanceof CompactStructFieldImpl
+              ? com.intellij.psi.util.PsiTreeUtil.getParentOfType(resolved, CompactStructDefinitionImpl.class)
+              : null;
+          if (container != null && !genericArgs.isEmpty()) {
+            java.util.Map<String, String> substitution = dev.verloren.midnight.type.CompactTypeInferenceUtil.buildGenericSubstitution(container, genericArgs);
+            String substitutedName = dev.verloren.midnight.type.CompactTypeInferenceUtil.substituteGenerics(rawType.name(), substitution);
+            return new CompactPrimitiveType(substitutedName);
+          }
+        }
+        return rawType;
       }
     }
     return CompactPrimitiveType.UNKNOWN;

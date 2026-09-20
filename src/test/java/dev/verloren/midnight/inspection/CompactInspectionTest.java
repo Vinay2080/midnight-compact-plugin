@@ -1541,5 +1541,78 @@ public class CompactInspectionTest extends BasePlatformTestCase {
             .toList();
     assertEquals("Undisclosed witness assignment via variable should be flagged", 1, matched.size());
   }
+
+  public void testUtilsModuleEitherAndFieldResolutionNoWarnings() {
+    String code = """
+            module Utils {
+              import CompactStandardLibrary;
+
+              export pure circuit isKeyOrAddressZero(
+                  keyOrAddress: Either<ZswapCoinPublicKey, ContractAddress>): Boolean {
+                return isContractAddress(keyOrAddress)
+                    ? default<ContractAddress> == keyOrAddress.right : default<ZswapCoinPublicKey> == keyOrAddress.left;
+              }
+
+              export pure circuit isKeyZero(key: ZswapCoinPublicKey): Boolean {
+                const zero = default<ZswapCoinPublicKey>;
+                return zero == key;
+              }
+
+              export pure circuit isKeyOrAddressEqual(
+                  keyOrAddress: Either<ZswapCoinPublicKey, ContractAddress>,
+                  other: Either<ZswapCoinPublicKey, ContractAddress>): Boolean {
+                if (keyOrAddress.is_left && other.is_left) {
+                  return keyOrAddress.left == other.left;
+                } else if (!keyOrAddress.is_left && !other.is_left) {
+                  return keyOrAddress.right == other.right;
+                } else {
+                  return false;
+                }
+              }
+
+              export pure circuit isContractAddress(
+                  keyOrAddress: Either<ZswapCoinPublicKey, ContractAddress>): Boolean {
+                return !keyOrAddress.is_left;
+              }
+
+              export pure circuit emptyString(): Opaque<"string"> {
+                return default<Opaque<"string">>;
+              }
+
+              export pure circuit canonicalize<T1, T2>(
+                  value: Either<T1, T2>): Either<T1, T2> {
+                return value.is_left
+                    ? Either<T1, T2> { is_left: true, left: value.left, right: default<T2> }
+                    : Either<T1, T2> { is_left: false, left: default<T1>, right: value.right };
+              }
+
+              export pure circuit zeroAccount(): Either<Bytes<32>, ContractAddress> {
+                return Either<Bytes<32>, ContractAddress> { is_left: true, left: default<Bytes<32>>, right: default<ContractAddress> };
+              }
+
+              export pure circuit isTargetZero(target: Either<Bytes<32>, ContractAddress>): Boolean {
+                if (target.is_left) {
+                  return target.left == default<Bytes<32>>;
+                } else {
+                  return target.right == default<ContractAddress>;
+                }
+              }
+
+              export circuit selfAsRecipient(): Either<ZswapCoinPublicKey, ContractAddress> {
+                return right<ZswapCoinPublicKey, ContractAddress>(kernel.self());
+              }
+            }
+            """;
+    enableAllInspections();
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+    List<HighlightInfo> errors = highlights.stream()
+            .filter(h -> h.getDescription() != null && (
+                    h.getDescription().contains("Unresolved")
+                            || h.getDescription().contains("Type mismatch")
+            ))
+            .toList();
+    assertTrue("Utils module with Either operations should produce zero semantic errors: " + errors, errors.isEmpty());
+  }
 }
 

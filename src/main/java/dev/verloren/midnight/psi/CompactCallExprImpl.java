@@ -20,8 +20,26 @@ public class CompactCallExprImpl extends CompactPsiElement implements CompactExp
     PsiReference ref = getCalleeReference();
     if (ref != null) {
       PsiElement resolved = ref.resolve();
-      if (resolved instanceof CompactTypeElement) {
-        return ((CompactTypeElement) resolved).getType();
+      CompactType returnType = null;
+      if (resolved instanceof CompactCircuitDefinition circuit) {
+        returnType = circuit.getType();
+      } else if (resolved instanceof CompactWitnessDeclaration witness) {
+        returnType = witness.getType();
+      } else if (resolved instanceof CompactTypeElement typeElement) {
+        returnType = typeElement.getType();
+      } else if (resolved instanceof CompactNamedElement named) {
+        returnType = named.getType();
+      }
+
+      if (returnType != null) {
+        ASTNode genArgsNode = getNode().findChildByType(dev.verloren.midnight.parser.CompactElementTypes.GENERIC_ARGUMENT_LIST);
+        if (genArgsNode != null && resolved != null) {
+          java.util.List<String> genericArgs = dev.verloren.midnight.type.CompactTypeInferenceUtil.parseGenericArgs(genArgsNode.getText());
+          java.util.Map<String, String> substitution = dev.verloren.midnight.type.CompactTypeInferenceUtil.buildGenericSubstitution(resolved, genericArgs);
+          String substitutedName = dev.verloren.midnight.type.CompactTypeInferenceUtil.substituteGenerics(returnType.name(), substitution);
+          return new CompactPrimitiveType(substitutedName);
+        }
+        return returnType;
       }
     }
     return CompactPrimitiveType.UNKNOWN;

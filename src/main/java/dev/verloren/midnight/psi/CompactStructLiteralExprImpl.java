@@ -18,12 +18,20 @@ public class CompactStructLiteralExprImpl extends CompactPsiElement implements C
 
   @Override
   public @NotNull CompactType getType() {
-    PsiReference ref = getReference();
-    if (ref != null) {
-      PsiElement resolved = ref.resolve();
-      if (resolved instanceof CompactTypeElement typeElement) {
-        return typeElement.getType();
+    ASTNode identifier = getNode().findChildByType(CompactTokenTypes.IDENTIFIER);
+    ASTNode genArgs = getNode().findChildByType(dev.verloren.midnight.parser.CompactElementTypes.GENERIC_ARGUMENT_LIST);
+    if (identifier != null) {
+      if (genArgs != null) {
+        return new CompactPrimitiveType(identifier.getText() + genArgs.getText());
       }
+      PsiReference ref = getReference();
+      if (ref != null) {
+        PsiElement resolved = ref.resolve();
+        if (resolved instanceof CompactTypeElement typeElement) {
+          return typeElement.getType();
+        }
+      }
+      return new CompactPrimitiveType(identifier.getText());
     }
     return CompactPrimitiveType.UNKNOWN;
   }

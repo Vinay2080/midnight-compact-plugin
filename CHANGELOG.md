@@ -19,6 +19,7 @@
 - Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
 ### Fixed
+- Fixed false-positive unresolved struct field warnings (`left`, `right`, `is_left`) and type mismatch errors when using generic structs (such as `Either<A, B>`), struct literals, and generic circuit calls with concrete type arguments.
 - Fixed an issue where creating a new Compact file from a template could fail with an `IncorrectOperationException` during post-creation formatting.
 - Fixed an issue where WSL compiler paths with short root mount locations were not correctly translated back to local Windows paths.
 - Fixed an issue where changing the Compact compiler version via quick-fix (Alt+Enter) in the editor did not update the active version highlight and cards in the Compact Compiler tool window side panel.
