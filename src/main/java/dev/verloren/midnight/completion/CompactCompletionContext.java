@@ -215,32 +215,65 @@ public final class CompactCompletionContext {
       return false;
     }
     IElementType type = previous.getNode().getElementType();
-    return type == CompactTokenTypes.COLON
-            || type == CompactTokenTypes.AS
+    if (type == CompactTokenTypes.AS
             || type == CompactTokenTypes.LT
-            || type == CompactTokenTypes.HASH;
+            || type == CompactTokenTypes.HASH) {
+      return true;
+    }
+    if (type == CompactTokenTypes.COLON) {
+      return isTypeColon(previous);
+    }
+    return false;
+  }
+
+  private static boolean isTypeColon(@NotNull PsiElement colonLeaf) {
+    PsiElement beforeColon = prevNonCommentLeaf(colonLeaf);
+    if (beforeColon == null || beforeColon.getNode() == null) {
+      return false;
+    }
+    IElementType beforeType = beforeColon.getNode().getElementType();
+    // 1. After callable parameter list: circuit foo(): <caret>
+    if (beforeType == CompactTokenTypes.RPAREN) {
+      return true;
+    }
+    // 2. After identifier: could be ledger, const, parameter, struct field, or struct literal
+    if (beforeType == CompactTokenTypes.IDENTIFIER) {
+      PsiElement beforeId = prevNonCommentLeaf(beforeColon);
+      if (beforeId != null && beforeId.getNode() != null) {
+        IElementType beforeIdType = beforeId.getNode().getElementType();
+        if (beforeIdType == CompactTokenTypes.LEDGER) {
+          return true; // ledger foo: <caret>
+        }
+        if (beforeIdType == CompactTokenTypes.LPAREN) {
+          return true; // (foo: <caret>)
+        }
+        if (beforeIdType == CompactTokenTypes.CONST) {
+          return true; // const foo: <caret>
+        }
+        if (beforeIdType == CompactTokenTypes.COMMA) {
+          // Walk back to find if we're inside '(' (parameter list) vs '{' (struct literal)
+          for (PsiElement p = beforeId; p != null; p = prevNonCommentLeaf(p)) {
+            if (p.getNode() == null) break;
+            IElementType t = p.getNode().getElementType();
+            if (t == CompactTokenTypes.LPAREN) {
+              return true; // in parameter list
+            }
+            if (t == CompactTokenTypes.LBRACE || t == CompactTokenTypes.SEMICOLON) {
+              break;
+            }
+          }
+        }
+      }
+      // Check if inside struct definition: struct Foo { field: <caret> }
+      if (PsiTreeUtil.getParentOfType(colonLeaf, CompactStructDefinition.class, false) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isTypePosition(@NotNull PsiElement position, PsiElement previous) {
-    // 1. Inside ledger declaration type slot: ledger foo: <caret>
-    CompactLedgerDeclaration ledger = PsiTreeUtil.getParentOfType(position, CompactLedgerDeclaration.class, false);
-    if (ledger != null) {
-      ASTNode colonNode = ledger.getNode().findChildByType(CompactTokenTypes.COLON);
-      if (colonNode != null && position.getTextRange().getStartOffset() >= colonNode.getTextRange().getEndOffset()) {
-        return true;
-      }
-    }
-
-    // 2. Inside struct field type slot: struct Foo { x: <caret> }
-    CompactStructFieldImpl structField = PsiTreeUtil.getParentOfType(position, CompactStructFieldImpl.class, false);
-    if (structField != null) {
-      ASTNode colonNode = structField.getNode().findChildByType(CompactTokenTypes.COLON);
-      if (colonNode != null && position.getTextRange().getStartOffset() >= colonNode.getTextRange().getEndOffset()) {
-        return true;
-      }
-    }
-
-    // 3. Inside type alias definition: type Foo = <caret>
+    // 1. Inside type alias definition: type Foo = <caret>
     CompactTypeDefinition typeDef = PsiTreeUtil.getParentOfType(position, CompactTypeDefinition.class, false);
     if (typeDef != null) {
       ASTNode eqNode = typeDef.getNode().findChildByType(CompactTokenTypes.ASSIGN);
@@ -249,19 +282,7 @@ public final class CompactCompletionContext {
       }
     }
 
-    // 4. Inside const declaration type slot: const x: <caret> = 0;
-    CompactConstBindingImpl constBinding = PsiTreeUtil.getParentOfType(position, CompactConstBindingImpl.class, false);
-    if (constBinding != null) {
-      ASTNode colonNode = constBinding.getNode().findChildByType(CompactTokenTypes.COLON);
-      ASTNode eqNode = constBinding.getNode().findChildByType(CompactTokenTypes.ASSIGN);
-      if (colonNode != null && position.getTextRange().getStartOffset() >= colonNode.getTextRange().getEndOffset()) {
-        if (eqNode == null || position.getTextRange().getStartOffset() <= eqNode.getTextRange().getStartOffset()) {
-          return true;
-        }
-      }
-    }
-
-    // 5. After comma inside type arguments, e.g. Vector<#32, <caret>>
+    // 2. After comma inside type arguments, e.g. Vector<#32, <caret>> or Either<Field, <caret>>
     if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.COMMA) {
       for (PsiElement p = previous; p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
         if (p.getNode() == null) break;

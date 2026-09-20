@@ -53,6 +53,7 @@ public class CompactCompletionContributor extends CompletionContributor {
 
   public static final String[] BUILTIN_TYPES = {
       "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "State", "Counter", "Void",
+      "Either", "Maybe", "ContractAddress", "Cell", "Set", "Map",
       "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point"
   };
 
@@ -162,7 +163,7 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
 
     // 3. Primitive non-parameterized types
-    String[] simpleTypes = {"Boolean", "Field", "State", "Counter", "Void",
+    String[] simpleTypes = {"Boolean", "Field", "State", "Counter", "Void", "ContractAddress",
         "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point"};
     for (String simple : simpleTypes) {
       elements.add(PrioritizedLookupElement.withPriority(
@@ -189,6 +190,33 @@ public class CompactCompletionContributor extends CompletionContributor {
             .bold()
             .withInsertHandler(CompactParameterizedTypeInsertHandler.OPAQUE_BRACKETS),
         85.0
+    ));
+
+    // 5. Either and Maybe parameterized types
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Either")
+            .withPresentableText("Either")
+            .withTailText("<Left, Right>", true)
+            .withTypeText("type")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+        95.0
+    ));
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Either<Bytes<32>, ContractAddress>")
+            .withPresentableText("Either<Bytes<32>, ContractAddress>")
+            .withTypeText("type")
+            .bold(),
+        90.0
+    ));
+    elements.add(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Maybe")
+            .withPresentableText("Maybe")
+            .withTailText("<Type>", true)
+            .withTypeText("type")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+        92.0
     ));
 
     return elements;
@@ -559,16 +587,37 @@ public class CompactCompletionContributor extends CompletionContributor {
       // Add compatible expression keywords with high priority
       if (isTypeCompatible(CompactPrimitiveType.BOOLEAN, expectedType)) {
         result.addElement(PrioritizedLookupElement.withPriority(
-            LookupElementBuilder.create("true").bold(), 100.0));
+            LookupElementBuilder.create("true").withTypeText("Boolean").bold(), 100.0));
         result.addElement(PrioritizedLookupElement.withPriority(
-            LookupElementBuilder.create("false").bold(), 100.0));
+            LookupElementBuilder.create("false").withTypeText("Boolean").bold(), 100.0));
       }
       if (!"Void".equalsIgnoreCase(expectedType.name())) {
+        String expectedTypeName = expectedType.name();
+        if (!"Unknown".equalsIgnoreCase(expectedTypeName)) {
+          result.addElement(PrioritizedLookupElement.withPriority(
+              LookupElementBuilder.create("default<" + expectedTypeName + ">")
+                  .withPresentableText("default<" + expectedTypeName + ">")
+                  .withTypeText("default<Type>")
+                  .bold(),
+              95.0
+          ));
+        }
         result.addElement(PrioritizedLookupElement.withPriority(
-            LookupElementBuilder.create("default"), 50.0));
+            LookupElementBuilder.create("default")
+                .withPresentableText("default")
+                .withTailText("<Type>", true)
+                .withTypeText("default<Type>")
+                .bold()
+                .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+            90.0
+        ));
+        addCommonDefaultCompletions(result, 85.0);
         result.addElement(PrioritizedLookupElement.withPriority(
             LookupElementBuilder.create("disclose"), 50.0));
       }
+
+      // Either struct literal and left/right helper completions
+      addEitherAndHelperCompletions(result);
 
       // Also provide prefixed imports and general value keywords in value context
       addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
@@ -579,18 +628,104 @@ public class CompactCompletionContributor extends CompletionContributor {
         }
         result.addElement(PrioritizedLookupElement.withPriority(LookupElementBuilder.create(keyword), 10.0));
       }
+      result.addElement(createAssertLookupElement());
       return;
     }
 
     // Default / unrestricted value completion
     addNamed(result, CompactResolveUtil.collectValueDeclarations(position));
     addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
+
+    // Boolean literals
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("true").withTypeText("Boolean").bold(), 80.0));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("false").withTypeText("Boolean").bold(), 80.0));
+
+    // Default completions
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("default")
+            .withPresentableText("default")
+            .withTailText("<Type>", true)
+            .withTypeText("default<Type>")
+            .bold()
+            .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
+        90.0
+    ));
+    addCommonDefaultCompletions(result, 85.0);
+
+    // Either struct literal and left/right helper completions
+    addEitherAndHelperCompletions(result);
+
     addAll(result, VALUE_KEYWORDS);
     result.addElement(createAssertLookupElement());
   }
 
+  private static void addCommonDefaultCompletions(@NotNull CompletionResultSet result, double priority) {
+    String[] commonTypes = {"Field", "Boolean", "Bytes<32>", "ContractAddress"};
+    for (String type : commonTypes) {
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("default<" + type + ">")
+              .withPresentableText("default<" + type + ">")
+              .withTypeText("default<Type>")
+              .bold(),
+          priority
+      ));
+    }
+  }
+
+  private static void addEitherAndHelperCompletions(@NotNull CompletionResultSet result) {
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("Either")
+            .withPresentableText("Either")
+            .withTailText(" { is_left: true, left: ..., right: default }", true)
+            .withTypeText("struct")
+            .bold()
+            .withInsertHandler(CompactEitherInsertHandler.INSTANCE),
+        85.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("left")
+            .withPresentableText("left")
+            .withTailText("(val)", true)
+            .withTypeText("Either")
+            .bold()
+            .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
+        85.0
+    ));
+    result.addElement(PrioritizedLookupElement.withPriority(
+        LookupElementBuilder.create("right")
+            .withPresentableText("right")
+            .withTailText("(val)", true)
+            .withTypeText("Either")
+            .bold()
+            .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
+        85.0
+    ));
+  }
+
   public static @Nullable CompactType getExpectedType(@NotNull PsiElement position) {
-    // 1. Check if in the return expression context
+    // 1. Check if in struct literal field is_left: <caret>
+    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
+    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.COLON) {
+      PsiElement idBeforeColon = PsiTreeUtil.prevVisibleLeaf(prev);
+      if (idBeforeColon != null && "is_left".equals(idBeforeColon.getText())) {
+        return CompactPrimitiveType.BOOLEAN;
+      }
+    }
+
+    // 2. Check if in the "if (<caret>)" or "assert(<caret>)" condition context
+    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.LPAREN) {
+      PsiElement beforeParen = PsiTreeUtil.prevVisibleLeaf(prev);
+      if (beforeParen != null && beforeParen.getNode() != null) {
+        com.intellij.psi.tree.IElementType tt = beforeParen.getNode().getElementType();
+        if (tt == CompactTokenTypes.IF || tt == CompactTokenTypes.ASSERT) {
+          return CompactPrimitiveType.BOOLEAN;
+        }
+      }
+    }
+
+    // 3. Check if in the return expression context
     if (isReturnContext(position)) {
       PsiElement enclosing = PsiTreeUtil.getParentOfType(position,
           CompactCircuitDefinition.class,
@@ -602,24 +737,12 @@ public class CompactCompletionContributor extends CompletionContributor {
       }
     }
 
-    // 2. Check if in const x: Type = <caret> context
+    // 4. Check if in const x: Type = <caret> context
     CompactConstBindingImpl binding = PsiTreeUtil.getParentOfType(position, CompactConstBindingImpl.class);
     if (binding != null) {
-      CompactTypeElement typeElem = PsiTreeUtil.findChildOfType(binding, CompactTypeElement.class);
+      CompactTypeElement typeElem = dev.verloren.midnight.intention.CompactSpecifyTypeExplicitlyIntention.getDeclaredTypeElement(binding);
       if (typeElem != null) {
         return typeElem.getType();
-      }
-    }
-
-    // 3. Check if in the "is (<caret>)" or "assert(<caret>)" condition context
-    PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
-    if (prev != null && prev.getNode() != null && prev.getNode().getElementType() == CompactTokenTypes.LPAREN) {
-      PsiElement beforeParen = PsiTreeUtil.prevVisibleLeaf(prev);
-      if (beforeParen != null && beforeParen.getNode() != null) {
-        com.intellij.psi.tree.IElementType tt = beforeParen.getNode().getElementType();
-        if (tt == CompactTokenTypes.IF || tt == CompactTokenTypes.ASSERT) {
-          return CompactPrimitiveType.BOOLEAN;
-        }
       }
     }
 

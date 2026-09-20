@@ -1374,4 +1374,186 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNotNull(pos);
     assertEquals(CompactCompletionContext.Kind.AFTER_PRAGMA, CompactCompletionContext.classify(pos));
   }
+
+  public void testDefaultCompletionInsertsAngleBracketsAndPlacesCaretInside() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          const x = def<caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    if (elements == null) {
+      myFixture.checkResult(
+          """
+          circuit test(): Void {
+            const x = default<<caret>>
+          }
+          """
+      );
+    } else {
+      LookupElement defaultEl = null;
+      for (LookupElement el : elements) {
+        if ("default".equals(el.getLookupString())) {
+          defaultEl = el;
+          break;
+        }
+      }
+      assertNotNull("Should find 'default' lookup element", defaultEl);
+      myFixture.getLookup().setCurrentItem(defaultEl);
+      myFixture.type('\n');
+      myFixture.checkResult(
+          """
+          circuit test(): Void {
+            const x = default<<caret>>
+          }
+          """
+      );
+    }
+  }
+
+  public void testDefaultCompletionWithExpectedType() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          const x: ContractAddress = def<caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'default<ContractAddress>'", lookupStrings.contains("default<ContractAddress>"));
+    assertTrue("Should suggest generic 'default'", lookupStrings.contains("default"));
+  }
+
+  public void testEitherCompletionInTypeContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export ledger l: Eith<caret>;
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    if (elements == null) {
+      myFixture.checkResult(
+          """
+          export ledger l: Either<<caret>>;
+          """
+      );
+    } else {
+      LookupElement eitherEl = null;
+      for (LookupElement el : elements) {
+        if ("Either".equals(el.getLookupString())) {
+          eitherEl = el;
+          break;
+        }
+      }
+      assertNotNull("Should find 'Either' lookup element in type context", eitherEl);
+      myFixture.getLookup().setCurrentItem(eitherEl);
+      myFixture.type('\n');
+      myFixture.checkResult(
+          """
+          export ledger l: Either<<caret>>;
+          """
+      );
+    }
+  }
+
+  public void testEitherStructCompletionInValueContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          const res = Eith<caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    if (elements == null) {
+      myFixture.checkResult(
+          """
+          circuit test(): Void {
+            const res = Either { is_left: true, left: <caret>, right: default }
+          }
+          """
+      );
+    } else {
+      LookupElement eitherEl = null;
+      for (LookupElement el : elements) {
+        if ("Either".equals(el.getLookupString())) {
+          eitherEl = el;
+          break;
+        }
+      }
+      assertNotNull("Should find 'Either' lookup element in value context", eitherEl);
+      myFixture.getLookup().setCurrentItem(eitherEl);
+      myFixture.type('\n');
+      myFixture.checkResult(
+          """
+          circuit test(): Void {
+            const res = Either { is_left: true, left: <caret>, right: default }
+          }
+          """
+      );
+    }
+  }
+
+  public void testLeftAndRightCompletionInValueContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          const a = le<caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'left' in value context", lookupStrings.contains("left"));
+  }
+
+  public void testTrueAndFalseCompletionInGeneralContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          const b = <caret>
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'true' in general value context", lookupStrings.contains("true"));
+    assertTrue("Should suggest 'false' in general value context", lookupStrings.contains("false"));
+  }
+
+  public void testTrueAndFalseCompletionInBooleanExpectedContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          if (<caret>)
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'true' in boolean expected context", lookupStrings.contains("true"));
+    assertTrue("Should suggest 'false' in boolean expected context", lookupStrings.contains("false"));
+  }
+
+  public void testStructLiteralFieldCompletionForBoolean() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(): Void {
+          const x = Either { is_left: <caret> };
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'true' for is_left struct field. Actual: " + lookupStrings, lookupStrings.contains("true"));
+    assertTrue("Should suggest 'false' for is_left struct field. Actual: " + lookupStrings, lookupStrings.contains("false"));
+  }
 }

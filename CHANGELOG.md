@@ -5,6 +5,9 @@
 ## [Unreleased]
 
 ### Added
+- Added structured and contextual code completions for `default<Type>` with angle brackets, type parameter assistance, and smart type inference in expression contexts.
+- Added structured struct literal completions (`Either { is_left: true, left: <caret>, right: default }`) and constructor helper completions (`left(val)` and `right(val)`) for `Either`, along with parameterized type completions `Either<Left, Right>`.
+- Added boolean literal completions for `true` and `false` with dynamic prioritization in boolean condition contexts (e.g. `if (...)`, `assert(...)`, `is_left:` fields).
 - Added prioritized suggestions for already installed Compact compilers satisfying pragma constraints (`pragma language_version` and `pragma compiler_version`) in inspections and context intentions, presenting satisfying local versions sorted descending before external download options and eliminating redundant downloads when the required version is installed.
 - Added dynamic pragma version resolution to newly created Compact file templates, automatically populating the required language version directive based on your currently configured project compiler toolchain.
 - Added contextual code completion for `language_version` and `compiler_version` directives immediately after the `pragma` keyword at top level and inside incomplete pragma forms, with automatic trailing space insertion.
