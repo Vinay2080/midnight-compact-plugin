@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- Added member autocompletion (`target.<caret>`) for parameterized and generic struct variables (e.g., suggesting `is_left`, `left`, `right` for `Either<Bytes<32>, ContractAddress>`).
 - Added smart typed and generic `Either` struct literal completions (`Either<T1, T2> { is_left: true, left: ..., right: default<T2> }` and `Either { ... }`) with bracket-aware type argument parsing, expected type detection, and interactive live templates across type parameters and field values (`is_left`, `left`, `right`).
 - Added structured and contextual code completions for `default<Type>` with angle brackets, type parameter assistance, and smart type inference in expression contexts.
 - Added structured struct literal completions (`Either { is_left: true, left: ..., right: default }`) with multi-field live template tabbing across `is_left`, `left`, and `right`, as well as constructor helper completions (`left(val)` and `right(val)`) and parameterized type completions (`Either<Left, Right>`).

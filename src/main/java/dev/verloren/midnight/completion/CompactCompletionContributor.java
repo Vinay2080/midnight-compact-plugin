@@ -19,6 +19,7 @@ import dev.verloren.midnight.reference.CompactStructFieldReference;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
 import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
+import dev.verloren.midnight.type.CompactTypeInferenceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -553,10 +554,22 @@ public class CompactCompletionContributor extends CompletionContributor {
       @NotNull PsiElement context,
       @NotNull CompletionResultSet result
   ) {
-    for (CompactNamedElement target : CompactResolveUtil.resolveType(typeName, context)) {
+    String rawTypeName = CompactTypeInferenceUtil.getRawTypeName(typeName);
+    for (CompactNamedElement target : CompactResolveUtil.resolveType(rawTypeName, context)) {
       CompactNamedElement unwrapped = (target instanceof CompactImportElementImpl importElem)
           ? CompactResolveUtil.resolveImportElementSource(importElem)
           : target;
+      if (unwrapped instanceof dev.verloren.midnight.psi.CompactTypeDefinitionImpl typeAlias) {
+        String rawTarget = CompactTypeInferenceUtil.getRawTypeName(typeAlias.getType().name());
+        for (CompactNamedElement aliasTarget : CompactResolveUtil.resolveType(rawTarget, context)) {
+          CompactNamedElement aliasUnwrapped = (aliasTarget instanceof CompactImportElementImpl aliasImport)
+              ? CompactResolveUtil.resolveImportElementSource(aliasImport)
+              : aliasTarget;
+          if (aliasUnwrapped instanceof CompactStructDefinition structDef) {
+            addNamed(result, structDef.getFields());
+          }
+        }
+      }
       switch (Objects.requireNonNull(unwrapped)) {
         case CompactStructDefinition structDef -> addNamed(result, structDef.getFields());
         case CompactEnumDefinition enumDef -> addNamed(result, enumDef.getMembers());

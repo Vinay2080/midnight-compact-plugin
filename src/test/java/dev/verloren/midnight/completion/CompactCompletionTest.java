@@ -1655,4 +1655,29 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNull(CompactCompletionContributor.parseEitherTypeArgs("Field"));
     assertNull(CompactCompletionContributor.parseEitherTypeArgs("Either"));
   }
+
+  public void testGenericStructMemberCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Either<A, B> {
+          is_left: Boolean;
+          left: A;
+          right: B;
+        }
+
+        export pure circuit isTargetZero(target: Either<Bytes<32>, ContractAddress>): Boolean {
+          if (target.<caret>) {
+            return false;
+          }
+          return true;
+        }
+        """
+    );
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    assertTrue("Should suggest 'is_left' for Either member access. Actual: " + lookupStrings, lookupStrings.contains("is_left"));
+    assertTrue("Should suggest 'left' for Either member access. Actual: " + lookupStrings, lookupStrings.contains("left"));
+    assertTrue("Should suggest 'right' for Either member access. Actual: " + lookupStrings, lookupStrings.contains("right"));
+  }
 }
