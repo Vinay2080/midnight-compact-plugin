@@ -104,6 +104,17 @@ This guide maps all external and reference materials present in the repository.
   - **Doc Comments & Help Rendering**: `psi/.../roxygen/`, `src/.../documentation/` (structured doc comment parsing, markdown doc rendering, and parameter tables).
   - **Programmatic PSI Generation**: `psi/.../RElementGenerator.java` (generating synthetic AST nodes via string snippets).
 
+### 2.5 IntelliJ Solidity (`intellij-solidity/`)
+- **Location**: `intellij-solidity/src/main/kotlin/me/serce/solidity/`
+- **Use when**:
+  - **Smart Contract & Struct AST Models**: `lang/psi/` (contract definitions, structs, state variables, events, and mappings).
+  - **Scope Resolution & Symbol Navigation**: `lang/resolve/` (resolving contract members, struct fields, constructor parameters, and inheritance scopes).
+  - **Type Inference & System Integration**: `lang/types/` (type representation, type inference engines, primitive vs user-defined types).
+  - **Smart Contract Completion Providers**: `ide/completion/` (modular completion providers for contract members, keywords, and struct literals).
+- **Precautions & Invariants**:
+  - *Do NOT copy Solidity grammar or semantics*: Compact uses TypeScript/Rust-style syntax, ZK circuits/witnesses, and ledger state rather than EVM opcodes or Solidity inheritance modifiers.
+  - *Architectural Reference Only*: Reference class modularity, IntelliJ PSI scoping techniques, and type representation patterns.
+
 ---
 
 ## 3. Local Blockchain Testnet Reference (`../midnight-local-dev/`)

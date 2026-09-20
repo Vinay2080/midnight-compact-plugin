@@ -7,25 +7,26 @@ This document describes the concrete, verified architecture of the Midnight Comp
 ## 1. Pipeline Overview
 
 ```text
+```text
 Compact Source Text (.compact)
   ↓
-[Lexer] CompactLexer (extends LexerBase) + CompactTokenTypes
+[Layer 1: Lexer & Parser] CompactLexer (extends LexerBase) + CompactParser (implements PsiParser)
   ↓
-[Parser] CompactParser (implements PsiParser) + CompactElementTypes
+[Layer 1: PSI] CompactPsiElement / CompactFile / Typed AST Wrappers (dev.verloren.midnight.psi.impl.*)
   ↓
-[PSI] CompactPsiElement / CompactFile / Typed AST Wrappers (dev.verloren.midnight.psi.impl.*)
+[Layer 2: Type Engine] CompactType (Sealed Hierarchy) + CompactTypeSubstitutor + CompactTypeChecker
   ↓
-[Semantic Layer] CompactResolveUtil (AST scope walker) + CompactTypeInferenceUtil
+[Layer 3: Resolution & Scopes] CompactResolveUtil (AST scope walker) + Namespace Isolation (VALUE vs TYPE)
   ↓
-[IDE Features]
+[Layer 4: IDE Features & UI]
   ├── References & Navigation (Go To Declaration, Go To Type, Find Usages, Standard Library)
-  ├── Completion (CompactCompletionContributor, CompactParameterizedTypeInsertHandler, CompactLedgerInsertHandler)
+  ├── Modular Completion (CompactCompletionContributor routing to CompactMemberCompletionProvider, CompactCallableCompletionProvider, etc.)
   ├── Live Templates & Macros (CompactTypeMacro, CompactDeclarationNameGenerator)
   ├── File Templates & Properties (CompactDefaultTemplatePropertiesProvider, CompactCreateFileAction)
   ├── Editor Typing (CompactAngleBraceTypedHandler, CompactDelimiterTypedHandler, CompactQuoteHandler)
   ├── Smart Enter & Intentions (CompactSmartEnterProcessor, CompactToggleExportIntention)
   ├── Refactoring & Rename (CompactRefactoringSupportProvider, CompactNamesValidator)
-  ├── Semantic Inspections (10 local inspections & quick fixes)
+  ├── Semantic Inspections (10 local inspections & quick fixes grounded in Type Engine)
   ├── Code Style (CompactFormattingModelBuilder, CompactBlock, Indentation)
   ├── Toolchain & Annotator (CompactExternalAnnotator, CompactToolchainUtil, WSL Mapping)
   └── Compiler Tool Window & Status Bar (CompactCompilerToolWindowFactory, CompactStatusBarWidget)
@@ -33,9 +34,20 @@ Compact Source Text (.compact)
 
 ---
 
-## 2. Subsystems
+## 2. Architectural Guardrails & Invariants
 
-### 2.1 Lexer
+All subsystems must adhere to [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md):
+1. **Layer Hierarchy**: Dependencies flow strictly downward: `[UI/Completion/Inspection]` -> `[Resolution]` -> `[Type Engine]` -> `[PSI]`. Lower layers never import upper layers.
+2. **The Rule of Generalization**: Zero hardcoded standard library names (`"Either"`, `"Maybe"`, `"default"`) in general compiler, completion, or inspection code. All features must work uniformly for user-defined structs.
+3. **Mandatory Dual Testing**: Every standard library test must have an identical **User-Defined Mirror Test** (`Result<TVal, TErr>`, `Pair<A, B>`).
+4. **Modularity & Class Size Budget**: Every class must remain $\le$ 400 lines and methods $\le$ 40 lines. Monolithic contributors must be split into dedicated `CompletionProvider` classes.
+5. **Single Source of Truth**: All type representations must be instances of `CompactType`. Prohibited: parsing type strings with regex.
+
+---
+
+## 3. Subsystems
+
+### 3.1 Lexer
 - **Purpose**: Tokenise Compact source code into IntelliJ `IElementType` tokens.
 - **Key Classes**:
   - `dev.verloren.midnight.lexer.CompactLexer`: Handwritten lexer extending `LexerBase`.
@@ -47,7 +59,7 @@ Compact Source Text (.compact)
   - Must remain robust and never crash or hang on arbitrary or malformed character input.
   - Aligns with upstream compiler lexer (`compact/compiler/lexer.ss`) and ADR-001.
 
-### 2.2 Parser & AST
+### 3.2 Parser & AST
 - **Purpose**: Parse token stream into an AST with rich error recovery.
 - **Key Classes**:
   - `dev.verloren.midnight.parser.CompactParser`: Handwritten recursive-descent parser implementing `PsiParser`.
@@ -60,7 +72,7 @@ Compact Source Text (.compact)
   - Loop safety: every parser loop MUST guarantee token advancement to avoid EDT freezes.
   - Never regenerate parser from grammar files without explicit project migration.
 
-### 2.3 PSI (Program Structure Interface)
+### 3.3 PSI (Program Structure Interface)
 - **Purpose**: Provide high-level, typed object-oriented representations of AST nodes.
 - **Key Classes**:
   - `dev.verloren.midnight.psi.impl.CompactPsiElement`: Base PSI class.
@@ -73,7 +85,22 @@ Compact Source Text (.compact)
   - All declared named symbols (circuits, witnesses, structs, enums, parameters, consts, import aliases) must implement `CompactNamedElement`.
   - Tolerant of incomplete code and `PsiErrorElement` nodes without throwing exceptions.
 
-### 2.4 Reference Resolution & Scoping
+### 3.4 Type Engine & Substitutor
+- **Purpose**: First-class algebraic type representation, type checking, and parameter substitution.
+- **Key Classes**:
+  - `dev.verloren.midnight.type.CompactType`: Sealed type interface.
+  - `dev.verloren.midnight.type.CompactPrimitiveType`: Primitive types (`Boolean`, `Field`, `Cell`, `Void`, etc.).
+  - `dev.verloren.midnight.type.CompactParameterizedType`: Generic type applications (`Either<L, R>`, `Vector<N, T>`).
+  - `dev.verloren.midnight.type.CompactStructType`: Struct types with field maps.
+  - `dev.verloren.midnight.type.CompactTypeVariable`: Generic type parameters.
+  - `dev.verloren.midnight.type.CompactTypeSubstitutor`: Generic type argument substitution engine.
+- **Depends on**: `psi`.
+- **Used by**: `resolve`, `completion`, `inspection`.
+- **Invariants**:
+  - Zero regex/string parsing for type arithmetic or compatibility checks.
+  - Exhaustive pattern-matching dispatch on `CompactType`.
+
+### 3.5 Reference Resolution & Scoping
 - **Purpose**: Resolve identifiers to declaration elements.
 - **Key Classes**:
   - `dev.verloren.midnight.resolve.CompactResolveUtil`: Scope tree walker with namespace separation (ADR-002).
@@ -89,13 +116,13 @@ Compact Source Text (.compact)
   - Innermost-first lexical shadowing: local bindings shadow outer/file-level bindings of the same namespace.
   - Single-file resolution using `PsiTreeUtil` and AST traversal; soft-unresolved handling for external includes or builtins not defined in the local file.
 
-### 2.5 Code Completion & Export Scoping
-- **Purpose**: Context-aware code completion with export filtering, pragma directives, and comment suppression (ADR-019, ADR-026, ADR-028, ADR-032).
+### 3.6 Code Completion & Modular Providers
+- **Purpose**: Context-aware code completion decomposed into single-responsibility providers (ADR-019, ADR-026, ADR-028, ADR-032).
 - **Key Classes**:
-  - `dev.verloren.midnight.completion.CompactCompletionContributor`: IntelliJ `CompletionContributor`.
-  - `dev.verloren.midnight.completion.CompactCompletionContext`: Structural classifier determining cursor context (`TOP_LEVEL`, `STATEMENT`, `EXPRESSION`, `TYPE`, `AFTER_EXPORT`, `AFTER_SEALED`, `AFTER_PURE`, `AFTER_NEW`, `AFTER_PRAGMA`, `NONE`).
-  - `dev.verloren.midnight.completion.CompactDeclarationInsertHandler`: Insert handler for declaration completions with auto-numbering.
-  - `dev.verloren.midnight.completion.CompactLedgerInsertHandler`: Insert handler for ledger declarations with live template scaffolding.
+  - `dev.verloren.midnight.completion.CompactCompletionContributor`: IntelliJ `CompletionContributor` routing pattern triggers.
+  - `dev.verloren.midnight.completion.CompactCompletionContext`: Structural classifier determining cursor context.
+  - Modular `CompletionProvider` subclasses: `CompactMemberCompletionProvider`, `CompactCallableCompletionProvider`, `CompactStructLiteralCompletionProvider`, `CompactKeywordCompletionProvider`.
+  - Generalized `InsertHandler` implementations: `CompactGenericStructInsertHandler`, `CompactGenericCallInsertHandler`, `CompactLedgerInsertHandler`.
 - **Invariants**:
   - Keyword and completion suggestions are strictly suppressed inside comments and docstrings.
   - `export const` strictly prohibited per upstream grammar (ADR-028).
