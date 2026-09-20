@@ -1680,4 +1680,58 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertTrue("Should suggest 'left' for Either member access. Actual: " + lookupStrings, lookupStrings.contains("left"));
     assertTrue("Should suggest 'right' for Either member access. Actual: " + lookupStrings, lookupStrings.contains("right"));
   }
+
+  public void testTypedEitherRightHelperCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export circuit selfAsRecipient(): Either<ZswapCoinPublicKey, ContractAddress> {
+          return rig<caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement rightEl = null;
+    for (LookupElement el : elements) {
+      if ("right<ZswapCoinPublicKey, ContractAddress>".equals(el.getLookupString())
+          || "right".equals(el.getLookupString())) {
+        rightEl = el;
+        break;
+      }
+    }
+    assertNotNull("Should find typed 'right' helper completion", rightEl);
+    myFixture.getLookup().setCurrentItem(rightEl);
+    myFixture.type('\n');
+    String text = myFixture.getFile().getText();
+    assertTrue("File should contain expanded typed right helper call but was:\n" + text,
+        text.contains("return right<ZswapCoinPublicKey, ContractAddress>(<caret>)")
+        || text.contains("return right<ZswapCoinPublicKey, ContractAddress>()"));
+  }
+
+  public void testTypedEitherLeftHelperCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        export circuit canonicalZero(): Either<Bytes<32>, ContractAddress> {
+          return lef<caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement leftEl = null;
+    for (LookupElement el : elements) {
+      if ("left<Bytes<32>, ContractAddress>".equals(el.getLookupString())
+          || "left".equals(el.getLookupString())) {
+        leftEl = el;
+        break;
+      }
+    }
+    assertNotNull("Should find typed 'left' helper completion", leftEl);
+    myFixture.getLookup().setCurrentItem(leftEl);
+    myFixture.type('\n');
+    String text = myFixture.getFile().getText();
+    assertTrue("File should contain expanded typed left helper call but was:\n" + text,
+        text.contains("return left<Bytes<32>, ContractAddress>(<caret>)")
+        || text.contains("return left<Bytes<32>, ContractAddress>()"));
+  }
 }

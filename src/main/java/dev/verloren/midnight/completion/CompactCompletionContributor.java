@@ -586,8 +586,11 @@ public class CompactCompletionContributor extends CompletionContributor {
       Set<String> seen = new HashSet<>();
 
       for (CompactNamedElement decl : allDecls) {
-        CompactType declType = getCandidateType(decl);
         String name = decl.getName();
+        if ("left".equals(name) || "right".equals(name)) {
+          continue;
+        }
+        CompactType declType = getCandidateType(decl);
         if (name != null && seen.add(name)) {
           if (isTypeCompatible(declType, expectedType)) {
             addNamed(result, decl, 110.0);
@@ -631,7 +634,7 @@ public class CompactCompletionContributor extends CompletionContributor {
 
       // Either struct literal and left/right helper completions
       boolean isEitherExpected = expectedType.name().startsWith("Either");
-      addEitherAndHelperCompletions(result, isEitherExpected ? expectedType : null, isEitherExpected ? 95.0 : 30.0);
+      addEitherAndHelperCompletions(result, isEitherExpected ? expectedType : null, isEitherExpected ? 115.0 : 30.0);
 
       // Also provide prefixed imports and general value keywords in value context
       addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
@@ -647,7 +650,14 @@ public class CompactCompletionContributor extends CompletionContributor {
     }
 
     // Default / unrestricted value completion
-    addNamed(result, CompactResolveUtil.collectValueDeclarations(position));
+    for (CompactNamedElement decl : CompactResolveUtil.collectValueDeclarations(position)) {
+      String name = decl.getName();
+      if ("left".equals(name) || "right".equals(name)) {
+        continue;
+      }
+      double prio = (decl instanceof CompactParameterImpl || decl instanceof CompactConstBindingImpl) ? 70.0 : 60.0;
+      addNamed(result, decl, prio);
+    }
     addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
 
     // Boolean literals
@@ -755,6 +765,64 @@ public class CompactCompletionContributor extends CompletionContributor {
               .withInsertHandler(CompactEitherInsertHandler.INFERRED),
           priority - 5.0
       ));
+      String typedLeft = "left<" + args.left() + ", " + args.right() + ">";
+      String typedRight = "right<" + args.left() + ", " + args.right() + ">";
+      CompactEitherHelperInsertHandler typedHelperHandler = new CompactEitherHelperInsertHandler(args.left(), args.right());
+
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(typedRight)
+              .withPresentableText(typedRight)
+              .withTailText("(value: " + args.right() + ")", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(typedHelperHandler),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("right")
+              .withPresentableText(typedRight)
+              .withTailText("(value: " + args.right() + ")", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(typedHelperHandler),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create(typedLeft)
+              .withPresentableText(typedLeft)
+              .withTailText("(value: " + args.left() + ")", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(typedHelperHandler),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("left")
+              .withPresentableText(typedLeft)
+              .withTailText("(value: " + args.left() + ")", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(typedHelperHandler),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("left")
+              .withPresentableText("left")
+              .withTailText("(val)", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
+          priority - 5.0
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("right")
+              .withPresentableText("right")
+              .withTailText("(val)", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
+          priority - 5.0
+      ));
     } else {
       result.addElement(PrioritizedLookupElement.withPriority(
           LookupElementBuilder.create("Either<Left, Right>")
@@ -774,26 +842,43 @@ public class CompactCompletionContributor extends CompletionContributor {
               .withInsertHandler(CompactEitherInsertHandler.INFERRED),
           priority
       ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("left<Left, Right>")
+              .withPresentableText("left<Left, Right>")
+              .withTailText("(val)", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(new CompactEitherHelperInsertHandler(true)),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("right<Left, Right>")
+              .withPresentableText("right<Left, Right>")
+              .withTailText("(val)", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(new CompactEitherHelperInsertHandler(true)),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("left")
+              .withPresentableText("left")
+              .withTailText("(val)", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
+          priority
+      ));
+      result.addElement(PrioritizedLookupElement.withPriority(
+          LookupElementBuilder.create("right")
+              .withPresentableText("right")
+              .withTailText("(val)", true)
+              .withTypeText("Either")
+              .bold()
+              .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
+          priority
+      ));
     }
-
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("left")
-            .withPresentableText("left")
-            .withTailText("(val)", true)
-            .withTypeText("Either")
-            .bold()
-            .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
-        priority
-    ));
-    result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("right")
-            .withPresentableText("right")
-            .withTailText("(val)", true)
-            .withTypeText("Either")
-            .bold()
-            .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
-        priority
-    ));
   }
 
   public static @Nullable CompactType getExpectedType(@NotNull PsiElement position) {
