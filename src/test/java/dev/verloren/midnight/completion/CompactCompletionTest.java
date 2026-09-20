@@ -1473,7 +1473,7 @@ public class CompactCompletionTest extends BasePlatformTestCase {
       myFixture.checkResult(
           """
           circuit test(): Void {
-            const res = Either { is_left: true, left: <caret>, right: default }
+            const res = Either { is_left: true, left: , right: default }<caret>
           }
           """
       );
@@ -1491,7 +1491,7 @@ public class CompactCompletionTest extends BasePlatformTestCase {
       myFixture.checkResult(
           """
           circuit test(): Void {
-            const res = Either { is_left: true, left: <caret>, right: default }
+            const res = Either { is_left: true, left: , right: default }<caret>
           }
           """
       );
@@ -1555,5 +1555,55 @@ public class CompactCompletionTest extends BasePlatformTestCase {
     assertNotNull("Lookup strings should not be null", lookupStrings);
     assertTrue("Should suggest 'true' for is_left struct field. Actual: " + lookupStrings, lookupStrings.contains("true"));
     assertTrue("Should suggest 'false' for is_left struct field. Actual: " + lookupStrings, lookupStrings.contains("false"));
+  }
+
+  public void testDefaultAndEitherPrioritiesInUnrestrictedValueContext() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        circuit test(myVar: Field): Void {
+          const x = <caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull("Lookup elements should not be null", elements);
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    int varIndex = lookupStrings.indexOf("myVar");
+    int defaultIndex = lookupStrings.indexOf("default");
+    int defaultFieldIndex = lookupStrings.indexOf("default<Field>");
+    int eitherIndex = lookupStrings.indexOf("Either");
+
+    assertTrue("myVar should be in lookup elements", varIndex >= 0);
+    assertTrue("default should be in lookup elements", defaultIndex >= 0);
+    assertTrue("default<Field> should be in lookup elements", defaultFieldIndex >= 0);
+    assertTrue("Either should be in lookup elements", eitherIndex >= 0);
+
+    // In unrestricted value context, local variables must be prioritized above generic default / Either
+    assertTrue("Local variable 'myVar' (" + varIndex + ") should precede 'default' (" + defaultIndex + ")", varIndex < defaultIndex);
+    assertTrue("Local variable 'myVar' (" + varIndex + ") should precede 'default<Field>' (" + defaultFieldIndex + ")", varIndex < defaultFieldIndex);
+    assertTrue("Local variable 'myVar' (" + varIndex + ") should precede 'Either' (" + eitherIndex + ")", varIndex < eitherIndex);
+  }
+
+  public void testEitherPrioritiesWhenExpectedTypeIsEither() {
+    myFixture.configureByText(CompactFileType.INSTANCE,
+        """
+        struct Either<L, R> { is_left: Boolean, left: L, right: R }
+        circuit test(): Void {
+          const x: Either<Field, Field> = <caret>
+        }
+        """
+    );
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull("Lookup elements should not be null", elements);
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull("Lookup strings should not be null", lookupStrings);
+    int eitherIndex = lookupStrings.indexOf("Either");
+    int leftIndex = lookupStrings.indexOf("left");
+    int rightIndex = lookupStrings.indexOf("right");
+
+    assertTrue("Either should be suggested when Either expected", eitherIndex >= 0);
+    assertTrue("left should be suggested when Either expected", leftIndex >= 0);
+    assertTrue("right should be suggested when Either expected", rightIndex >= 0);
   }
 }

@@ -467,7 +467,7 @@ public class CompactCompletionContributor extends CompletionContributor {
     for (CompactNamedElement element : elements) {
       String name = element.getName();
       if (name != null && seen.add(name)) {
-        addNamed(result, element);
+        addNamed(result, element, 60.0);
       }
     }
   }
@@ -609,15 +609,16 @@ public class CompactCompletionContributor extends CompletionContributor {
                 .withTypeText("default<Type>")
                 .bold()
                 .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
-            90.0
+            50.0
         ));
-        addCommonDefaultCompletions(result, 85.0);
+        addCommonDefaultCompletions(result);
         result.addElement(PrioritizedLookupElement.withPriority(
-            LookupElementBuilder.create("disclose"), 50.0));
+            LookupElementBuilder.create("disclose"), 30.0));
       }
 
       // Either struct literal and left/right helper completions
-      addEitherAndHelperCompletions(result);
+      boolean isEitherExpected = expectedType.name().startsWith("Either");
+      addEitherAndHelperCompletions(result, isEitherExpected ? 95.0 : 30.0);
 
       // Also provide prefixed imports and general value keywords in value context
       addPrefixed(result, CompactResolveUtil.prefixedImportNames(position, CompactResolveUtil.Namespace.VALUE));
@@ -638,9 +639,9 @@ public class CompactCompletionContributor extends CompletionContributor {
 
     // Boolean literals
     result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("true").withTypeText("Boolean").bold(), 80.0));
+        LookupElementBuilder.create("true").withTypeText("Boolean").bold(), 55.0));
     result.addElement(PrioritizedLookupElement.withPriority(
-        LookupElementBuilder.create("false").withTypeText("Boolean").bold(), 80.0));
+        LookupElementBuilder.create("false").withTypeText("Boolean").bold(), 55.0));
 
     // Default completions
     result.addElement(PrioritizedLookupElement.withPriority(
@@ -650,18 +651,18 @@ public class CompactCompletionContributor extends CompletionContributor {
             .withTypeText("default<Type>")
             .bold()
             .withInsertHandler(CompactParameterizedTypeInsertHandler.BRACKETS),
-        90.0
+        50.0
     ));
-    addCommonDefaultCompletions(result, 85.0);
+    addCommonDefaultCompletions(result);
 
     // Either struct literal and left/right helper completions
-    addEitherAndHelperCompletions(result);
+    addEitherAndHelperCompletions(result, 45.0);
 
     addAll(result, VALUE_KEYWORDS);
     result.addElement(createAssertLookupElement());
   }
 
-  private static void addCommonDefaultCompletions(@NotNull CompletionResultSet result, double priority) {
+  private static void addCommonDefaultCompletions(@NotNull CompletionResultSet result) {
     String[] commonTypes = {"Field", "Boolean", "Bytes<32>", "ContractAddress"};
     for (String type : commonTypes) {
       result.addElement(PrioritizedLookupElement.withPriority(
@@ -669,12 +670,12 @@ public class CompactCompletionContributor extends CompletionContributor {
               .withPresentableText("default<" + type + ">")
               .withTypeText("default<Type>")
               .bold(),
-          priority
+          40.0
       ));
     }
   }
 
-  private static void addEitherAndHelperCompletions(@NotNull CompletionResultSet result) {
+  private static void addEitherAndHelperCompletions(@NotNull CompletionResultSet result, double priority) {
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("Either")
             .withPresentableText("Either")
@@ -682,7 +683,7 @@ public class CompactCompletionContributor extends CompletionContributor {
             .withTypeText("struct")
             .bold()
             .withInsertHandler(CompactEitherInsertHandler.INSTANCE),
-        85.0
+        priority
     ));
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("left")
@@ -691,7 +692,7 @@ public class CompactCompletionContributor extends CompletionContributor {
             .withTypeText("Either")
             .bold()
             .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
-        85.0
+        priority
     ));
     result.addElement(PrioritizedLookupElement.withPriority(
         LookupElementBuilder.create("right")
@@ -700,7 +701,7 @@ public class CompactCompletionContributor extends CompletionContributor {
             .withTypeText("Either")
             .bold()
             .withInsertHandler(CompactParenthesesInsertHandler.WITH_PARENS),
-        85.0
+        priority
     ));
   }
 
