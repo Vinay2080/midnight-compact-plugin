@@ -18,7 +18,6 @@
 - Added Ctrl+Click and Go to Declaration navigation for `CompactStandardLibrary` in import statements (`import CompactStandardLibrary;`), jumping directly to the bundled `standard-library.compact` source file.
 - Added comprehensive in-editor documentation comments across the entire Compact Standard Library (`standard-library.compact`), providing detailed descriptions, parameter documentation, and usage examples for core types (`Maybe`, `Either`), Merkle tree verification, and shielded token operations (`receiveShielded`, `sendShielded`, `mintShieldedToken`, etc.).
 - Added Quick Documentation (Ctrl+Q / F1) support for standard library imports and file headers, displaying rich documentation overviews of the Midnight Compact Standard Library.
-- Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
 ### Fixed
 - Fixed false-positive unresolved struct field warnings (`left`, `right`, `is_left`) and type mismatch errors when using generic structs (such as `Either<A, B>`), struct literals, and generic circuit calls with concrete type arguments.
@@ -26,6 +25,13 @@
 - Fixed an issue where WSL compiler paths with short root mount locations were not correctly translated back to local Windows paths.
 - Fixed an issue where changing the Compact compiler version via quick-fix (Alt+Enter) in the editor did not update the active version highlight and cards in the Compact Compiler tool window side panel.
 - Fixed an issue where circuit parameters and in-scope variables were omitted from autocompletion inside return statements if their type differed from the return type.
+
+## [1.3.3] - 2026-09-21
+
+### Added
+- Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
+
+### Fixed
 - Fixed false-positive warnings reporting that sealed ledger fields cannot be modified outside constructors when initializing state inside Compact library modules.
 - Fixed false-positive type mismatch errors when returning ternary expressions (cond ? a : b) from circuits and witnesses.
 
