@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-09-21
+
 ### Added
 - Added automatic quotation mark pairing (`"` and `'`) with caret positioning between paired quotes and smart closing quote step-over during editor typing.
 
