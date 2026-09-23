@@ -11,6 +11,15 @@
 - Added structured and contextual code completions for `default<Type>` with angle brackets, type parameter assistance, and smart type inference in expression contexts.
 - Added structured struct literal completions (`Either { is_left: true, left: ..., right: default }`) with multi-field live template tabbing across `is_left`, `left`, and `right`, as well as constructor helper completions (`left(val)` and `right(val)`) and parameterized type completions (`Either<Left, Right>`).
 - Added boolean literal completions for `true` and `false` with dynamic prioritization in boolean condition contexts (e.g. `if (...)`, `assert(...)`, `is_left:` fields).
+
+### Fixed
+- Fixed false-positive unresolved struct field warnings (`left`, `right`, `is_left`) and type mismatch errors when using generic structs (such as `Either<A, B>`), struct literals, and generic circuit calls with concrete type arguments.
+- Fixed an issue where creating a new Compact file from a template could fail with an `IncorrectOperationException` during post-creation formatting.
+- Fixed an issue where WSL compiler paths with short root mount locations were not correctly translated back to local Windows paths.
+
+## [1.3.4] - 2026-09-23
+
+### Added
 - Added prioritized suggestions for already installed Compact compilers satisfying pragma constraints (`pragma language_version` and `pragma compiler_version`) in inspections and context intentions, presenting satisfying local versions sorted descending before external download options and eliminating redundant downloads when the required version is installed.
 - Added dynamic pragma version resolution to newly created Compact file templates, automatically populating the required language version directive based on your currently configured project compiler toolchain.
 - Added contextual code completion for `language_version` and `compiler_version` directives immediately after the `pragma` keyword at top level and inside incomplete pragma forms, with automatic trailing space insertion.
@@ -20,9 +29,6 @@
 - Added Quick Documentation (Ctrl+Q / F1) support for standard library imports and file headers, displaying rich documentation overviews of the Midnight Compact Standard Library.
 
 ### Fixed
-- Fixed false-positive unresolved struct field warnings (`left`, `right`, `is_left`) and type mismatch errors when using generic structs (such as `Either<A, B>`), struct literals, and generic circuit calls with concrete type arguments.
-- Fixed an issue where creating a new Compact file from a template could fail with an `IncorrectOperationException` during post-creation formatting.
-- Fixed an issue where WSL compiler paths with short root mount locations were not correctly translated back to local Windows paths.
 - Fixed an issue where changing the Compact compiler version via quick-fix (Alt+Enter) in the editor did not update the active version highlight and cards in the Compact Compiler tool window side panel.
 - Fixed an issue where circuit parameters and in-scope variables were omitted from autocompletion inside return statements if their type differed from the return type.
 
