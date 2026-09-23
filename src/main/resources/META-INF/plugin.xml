@@ -6,7 +6,7 @@
     <!-- Public plugin name should be written in Title Case.
      Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-name -->
     <name>Midnight Compact Language</name>
-    <version>1.3.2</version>
+    <version>1.3.4</version>
 
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor email="shaking.121@gmail.com" url="https://github.com/Vinay2080">Verloren</vendor>
@@ -91,6 +91,21 @@
 
     <!-- Change notes displayed in the IDE Plugin Manager "What's New" and Marketplace release history -->
     <change-notes><![CDATA[
+        <h3>1.3.4</h3>
+        <ul>
+            <li><b>Prioritized Offline Compiler Suggestions:</b> Contextual quick-fixes prioritize already installed Compact compilers satisfying pragma constraints over downloading, eliminating redundant downloads.</li>
+            <li><b>Dynamic File Template Pragma Resolution:</b> Automatically detects and populates your configured project compiler language version into newly created Compact files.</li>
+            <li><b>Pragma Directives Autocompletion &amp; Docs:</b> Context-aware completion and rich quick documentation for <code>language_version</code> and <code>compiler_version</code> directives.</li>
+            <li><b>Standard Library Navigation &amp; Rich Docs:</b> Ctrl+Click navigation to standard library source and comprehensive documentation comments for core standard library types.</li>
+            <li><b>Compiler Panel Selection Sync:</b> Synchronized compiler version card highlights in the sidebar tool window with project settings.</li>
+            <li><b>Return Scope Autocompletion:</b> In-scope variables and parameters are prioritized in return expressions.</li>
+        </ul>
+        <h3>1.3.3</h3>
+        <ul>
+            <li><b>Automatic Quote Pairing:</b> Automatic quotation mark pairing (<code>&quot;</code> and <code>&#39;</code>) with caret positioning between paired quotes and smart closing quote step-over during typing.</li>
+            <li><b>Sealed Ledger Initialization:</b> Resolved false-positive warnings reporting that sealed ledger fields cannot be modified outside constructors when initializing state inside library modules.</li>
+            <li><b>Ternary Return Expressions:</b> Fixed false-positive type mismatch errors when returning ternary conditional expressions (<code>cond ? a : b</code>) from circuits and witnesses.</li>
+        </ul>
         <h3>1.3.2</h3>
         <ul>
             <li><b>Cursor Jump Prevention:</b> Fixed an issue where the editor cursor unpredictably jumped to the beginning of the line when pressing the spacebar or typing on an indented empty line.</li>
