@@ -5,13 +5,13 @@ project:
   platform_version: "2026.2"
   java_version: "25"
   gradle_version: "8.13"
-  current_version: "1.3.4"
+  current_version: "1.3.5"
 
 metrics:
-  passing_tests: 697
+  passing_tests: 701
   failing_tests: 0
   skipped_tests: 0
-  test_suites: 65
+  test_suites: 66
 
 phases:
   lexer: complete
@@ -132,5 +132,5 @@ architecture:
     - "ADR-034: Prioritized Installed Compiler Suggestions for Pragma Constraints"
 
 tests:
-  last_known_passing: 697
+  last_known_passing: 701
   failures: 0
