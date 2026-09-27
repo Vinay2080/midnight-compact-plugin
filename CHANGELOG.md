@@ -14,6 +14,10 @@
 
 ### Fixed
 - Fixed false-positive unresolved struct field warnings (`left`, `right`, `is_left`) and type mismatch errors when using generic structs (such as `Either<A, B>`), struct literals, and generic circuit calls with concrete type arguments.
+
+## [1.3.5] - 2026-09-27
+
+### Fixed
 - Fixed an issue where creating a new Compact file from a template could fail with an `IncorrectOperationException` during post-creation formatting.
 - Fixed an issue where WSL compiler paths with short root mount locations were not correctly translated back to local Windows paths.
 
