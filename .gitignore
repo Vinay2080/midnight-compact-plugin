@@ -36,3 +36,4 @@ build
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/contract/index.d.ts
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/contract/index.js
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/contract/index.js.map
+!/game/
