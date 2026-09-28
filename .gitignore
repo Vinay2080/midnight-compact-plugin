@@ -37,3 +37,4 @@ build
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/contract/index.js
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/contract/index.js.map
 !/game/
+!/game/Guessing_game.compact
