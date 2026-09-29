@@ -1,6 +1,6 @@
 # Current State
 
-Last Updated: September 2026 (v1.3.5 / Generic Struct Type Resolution & Field Substitution, Typed Generic Either Helper Completions, Smart Struct Literal Completions, Architecture Guardrails & Modularity)
+Last Updated: September 2026 (v1.4.0 / Generic Struct Type Resolution & Field Substitution, Typed Generic Either Helper Completions, Smart Struct Literal Completions, Architecture Guardrails & Modularity)
 
 ---
 

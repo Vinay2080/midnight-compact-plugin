@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-09-29
+
 ### Added
 - Added typed generic `right<L, R>(...)` and `left<L, R>(...)` constructor helper completions when returning or assigning to `Either<L, R>` types, automatically inferring and populating concrete type arguments, positioning the caret within parentheses, and registering tab-out scopes.
 - Added member autocompletion (`target.<caret>`) for parameterized and generic struct variables (e.g., suggesting `is_left`, `left`, `right` for `Either<Bytes<32>, ContractAddress>`).
