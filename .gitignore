@@ -38,3 +38,11 @@ build
 /gen/compact-contracts/contracts/test/integration/_mocks/ComposedConfidentialFungibleTokenPublicSupply/contract/index.js.map
 !/game/
 !/game/Guessing_game.compact
+/test_output*.txt
+/dang.compact
+/module.compact
+/new.compact
+node_modules/
+**/node_modules/
+dist/
+**/dist/
