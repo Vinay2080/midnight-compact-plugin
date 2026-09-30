@@ -1,0 +1,68 @@
+% Data Flow Diagram (DFD Level 1 Decomposition)
+\begin{tikzpicture}[
+    scale=0.88, every node/.style={transform shape},
+    dfdProcess/.style={
+        circle,
+        draw=srsPrimary, line width=1.1pt,
+        fill=srsPrimary!10, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=2pt, minimum size=2.1cm
+    },
+    dfdEntity/.style={
+        rectangle,
+        draw=srsDark, line width=1.1pt,
+        fill=srsLight, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=6pt, minimum width=2.4cm, minimum height=1.1cm,
+        drop shadow={opacity=0.15, shadow xshift=1pt, shadow yshift=-1pt}
+    },
+    dfdStore/.style={
+        rectangle,
+        draw=srsAccent, line width=1pt,
+        fill=white, text=srsDark,
+        font=\scriptsize\sffamily,
+        align=center, inner sep=4pt, minimum width=2.6cm, minimum height=0.8cm
+    },
+    dfdArrow/.style={
+        -{Stealth[scale=0.9]}, line width=0.9pt, draw=srsDark
+    },
+    dfdLabel/.style={
+        font=\tiny\sffamily, text=srsDark, fill=white, inner sep=1pt
+    }
+]
+
+    % External Entities
+    \node[dfdEntity] (developer) at (-6.5, 3.0) {Developer\\(Editor)};
+    \node[dfdEntity] (compilerCli) at (6.5, -3.0) {Compact CLI\\Compiler};
+
+    % Processes
+    \node[dfdProcess] (p1) at (-3.2, 3.0) {1.0\\Lexical\\Streaming};
+    \node[dfdProcess] (p2) at (0.0, 3.0) {2.0\\Pratt\\Parsing};
+    \node[dfdProcess] (p3) at (3.2, 3.0) {3.0\\PSI Tree\\Generation};
+
+    \node[dfdProcess] (p4) at (0.0, -0.2) {4.0\\Semantic\\Resolution};
+    \node[dfdProcess] (p5) at (3.2, -3.0) {5.0\\Build \&\\Execution};
+
+    % Data Stores
+    \node[dfdStore] (d1) at (-1.6, 5.2) {D1: Token Buffer};
+    \node[dfdStore] (d2) at (1.6, 5.2) {D2: AST / PSI Cache};
+    \node[dfdStore] (d3) at (-3.2, -0.2) {D3: Symbol Scope Index};
+    \node[dfdStore] (d4) at (0.0, -3.0) {D4: Build Artifacts};
+
+    % Flows
+    \draw[dfdArrow] (developer) -- node[dfdLabel, above] {Source Text} (p1);
+    \draw[dfdArrow] (p1) -- node[dfdLabel, above] {Tokens} (p2);
+    \draw[dfdArrow] (p1) |- (d1);
+
+    \draw[dfdArrow] (p2) -- node[dfdLabel, above] {AST Nodes} (p3);
+    \draw[dfdArrow] (p3) |- (d2);
+
+    \draw[dfdArrow] (p3) -- node[dfdLabel, right] {PSI Structure} (p4);
+    \draw[dfdArrow] (p4) -- node[dfdLabel, above] {Index Symbols} (d3);
+
+    \draw[dfdArrow] (p4) |- node[dfdLabel, near end, above] {Validated AST} (p5);
+    \draw[dfdArrow] (p5) -- node[dfdLabel, above] {CLI Invocation} (compilerCli);
+    \draw[dfdArrow] (compilerCli) |- node[dfdLabel, below] {Bytecode \& Diagnostics} (d4);
+    \draw[dfdArrow] (d4) -| node[dfdLabel, near start, above] {Output Files} (developer);
+
+\end{tikzpicture}

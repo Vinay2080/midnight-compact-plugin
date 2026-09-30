@@ -1,0 +1,85 @@
+% Layered Architecture & Component Diagram
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    compBox/.style={
+        rectangle, rounded corners=3pt,
+        draw=srsPrimary, line width=0.9pt,
+        fill=srsPrimary!8, text=srsDark,
+        font=\scriptsize\sffamily, align=center,
+        inner sep=4pt, minimum height=0.85cm
+    },
+    compTool/.style={
+        rectangle, rounded corners=3pt,
+        draw=srsAccent, line width=0.9pt,
+        fill=srsAccent!10, text=srsDark,
+        font=\scriptsize\sffamily, align=center,
+        inner sep=4pt, minimum height=0.85cm
+    },
+    layerLabel/.style={
+        font=\small\bfseries\sffamily, text=srsDark, anchor=north west
+    },
+    layerFrame/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsDark, line width=1.1pt,
+        fill=srsLight!50,
+        inner sep=8pt,
+        drop shadow={opacity=0.15, shadow xshift=1.5pt, shadow yshift=-1.5pt}
+    },
+    depArrow/.style={
+        -{Stealth[scale=1.1]}, line width=1.4pt, draw=srsDanger
+    },
+    depLabel/.style={
+        font=\tiny\bfseries\sffamily, text=srsDanger, fill=white, inner sep=2pt, rounded corners=2pt
+    }
+]
+
+    % Layer 1 Components
+    \node[compBox, minimum width=2.4cm] (c1_1) at (-5.0, 4.5) {CompactCompletion\\Contributor};
+    \node[compBox, minimum width=2.4cm] (c1_2) at (-2.3, 4.5) {10 Static Semantic\\Inspections \& Fixes};
+    \node[compBox, minimum width=2.2cm] (c1_3) at (0.3, 4.5) {Refactoring \&\\FindUsages};
+    \node[compBox, minimum width=2.2cm] (c1_4) at (2.8, 4.5) {Formatting \&\\StructureView};
+    \node[compTool, minimum width=2.3cm] (c1_5) at (5.3, 4.5) {Remix Compiler\\ToolWindow};
+
+    % Layer 2 Components
+    \node[compBox, minimum width=3.8cm] (c2_1) at (-4.2, 2.3) {CompactResolveUtil\\Innermost Lexical Scope};
+    \node[compBox, minimum width=3.8cm] (c2_2) at (0.0, 2.3) {Namespace Segregation\\VALUE vs TYPE Namespaces};
+    \node[compBox, minimum width=3.8cm] (c2_3) at (4.2, 2.3) {Module Exports \&\\Prefix Resolution};
+
+    % Layer 3 Components
+    \node[compBox, minimum width=3.8cm] (c3_1) at (-4.2, 0.1) {CompactType Model\\Primitive, Struct, Enum, Void};
+    \node[compBox, minimum width=3.8cm] (c3_2) at (0.0, 0.1) {CompactTypeInferenceUtil\\Unification \& Subtyping};
+    \node[compBox, minimum width=3.8cm] (c3_3) at (4.2, 0.1) {Generic Container\\Type Propagation};
+
+    % Layer 4 Components
+    \node[compBox, minimum width=3.8cm] (c4_1) at (-4.2, -2.1) {CompactElementFactory\\ASTNode $\to$ CompactPsiElement};
+    \node[compBox, minimum width=3.8cm] (c4_2) at (0.0, -2.1) {Declarations Model\\Circuit, Witness, Ledger, Struct};
+    \node[compBox, minimum width=3.8cm] (c4_3) at (4.2, -2.1) {Expressions Model\\Binary, Unary, Member, Call};
+
+    % Layer 5 Components
+    \node[compBox, minimum width=3.8cm] (c5_1) at (-4.2, -4.3) {CompactLexer\\Zero-Allocation Streaming};
+    \node[compBox, minimum width=3.8cm] (c5_2) at (0.0, -4.3) {CompactParser (Pratt)\\Precedence Climbing Engine};
+    \node[compBox, minimum width=3.8cm] (c5_3) at (4.2, -4.3) {Resilient Error\\Boundary Recovery};
+
+    % Background Frames
+    \begin{scope}[on background layer]
+        \node[layerFrame, fit=(c1_1) (c1_5), minimum width=13.5cm, minimum height=1.6cm] (f1) {};
+        \node[layerFrame, fit=(c2_1) (c2_3), minimum width=13.5cm, minimum height=1.6cm] (f2) {};
+        \node[layerFrame, fit=(c3_1) (c3_3), minimum width=13.5cm, minimum height=1.6cm] (f3) {};
+        \node[layerFrame, fit=(c4_1) (c4_3), minimum width=13.5cm, minimum height=1.6cm] (f4) {};
+        \node[layerFrame, fit=(c5_1) (c5_3), minimum width=13.5cm, minimum height=1.6cm] (f5) {};
+    \end{scope}
+
+    % Titles
+    \node[layerLabel] at (f1.north west) [xshift=8pt, yshift=-4pt] {Layer 1: Presentation, Code Insight \& Tool Windows};
+    \node[layerLabel] at (f2.north west) [xshift=8pt, yshift=-4pt] {Layer 2: Scoped Symbol Resolution \& Module Inclusions};
+    \node[layerLabel] at (f3.north west) [xshift=8pt, yshift=-4pt] {Layer 3: Static Type Engine \& Generalization Invariant};
+    \node[layerLabel] at (f4.north west) [xshift=8pt, yshift=-4pt] {Layer 4: Program Structure Interface (PSI)};
+    \node[layerLabel] at (f5.north west) [xshift=8pt, yshift=-4pt] {Layer 5: Pratt Parser \& Handwritten Lexer};
+
+    % Strict Downward Dependency Invariant Indicators
+    \draw[depArrow] (f1.south) -- node[depLabel] {STRICT DOWNWARD CALLS ONLY} (f2.north);
+    \draw[depArrow] (f2.south) -- node[depLabel] {NO CYCLIC DEPENDENCIES} (f3.north);
+    \draw[depArrow] (f3.south) -- node[depLabel] {AST IMMUTABILITY} (f4.north);
+    \draw[depArrow] (f4.south) -- node[depLabel] {TOKEN STREAM CONSUMPTION} (f5.north);
+
+\end{tikzpicture}

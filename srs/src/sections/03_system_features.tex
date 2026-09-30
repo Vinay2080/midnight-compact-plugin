@@ -1,0 +1,395 @@
+\section{System Features and Functional Requirements}
+\label{sec:system_features}
+
+This section specifies the detailed functional requirements across all ten subsystems of the Midnight Compact Language Plugin. Each requirement conforms to the EARS template and specifies input preconditions, processing rules, observable outputs, and testable acceptance criteria.
+
+\subsection{Subsystem 1: Lexical Analysis and Token Classification}
+\label{sec:subsystem_lexer}
+
+The lexical analysis subsystem processes raw Compact source text into a continuous stream of strongly typed tokens (\texttt{IElementType}) utilizing a custom, handwritten finite-state lexer (\texttt{CompactLexer}).
+
+\subsubsection{[REQ-LEX-FUN-001] Complete Token Grammar Classification}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} classify all valid Compact language lexemes into discrete \texttt{IElementType} tokens defined in \texttt{CompactTokenTypes}.
+    \item \textbf{Inputs}: Raw character stream from any active \texttt{.compact} document buffer.
+    \item \textbf{Processing}: The lexer matches keywords (\texttt{contract}, \texttt{circuit}, \texttt{witness}, \texttt{ledger}, \texttt{sealed}, \texttt{disclose}, \texttt{pragma}, \texttt{import}, \texttt{export}, \texttt{struct}, \texttt{enum}, \texttt{pure}, \texttt{return}, \texttt{if}, \texttt{else}, \texttt{for}, \texttt{const}, \texttt{default}, \texttt{new}, \texttt{assert}, \texttt{as}), built-in primitives (\texttt{Boolean}, \texttt{Field}, \texttt{Uint}, \texttt{Bytes}, \texttt{Cell}, \texttt{Map}, \texttt{Vector}, \texttt{JubjubScalar}), delimiters, operators, and literals.
+    \item \textbf{Outputs}: Stream of \texttt{(tokenType, startOffset, endOffset)} tuples.
+    \item \textbf{Acceptance Criteria}: Given valid Compact source code, When lexed, Then every character belongs to exactly one recognized token type without emitting \texttt{TokenType.BAD\_CHARACTER} on valid syntax.
+\end{itemize}
+
+\subsubsection{[REQ-LEX-FUN-002] Multi-Base Numeric Literal Parsing}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} parse and classify integer numeric literals across four distinct radices: decimal (\texttt{12345}), hexadecimal (\texttt{0x1A2F}), binary (\texttt{0b10110}), and octal (\texttt{0o755}).
+    \item \textbf{Processing}: Recognize radix prefixes \texttt{0x}, \texttt{0X}, \texttt{0b}, \texttt{0B}, \texttt{0o}, \texttt{0O} followed by appropriate digit sets. Support optional underscores for digit separation (e.g., \texttt{1\_000\_000}).
+    \item \textbf{Outputs}: \texttt{CompactTokenTypes.INTEGER\_LITERAL}.
+    \item \textbf{Acceptance Criteria}: Given \texttt{"0xdead\_beef"}, When tokenized, Then the lexer returns a single \texttt{INTEGER\_LITERAL} spanning the full literal.
+\end{itemize}
+
+\subsubsection{[REQ-LEX-FUN-003] String Literals and Escape Sequence Handling}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} tokenize double-quoted string literals and properly parse standard escape sequences (\texttt{\textbackslash n}, \texttt{\textbackslash t}, \texttt{\textbackslash r}, \texttt{\textbackslash \textbackslash}, \texttt{\textbackslash "}).
+    \item \textbf{Unwanted Behavior}: If a string literal is unclosed before encountering a newline or end-of-file, the lexer \textbf{SHALL} emit \texttt{CompactTokenTypes.UNCLOSED\_STRING} and recover at the newline without crashing.
+\end{itemize}
+
+\subsubsection{[REQ-LEX-FUN-004] Comments and Documentation Tokens}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} differentiate between single-line comments (\texttt{//}), multi-line block comments (\texttt{/* ... */}), and doc comments (\texttt{///}).
+    \item \textbf{Outputs}: \texttt{CompactTokenTypes.DOC\_COMMENT} for \texttt{///} lines, allowing downstream Quick Documentation providers to index doc comments.
+\end{itemize}
+
+\subsubsection{[REQ-LEX-FUN-005] Zero-Allocation Token Streaming}
+\begin{itemize}
+    \item \textbf{Statement}: The lexer \textbf{SHALL} operate in $O(1)$ memory allocation overhead per token by returning offset boundaries within the underlying \texttt{CharSequence} without generating intermediate \texttt{String} objects.
+\end{itemize}
+
+\subsection{Subsystem 2: Syntactic Pratt Parsing and AST Generation}
+\label{sec:subsystem_parser}
+
+The parsing subsystem implements a top-down operator precedence (Pratt) parser (\texttt{CompactParser}) that constructs an Abstract Syntax Tree (\texttt{ASTNode}) conforming to the official Compact language grammar.
+
+\subsubsection{[REQ-PRS-FUN-001] Complete Expression Precedence Hierarchy}
+\begin{itemize}
+    \item \textbf{Statement}: The parser \textbf{SHALL} resolve all expression operators strictly according to the precedence table specified in Table~\ref{tab:precedence}.
+    \item \textbf{Processing}: Implement Pratt binding powers ensuring higher precedence operators bind tighter than lower ones.
+\end{itemize}
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{c l l c}
+        \toprule
+        \textbf{Level} & \textbf{Operator Category} & \textbf{Operators} & \textbf{Associativity} \\
+        \midrule
+        1 & Assignment & \texttt{=}, \texttt{+=}, \texttt{-=}, \texttt{*=}, \texttt{/=} & Right \\
+        2 & Ternary Conditional & \texttt{? :} & Right \\
+        3 & Logical Disjunction & \texttt{||} & Left \\
+        4 & Logical Conjunction & \texttt{\&\&} & Left \\
+        5 & Equality & \texttt{==}, \texttt{!=} & Left \\
+        6 & Relational Comparison & \texttt{<}, \texttt{<=}, \texttt{>}, \texttt{>=} & Left \\
+        7 & Type Cast & \texttt{as} & Left \\
+        8 & Bitwise & \texttt{|}, \texttt{\^{}}, \texttt{\&}, \texttt{<<}, \texttt{>>} & Left \\
+        9 & Additive & \texttt{+}, \texttt{-} & Left \\
+        10 & Multiplicative & \texttt{*}, \texttt{/}, \texttt{\%} & Left \\
+        11 & Unary Prefix & \texttt{!}, \texttt{-}, \texttt{\~{}} & Right \\
+        12 & Postfix / Call / Member / Index & \texttt{()}, \texttt{[]}, \texttt{.} & Left \\
+        \bottomrule
+    \end{tabular}
+    \caption{Compact Language Operator Precedence and Associativity Table.}
+    \label{tab:precedence}
+\end{table}
+
+\subsubsection{[REQ-PRS-FUN-002] Resilient Syntax Error Recovery}
+\begin{itemize}
+    \item \textbf{Statement}: When encountering a syntax error, the parser \textbf{SHALL} synchronize at the nearest declaration boundary (\texttt{circuit}, \texttt{witness}, \texttt{ledger}, \texttt{struct}, \texttt{enum}, \texttt{\}}) or statement delimiter (\texttt{;}) without terminating parsing.
+    \item \textbf{Outputs}: Generates an \texttt{PsiErrorElement} at the fault offset while retaining full syntax tree integrity for the remainder of the file.
+\end{itemize}
+
+\subsubsection{[REQ-PRS-FUN-003] Contract, Circuit, and Witness Declaration Parsing}
+\begin{itemize}
+    \item \textbf{Statement}: The parser \textbf{SHALL} parse contract structures including:
+    \begin{itemize}
+        \item Contract definitions: \texttt{contract Name \{ ... \}} with optional \texttt{implements InterfaceName}.
+        \item Circuit declarations: optional \texttt{export} and \texttt{pure} modifiers, parameter lists, optional return type, and statement block.
+        \item Witness declarations: \texttt{witness name(params): ReturnType;}.
+        \item Ledger state declarations: optional \texttt{sealed} modifier, type annotation, and initial value assignment.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{[REQ-PRS-FUN-004] Data Structure Declarations (Structs and Enums)}
+\begin{itemize}
+    \item \textbf{Statement}: The parser \textbf{SHALL} parse struct definitions with generic type parameters (\texttt{struct Pair<A, B> \{ ... \}}), constructor definitions, and field declarations, as well as enum definitions with optional explicit discriminant values.
+\end{itemize}
+
+\subsubsection{[REQ-PRS-FUN-005] Module Imports and Pragma Directives}
+\begin{itemize}
+    \item \textbf{Statement}: The parser \textbf{SHALL} parse \texttt{pragma language\_version <constraint>;} and \texttt{import <path> as <alias>;} directives.
+\end{itemize}
+
+\subsection{Subsystem 3: Program Structure Interface (PSI) Architecture}
+\label{sec:subsystem_psi}
+
+The PSI layer wraps raw AST nodes into strongly typed Java domain objects inheriting from IntelliJ's \texttt{PsiElement}.
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/class_model_diagram}
+    \caption{Domain Model and PSI AST Class Hierarchy Diagram.}
+    \label{fig:class_model_diagram}
+\end{figure}
+
+\subsubsection{[REQ-PSI-FUN-001] Factory Mapping ASTNode to CompactPsiElement}
+\begin{itemize}
+    \item \textbf{Statement}: The \texttt{CompactElementFactory} \textbf{SHALL} map every composite \texttt{ASTNode} produced by the parser into its corresponding strongly typed \texttt{CompactPsiElement} subclass.
+\end{itemize}
+
+\subsubsection{[REQ-PSI-FUN-002] Named Element Contract (CompactNamedElement)}
+\begin{itemize}
+    \item \textbf{Statement}: All declaration nodes (circuits, witnesses, ledgers, variables, structs, enums) \textbf{SHALL} implement \texttt{CompactNamedElement}.
+    \item \textbf{Processing}: Provide standard implementations for \texttt{getName()}, \texttt{setName(newName)}, and \texttt{getNameIdentifier()}.
+\end{itemize}
+
+\subsubsection{[REQ-PSI-FUN-003] Non-Leaking PSI Lifecycle Invariant}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL NOT} store \texttt{PsiElement} references in static variables or unmanaged collections. All PSI access must validate \texttt{element.isValid()} prior to dereferencing.
+\end{itemize}
+
+\subsection{Subsystem 4: Scoped Symbol Resolution and Namespace Segregation}
+\label{sec:subsystem_resolution}
+
+The symbol resolution subsystem (\texttt{CompactResolveUtil}) resolves identifiers in Compact source code to their target declarations across lexical scopes and project files.
+
+\subsubsection{[REQ-RES-FUN-001] Innermost Lexical Scope Resolution}
+\begin{itemize}
+    \item \textbf{Statement}: When resolving an identifier, the system \textbf{SHALL} search from the innermost block scope outward to the enclosing function, contract, and file scope.
+    \item \textbf{Processing}: Local variable bindings shadow outer declarations with identical names.
+\end{itemize}
+
+\subsubsection{[REQ-RES-FUN-002] Segregation of VALUE and TYPE Namespaces}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} maintain strictly separated resolution logic for \texttt{Namespace.VALUE} (variables, circuits, witnesses, constants) and \texttt{Namespace.TYPE} (structs, enums, type aliases, primitive types).
+    \item \textbf{Rationale}: A struct and a variable may legally share the same identifier name without shadowing.
+\end{itemize}
+
+\subsubsection{[REQ-RES-FUN-003] Cross-File Module and Import Resolution}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} resolve symbols declared in imported modules referenced via \texttt{import "./path/module.compact"}.
+    \item \textbf{Processing}: Resolve relative file paths against the current document's directory. Only declarations with the \texttt{export} keyword shall be visible across module boundaries.
+\end{itemize}
+
+\subsubsection{[REQ-RES-FUN-004] Member Access Resolution on Structs and Enums}
+\begin{itemize}
+    \item \textbf{Statement}: When resolving a member expression \texttt{target.member}, the system \textbf{SHALL} infer the static type of \texttt{target} and resolve \texttt{member} against the fields of that inferred struct or variants of that enum.
+\end{itemize}
+
+\subsection{Subsystem 5: Static Type System and Type Inference Engine}
+\label{sec:subsystem_type_engine}
+
+The type system (\texttt{CompactTypeInferenceUtil}) models Compact's type hierarchy and determines expression types, subtyping relationships, and assignability.
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/flowchart_type_inference}
+    \caption{Type Inference and Assignability Evaluation Flowchart.}
+    \label{fig:flowchart_type_inference}
+\end{figure}
+
+\subsubsection{[REQ-TYP-FUN-001] Comprehensive Type Representation}
+\begin{itemize}
+    \item \textbf{Statement}: All types \textbf{SHALL} be represented by immutable instances of \texttt{CompactType}:
+    \begin{itemize}
+        \item Primitive types: \texttt{Boolean}, \texttt{Field}, \texttt{Uint<N>}, \texttt{Bytes<N>}, \texttt{JubjubScalar}, \texttt{Secp256k1Scalar}.
+        \item Composite types: \texttt{CompactStructType}, \texttt{CompactEnumType}, \texttt{CompactTupleType}.
+        \item Generic containers: \texttt{Vector<T>}, \texttt{Cell<T>}, \texttt{Map<K, V>}.
+        \item Sentinel types: \texttt{CompactVoidType}, \texttt{CompactErrorType}, \texttt{CompactUnknownType}.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{[REQ-TYP-FUN-002] Algorithmic Type Assignability}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} evaluate type assignability via \texttt{CompactTypeInferenceUtil.isAssignable(source, target)} following the decision logic in Figure~\ref{fig:flowchart_type_inference}.
+    \item \textbf{Acceptance Criteria}: Given \texttt{Uint<16>} assigned to \texttt{Uint<32>}, Then \texttt{isAssignable} evaluates to \texttt{true}; Given \texttt{Field} assigned to \texttt{Boolean}, Then \texttt{isAssignable} evaluates to \texttt{false}.
+\end{itemize}
+
+\subsubsection{[REQ-TYP-FUN-003] Strict Generalization Invariant Enforcement}
+\begin{itemize}
+    \item \textbf{Statement}: The type inference engine \textbf{SHALL NOT} contain hardcoded string checks for standard library type names. Type compatibility for user-defined structs must utilize the exact same evaluation pipeline as built-in standard library constructs.
+\end{itemize}
+
+\subsection{Subsystem 6: Code Insight, Navigation, and Refactoring}
+\label{sec:subsystem_code_insight}
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/sequence_completion_diagram}
+    \caption{Code Completion and Scoped Resolution Sequence Diagram.}
+    \label{fig:sequence_completion}
+\end{figure}
+
+\subsubsection{[REQ-IDE-FUN-001] Contextual Code Completion (Ctrl+Space)}
+\begin{itemize}
+    \item \textbf{Statement}: When the user invokes completion, the system \textbf{SHALL} suggest:
+    \begin{itemize}
+        \item Context-appropriate keywords (e.g. \texttt{circuit}, \texttt{witness}, \texttt{ledger} at top-level).
+        \item Visible symbols in the current lexical scope matching the expected namespace.
+        \item Struct fields and enum variants following a dot (\texttt{.}) trigger.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{[REQ-IDE-FUN-002] Go to Declaration (Ctrl+B / Cmd+B)}
+\begin{itemize}
+    \item \textbf{Statement}: When navigation is invoked on a reference, the editor \textbf{SHALL} move the cursor directly to the declaration's identifier element in the current file or target project file.
+\end{itemize}
+
+\subsubsection{[REQ-IDE-FUN-003] Go to Type Declaration (Ctrl+Shift+B)}
+\begin{itemize}
+    \item \textbf{Statement}: When invoked on a variable or parameter, the editor \textbf{SHALL} navigate to the underlying \texttt{struct}, \texttt{enum}, or type declaration defining its type.
+\end{itemize}
+
+\subsubsection{[REQ-IDE-FUN-004] Inplace Rename Refactoring (Shift+F6)}
+\begin{itemize}
+    \item \textbf{Statement}: When invoked on any \texttt{CompactNamedElement}, the system \textbf{SHALL} initiate an inplace rename refactoring session.
+    \item \textbf{Validation}: Validate new names with \texttt{CompactNamesValidator}; reject invalid identifiers and keywords.
+    \item \textbf{Atomicity}: Atomically rename all references across the project in a single undoable command.
+\end{itemize}
+
+\subsubsection{[REQ-IDE-FUN-005] Structure View Outline (Alt+7)}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} render a hierarchical tree of contracts, circuits, witnesses, ledgers, structs, and enums with distinct type icons.
+\end{itemize}
+
+\subsubsection{[REQ-IDE-FUN-006] Canonical Code Formatting (Ctrl+Alt+L)}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} format Compact source code to canonical 2-space indentation, spacing around binary operators, and standard brace placement.
+\end{itemize}
+
+\subsection{Subsystem 7: Static Semantic Inspections and Automated Quick-Fixes}
+\label{sec:subsystem_inspections}
+
+The inspection subsystem runs 10 real-time background static analyses and provides automated quick-fixes.
+
+\subsubsection{[REQ-INS-FUN-001] Unresolved Reference Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag identifiers that cannot be resolved to any declaration in scope with an \texttt{ERROR} severity highlight.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-002] Duplicate Declaration Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag multiple declarations of identical identifier names within the same lexical scope with an \texttt{ERROR} severity.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-003] Unused Local Variable Inspection \& Quick-Fix}
+\begin{itemize}
+    \item \textbf{Statement}: Flag local variables that are declared but never referenced with a \texttt{WEAK\_WARNING} (grayed out).
+    \item \textbf{Quick-Fix}: Provide ``Remove Unused Variable'' quick-fix that safely excises the declaration statement.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-004] Pure Circuit Ledger Mutation Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag any assignment to a \texttt{ledger} variable occurring inside a circuit declared with the \texttt{pure} modifier.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-005] Undisclosed Witness Direct Assignment Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag direct assignment of private \texttt{witness} data to public \texttt{ledger} state without an intervening \texttt{disclose} operation.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-006] Sealed Ledger Field Mutation Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag any modification of a ledger field marked with the \texttt{sealed} modifier after contract initialization.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-007] Recursive Circuit Call Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag recursive circuit invocations (direct or mutual), which are mathematically impossible in unrolled ZK-SNARK arithmetic circuits.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-008] Pragma Version Compatibility Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag file pragma constraints that are not satisfied by the currently selected compiler version.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-009] Type Mismatch in Binary Expressions Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag binary operations where operand types are incompatible under \texttt{CompactTypeInferenceUtil.isAssignable}.
+\end{itemize}
+
+\subsubsection{[REQ-INS-FUN-010] Unused Import Inspection}
+\begin{itemize}
+    \item \textbf{Statement}: Flag imported modules from which no exported symbols are referenced, offering an ``Optimize Imports'' action.
+\end{itemize}
+
+\subsection{Subsystem 8: Remix-Style Compiler Tool Window and Build System}
+\label{sec:subsystem_compiler_window}
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/sequence_compile_diagram}
+    \caption{Compilation and Diagnostic Pipeline Sequence Diagram.}
+    \label{fig:sequence_compile}
+\end{figure}
+
+\subsubsection{[REQ-CMP-FUN-001] Right Stripe Tool Window Registration}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} register the ``Compact Compiler'' tool window on the right-hand stripe of the IDE.
+\end{itemize}
+
+\subsubsection{[REQ-CMP-FUN-002] Active Contract Tracking}
+\begin{itemize}
+    \item \textbf{Statement}: When the active editor tab changes, the compiler tool window \textbf{SHALL} dynamically update its contract name, file path, and extracted pragma constraints.
+\end{itemize}
+
+\subsubsection{[REQ-CMP-FUN-003] Live Pragma Compatibility Badge}
+\begin{itemize}
+    \item \textbf{Statement}: The tool window \textbf{SHALL} render a color-coded SemVer compatibility badge:
+    \begin{itemize}
+        \item Green (\texttt{[MATCH] pragma match}): Active compiler satisfies the pragma constraint.
+        \item Amber (\texttt{[MISMATCH] version mismatch}): Active compiler violates the constraint.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{[REQ-CMP-FUN-004] 1-Click Contract Compilation}
+\begin{itemize}
+    \item \textbf{Statement}: When the user clicks ``Compile Current Contract'', the system \textbf{SHALL} spawn the active Compact compiler binary asynchronously in the background.
+    \item \textbf{Outputs}: Render compiler diagnostics, build status, and generated ZK verification artifacts.
+\end{itemize}
+
+\subsection{Subsystem 9: Multi-Version Toolchain Manager and SemVer Engine}
+\label{sec:subsystem_toolchain}
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/state_toolchain_diagram}
+    \caption{Multi-Version Toolchain State Machine Diagram.}
+    \label{fig:state_toolchain}
+\end{figure}
+
+\subsubsection{[REQ-MGR-FUN-001] Isolated Toolchain Directory Storage}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} store downloaded compiler binaries in isolated user-level directories structured as \texttt{\textasciitilde/.compact/versions/<version>/compact}.
+\end{itemize}
+
+\subsubsection{[REQ-MGR-FUN-002] Hierarchical Resolution Chain}
+\begin{itemize}
+    \item \textbf{Statement}: The active compiler version for any file \textbf{SHALL} be resolved according to the following strict order of precedence:
+    \begin{enumerate}
+        \item Per-project setting stored in \texttt{.idea/midnight.xml}.
+        \item Global IDE setting in \texttt{MidnightProjectSettings}.
+        \item System PATH binary (\texttt{compact}).
+        \item WSL2 Linux binary (\texttt{/usr/bin/compact}).
+    \end{enumerate}
+\end{itemize}
+
+\subsubsection{[REQ-MGR-FUN-003] Automated Background Binary Downloader}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} support downloading and extracting official release archives for the host OS and architecture with a cancellable \texttt{ProgressIndicator}.
+\end{itemize}
+
+\subsubsection{[REQ-MGR-FUN-004] WSL2 Process Execution Bridge}
+\begin{itemize}
+    \item \textbf{Statement}: On Windows platforms, the system \textbf{SHALL} allow executing Linux-native Compact compilers installed inside WSL2, automatically translating file paths between Windows and Linux formats.
+\end{itemize}
+
+\subsection{Subsystem 10: Status Bar Environment Monitor}
+\label{sec:subsystem_statusbar}
+
+\subsubsection{[REQ-BAR-FUN-001] Real-Time Environment Display}
+\begin{itemize}
+    \item \textbf{Statement}: The system \textbf{SHALL} display a lightweight widget in the IDE status bar showing the active compiler version (e.g., \texttt{Compact: v0.34.0 (0.26.0)}).
+\end{itemize}
+
+\subsubsection{[REQ-BAR-FUN-002] Non-Blocking \texorpdfstring{$O(1)$}{O(1)} Execution}
+\begin{itemize}
+    \item \textbf{Statement}: The status bar widget \textbf{SHALL NOT} perform file I/O or network calls on the EDT. All version queries must read from cached in-memory state in $O(1)$ time.
+\end{itemize}
+
+\subsubsection{[REQ-BAR-FUN-003] Interactive Quick Switcher Popup}
+\begin{itemize}
+    \item \textbf{Statement}: Clicking the status bar widget \textbf{SHALL} open a speed-search popup displaying all installed compiler versions, allowing immediate 1-click version switching.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/data_flow_diagram}
+    \caption{Data Flow Diagram (Level 1 Process Decomposition).}
+    \label{fig:data_flow_diagram}
+\end{figure}

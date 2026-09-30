@@ -1,0 +1,156 @@
+%! Author = Midnight Compact Architecture Team
+%! Date = 30-09-2026
+
+\documentclass[11pt,a4paper]{article}
+
+% Core Packages
+\usepackage{amsmath,amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in, top=1.1in, bottom=1.1in}
+
+% Typography & Styling
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{parskip}
+
+% Color Palette Definition
+\definecolor{srsPrimary}{RGB}{41, 128, 185}     % Slate Blue
+\definecolor{srsSecondary}{RGB}{39, 174, 96}    % Emerald Green
+\definecolor{srsAccent}{RGB}{142, 68, 173}      % Midnight Purple
+\definecolor{srsWarning}{RGB}{230, 126, 34}     % Amber Orange
+\definecolor{srsDanger}{RGB}{192, 57, 43}       % Carmine Red
+\definecolor{srsDark}{RGB}{44, 62, 80}          % Charcoal / Dark Slate
+\definecolor{srsLight}{RGB}{245, 247, 250}      % Background Light Gray
+\definecolor{srsBorder}{RGB}{189, 195, 199}     % Border Silver
+
+% Hyperlinks Configuration
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=srsPrimary,
+    citecolor=srsAccent,
+    urlcolor=srsPrimary,
+    pdftitle={Software Requirements Specification - Midnight Compact Language Plugin},
+    pdfauthor={Midnight Compact Architecture Team},
+    pdfsubject={ISO/IEC/IEEE 29148:2018 Standards-Compliant SRS},
+    pdfkeywords={Midnight, Compact, IntelliJ Platform, ZK-SNARK, Blockchain, Smart Contracts, SRS}
+}
+
+% TikZ and Vector Graphics Libraries
+\usepackage{tikz}
+\usetikzlibrary{
+    shapes.geometric,
+    shapes.misc,
+    arrows.meta,
+    positioning,
+    fit,
+    backgrounds,
+    calc,
+    shadows,
+    matrix
+}
+
+% Header and Footer Styling
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\textsl{Software Requirements Specification (SRS)}}
+\fancyhead[R]{\small\sffamily\textsl{Midnight Compact Plugin}}
+\fancyfoot[L]{\footnotesize\sffamily ISO/IEC/IEEE 29148:2018 Compliant}
+\fancyfoot[R]{\small\sffamily Page \thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Section Title Formatting
+\titleformat{\section}
+    {\normalfont\Large\bfseries\sffamily\color{srsDark}}
+    {\thesection}{1em}{}
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\sffamily\color{srsPrimary}}
+    {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+    {\normalfont\normalsize\bfseries\sffamily\color{srsDark}}
+    {\thesubsubsection}{1em}{}
+
+% Document Metadata
+\title{
+    \vspace{-1.5cm}
+    \begin{tikzpicture}
+        \node[circle, draw=srsPrimary, line width=1.5pt, fill=srsPrimary!12, inner sep=8pt] {
+            \color{srsPrimary}\huge\bfseries\sffamily M
+        };
+    \end{tikzpicture}
+    \par\vspace{0.4cm}
+    {\Huge\bfseries\sffamily\color{srsDark} Software Requirements Specification}\\[8pt]
+    {\Large\sffamily\color{srsPrimary} Midnight Compact Language Plugin for IntelliJ IDEA}\\[10pt]
+    {\large\sffamily\color{srsAccent} ISO/IEC/IEEE 29148:2018 \& IEEE Std 830-1998 Standard}
+}
+
+\author{
+    \textbf{Midnight Compact Architecture \& Systems Team}\\
+    \texttt{dev.verloren.midnight}\\
+    \small Input Output Global / Midnight Network Ecosystem
+}
+
+\date{\textbf{Version 1.0.0} --- \today}
+
+\begin{document}
+
+% Title Page
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent This document establishes the formal, definitive Software Requirements Specification (SRS) for the \textbf{Midnight Compact Language Plugin for IntelliJ IDEA} (\texttt{dev.verloren.midnight}), conforming to \textbf{ISO/IEC/IEEE 29148:2018} and \textbf{IEEE Std 830-1998}. Compact is the domain-specific smart contract programming language of the privacy-preserving Midnight blockchain network, engineered specifically for zero-knowledge cryptographic contract development. 
+
+This specification rigorously specifies the end-to-end architecture, functional requirements, external interfaces, non-functional quality gates, and verification criteria for all ten subsystems: (1) Zero-allocation DFA Lexer, (2) Recursive-Descent Pratt Precedence Parser, (3) Typed Program Structure Interface (PSI) AST model, (4) Scoped Lexical and Namespace Resolution, (5) Static Type Inference and Unification Engine, (6) Code Insight and Inplace Refactoring, (7) Ten Static Semantic Inspections with Quick-Fixes, (8) Remix-Style Interactive Compiler Tool Window, (9) Multi-Version Isolated Toolchain Manager with SemVer Pragma Badges, and (10) Non-blocking Status Bar Environment Monitor. It incorporates complete diagrammatic representations across structural, behavioral, lifecycle, and deployment perspectives rendered in native vector graphics, and concludes with an exhaustive Requirements Traceability Matrix (RTM).
+\end{abstract}
+
+\vfill
+\noindent\rule{\textwidth}{0.4pt}\\
+\textbf{Document Classification}: Technical Specification / Architecture Baseline\\
+\textbf{Standard Conformance}: ISO/IEC/IEEE 29148:2018, IEEE Std 830-1998, RFC 2119\\
+\textbf{Target Platform}: JetBrains IntelliJ Platform SDK 2025.1+ / OpenJDK 25\\
+\textbf{Target Language}: Compact (\texttt{0.20}--\texttt{0.26}) / Toolchains \texttt{v0.31.1}--\texttt{v0.34.0}
+\newpage
+
+% Table of Contents
+\tableofcontents
+\newpage
+
+% Lists of Figures and Tables
+\listoffigures
+\listoftables
+\newpage
+
+% Document Sections
+\input{sections/01_introduction}
+\newpage
+
+\input{sections/02_overall_description}
+\newpage
+
+\input{sections/03_system_features}
+\newpage
+
+\input{sections/04_external_interfaces}
+\newpage
+
+\input{sections/05_nonfunctional_requirements}
+\newpage
+
+\input{sections/06_traceability_matrix}
+\newpage
+
+\input{sections/07_appendices}
+\newpage
+
+% Bibliography
+\bibliography{main}
+\bibliographystyle{plain}
+
+\end{document}

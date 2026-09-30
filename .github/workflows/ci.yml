@@ -42,6 +42,9 @@ jobs:
         shell: pwsh
         run: ./scripts/verify-patch.ps1 -AllTests
 
+      - name: Verify Plugin Compatibility
+        run: ./gradlew verifyPlugin
+
       - name: Build Plugin Package
         run: ./gradlew buildPlugin
 
@@ -68,3 +71,26 @@ jobs:
           name: midnight-plugin-zip
           path: build/distributions/*.zip
           if-no-files-found: error
+
+  qodana:
+    name: Qodana Static Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      checks: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Run Qodana Scan
+        uses: JetBrains/qodana-action@v2024.3

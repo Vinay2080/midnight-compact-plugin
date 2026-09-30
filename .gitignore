@@ -46,3 +46,13 @@ node_modules/
 **/node_modules/
 dist/
 **/dist/
+*.iml
+.mcp.json
+*.aux
+*.bbl
+*.blg
+*.lof
+*.log
+*.lot
+*.out
+*.toc

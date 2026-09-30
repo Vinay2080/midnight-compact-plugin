@@ -1,76 +1,80 @@
 package dev.verloren.midnight.architecture;
 
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchRule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Stream;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Architectural compliance test suite enforcing layer isolation, downward-only dependencies,
- * and modularity boundaries in the Midnight Compact plugin codebase.
+ * and modularity boundaries in the Midnight Compact plugin codebase using ArchUnit bytecode analysis.
+ *
+ * <p>Runs as a pure JVM test without launching the heavy IntelliJ Platform test fixture.</p>
  */
-public class CompactArchitectureTest extends BasePlatformTestCase {
+public class CompactArchitectureTest {
+
+  private static final JavaClasses CLASSES = new ClassFileImporter()
+      .importPackages("dev.verloren.midnight");
 
   /**
-   * Enforces that core semantic layers (type, resolve, psi, lexer, parser) do not import
-   * UI, completion, inspection, or editor layers.
+   * Enforces that core semantic layers (type, resolve, scope, symbol, psi, lexer, parser)
+   * do not depend on UI, completion, inspection, editor, or tool window layers.
    */
-  public void testLayerDependencyInvariants() throws IOException {
-    Path srcMain = Path.of("src/main/java/dev/verloren/midnight");
-    if (!Files.exists(srcMain)) {
-      srcMain = Path.of("midnight-plugin/src/main/java/dev/verloren/midnight");
-    }
-    assertTrue("Source root must exist: " + srcMain, Files.exists(srcMain));
+  @Test
+  public void testLayerDependencyInvariants() {
+    ArchRule downwardOnlyDependencies = noClasses()
+        .that().resideInAnyPackage(
+            "dev.verloren.midnight.type..",
+            "dev.verloren.midnight.resolve..",
+            "dev.verloren.midnight.scope..",
+            "dev.verloren.midnight.symbol..",
+            "dev.verloren.midnight.psi..",
+            "dev.verloren.midnight.lexer..",
+            "dev.verloren.midnight.parser.."
+        )
+        .should().dependOnClassesThat().resideInAnyPackage(
+            "dev.verloren.midnight.completion..",
+            "dev.verloren.midnight.inspection..",
+            "dev.verloren.midnight.editor..",
+            "dev.verloren.midnight.intention..",
+            "dev.verloren.midnight.toolwindow..",
+            "dev.verloren.midnight.statusbar.."
+        )
+        .because("Core semantic layers must remain independent of UI and editor layers");
 
-    List<String> prohibitedUpwardImports = List.of(
-        "dev.verloren.midnight.completion.",
-        "dev.verloren.midnight.inspection.",
-        "dev.verloren.midnight.editor.",
-        "dev.verloren.midnight.intention.",
-        "dev.verloren.midnight.toolwindow.",
-        "dev.verloren.midnight.statusbar."
-    );
+    downwardOnlyDependencies.check(CLASSES);
+  }
 
-    List<String> coreSemanticPackages = List.of("type", "resolve", "scope", "symbol", "psi", "lexer", "parser");
-    List<String> violations = new ArrayList<>();
+  /**
+   * Enforces that the lexer and parser do not depend on high-level semantic type or resolution layers.
+   */
+  @Test
+  public void testLexerParserIsolation() {
+    ArchRule lexerParserIsolation = noClasses()
+        .that().resideInAnyPackage(
+            "dev.verloren.midnight.lexer..",
+            "dev.verloren.midnight.parser.."
+        )
+        .should().dependOnClassesThat().resideInAnyPackage(
+            "dev.verloren.midnight.type..",
+            "dev.verloren.midnight.resolve..",
+            "dev.verloren.midnight.inspection.."
+        )
+        .because("Lexer and parser must depend only on tokens, element types, and AST structures");
 
-    for (String pkg : coreSemanticPackages) {
-      Path pkgPath = srcMain.resolve(pkg);
-      if (!Files.exists(pkgPath)) {
-        continue;
-      }
-      try (Stream<Path> files = Files.walk(pkgPath)) {
-        files.filter(p -> p.toString().endsWith(".java")).forEach(javaFile -> {
-          try {
-            List<String> lines = Files.readAllLines(javaFile);
-            for (int i = 0; i < lines.size(); i++) {
-              String line = lines.get(i).trim();
-              if (line.startsWith("import ")) {
-                for (String prohibited : prohibitedUpwardImports) {
-                  if (line.contains(prohibited)) {
-                    violations.add(javaFile.getFileName() + ":" + (i + 1) + " imports prohibited layer: " + line);
-                  }
-                }
-              }
-            }
-          } catch (IOException e) {
-            fail("Failed reading " + javaFile + ": " + e.getMessage());
-          }
-        });
-      }
-    }
-
-    assertTrue("Architectural Layer Invariant Violations found:\n" + String.join("\n", violations),
-        violations.isEmpty());
+    lexerParserIsolation.check(CLASSES);
   }
 
   /**
    * Verifies that the rule definitions exist and are properly registered in the codebase.
    */
+  @Test
   public void testArchitectureRulesDocumentExists() {
     Path rulesPath = Path.of(".agents/rules/architecture.rules.md");
     if (!Files.exists(rulesPath)) {

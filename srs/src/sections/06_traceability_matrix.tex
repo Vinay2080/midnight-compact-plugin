@@ -1,0 +1,71 @@
+\section{Verification and Requirements Traceability Matrix}
+\label{sec:traceability_matrix}
+
+This section provides the bidirectional Requirements Traceability Matrix (RTM) establishing verification mapping between every functional and non-functional requirement, its implementing architectural component in \texttt{dev.verloren.midnight.*}, the verification method (Test, Demonstration, Analysis, Inspection), and its automated test suite class.
+
+\begin{table}[htbp]
+    \centering
+    \scriptsize
+    \begin{tabularx}{\textwidth}{l p{3.2cm} p{3.8cm} c p{3.2cm}}
+        \toprule
+        \textbf{Requirement ID} & \textbf{Title / Summary} & \textbf{Implementation Class} & \textbf{Method} & \textbf{Automated Test Suite} \\
+        \midrule
+        \texttt{REQ-LEX-FUN-001} & Full Token Grammar & \texttt{CompactLexer} & Test & \texttt{CompactLexerTest} \\
+        \texttt{REQ-LEX-FUN-002} & Multi-Radix Literals & \texttt{CompactLexer} & Test & \texttt{CompactLiteralLexerTest} \\
+        \texttt{REQ-LEX-FUN-003} & Escape String Parsing & \texttt{CompactLexer} & Test & \texttt{CompactStringLexerTest} \\
+        \texttt{REQ-LEX-FUN-004} & Doc Comments (\texttt{///}) & \texttt{CompactLexer} & Test & \texttt{CompactCommentLexerTest} \\
+        \texttt{REQ-LEX-FUN-005} & Zero-Alloc Streaming & \texttt{CompactLexer} & Analysis & \texttt{CompactLexerBenchmark} \\
+        \midrule
+        \texttt{REQ-PRS-FUN-001} & Pratt Precedence Engine & \texttt{CompactParser} & Test & \texttt{CompactPrecedenceTest} \\
+        \texttt{REQ-PRS-FUN-002} & Resilient Error Recovery & \texttt{CompactParser} & Test & \texttt{CompactRecoveryTest} \\
+        \texttt{REQ-PRS-FUN-003} & Contract/Circuit Parsing & \texttt{CompactParser} & Test & \texttt{CompactDeclarationTest} \\
+        \texttt{REQ-PRS-FUN-004} & Struct/Enum Parsing & \texttt{CompactParser} & Test & \texttt{CompactDataStructureTest} \\
+        \texttt{REQ-PRS-FUN-005} & Pragma/Import Directives & \texttt{CompactParser} & Test & \texttt{CompactDirectiveTest} \\
+        \midrule
+        \texttt{REQ-PSI-FUN-001} & Element Factory Mapping & \texttt{CompactElementFactory} & Test & \texttt{CompactPsiFactoryTest} \\
+        \texttt{REQ-PSI-FUN-002} & Named Element Contract & \texttt{CompactNamedElementImpl} & Test & \texttt{CompactNamedElementTest} \\
+        \texttt{REQ-PSI-FUN-003} & Non-Leaking Lifecycle & PSI Architecture & Analysis & \texttt{LeakHunterVerificationTest} \\
+        \midrule
+        \texttt{REQ-RES-FUN-001} & Innermost Lexical Scope & \texttt{CompactResolveUtil} & Test & \texttt{CompactResolveScopeTest} \\
+        \texttt{REQ-RES-FUN-002} & VALUE vs TYPE Namespaces & \texttt{CompactResolveUtil} & Test & \texttt{CompactNamespaceTest} \\
+        \texttt{REQ-RES-FUN-003} & Cross-File Module Imports & \texttt{CompactResolveUtil} & Test & \texttt{CompactModuleImportTest} \\
+        \texttt{REQ-RES-FUN-004} & Member Access Resolution & \texttt{CompactResolveUtil} & Test & \texttt{CompactMemberResolveTest} \\
+        \midrule
+        \texttt{REQ-TYP-FUN-001} & Immutable Type Model & \texttt{CompactType} & Test & \texttt{CompactTypeModelTest} \\
+        \texttt{REQ-TYP-FUN-002} & Assignability Evaluation & \texttt{CompactTypeInferenceUtil} & Test & \texttt{CompactAssignabilityTest} \\
+        \texttt{REQ-TYP-FUN-003} & Anti-Hardcoding Rule & \texttt{CompactTypeInferenceUtil} & Test & \texttt{CompactMirrorGenericTest} \\
+        \midrule
+        \texttt{REQ-IDE-FUN-001} & Code Completion & \texttt{CompactCompletionContributor} & Test & \texttt{CompactCompletionTest} \\
+        \texttt{REQ-IDE-FUN-002} & Go to Declaration & \texttt{CompactRefBase} & Test & \texttt{CompactNavigationTest} \\
+        \texttt{REQ-IDE-FUN-003} & Go to Type Declaration & \texttt{CompactTypeDeclarationProvider} & Test & \texttt{CompactTypeNavTest} \\
+        \texttt{REQ-IDE-FUN-004} & Inplace Rename & \texttt{CompactRefactoringSupport} & Test & \texttt{CompactRenameTest} \\
+        \texttt{REQ-IDE-FUN-005} & Structure View Outline & \texttt{CompactStructureViewModel} & Test & \texttt{CompactStructureViewTest} \\
+        \texttt{REQ-IDE-FUN-006} & Code Formatting & \texttt{CompactFormattingModel} & Test & \texttt{CompactFormattingTest} \\
+        \midrule
+        \texttt{REQ-INS-FUN-001} & Unresolved References & \texttt{CompactUnresolvedInspection} & Test & \texttt{CompactInspectionTest} \\
+        \texttt{REQ-INS-FUN-003} & Unused Local Var \& Fix & \texttt{CompactUnusedVarInspection} & Test & \texttt{CompactUnusedVarFixTest} \\
+        \texttt{REQ-INS-FUN-004} & Pure Circuit Mutation & \texttt{CompactPureMutationInspection} & Test & \texttt{CompactPureInspectionTest} \\
+        \texttt{REQ-INS-FUN-005} & Undisclosed Witness & \texttt{CompactWitnessLeakInspection} & Test & \texttt{CompactWitnessLeakTest} \\
+        \texttt{REQ-INS-FUN-006} & Sealed Ledger Mutation & \texttt{CompactSealedMutationInspection} & Test & \texttt{CompactSealedInspectionTest} \\
+        \texttt{REQ-INS-FUN-007} & Recursive Circuit Call & \texttt{CompactRecursionInspection} & Test & \texttt{CompactRecursionTest} \\
+        \midrule
+        \texttt{REQ-CMP-FUN-001} & Remix Tool Window & \texttt{CompactCompilerToolWindow} & Demo & \texttt{CompilerToolWindowUITest} \\
+        \texttt{REQ-CMP-FUN-003} & Pragma Compatibility & \texttt{CompactPragmaEvaluator} & Test & \texttt{CompactPragmaTest} \\
+        \texttt{REQ-CMP-FUN-004} & 1-Click Compilation & \texttt{CompactBuildRunner} & Test & \texttt{CompactBuildExecutionTest} \\
+        \midrule
+        \texttt{REQ-MGR-FUN-001} & Isolated Directory Layout & \texttt{CompactToolchainManager} & Test & \texttt{CompactToolchainTest} \\
+        \texttt{REQ-MGR-FUN-002} & Resolution Hierarchy & \texttt{MidnightSettings} & Test & \texttt{CompactResolutionOrderTest} \\
+        \texttt{REQ-MGR-FUN-004} & WSL2 Process Bridge & \texttt{CompactWslRunner} & Test & \texttt{CompactWslExecutionTest} \\
+        \midrule
+        \texttt{REQ-BAR-FUN-001} & Status Bar Environment & \texttt{CompactStatusBarWidget} & Test & \texttt{CompactStatusBarTest} \\
+        \texttt{REQ-BAR-FUN-002} & $O(1)$ Non-Blocking & \texttt{CompactStatusBarWidget} & Analysis & \texttt{CompactStatusBarPerfTest} \\
+        \midrule
+        \texttt{REQ-NFR-PERF-001} & Lexer Throughput & \texttt{CompactLexer} & Test & \texttt{CompactPerformanceHarness} \\
+        \texttt{REQ-NFR-PERF-004} & Zero EDT Lockup & Full Architecture & Analysis & \texttt{EdtThreadSafetyAudit} \\
+        \texttt{REQ-NFR-SEC-003} & Command Injection Guard & \texttt{CompactProcessBuilder} & Inspection & \texttt{SecurityAuditTest} \\
+        \texttt{REQ-NFR-MNT-001} & Downward Dependencies & Architecture Guard & Inspection & \texttt{CompactArchTest} \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Requirements Traceability Matrix (RTM) linking requirements to code and tests.}
+    \label{tab:rtm}
+\end{table}

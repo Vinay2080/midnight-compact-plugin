@@ -16,15 +16,16 @@
    - **Mandatory "User-Defined Mirror" Testing**: Every test exercising standard library constructs (`Either`, `Maybe`) must have an identical companion test exercising user-defined generic structs (e.g. `Result<TVal, TErr>`, `Pair<A, B>`).
 
 3. **Type System as Single Source of Truth**:
-   - All type representations must be instances of the sealed `CompactType` hierarchy (`CompactPrimitiveType`, `CompactParameterizedType`, `CompactStructType`, `CompactTypeVariable`, `CompactFunctionType`).
+   - All type representations must be instances of `CompactType` (transitioning to a sealed hierarchy in Phase 3).
    - **STRICTLY PROHIBITED**: Passing raw type strings (e.g. `"Either<Field, Boolean>"`) and parsing with regex or substring split operations.
-   - Type parameter binding and substitution must be executed via `CompactTypeSubstitutor`.
+   - Type inference and evaluation must be executed via `CompactTypeInferenceUtil`.
 
 4. **Modularity & Single Responsibility Principle (SRP)**:
-   - **File Length Limit**: Every class must remain **<= 400 lines**. Classes exceeding this limit must be split into dedicated providers, visitors, or handlers.
+   - **File Length Limit**: Every new class must remain **<= 400 lines**. Classes exceeding this limit must be split into dedicated providers, visitors, or handlers.
+   - **Legacy Suppression Baseline**: Grandfathered classes exceeding 400 lines (`CompactParser`, `CompactCompletionContributor`, `CompactDocumentationProvider`, `CompactVersionManager`, `CompactToolchainUtil`, `CompactCompilerPanel`, `CompactResolveUtil`, `CompactHighlightingAnnotator`, `CompactLexer`) must only decrease in size during refactoring. No new classes may exceed 400 lines.
    - **Method Length Limit**: Methods must remain **<= 40 lines**.
-   - **Completion Modularity**: `CompletionContributor` only registers patterns; distinct `CompletionProvider` subclasses compute lookup items; distinct `InsertHandler` subclasses handle document mutations.
-   - **Inspection Modularity**: Inspections only configure error reporting; semantic validation is delegated to shared `CompactTypeChecker` or `CompactResolveUtil`.
+   - **Completion Modularity**: `CompletionContributor` registers patterns; distinct `CompletionProvider` subclasses compute lookup items; distinct `InsertHandler` subclasses handle document mutations.
+   - **Inspection Modularity**: Inspections only configure error reporting; semantic validation is delegated to shared utilities (`CompactTypeInferenceUtil` or `CompactResolveUtil`).
 
 5. **Threading & Memory Safety**:
    - PSI reads must be wrapped in `ReadAction` or executed on background threads.

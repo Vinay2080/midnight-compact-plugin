@@ -1,0 +1,92 @@
+% Comprehensive Use Case Diagram
+\begin{tikzpicture}[
+    scale=0.88, every node/.style={transform shape},
+    actor/.style={
+        rectangle, rounded corners=4pt,
+        draw=srsDark, line width=1.1pt,
+        fill=srsLight, text=srsDark,
+        align=center, font=\footnotesize\bfseries\sffamily,
+        inner sep=6pt, minimum width=2.4cm
+    },
+    usecase/.style={
+        ellipse,
+        draw=srsPrimary, line width=1pt,
+        fill=white, text=srsDark,
+        align=center, font=\scriptsize\sffamily,
+        inner sep=3pt, minimum width=3.4cm, minimum height=0.9cm
+    },
+    usecaseCore/.style={
+        ellipse,
+        draw=srsSecondary, line width=1.2pt,
+        fill=srsSecondary!10, text=srsDark,
+        align=center, font=\scriptsize\bfseries\sffamily,
+        inner sep=3pt, minimum width=3.6cm, minimum height=1.0cm
+    },
+    systemBoundary/.style={
+        rectangle, rounded corners=8pt,
+        draw=srsDark!70, line width=1.2pt, dashed,
+        fill=srsLight!30
+    },
+    ucLine/.style={
+        -{Stealth[scale=0.9]}, line width=0.9pt, draw=srsDark!80
+    },
+    relLine/.style={
+        -{Stealth[scale=0.8]}, line width=0.8pt, dashed, draw=srsAccent
+    },
+    relLabel/.style={
+        font=\tiny\sffamily, text=srsAccent, fill=white, inner sep=1pt
+    }
+]
+
+    % Boundary Background Frame
+    \draw[systemBoundary] (-3.8, -7.2) rectangle (6.8, 6.2);
+    \node[anchor=north west, font=\small\bfseries\sffamily, text=srsDark] at (-3.6, 6.0) {Midnight Compact Language Plugin System Boundary};
+
+    % Left Actors
+    \node[actor] (dev) at (-6.2, 2.5) {Smart Contract\\Developer};
+    \node[actor] (zkEng) at (-6.2, -0.5) {ZK Circuit\\Engineer};
+    \node[actor] (auditor) at (-6.2, -3.5) {Smart Contract\\Auditor};
+
+    % System Use Cases (Column 1)
+    \node[usecaseCore] (ucEdit) at (-1.4, 4.8) {Edit \& Highlight\\Compact Source};
+    \node[usecase] (ucComplete) at (-1.4, 3.2) {Contextual Code\\Completion (Ctrl+Space)};
+    \node[usecase] (ucNav) at (-1.4, 1.6) {Navigate Definitions\\(Go to Decl / Type Decl)};
+    \node[usecase] (ucRefactor) at (-1.4, 0.0) {Inplace Rename\\Refactoring (Shift+F6)};
+    \node[usecase] (ucInspect) at (-1.4, -1.6) {Real-Time Semantic\\Inspections \& Quick-Fixes};
+    \node[usecase] (ucFormat) at (-1.4, -3.2) {Canonical Code\\Formatting (Ctrl+Alt+L)};
+    \node[usecase] (ucStructure) at (-1.4, -4.8) {Inspect Structure View\\\& Document Outline};
+
+    % Right Column: Build & Toolchain Use Cases
+    \node[usecaseCore] (ucCompile) at (3.8, 3.6) {1-Click Compile Contract\\(Remix Panel / Shift+F10)};
+    \node[usecase] (ucPragma) at (3.8, 1.8) {Evaluate Pragma SemVer\\Compatibility Badge};
+    \node[usecase] (ucSwitch) at (3.8, 0.0) {Switch Isolated\\Compiler Version};
+    \node[usecase] (ucDownload) at (3.8, -1.8) {Download \& Install\\Compiler Binary};
+    \node[usecase] (ucWsl) at (3.8, -3.6) {Execute via WSL2\\Linux Subsystem};
+    \node[usecase] (ucStatusBar) at (3.8, -5.4) {Monitor Status Bar\\Active Environment};
+
+    % Actor Associations
+    \draw[ucLine] (dev) -- (ucEdit);
+    \draw[ucLine] (dev) -- (ucComplete);
+    \draw[ucLine] (dev) -- (ucNav);
+    \draw[ucLine] (dev) -- (ucRefactor);
+    \draw[ucLine] (dev) -- (ucCompile);
+    \draw[ucLine] (dev) -- (ucFormat);
+
+    \draw[ucLine] (zkEng) -- (ucNav);
+    \draw[ucLine] (zkEng) -- (ucInspect);
+    \draw[ucLine] (zkEng) -- (ucPragma);
+    \draw[ucLine] (zkEng) -- (ucCompile);
+    \draw[ucLine] (zkEng) -- (ucSwitch);
+
+    \draw[ucLine] (auditor) -- (ucInspect);
+    \draw[ucLine] (auditor) -- (ucStructure);
+    \draw[ucLine] (auditor) -- (ucNav);
+
+    % Include / Extend Relationships
+    \draw[relLine] (ucCompile) -- node[relLabel, right] {$\ll$include$\gg$} (ucPragma);
+    \draw[relLine] (ucSwitch) -- node[relLabel, right] {$\ll$extend$\gg$} (ucDownload);
+    \draw[relLine] (ucSwitch) -- node[relLabel, right] {$\ll$extend$\gg$} (ucWsl);
+    \draw[relLine] (ucStatusBar) -- node[relLabel, right] {$\ll$extend$\gg$} (ucSwitch);
+    \draw[relLine] (ucEdit) -- node[relLabel, left] {$\ll$include$\gg$} (ucComplete);
+
+\end{tikzpicture}

@@ -4,6 +4,8 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.changelog")
     id("org.jetbrains.intellij.platform")
+    checkstyle
+    jacoco
 }
 
 val requestedTasks = gradle.startParameter.taskNames
@@ -45,6 +47,7 @@ logger.lifecycle("[Midnight] Material Theme UI enabled in sandbox: $enableMtui")
 
 dependencies {
     testImplementation(libs.junit)
+    testImplementation(libs.archunit)
 
     intellijPlatform {
         intellijIdea("2026.2.0.1")
@@ -99,7 +102,34 @@ sourceSets {
     }
 }
 
+checkstyle {
+    toolVersion = libs.versions.checkstyle.get()
+    configDirectory.set(file("${rootDir}/config/checkstyle"))
+    isIgnoreFailures = false
+}
+
+jacoco {
+    toolVersion = "0.8.14"
+}
+
 tasks {
+    jacocoTestReport {
+        dependsOn(test)
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+        }
+    }
+    jacocoTestCoverageVerification {
+        dependsOn(test)
+        violationRules {
+            rule {
+                limit {
+                    minimum = "0.05".toBigDecimal()
+                }
+            }
+        }
+    }
     withType<JavaCompile> {
         options.compilerArgs.addAll(listOf("-Xlint:all", "-Xlint:-processing", "-Xlint:-serial"))
     }

@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+    <!-- Phase 1 Legacy Baseline: Grandfathered oversized production classes (>400 lines) pending decomposition in Phase 3 & 4 -->
+    <suppress checks="FileLength" files="CompactVersionManager\.java"/>
+    <suppress checks="FileLength" files="CompactToolchainUtil\.java"/>
+    <suppress checks="FileLength" files="CompactCompilerPanel\.java"/>
+    <suppress checks="FileLength" files="CompactResolveUtil\.java"/>
+    <suppress checks="FileLength" files="CompactHighlightingAnnotator\.java"/>
+    <suppress checks="FileLength" files="CompactLexer\.java"/>
+    <suppress checks="FileLength" files="CompactParameterInfoHandler\.java"/>
+
+    <!-- Method length suppressions for all test suites and utilities -->
+    <suppress checks="MethodLength" files=".*Test\.java"/>
+    <suppress checks="MethodLength" files=".*TestUtils?\.java"/>
+
+    <!-- Phase 1 Method Length Legacy Baseline: Pre-existing legacy methods pending SRP extraction in Phase 3 & 4 -->
+    <suppress checks="MethodLength" files="CompactHighlightingAnnotator\.java"/>
+    <suppress checks="MethodLength" files="CompactResolveUtil\.java"/>
+    <suppress checks="MethodLength" files="CompactVersionManager\.java"/>
+    <suppress checks="MethodLength" files="CompactToolchainUtil\.java"/>
+    <suppress checks="MethodLength" files="CompactCompilerPanel\.java"/>
+    <suppress checks="MethodLength" files="CompactLexer\.java"/>
+    <suppress checks="MethodLength" files="CompactParameterInfoHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactCreateFileAction\.java"/>
+    <suppress checks="MethodLength" files="CompactCompilerOutputParser\.java"/>
+    <suppress checks="MethodLength" files="CompactExternalAnnotator\.java"/>
+    <suppress checks="MethodLength" files="CompactProblemUtil\.java"/>
+    <suppress checks="MethodLength" files="CompactAssertInsertHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactCompletionContext\.java"/>
+    <suppress checks="MethodLength" files="CompactDeclarationInsertHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactEitherHelperInsertHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactEitherInsertHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactParameterizedTypeInsertHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactAngleBraceTypedHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactBreadcrumbsProvider\.java"/>
+    <suppress checks="MethodLength" files="CompactDeclarationEnterHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactDelimiterTypedHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactDocCommentEnterHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactLineMarkerProvider\.java"/>
+    <suppress checks="MethodLength" files="CompactSurroundDescriptor\.java"/>
+    <suppress checks="MethodLength" files="CompactSmartEnterProcessor\.java"/>
+    <suppress checks="MethodLength" files="CompactBlock\.java"/>
+    <suppress checks="MethodLength" files="CompactFormattingModelBuilder\.java"/>
+    <suppress checks="MethodLength" files="CompactColorSettingsPage\.java"/>
+    <suppress checks="MethodLength" files="CompactSyntaxHighlighter\.java"/>
+    <suppress checks="MethodLength" files="CompactDeclarationNameGenerator\.java"/>
+    <suppress checks="MethodLength" files="CompactDeclarationTriggerResolver\.java"/>
+    <suppress checks="MethodLength" files="CompactDuplicateDeclarationInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactPragmaVersionInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactPureCircuitInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactRecursiveCircuitInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactTypeMismatchInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactUndisclosedWitnessInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactUnresolvedReferenceInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactUnusedLocalVariableInspection\.java"/>
+    <suppress checks="MethodLength" files="CompactGotoDeclarationHandler\.java"/>
+    <suppress checks="MethodLength" files="CompactTypeDeclarationProvider\.java"/>
+    <suppress checks="MethodLength" files="CompactElementFactory\.java"/>
+    <suppress checks="MethodLength" files="CompactNamedElementImpl\.java"/>
+    <suppress checks="MethodLength" files="CompactPsiUtil\.java"/>
+    <suppress checks="MethodLength" files="CompactReferenceContributor\.java"/>
+    <suppress checks="MethodLength" files="CompactStructFieldReference\.java"/>
+    <suppress checks="MethodLength" files="CompactRunConfigurationEditor\.java"/>
+    <suppress checks="MethodLength" files="CompactRunConfiguration\.java"/>
+    <suppress checks="MethodLength" files="CompactCommandLineState\.java"/>
+    <suppress checks="MethodLength" files="CompactStatusBarPopup\.java"/>
+    <suppress checks="MethodLength" files="CompactVersionCard\.java"/>
+    <suppress checks="MethodLength" files="CompactSemVerUtil\.java"/>
+</suppressions>

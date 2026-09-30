@@ -1,0 +1,64 @@
+% Code Completion & Scoped Resolution Sequence Diagram
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    lifeline/.style={
+        draw=srsDark!60, dashed, line width=0.8pt
+    },
+    headerBox/.style={
+        rectangle, rounded corners=4pt,
+        draw=srsDark, line width=1pt,
+        fill=srsLight, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=4pt,
+        minimum width=2.4cm, minimum height=0.8cm
+    },
+    syncMsg/.style={
+        -{Stealth[scale=0.9]}, line width=0.9pt, draw=srsDark
+    },
+    retMsg/.style={
+        -{Stealth[scale=0.9]}, dashed, line width=0.8pt, draw=srsDark!70
+    },
+    msgLabel/.style={
+        font=\tiny\sffamily, text=srsDark, fill=white, inner sep=1.5pt
+    },
+    actBox/.style={
+        rectangle, fill=srsPrimary!20, draw=srsPrimary, line width=0.8pt
+    }
+]
+
+    % Lifeline Headers
+    \node[headerBox] (hUser) at (0, 7.5) {User (IDE)};
+    \node[headerBox] (hComp) at (3.0, 7.5) {Completion\\Contributor};
+    \node[headerBox] (hType) at (6.0, 7.5) {TypeInference\\Util};
+    \node[headerBox] (hRes) at (9.0, 7.5) {CompactResolve\\Util};
+    \node[headerBox] (hUI) at (12.0, 7.5) {Lookup Element\\Result Set};
+
+    % Lifeline dashed paths
+    \draw[lifeline] (hUser.south) -- (0, -0.5);
+    \draw[lifeline] (hComp.south) -- (3.0, -0.5);
+    \draw[lifeline] (hType.south) -- (6.0, -0.5);
+    \draw[lifeline] (hRes.south) -- (9.0, -0.5);
+    \draw[lifeline] (hUI.south) -- (12.0, -0.5);
+
+    % Activations
+    \draw[actBox] (2.9, 6.4) rectangle (3.1, 0.4);
+    \draw[actBox] (5.9, 5.4) rectangle (6.1, 4.4);
+    \draw[actBox] (8.9, 3.8) rectangle (9.1, 2.0);
+    \draw[actBox] (11.9, 1.4) rectangle (12.1, 0.6);
+
+    % Messages
+    \draw[syncMsg] (0, 6.4) -- node[msgLabel, above] {1: Press Ctrl+Space / Type '.'} (2.9, 6.4);
+
+    \draw[syncMsg] (3.1, 5.4) -- node[msgLabel, above] {2: inferType(qualifierExpr)} (5.9, 5.4);
+    \draw[retMsg] (5.9, 4.5) -- node[msgLabel, below] {3: CompactStructType(fields)} (3.1, 4.5);
+
+    \draw[syncMsg] (3.1, 3.8) -- node[msgLabel, above] {4: getVisibleSymbols(innerScope, VALUE)} (8.9, 3.8);
+    \node[msgLabel, right, font=\tiny\itshape] at (9.1, 3.0) {Walks AST blocks $\to$ imports};
+    \draw[retMsg] (8.9, 2.2) -- node[msgLabel, below] {5: List$\langle$CompactNamedElement$\rangle$} (3.1, 2.2);
+
+    \draw[syncMsg] (3.1, 1.4) -- node[msgLabel, above] {6: addElement(LookupElementBuilder)} (11.9, 1.4);
+    \draw[retMsg] (11.9, 0.6) -- node[msgLabel, below] {7: Variants rendered} (3.1, 0.6);
+
+    \draw[retMsg] (2.9, 0.4) -- node[msgLabel, above] {8: Display popup with icons \& types} (0, 0.4);
+
+\end{tikzpicture}

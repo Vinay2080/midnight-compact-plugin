@@ -1,0 +1,93 @@
+% Multi-Version Toolchain State Machine Diagram
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    stateNode/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsDark, line width=1pt,
+        fill=white, text=srsDark,
+        font=\scriptsize\sffamily, align=center,
+        inner sep=6pt, minimum width=3.0cm, minimum height=1.0cm,
+        drop shadow={opacity=0.15, shadow xshift=1pt, shadow yshift=-1pt}
+    },
+    stateActive/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsSecondary, line width=1.3pt,
+        fill=srsSecondary!15, text=srsDark,
+        font=\scriptsize\bfseries\sffamily, align=center,
+        inner sep=6pt, minimum width=3.2cm, minimum height=1.1cm,
+        drop shadow={opacity=0.2, shadow xshift=1.5pt, shadow yshift=-1.5pt}
+    },
+    stateError/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsDanger, line width=1.1pt,
+        fill=srsDanger!12, text=srsDark,
+        font=\scriptsize\bfseries\sffamily, align=center,
+        inner sep=6pt, minimum width=3.0cm, minimum height=1.0cm
+    },
+    initState/.style={
+        circle, fill=srsDark, minimum size=0.45cm
+    },
+    transArrow/.style={
+        -{Stealth[scale=0.9]}, line width=0.9pt, draw=srsDark
+    },
+    transLabel/.style={
+        font=\tiny\sffamily, text=srsDark, fill=white, inner sep=1pt, align=center
+    }
+]
+
+    % States Layout
+    \node[initState] (start) at (-6.5, 2.5) {};
+
+    \node[stateNode] (detect) at (-3.5, 2.5) {
+        \textbf{Detecting Environment}\\
+        \tiny Probe .idea/midnight.xml,\\
+        \tiny global settings, PATH, WSL
+    };
+
+    \node[stateActive] (resolved) at (1.5, 2.5) {
+        \textbf{Resolved \& Ready}\\
+        \tiny Compiler binary valid,\\
+        \tiny Pragma SemVer evaluated
+    };
+
+    \node[stateNode] (download) at (1.5, -0.5) {
+        \textbf{Downloading Toolchain}\\
+        \tiny Fetch archive via HTTPS,\\
+        \tiny background ProgressIndicator
+    };
+
+    \node[stateNode] (extract) at (-3.5, -0.5) {
+        \textbf{Unpacking \& Verifying}\\
+        \tiny Extract to \textasciitilde/.compact/versions/,\\
+        \tiny set executable permissions
+    };
+
+    \node[stateNode] (compiling) at (6.2, 2.5) {
+        \textbf{Executing Build}\\
+        \tiny Run CLI process,\\
+        \tiny stream stdout/stderr
+    };
+
+    \node[stateError] (errorState) at (1.5, 5.0) {
+        \textbf{Error / Missing Binary}\\
+        \tiny Display gutter/statusbar warning,\\
+        \tiny prompt "Download More..."
+    };
+
+    % Transitions
+    \draw[transArrow] (start) -- (detect);
+
+    \draw[transArrow] (detect) -- node[transLabel, above] {Binary exists\\\& executable} (resolved);
+    \draw[transArrow] (detect) |- node[transLabel, left] {No compiler\\detected} (errorState);
+
+    \draw[transArrow] (errorState) -| node[transLabel, right] {User triggers\\Auto-Download} (download);
+
+    \draw[transArrow] (download) -- node[transLabel, above] {HTTP 200 OK\\Download complete} (extract);
+    \draw[transArrow] (extract) -- node[transLabel, left] {Archive unpacked\\Permissions set} (detect);
+
+    \draw[transArrow] (resolved.east) -- node[transLabel, above] {User triggers\\Compile} (compiling.west);
+    \draw[transArrow] (compiling.south) -- ++(0,-0.6) -| node[transLabel, below] {Process completed /\\diagnostics reported} (resolved.south);
+
+    \draw[transArrow] (resolved) -- node[transLabel, right] {Switch version\\(not installed)} (download);
+
+\end{tikzpicture}

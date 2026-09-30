@@ -1,0 +1,83 @@
+% Type Inference & Assignability Activity Flowchart
+\begin{tikzpicture}[
+    scale=0.88, every node/.style={transform shape},
+    startEnd/.style={
+        rectangle, rounded corners=12pt,
+        draw=srsDark, line width=1.1pt,
+        fill=srsDark!10, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=5pt, minimum width=2.6cm
+    },
+    activityNode/.style={
+        rectangle, rounded corners=4pt,
+        draw=srsPrimary, line width=1pt,
+        fill=white, text=srsDark,
+        font=\scriptsize\sffamily,
+        align=center, inner sep=5pt, minimum width=3.4cm
+    },
+    decisionNode/.style={
+        diamond, aspect=2,
+        draw=srsWarning, line width=1pt,
+        fill=srsWarning!15, text=srsDark,
+        font=\tiny\bfseries\sffamily,
+        align=center, inner sep=2pt, minimum width=3.2cm
+    },
+    passNode/.style={
+        rectangle, rounded corners=4pt,
+        draw=srsSecondary, line width=1.2pt,
+        fill=srsSecondary!15, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=4pt, minimum width=2.4cm
+    },
+    failNode/.style={
+        rectangle, rounded corners=4pt,
+        draw=srsDanger, line width=1.2pt,
+        fill=srsDanger!15, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=4pt, minimum width=2.4cm
+    },
+    flowLine/.style={
+        -{Stealth[scale=0.9]}, line width=0.9pt, draw=srsDark
+    },
+    condLabel/.style={
+        font=\tiny\bfseries\sffamily, text=srsDark, fill=white, inner sep=1pt
+    }
+]
+
+    % Nodes
+    \node[startEnd] (start) at (0, 7.5) {Start: isAssignable(T1, T2)};
+
+    \node[decisionNode] (d1) at (0, 6.0) {Either type UNKNOWN\\or ErrorType?};
+    \node[passNode] (r1) at (5.0, 6.0) {Return TRUE\\(Tolerant AST)};
+
+    \node[decisionNode] (d2) at (0, 4.2) {Exact Nominal Match?\\T1.equals(T2)};
+    \node[passNode] (r2) at (5.0, 4.2) {Return TRUE};
+
+    \node[decisionNode] (d3) at (0, 2.4) {Both Numeric Uint?\\size(T1) $\le$ size(T2)};
+    \node[passNode] (r3) at (5.0, 2.4) {Return TRUE};
+
+    \node[decisionNode] (d4) at (0, 0.6) {Generic Container?\\(Vector, Cell, Map)};
+    \node[activityNode] (recCheck) at (0, -1.2) {Recursively check element\\type assignability};
+    \node[passNode] (r4) at (5.0, -1.2) {Return TRUE};
+
+    \node[failNode] (fail) at (0, -2.8) {Return FALSE\\(Type Mismatch Error)};
+
+    % Connections
+    \draw[flowLine] (start) -- (d1);
+
+    \draw[flowLine] (d1) -- node[condLabel, above] {Yes} (r1);
+    \draw[flowLine] (d1) -- node[condLabel, right] {No} (d2);
+
+    \draw[flowLine] (d2) -- node[condLabel, above] {Yes} (r2);
+    \draw[flowLine] (d2) -- node[condLabel, right] {No} (d3);
+
+    \draw[flowLine] (d3) -- node[condLabel, above] {Yes} (r3);
+    \draw[flowLine] (d3) -- node[condLabel, right] {No} (d4);
+
+    \draw[flowLine] (d4) -- node[condLabel, right] {Yes} (recCheck);
+    \draw[flowLine] (d4.west) -| ++(-1.8,-1.7) |- node[condLabel, left] {No} (fail);
+
+    \draw[flowLine] (recCheck) -- node[condLabel, above] {Elements Match} (r4);
+    \draw[flowLine] (recCheck) -- node[condLabel, right] {Mismatch} (fail);
+
+\end{tikzpicture}

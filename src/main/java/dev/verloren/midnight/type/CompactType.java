@@ -3,12 +3,21 @@ package dev.verloren.midnight.type;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Base semantic type interface in the Compact plugin's type system.
+ * Sealed base semantic type interface in the Compact plugin's type system.
  *
  * <p>Represents types for expressions, variables, and return types.
- * Provides {@link #name()} and {@link #isAssignableTo(CompactType)}.</p>
+ * Permits primitive types, unsigned integers, numeric literal types, parameterized types,
+ * struct types, enum types, and function types.</p>
  */
-public interface CompactType {
+public sealed interface CompactType permits
+    CompactPrimitiveType,
+    CompactUintType,
+    CompactNumericLiteralType,
+    CompactParameterizedType,
+    CompactStructType,
+    CompactEnumType,
+    CompactFunctionType {
+
   @NotNull String name();
 
   default boolean isAssignableTo(@NotNull CompactType other) {

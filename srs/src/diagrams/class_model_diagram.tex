@@ -1,0 +1,185 @@
+% Domain Model & PSI AST Class Hierarchy Diagram
+\begin{tikzpicture}[
+    scale=0.88, every node/.style={transform shape},
+    umlClass/.style={
+        rectangle,
+        draw=srsDark, line width=1pt,
+        fill=white, text=srsDark,
+        font=\scriptsize\sffamily,
+        align=center, inner sep=4pt,
+        drop shadow={opacity=0.15, shadow xshift=1pt, shadow yshift=-1pt}
+    },
+    abstractClass/.style={
+        rectangle,
+        draw=srsPrimary, line width=1.1pt,
+        fill=srsPrimary!10, text=srsDark,
+        font=\scriptsize\sffamily,
+        align=center, inner sep=4pt,
+        drop shadow={opacity=0.15, shadow xshift=1pt, shadow yshift=-1pt}
+    },
+    inheritArrow/.style={
+        -{Triangle[open, length=6pt, width=5pt]}, line width=1pt, draw=srsDark
+    },
+    assocArrow/.style={
+        -{Stealth[length=5pt]}, line width=0.9pt, draw=srsDark!75
+    }
+]
+
+    % Top Level: IntelliJ SDK Base
+    \node[abstractClass, minimum width=3.8cm] (psiElem) at (0, 6.2) {
+        \textit{$\ll$interface$\gg$}\\
+        \textbf{com.intellij.psi.PsiElement}\\
+        \hrulefill\\
+        + getText(): String\\
+        + getChildren(): PsiElement[]
+    };
+
+    % Compact Root PSI Element
+    \node[abstractClass, minimum width=3.8cm] (compactElem) at (0, 4.4) {
+        \textit{$\ll$abstract$\gg$}\\
+        \textbf{CompactPsiElement}\\
+        \hrulefill\\
+        + getNode(): ASTNode\\
+        + getLanguage(): CompactLanguage
+    };
+
+    % Named Element Interface / Base
+    \node[abstractClass, minimum width=3.6cm] (namedElem) at (-4.2, 2.5) {
+        \textit{$\ll$interface$\gg$}\\
+        \textbf{CompactNamedElement}\\
+        \hrulefill\\
+        + getName(): String\\
+        + setName(name): PsiElement\\
+        + getNameIdentifier(): PsiElement
+    };
+
+    % Expression Base
+    \node[abstractClass, minimum width=3.6cm] (exprElem) at (4.2, 2.5) {
+        \textit{$\ll$abstract$\gg$}\\
+        \textbf{CompactExpression}\\
+        \hrulefill\\
+        + getInferredType(): CompactType
+    };
+
+    % Declarations Subclasses
+    \node[umlClass, minimum width=3.2cm] (circuitDecl) at (-6.2, 0.4) {
+        \textbf{CompactCircuitDefinition}\\
+        \hrulefill\\
+        + isPure(): boolean\\
+        + getParameters(): List\\
+        + getReturnType(): CompactType
+    };
+
+    \node[umlClass, minimum width=3.2cm] (witnessDecl) at (-2.4, 0.4) {
+        \textbf{CompactWitnessDefinition}\\
+        \hrulefill\\
+        + getWitnessName(): String\\
+        + getTargetType(): CompactType
+    };
+
+    \node[umlClass, minimum width=3.2cm] (ledgerDecl) at (-6.2, -1.8) {
+        \textbf{CompactLedgerDefinition}\\
+        \hrulefill\\
+        + isSealed(): boolean\\
+        + getInitialValue(): Expr
+    };
+
+    \node[umlClass, minimum width=3.2cm] (structDecl) at (-2.4, -1.8) {
+        \textbf{CompactStructDefinition}\\
+        \hrulefill\\
+        + getFields(): List$\langle$Field$\rangle$\\
+        + getConstructor(): Method
+    };
+
+    % Expression Subclasses
+    \node[umlClass, minimum width=3.0cm] (binaryExpr) at (2.4, 0.4) {
+        \textbf{CompactBinaryExpr}\\
+        \hrulefill\\
+        + getLeft(): CompactExpr\\
+        + getOp(): IElementType\\
+        + getRight(): CompactExpr
+    };
+
+    \node[umlClass, minimum width=3.0cm] (callExpr) at (5.8, 0.4) {
+        \textbf{CompactCallExpr}\\
+        \hrulefill\\
+        + getCallee(): CompactExpr\\
+        + getArguments(): List
+    };
+
+    \node[umlClass, minimum width=3.0cm] (memberExpr) at (2.4, -1.8) {
+        \textbf{CompactMemberExpr}\\
+        \hrulefill\\
+        + getTarget(): CompactExpr\\
+        + getMemberName(): String
+    };
+
+    \node[umlClass, minimum width=3.0cm] (refExpr) at (5.8, -1.8) {
+        \textbf{CompactReferenceExpr}\\
+        \hrulefill\\
+        + getReference(): PsiRef\\
+        + resolve(): PsiElement
+    };
+
+    % Type System Root (Parallel Entity)
+    \node[abstractClass, minimum width=3.8cm, fill=srsAccent!15, draw=srsAccent] (compType) at (0, -3.8) {
+        \textit{$\ll$sealed abstract$\gg$}\\
+        \textbf{CompactType}\\
+        \hrulefill\\
+        + isAssignableTo(other): boolean\\
+        + getPresentableText(): String\\
+        + isPrimitive(): boolean
+    };
+
+    \node[umlClass, minimum width=2.4cm] (typePrim) at (-4.2, -5.4) {
+        \textbf{PrimitiveType}\\
+        \hrulefill\\
+        Field, Uint, Boolean\\
+        Bytes, Cell, Map
+    };
+
+    \node[umlClass, minimum width=2.4cm] (typeStruct) at (-1.4, -5.4) {
+        \textbf{StructType}\\
+        \hrulefill\\
+        name, fields\\
+        typeArgs
+    };
+
+    \node[umlClass, minimum width=2.4cm] (typeEnum) at (1.4, -5.4) {
+        \textbf{EnumType}\\
+        \hrulefill\\
+        name, variants\\
+        ordinal
+    };
+
+    \node[umlClass, minimum width=2.4cm] (typeError) at (4.2, -5.4) {
+        \textbf{ErrorType}\\
+        \hrulefill\\
+        UNKNOWN, VOID\\
+        RECURSIVE
+    };
+
+    % Inheritance Links
+    \draw[inheritArrow] (compactElem) -- (psiElem);
+    \draw[inheritArrow] (namedElem) -- (compactElem);
+    \draw[inheritArrow] (exprElem) -- (compactElem);
+
+    \draw[inheritArrow] (circuitDecl) -- (namedElem);
+    \draw[inheritArrow] (witnessDecl) -- (namedElem);
+    \draw[inheritArrow] (ledgerDecl) -- (namedElem);
+    \draw[inheritArrow] (structDecl) -- (namedElem);
+
+    \draw[inheritArrow] (binaryExpr) -- (exprElem);
+    \draw[inheritArrow] (callExpr) -- (exprElem);
+    \draw[inheritArrow] (memberExpr) -- (exprElem);
+    \draw[inheritArrow] (refExpr) -- (exprElem);
+
+    \draw[inheritArrow] (typePrim) -- (compType);
+    \draw[inheritArrow] (typeStruct) -- (compType);
+    \draw[inheritArrow] (typeEnum) -- (compType);
+    \draw[inheritArrow] (typeError) -- (compType);
+
+    % Cross association
+    \draw[assocArrow, dashed] (exprElem) -- node[fill=white, font=\tiny\sffamily, inner sep=1pt] {infers type} (compType);
+
+\end{tikzpicture}

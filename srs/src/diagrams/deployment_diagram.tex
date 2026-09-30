@@ -1,0 +1,103 @@
+% Deployment & Physical Runtime Topology Diagram
+\begin{tikzpicture}[
+    scale=0.88, every node/.style={transform shape},
+    nodeBox/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsDark, line width=1.2pt,
+        fill=white, text=srsDark,
+        font=\small\sffamily, align=left,
+        inner sep=8pt,
+        drop shadow={opacity=0.2, shadow xshift=2pt, shadow yshift=-2pt}
+    },
+    compBox/.style={
+        rectangle, rounded corners=3pt,
+        draw=srsPrimary, line width=0.9pt,
+        fill=srsPrimary!10, text=srsDark,
+        font=\scriptsize\sffamily, align=center,
+        inner sep=5pt, minimum width=6.2cm
+    },
+    fsBox/.style={
+        rectangle, rounded corners=3pt,
+        draw=srsAccent, line width=0.9pt,
+        fill=srsAccent!10, text=srsDark,
+        font=\scriptsize\sffamily, align=left,
+        inner sep=5pt, minimum width=5.8cm
+    },
+    wslBox/.style={
+        rectangle, rounded corners=3pt,
+        draw=srsWarning, line width=0.9pt,
+        fill=srsWarning!10, text=srsDark,
+        font=\scriptsize\sffamily, align=center,
+        inner sep=5pt, minimum width=5.8cm
+    },
+    frameTitle/.style={
+        font=\normalsize\bfseries\sffamily, text=srsDark, anchor=north west
+    },
+    frameSubtitle/.style={
+        font=\scriptsize\sffamily, text=srsDark!80, anchor=north west
+    },
+    bridgeArrow/.style={
+        {Stealth[scale=1.0]}-{Stealth[scale=1.0]}, line width=1.1pt, draw=srsDark
+    },
+    pipeLabel/.style={
+        font=\tiny\bfseries\sffamily, text=srsDark, fill=white, inner sep=1.5pt
+    }
+]
+
+    % Inside Host: JVM Components
+    \node[compBox] (cHost1) at (-4.2, 1.8) {
+        \textbf{Midnight Compact Plugin (dev.verloren.midnight)}\\
+        Lexer $\cdot$ Pratt Parser $\cdot$ PSI Engine $\cdot$ Type System
+    };
+    \node[compBox] (cHost2) at (-4.2, 0.4) {
+        \textbf{Code Insight, Inspections \& Remix ToolWindow}\\
+        10 Semantic Checks $\cdot$ Quick-Fixes $\cdot$ Pragma Badge
+    };
+    \node[compBox] (cHost3) at (-4.2, -1.0) {
+        \textbf{Multi-Version Toolchain Manager}\\
+        SemVer Compatibility Engine $\cdot$ Process Runner
+    };
+
+    % Local File System Components
+    \node[fsBox] (cFs1) at (4.0, 2.7) {
+        \textbf{Project Directory (\texttt{.idea/midnight.xml})}\\
+        Target version settings, source contracts (\texttt{*.compact})
+    };
+    \node[fsBox] (cFs2) at (4.0, 1.3) {
+        \textbf{Isolated Toolchain Repository}\\
+        \texttt{\textasciitilde/.compact/versions/0.34.0/compact}\\
+        \texttt{\textasciitilde/.compact/versions/0.31.1/compact}
+    };
+
+    % WSL Components
+    \node[wslBox] (cWsl1) at (4.0, -1.7) {
+        \textbf{Linux Native Compact Compiler}\\
+        \texttt{/usr/bin/compact} or \texttt{\textasciitilde/.cargo/bin/compact}
+    };
+    \node[wslBox] (cWsl2) at (4.0, -2.9) {
+        \textbf{Cross-Execution IPC via \texttt{wsl.exe}}\\
+        Stdin/Stdout streaming $\cdot$ Path translation
+    };
+
+    % Background Frames
+    \begin{scope}[on background layer]
+        \node[nodeBox, fit=(cHost1) (cHost3), minimum width=7.4cm, minimum height=7.2cm] (frameHost) {};
+        \node[nodeBox, fit=(cFs1) (cFs2), minimum width=6.6cm, minimum height=3.2cm] (frameFs) {};
+        \node[nodeBox, fit=(cWsl1) (cWsl2), minimum width=6.6cm, minimum height=3.0cm] (frameWsl) {};
+    \end{scope}
+
+    % Titles on frames
+    \node[frameTitle] at (frameHost.north west) [xshift=10pt, yshift=-8pt] {Host Developer Workstation};
+    \node[frameSubtitle] at (frameHost.north west) [xshift=10pt, yshift=-22pt] {IntelliJ Platform (OpenJDK 25) on Win / macOS / Linux};
+
+    \node[frameTitle] at (frameFs.north west) [xshift=10pt, yshift=-8pt] {Local File System Storage};
+    \node[frameSubtitle] at (frameFs.north west) [xshift=10pt, yshift=-20pt] {Isolated user repository};
+
+    \node[frameTitle] at (frameWsl.north west) [xshift=10pt, yshift=-8pt] {WSL2 Linux Subsystem (Optional)};
+    \node[frameSubtitle] at (frameWsl.north west) [xshift=10pt, yshift=-20pt] {Ubuntu / Debian on Hyper-V MicroVM};
+
+    % Connecting Arrows
+    \draw[bridgeArrow] (frameHost.15) -- node[pipeLabel, above] {VFS / File I/O} (frameFs.195);
+    \draw[bridgeArrow] (frameHost.345) -- node[pipeLabel, below] {\texttt{wsl.exe} Process Bridge} (frameWsl.165);
+
+\end{tikzpicture}

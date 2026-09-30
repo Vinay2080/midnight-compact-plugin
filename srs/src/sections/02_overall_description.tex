@@ -1,0 +1,104 @@
+\section{Overall Description}
+\label{sec:overall_description}
+
+\subsection{Product Perspective}
+The \textbf{Midnight Compact Language Plugin} is an extension for the JetBrains IntelliJ Platform. Rather than running as a standalone IDE, it integrates directly into the host IDE's process space via the IntelliJ Platform Plugin SDK extension points.
+
+The system interacts directly with the host platform's subsystem components:
+\begin{itemize}
+    \item \textbf{Virtual File System (VFS)}: Observes file creation, modification, and deletion events for files with the \texttt{.compact} extension.
+    \item \textbf{PsiManager and Document Model}: Synchronizes text buffer modifications in real-time, building incremental AST representations via background read actions.
+    \item \textbf{Action System \& Keymap Manager}: Binds keyboard shortcuts for navigation (\texttt{Ctrl+B}), refactoring (\texttt{Shift+F6}), completion (\texttt{Ctrl+Space}), and parameter info (\texttt{Ctrl+P}).
+    \item \textbf{Tool Window Manager}: Registers the right-hand stripe ``Compact Compiler'' tool window.
+    \item \textbf{Status Bar Manager}: Renders the active toolchain version and quick-action popup.
+    \item \textbf{External OS Process Execution}: Spawns CLI compiler binaries on the host operating system or inside WSL2 Linux environments without blocking the Event Dispatch Thread (EDT).
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/use_case_diagram}
+    \caption{Comprehensive Use Case Diagram for the Midnight Compact Language Plugin.}
+    \label{fig:use_case_diagram}
+\end{figure}
+
+\subsection{Product Functions Summary}
+The plugin provides ten primary functional subsystems:
+\begin{enumerate}
+    \item \textbf{Lexical Analysis}: Handwritten deterministic finite automaton (DFA) lexer generating zero-allocation token streams.
+    \item \textbf{Syntactic Parsing}: Recursive-descent Pratt parser supporting all precedence levels and resilient error recovery.
+    \item \textbf{PSI AST Modeling}: Strongly typed Program Structure Interface (PSI) tree mirroring Compact language constructs.
+    \item \textbf{Scoped Symbol Resolution}: Multi-namespace symbol resolution resolving identifiers across local blocks, structs, contracts, and module imports.
+    \item \textbf{Static Type Inference Engine}: Type propagation, assignability checking, generic container evaluation, and nominal type matching.
+    \item \textbf{Code Insight \& Navigation}: Go to Declaration, Go to Type Declaration, Structure View, Inlay Parameter Hints, and Quick Documentation.
+    \item \textbf{Editor Services \& Refactoring}: Inplace Rename Refactoring with keyword collision guards, Find Usages, and canonical 2-space code formatting.
+    \item \textbf{Static Semantic Inspections}: Ten real-time static analysis inspections with automated one-click quick-fixes.
+    \item \textbf{Remix-Style Compiler Tool Window}: Embedded interactive compilation panel displaying contract metadata, dynamic SemVer pragma badges, and build execution.
+    \item \textbf{Multi-Version Toolchain Manager}: Isolated multi-version binary manager supporting automated background downloads and WSL2 bridging.
+\end{enumerate}
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/architecture_diagram}
+    \caption{Layered Architecture and Strict Downward Dependency Diagram.}
+    \label{fig:architecture_diagram}
+\end{figure}
+
+\subsection{User Classes and Characteristics}
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabularx}{\textwidth}{l p{3.2cm} p{4.2cm} p{3.2cm}}
+        \toprule
+        \textbf{User Persona} & \textbf{Role \& Context} & \textbf{Key Responsibilities} & \textbf{Skill / Experience Level} \\
+        \midrule
+        \textbf{Smart Contract Dev} & Writes commercial Midnight DApps. & Authoring business logic, ledger state, and witness functions. & Intermediate to advanced developer; familiar with Solidity/Rust. \\
+        \textbf{ZK Circuit Engineer} & Designs cryptographic zero-knowledge circuits. & Writing \texttt{circuit} and \texttt{pure} functions; optimizing constraint counts. & Expert cryptographer; strict requirement for constraint safety. \\
+        \textbf{Smart Contract Auditor} & Inspects code for vulnerabilities and disclosures. & Auditing ledger mutations, witness leaks, and access controls. & Security researcher; relies heavily on static inspections and structure view. \\
+        \textbf{Toolchain Administrator} & Manages CI/CD and compiler toolchains. & Configuring multi-version compiler environments across dev teams. & DevOps / Systems engineer; requires isolated, reproducible builds. \\
+        \bottomrule
+    \end{tabularx}
+    \caption{User Classes, Roles, and Characteristics.}
+    \label{tab:user_classes}
+\end{table}
+
+\subsection{Operating Environment}
+The system shall execute within the following runtime environments:
+\begin{itemize}
+    \item \textbf{Host Operating System}: Microsoft Windows 10/11 (x86\_64, ARM64), macOS 12.0+ (Apple Silicon M1/M2/M3/M4, Intel x86\_64), Linux (glibc 2.31+, x86\_64, aarch64).
+    \item \textbf{Java Runtime}: OpenJDK 25 / JetBrains Runtime (JBR) 25.
+    \item \textbf{Host IDE}: IntelliJ IDEA (Ultimate or Community) 2025.1 or newer.
+    \item \textbf{External Toolchains}: Midnight Compact compiler CLI versions \texttt{0.23.x} through \texttt{0.34.0} (language versions \texttt{0.20} through \texttt{0.26}).
+    \item \textbf{Virtualization Bridge}: Windows Subsystem for Linux (WSL2) with Ubuntu/Debian distribution.
+\end{itemize}
+
+\subsection{Design and Implementation Constraints}
+\label{sec:constraints}
+The architecture and implementation of the plugin are subject to non-negotiable architectural invariants:
+
+\begin{enumerate}
+    \item \textbf{[REQ-CON-001] Strict Downward Dependency Hierarchy}:
+    Dependencies between subsystems must flow strictly downward:
+    \begin{equation*}
+        \text{UI / Inspections / ToolWindow} \longrightarrow \text{Resolution} \longrightarrow \text{Type Engine} \longrightarrow \text{PSI / AST} \longrightarrow \text{Lexer / Parser}
+    \end{equation*}
+    No cyclic dependencies are permitted. PSI, type, or resolution classes shall never import UI, completion, or inspection classes.
+    
+    \item \textbf{[REQ-CON-002] The Rule of Generalization (Anti-Hardcoding Invariant)}:
+    Language features (such as struct literals, constructor inference, generic arguments, member completion) must apply uniformly to \textbf{all} user-defined and standard library types. The codebase shall strictly prohibit hardcoding standard library names (\texttt{"Either"}, \texttt{"Maybe"}, \texttt{"Vector"}) to trigger special-case compiler or completion logic.
+    
+    \item \textbf{[REQ-CON-003] Type System as Single Source of Truth}:
+    All type representations across the plugin must be concrete instances of \texttt{CompactType}. Passing around and string-splitting raw type signatures (e.g., \texttt{"Either<Field, Boolean>"}) via regex is strictly prohibited.
+    
+    \item \textbf{[REQ-CON-004] Code Size and Complexity Guardrails}:
+    To ensure maintainability, all production and test source files must not exceed 400 lines of code. Individual methods must not exceed 40 lines of code. Classes exceeding these thresholds must be decomposed into dedicated delegates.
+    
+    \item \textbf{[REQ-CON-005] Threading and Memory Lifecycle}:
+    No \texttt{PsiElement}, \texttt{PsiFile}, or \texttt{Project} instance shall ever be stored in static fields or global non-disposable caches. Read operations on PSI must execute within a \texttt{ReadAction} or background thread; write operations must execute on the EDT inside a \texttt{WriteCommandAction}.
+\end{enumerate}
+
+\subsection{Assumptions and Dependencies}
+\begin{itemize}
+    \item The host machine provides an active Internet connection if automatic compiler downloading is invoked.
+    \item The Compact compiler CLI emits diagnostics conforming to the standard GCC/Clang format or JSON output on \texttt{stderr}/\texttt{stdout}.
+    \item The user has file-system read and write permissions to the user home directory (\texttt{\textasciitilde/.compact/versions/}) for isolated toolchain management.
+\end{itemize}

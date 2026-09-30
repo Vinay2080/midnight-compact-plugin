@@ -2,10 +2,10 @@
 .SYNOPSIS
     Automated multi-gate verification runner for midnight-plugin.
 .DESCRIPTION
-    Runs compilation, plugin structure verification, and unit tests.
+    Runs compilation, static analysis (Checkstyle & ArchUnit), plugin verification, and unit tests.
     Outputs machine-readable JSON report at build/verification-report.json.
 .PARAMETER Quick
-    Runs compilation and structure verification, skipping test execution.
+    Runs compilation, static analysis, and plugin verification, skipping general unit tests.
 .PARAMETER AllTests
     Runs the complete test suite (./gradlew test).
 .PARAMETER TestPattern
@@ -21,7 +21,10 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
-$projectRoot = Split-Path -Parent $PSScriptRoot
+$projectRoot = if ($PSScriptRoot) { Split-Path -Parent $PSScriptRoot } else { (Get-Location).Path }
+if (-not (Test-Path (Join-Path $projectRoot "build.gradle.kts"))) {
+    $projectRoot = (Get-Location).Path
+}
 Set-Location $projectRoot
 
 # Cross-platform Gradle wrapper detection
@@ -34,6 +37,7 @@ $report = @{
     gates = @{
         git_boundary = @{ passed = $false; detail = "" }
         compilation = @{ passed = $false; detail = "" }
+        static_analysis = @{ passed = $false; detail = "" }
         plugin_structure = @{ passed = $false; detail = "" }
         tests = @{ passed = $false; detail = ""; test_target = "" }
     }
@@ -81,28 +85,47 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # ----------------------------------------------------
-# Gate 2: IntelliJ Plugin Structure Verification
+# Gate 1b: Static Analysis & Code Style (Checkstyle)
 # ----------------------------------------------------
 if ($report.gates.compilation.passed) {
-    Write-Host "`n[Gate 2] Verifying Plugin Structure..." -ForegroundColor Yellow
-    $structOutput = & $gradleCmd verifyPluginStructure --console=plain 2>&1
+    Write-Host "`n[Gate 1b] Verifying Static Analysis & Code Style..." -ForegroundColor Yellow
+    $checkstyleOutput = & $gradleCmd checkstyleMain checkstyleTest --console=plain 2>&1
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "  Plugin Structure: SUCCESS" -ForegroundColor Green
-        $report.gates.plugin_structure.passed = $true
-        $report.gates.plugin_structure.detail = "Plugin XML and structure validated"
+        Write-Host "  Static Analysis: SUCCESS" -ForegroundColor Green
+        $report.gates.static_analysis.passed = $true
+        $report.gates.static_analysis.detail = "Checkstyle rules verified"
     } else {
-        Write-Host "  Plugin Structure: FAILED" -ForegroundColor Red
+        Write-Host "  Static Analysis: FAILED" -ForegroundColor Red
+        $report.gates.static_analysis.detail = ($checkstyleOutput | Out-String)
+        Write-Host ($checkstyleOutput | Select-Object -Last 15 | Out-String)
+    }
+} else {
+    Write-Host "`n[Gate 1b] Skipped due to compilation failure." -ForegroundColor Gray
+}
+
+# ----------------------------------------------------
+# Gate 2: IntelliJ Plugin Verification
+# ----------------------------------------------------
+if ($report.gates.compilation.passed -and $report.gates.static_analysis.passed) {
+    Write-Host "`n[Gate 2] Verifying Plugin Specification & Compatibility..." -ForegroundColor Yellow
+    $structOutput = & $gradleCmd verifyPluginProjectConfiguration verifyPluginStructure --console=plain 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "  Plugin Verification: SUCCESS" -ForegroundColor Green
+        $report.gates.plugin_structure.passed = $true
+        $report.gates.plugin_structure.detail = "Plugin XML, project configuration, and structure validated"
+    } else {
+        Write-Host "  Plugin Verification: FAILED" -ForegroundColor Red
         $report.gates.plugin_structure.detail = ($structOutput | Out-String)
         Write-Host ($structOutput | Select-Object -Last 15 | Out-String)
     }
 } else {
-    Write-Host "`n[Gate 2] Skipped due to compilation failure." -ForegroundColor Gray
+    Write-Host "`n[Gate 2] Skipped due to previous gate failure." -ForegroundColor Gray
 }
 
 # ----------------------------------------------------
 # Gate 3: Unit / Integration Tests
 # ----------------------------------------------------
-if ($report.gates.compilation.passed -and -not $Quick) {
+if ($report.gates.compilation.passed -and $report.gates.static_analysis.passed -and -not $Quick) {
     Write-Host "`n[Gate 3] Running Automated Tests..." -ForegroundColor Yellow
     $gradleArgs = @("test", "--console=plain")
     
@@ -115,14 +138,19 @@ if ($report.gates.compilation.passed -and -not $Quick) {
         Write-Host "  Running targeted test: $TestPattern" -ForegroundColor Cyan
         $report.gates.tests.test_target = $TestPattern
     } else {
-        Write-Host "  Running quick unit smoke test (CompactBundleTest)..." -ForegroundColor Cyan
+        Write-Host "  Running architecture & unit smoke tests..." -ForegroundColor Cyan
+        $gradleArgs += "--tests"
+        $gradleArgs += "dev.verloren.midnight.architecture.CompactArchitectureTest"
         $gradleArgs += "--tests"
         $gradleArgs += "dev.verloren.midnight.CompactBundleTest"
-        $report.gates.tests.test_target = "CompactBundleTest"
+        $report.gates.tests.test_target = "Architecture & Smoke"
     }
 
     $testOutput = & $gradleCmd @gradleArgs 2>&1
     if ($LASTEXITCODE -eq 0) {
+        if ($AllTests) {
+            & $gradleCmd jacocoTestReport --console=plain 2>&1 | Out-Null
+        }
         Write-Host "  Tests: SUCCESS" -ForegroundColor Green
         $report.gates.tests.passed = $true
         $report.gates.tests.detail = "All requested tests passed with 0 failures"
@@ -143,6 +171,7 @@ if ($report.gates.compilation.passed -and -not $Quick) {
 # ----------------------------------------------------
 $allPassed = $report.gates.git_boundary.passed -and 
              $report.gates.compilation.passed -and 
+             $report.gates.static_analysis.passed -and 
              $report.gates.plugin_structure.passed -and 
              $report.gates.tests.passed
 
@@ -160,8 +189,8 @@ if ($allPassed) {
 
 $buildDir = Join-Path $projectRoot "build"
 if (-not (Test-Path $buildDir)) { New-Item -ItemType Directory -Path $buildDir | Out-Null }
-$reportPath = Join-Path $buildDir "verification-report.json"
-$report | ConvertTo-Json -Depth 5 | Set-Content -Path $reportPath -Encoding UTF8
+$reportPath = Join-Path $projectRoot "build\verification-report.json"
+$report | ConvertTo-Json -Depth 5 | Out-File -FilePath $reportPath -Encoding utf8 -Force
 Write-Host "Report saved to: $reportPath`n" -ForegroundColor Gray
 
 if (-not $allPassed) { exit 1 }

@@ -24,6 +24,10 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
         PsiElement resolved = ref.resolve();
         if (resolved instanceof CompactTypeElement typeElement) {
           return typeElement.getType();
+        } else if (resolved instanceof CompactNamedElement named) {
+          return named.getType();
+        } else if (resolved instanceof CompactExpression expr) {
+          return expr.getType();
         }
       }
       return CompactPrimitiveType.UNKNOWN;

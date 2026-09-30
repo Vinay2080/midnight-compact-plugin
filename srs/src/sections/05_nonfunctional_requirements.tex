@@ -1,0 +1,77 @@
+\section{Non-Functional Requirements (System Qualities)}
+\label{sec:nonfunctional}
+
+This section specifies the quantifiable quality attributes and system constraints that govern the performance, reliability, security, maintainability, and portability of the plugin.
+
+\subsection{Performance Requirements}
+\label{sec:perf_requirements}
+
+\begin{enumerate}
+    \item \textbf{[REQ-NFR-PERF-001] Lexical Throughput}:
+    The lexical analysis subsystem \textbf{SHALL} process source text at a rate exceeding $500{,}000$ characters per second on standard developer hardware (Intel Core i7 / Apple M1 or equivalent). Tokenizing a $1{,}000$-line Compact file must complete in $\le 10\text{ ms}$.
+    
+    \item \textbf{[REQ-NFR-PERF-002] Syntactic Parsing Latency}:
+    The Pratt parser \textbf{SHALL} parse and construct the complete AST for a $1{,}000$-line Compact contract within $\le 30\text{ ms}$ on a background read action.
+    
+    \item \textbf{[REQ-NFR-PERF-003] Code Completion Responsiveness}:
+    The completion contributor \textbf{SHALL} compute and return all relevant symbol variants to the IDE lookup list within $\le 50\text{ ms}$ of invocation under a project containing up to 100 source files.
+    
+    \item \textbf{[REQ-NFR-PERF-004] Zero Event Dispatch Thread (EDT) Lockup}:
+    Under no circumstances \textbf{SHALL} the plugin execute blocking operations (file I/O, network requests, CLI process execution, or deep recursive AST searches) on the Event Dispatch Thread (EDT). Any EDT execution block exceeding $100\text{ ms}$ represents a critical violation of system requirements.
+    
+    \item \textbf{[REQ-NFR-PERF-005] Status Bar Non-Blocking Execution}:
+    The \texttt{CompactStatusBarWidget} \textbf{SHALL} resolve its presentable version text and icon state strictly from in-memory cache in $O(1)$ time, guaranteeing $\le 1\text{ ms}$ processing time during IDE UI repaint loops.
+\end{enumerate}
+
+\subsection{Reliability and Fault Tolerance}
+\label{sec:reliability}
+
+\begin{enumerate}
+    \item \textbf{[REQ-NFR-REL-001] Resilient AST Error Recovery}:
+    The parser \textbf{SHALL NOT} abort or crash when encountering malformed or incomplete Compact code (e.g. unclosed braces, missing semicolons, partial expressions). It must insert \texttt{PsiErrorElement} nodes and recover parsing at the nearest statement boundary.
+    
+    \item \textbf{[REQ-NFR-REL-002] Missing Toolchain Resilience}:
+    If an external compiler binary is missing, non-executable, or terminated abruptly, the plugin \textbf{SHALL NOT} throw unhandled runtime exceptions. It must capture the failure, display an actionable balloon notification with a ``Download More...'' action, and gracefully reset compiler state.
+    
+    \item \textbf{[REQ-NFR-REL-003] Process Canceled Exception (PCE) Propagation}:
+    All background read actions and inspections \textbf{SHALL} properly catch and re-throw \texttt{ProcessCanceledException} to allow IntelliJ's background threading manager to cancel obsolete computations when the user types new characters.
+\end{enumerate}
+
+\subsection{Security and Sandbox Isolation}
+\label{sec:security}
+
+\begin{enumerate}
+    \item \textbf{[REQ-NFR-SEC-001] Path Traversal Prevention}:
+    When resolving module imports (\texttt{import "./path"}), the system \textbf{SHALL} sanitize input paths against directory traversal attacks (\texttt{../../}) that attempt to escape project directory roots.
+    
+    \item \textbf{[REQ-NFR-SEC-002] Isolated Compiler Directory Permissions}:
+    Downloaded compiler toolchains must be stored in the user-isolated directory \texttt{\textasciitilde/.compact/versions/<version>/} with standard user execution permissions, preventing multi-user privilege escalation.
+    
+    \item \textbf{[REQ-NFR-SEC-003] Command Injection Prevention}:
+    CLI arguments passed to \texttt{compact} or \texttt{wsl.exe} \textbf{SHALL} be passed as structured arrays of strings via IntelliJ's \texttt{GeneralCommandLine} API rather than interpolated shell strings, completely preventing command injection vulnerabilities.
+\end{enumerate}
+
+\subsection{Maintainability and Extensibility}
+\label{sec:maintainability}
+
+\begin{enumerate}
+    \item \textbf{[REQ-NFR-MNT-001] Structural Layering Invariant}:
+    The codebase \textbf{SHALL} maintain the strict downward dependency hierarchy verified by automated architectural linting. Cyclic package imports are strictly prohibited.
+    
+    \item \textbf{[REQ-NFR-MNT-002] Code Size Guardrails}:
+    Every production Java source file \textbf{SHALL NOT} exceed 400 lines of code. Individual methods \textbf{SHALL NOT} exceed 40 lines. Classes violating these bounds must be decomposed into dedicated strategy providers or delegates.
+    
+    \item \textbf{[REQ-NFR-MNT-003] Mandatory Mirror Testing Invariant}:
+    Any test verifying standard library constructs must have an identical companion mirror test verifying user-defined constructs, guaranteeing that the anti-hardcoding generalization invariant remains unviolated across releases.
+\end{enumerate}
+
+\subsection{Portability and Compatibility}
+\label{sec:portability}
+
+\begin{enumerate}
+    \item \textbf{[REQ-NFR-PRT-001] Cross-Platform Uniformity}:
+    All IDE features (completion, highlighting, refactoring, tool window, inspections) \textbf{SHALL} behave identically across Windows, macOS, and Linux without platform-dependent discrepancies.
+    
+    \item \textbf{[REQ-NFR-PRT-002] Multi-Version Compiler Compatibility}:
+    The plugin \textbf{SHALL} maintain backward compatibility with Compact toolchain versions ranging from \texttt{v0.31.1} to \texttt{v0.34.0} and Compact language specifications \texttt{0.20} through \texttt{0.26}.
+\end{enumerate}

@@ -1,0 +1,63 @@
+% Compilation & Diagnostic Pipeline Sequence Diagram
+\begin{tikzpicture}[
+    scale=0.9, every node/.style={transform shape},
+    lifeline/.style={
+        draw=srsDark!60, dashed, line width=0.8pt
+    },
+    headerBox/.style={
+        rectangle, rounded corners=4pt,
+        draw=srsDark, line width=1pt,
+        fill=srsLight, text=srsDark,
+        font=\scriptsize\bfseries\sffamily,
+        align=center, inner sep=4pt,
+        minimum width=2.3cm, minimum height=0.8cm
+    },
+    syncMsg/.style={
+        -{Stealth[scale=0.9]}, line width=0.9pt, draw=srsDark
+    },
+    retMsg/.style={
+        -{Stealth[scale=0.9]}, dashed, line width=0.8pt, draw=srsDark!70
+    },
+    msgLabel/.style={
+        font=\tiny\sffamily, text=srsDark, fill=white, inner sep=1.5pt
+    },
+    actBox/.style={
+        rectangle, fill=srsSecondary!20, draw=srsSecondary, line width=0.8pt
+    }
+]
+
+    % Lifeline Headers
+    \node[headerBox] (hUser) at (0, 7.5) {Developer};
+    \node[headerBox] (hWin) at (2.8, 7.5) {Compiler\\ToolWindow};
+    \node[headerBox] (hMgr) at (5.6, 7.5) {Toolchain\\Manager};
+    \node[headerBox] (hProc) at (8.4, 7.5) {OS Process\\(compact CLI)};
+    \node[headerBox] (hDiag) at (11.2, 7.5) {Diagnostic Parser\\\& Editor Gutter};
+
+    % Lifeline dashed paths
+    \draw[lifeline] (hUser.south) -- (0, -0.5);
+    \draw[lifeline] (hWin.south) -- (2.8, -0.5);
+    \draw[lifeline] (hMgr.south) -- (5.6, -0.5);
+    \draw[lifeline] (hProc.south) -- (8.4, -0.5);
+    \draw[lifeline] (hDiag.south) -- (11.2, -0.5);
+
+    % Activations
+    \draw[actBox] (2.7, 6.4) rectangle (2.9, 0.4);
+    \draw[actBox] (5.5, 5.6) rectangle (5.7, 2.0);
+    \draw[actBox] (8.3, 4.8) rectangle (8.5, 3.0);
+    \draw[actBox] (11.1, 2.4) rectangle (11.3, 0.8);
+
+    % Messages
+    \draw[syncMsg] (0, 6.4) -- node[msgLabel, above] {1: Click "Compile Current Contract"} (2.7, 6.4);
+
+    \draw[syncMsg] (2.9, 5.6) -- node[msgLabel, above] {2: executeBuild(activeFile, targetVer)} (5.5, 5.6);
+    \draw[syncMsg] (5.7, 4.8) -- node[msgLabel, above] {3: spawnProcess("compact compile <file>")} (8.3, 4.8);
+
+    \node[msgLabel, right, font=\tiny\itshape] at (8.5, 3.8) {Compiles ZK circuits \& ledger};
+
+    \draw[retMsg] (8.3, 3.0) -- node[msgLabel, below] {4: exitCode, stdout, stderr (JSON/text)} (5.7, 3.0);
+    \draw[syncMsg] (5.7, 2.4) -- node[msgLabel, above] {5: parseDiagnostics(stderr)} (11.1, 2.4);
+
+    \draw[retMsg] (11.1, 1.2) -- node[msgLabel, below] {6: Annotate errors at line/column} (2.9, 1.2);
+    \draw[retMsg] (2.7, 0.4) -- node[msgLabel, above] {7: Update Console \& Build Status Badge} (0, 0.4);
+
+\end{tikzpicture}

@@ -1,0 +1,79 @@
+\section{External Interface Requirements}
+\label{sec:external_interfaces}
+
+\subsection{User Interfaces}
+\label{sec:user_interfaces}
+
+The Midnight Compact Plugin integrates into the IntelliJ IDEA graphical user interface through multiple dedicated entry points:
+
+\begin{figure}[htbp]
+    \centering
+    \input{diagrams/deployment_diagram}
+    \caption{Deployment and Physical Runtime Topology Diagram.}
+    \label{fig:deployment_diagram}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{[REQ-INT-UI-001] Editor Syntax Highlighting}:
+    The plugin \textbf{SHALL} register a \texttt{CompactSyntaxHighlighter} that maps lexer tokens to configurable color schemes under \textit{Settings $\to$ Editor $\to$ Color Scheme $\to$ Compact}. Keywords, built-in types, circuits, witnesses, ledger state, and strings shall have distinct default coloring attributes.
+    
+    \item \textbf{[REQ-INT-UI-002] Gutter Line Markers}:
+    The plugin \textbf{SHALL} render gutter line markers alongside:
+    \begin{itemize}
+        \item Contract declarations implementing an interface, providing 1-click navigation to the interface definition.
+        \item Circuit declarations providing run/compile action icons to build the specific circuit target.
+    \end{itemize}
+    
+    \item \textbf{[REQ-INT-UI-003] Declarative Inlay Parameter Hints}:
+    The plugin \textbf{SHALL} display inline grayed parameter name hints at call sites for circuit invocations and struct constructor initializers when arguments are positional literals.
+    
+    \item \textbf{[REQ-INT-UI-004] Remix-Style Compiler Tool Window}:
+    The plugin \textbf{SHALL} provide an interactive Swing tool window on the right IDE tool stripe containing:
+    \begin{itemize}
+        \item Contract name and active document selector.
+        \item Compiler version dropdown selector.
+        \item Color-coded SemVer compatibility badge.
+        \item ``Compile Current Contract'' action button.
+        \item Embedded build console displaying compiler output and diagnostic errors.
+    \end{itemize}
+    
+    \item \textbf{[REQ-INT-UI-005] Status Bar Monitor Widget}:
+    The plugin \textbf{SHALL} place a non-intrusive status bar widget on the bottom right tray displaying the active compiler version and popping up an interactive switcher list upon click.
+\end{enumerate}
+
+\subsection{Hardware Interfaces}
+\begin{itemize}
+    \item \textbf{[REQ-INT-HW-001] Processor Support}: The plugin \textbf{SHALL} execute seamlessly on x86\_64 and ARM64 (Apple Silicon M-series, Linux aarch64) processor architectures.
+    \item \textbf{[REQ-INT-HW-002] Memory Budget}: The plugin's resident heap consumption \textbf{SHALL NOT} exceed 512 MB under standard project load (100 files, 50,000 lines of Compact code).
+\end{itemize}
+
+\subsection{Software Interfaces}
+\begin{itemize}
+    \item \textbf{[REQ-INT-SW-001] IntelliJ Platform SDK 2025.1+}:
+    The plugin integrates with the following IntelliJ platform services:
+    \begin{itemize}
+        \item \texttt{com.intellij.lang.Language}: Registers \texttt{CompactLanguage.INSTANCE}.
+        \item \texttt{com.intellij.psi.PsiParser}: Implemented by \texttt{CompactParser}.
+        \item \texttt{com.intellij.codeInsight.completion.CompletionContributor}: Implemented by \texttt{CompactCompletionContributor}.
+        \item \texttt{com.intellij.codeInspection.LocalInspectionTool}: Base class for the 10 static semantic inspections.
+        \item \texttt{com.intellij.openapi.wm.StatusBarWidgetFactory}: Instantiates \texttt{CompactStatusBarWidget}.
+    \end{itemize}
+    
+    \item \textbf{[REQ-INT-SW-002] Compact Compiler Command-Line Interface (CLI)}:
+    The plugin spawns the external compiler binary using \texttt{GeneralCommandLine} with arguments:
+    \begin{equation*}
+        \texttt{compact compile <filePath> --output-dir <buildDir>}
+    \end{equation*}
+    The process streams \texttt{stdout} and \texttt{stderr} asynchronously to avoid freezing the IDE.
+    
+    \item \textbf{[REQ-INT-SW-003] WSL2 Linux Process Bridge}:
+    On Windows systems with WSL enabled, the plugin interfaces with \texttt{wsl.exe -e compact compile <wslPath>}, utilizing \texttt{WslPath} utilities to convert between Windows and Linux path conventions.
+\end{itemize}
+
+\subsection{Communications Interfaces}
+\begin{itemize}
+    \item \textbf{[REQ-INT-COM-001] HTTPS Binary Downloader}:
+    The automated version manager downloads compiler binaries over TLS 1.3/HTTPS from official GitHub release assets or AWS S3 release distributions.
+    \item \textbf{[REQ-INT-COM-002] Process Pipe Communications}:
+    The plugin communicates with spawned compiler CLI instances via standard OS inter-process pipes (\texttt{stdin}, \texttt{stdout}, \texttt{stderr}) encoded in UTF-8.
+\end{itemize}

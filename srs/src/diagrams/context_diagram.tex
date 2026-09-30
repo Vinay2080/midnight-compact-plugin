@@ -1,0 +1,98 @@
+% System Context Diagram (C4 Level 1)
+\begin{tikzpicture}[
+    scale=0.95, every node/.style={transform shape},
+    actorNode/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsDark, line width=1.2pt,
+        fill=srsLight!80, text=srsDark,
+        align=center, font=\small\sffamily,
+        inner sep=8pt, minimum width=3.2cm, minimum height=1.4cm,
+        drop shadow={opacity=0.2, shadow xshift=1.5pt, shadow yshift=-1.5pt}
+    },
+    systemNode/.style={
+        rectangle, rounded corners=8pt,
+        draw=srsPrimary, line width=1.8pt,
+        fill=srsPrimary!12, text=srsDark,
+        align=center, font=\normalsize\bfseries\sffamily,
+        inner sep=12pt, minimum width=5.8cm, minimum height=3.2cm,
+        drop shadow={opacity=0.25, shadow xshift=2pt, shadow yshift=-2pt}
+    },
+    externalNode/.style={
+        rectangle, rounded corners=6pt,
+        draw=srsAccent, line width=1.2pt,
+        fill=srsAccent!10, text=srsDark,
+        align=center, font=\small\sffamily,
+        inner sep=8pt, minimum width=3.2cm, minimum height=1.4cm,
+        drop shadow={opacity=0.2, shadow xshift=1.5pt, shadow yshift=-1.5pt}
+    },
+    flowArrow/.style={
+        -{Stealth[scale=1.1]}, line width=1.2pt, draw=srsDark
+    },
+    biFlowArrow/.style={
+        {Stealth[scale=1.1]}-{Stealth[scale=1.1]}, line width=1.2pt, draw=srsDark
+    },
+    labelNode/.style={
+        font=\scriptsize\sffamily, text=srsDark!85, fill=white, inner sep=2pt, rounded corners=2pt
+    }
+]
+
+    % Central System
+    \node[systemNode] (plugin) at (0, 0) {
+        \textbf{Midnight Compact Plugin}\\
+        \vspace{4pt}
+        \footnotesize\textmd{dev.verloren.midnight}\\
+        \scriptsize\textnormal{IntelliJ Platform Language Extension}
+    };
+
+    % Left: Human Actors
+    \node[actorNode] (dev) at (-6.2, 1.8) {
+        \textbf{Smart Contract Dev}\\
+        \scriptsize Authors .compact files,\\
+        \scriptsize triggers refactorings \& builds
+    };
+
+    \node[actorNode] (auditor) at (-6.2, -1.8) {
+        \textbf{ZK Security Auditor}\\
+        \scriptsize Inspects circuits, sealed state,\\
+        \scriptsize and witness disclosure flows
+    };
+
+    % Top: IDE Platform
+    \node[externalNode] (idea) at (0, 4.0) {
+        \textbf{JetBrains IntelliJ Platform}\\
+        \scriptsize Editor, PSI Infrastructure, Indexing,\\
+        \scriptsize Tool Windows, Gutter \& Annotations
+    };
+
+    % Right: External Compilers & Toolchains
+    \node[externalNode] (cli) at (6.2, 1.8) {
+        \textbf{Compact Toolchains}\\
+        \scriptsize \texttt{\textasciitilde/.compact/versions/<ver>/compact}\\
+        \scriptsize Isolated binaries (v0.31.1--0.34.0)
+    };
+
+    \node[externalNode] (wsl) at (6.2, -1.8) {
+        \textbf{WSL2 / Linux Bridge}\\
+        \scriptsize \texttt{/usr/bin/compact}\\
+        \scriptsize Linux subsystem cross-execution
+    };
+
+    % Bottom: Midnight Network Ecosystem
+    \node[externalNode] (midnight) at (0, -4.0) {
+        \textbf{Midnight Blockchain Ecosystem}\\
+        \scriptsize ZK-SNARK Verifier, Ledger Node,\\
+        \scriptsize Proof Generation Tooling
+    };
+
+    % Connectors & Interactions
+    \draw[flowArrow] (dev) -- node[labelNode, above, sloped] {Edits code / Ctrl+Space} (plugin.150);
+    \draw[flowArrow] (auditor) -- node[labelNode, below, sloped] {Reviews ZK inspections} (plugin.210);
+
+    \draw[biFlowArrow] (idea) -- node[labelNode, right] {PSI Events / Action System} (plugin);
+
+    \draw[biFlowArrow] (plugin.30) -- node[labelNode, above, sloped] {CLI Invocation / Output} (cli);
+    \draw[biFlowArrow] (plugin.330) -- node[labelNode, below, sloped] {WSL Process Execution} (wsl);
+
+    \draw[flowArrow] (plugin) -- node[labelNode, right] {Compiled Artifacts / Proof Specs} (midnight);
+
+\end{tikzpicture}
