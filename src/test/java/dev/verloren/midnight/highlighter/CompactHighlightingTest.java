@@ -64,7 +64,7 @@ public class CompactHighlightingTest extends BasePlatformTestCase {
     assertHasHighlight(highlights, "id", CompactHighlighterColors.PARAMETER_DECLARATION);
     assertHasHighlight(highlights, "localLimit", CompactHighlighterColors.LOCAL_VARIABLE_DECLARATION);
     assertHasHighlight(highlights, "language_version", CompactHighlighterColors.PRAGMA);
-    assertHasHighlight(highlights, "20.0", CompactHighlighterColors.VERSION);
+    assertHasHighlight(highlights, "0.20.0", CompactHighlighterColors.VERSION);
   }
 
   public void testTypesAndGenericsDeclarationHighlighting() {
