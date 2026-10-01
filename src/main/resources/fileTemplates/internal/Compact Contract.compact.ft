@@ -11,12 +11,3 @@ pragma language_version >= 0.26.0;
 
 import CompactStandardLibrary;
 
-export ledger counter: Counter;
-
-constructor() {
-  counter.increment(1);
-}
-
-export circuit increment(): [] {
-  counter.increment(1);
-}

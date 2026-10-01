@@ -9,13 +9,8 @@ pragma language_version >= ${LANGUAGE_VERSION};
 pragma language_version >= 0.26.0;
 #end
 
-export module ${NAME} {
-  export struct Config {
-    enabled: Boolean,
-    threshold: Uint<32>
-  }
+import CompactStandardLibrary;
 
-  export pure circuit isValid(threshold: Uint<32>, value: Uint<32>): Boolean {
-    return value >= threshold;
-  }
+export module ${NAME} {
+  
 }

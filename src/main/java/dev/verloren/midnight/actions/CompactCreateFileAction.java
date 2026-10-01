@@ -16,12 +16,10 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.CompactBundle;
 import dev.verloren.midnight.icons.MidnightIcons;
 import dev.verloren.midnight.ide.fileTemplates.CompactDefaultTemplatePropertiesProvider;
 import dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory;
-import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.refactoring.CompactNamesValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,11 +200,29 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
 
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null && editor.getDocument() == createdElement.getViewProvider().getDocument()) {
-      CompactNamedElement named = PsiTreeUtil.findChildOfType(createdElement, CompactNamedElement.class);
-      if (named != null && named.getNameIdentifier() != null) {
-        editor.getCaretModel().moveToOffset(named.getNameIdentifier().getTextRange().getEndOffset());
+      int targetOffset = determineInitialCaretOffset(createdElement);
+      if (targetOffset >= 0 && targetOffset <= editor.getDocument().getTextLength()) {
+        editor.getCaretModel().moveToOffset(targetOffset);
       }
     }
+  }
+
+  public static int determineInitialCaretOffset(@NotNull PsiFile file) {
+    String text = file.getText();
+    int lbrace = text.indexOf('{');
+    int rbrace = text.lastIndexOf('}');
+    if (lbrace != -1 && rbrace > lbrace) {
+      int nextLine = text.indexOf('\n', lbrace);
+      if (nextLine != -1 && nextLine < rbrace) {
+        int afterIndent = nextLine + 1;
+        while (afterIndent < rbrace && (text.charAt(afterIndent) == ' ' || text.charAt(afterIndent) == '\t')) {
+          afterIndent++;
+        }
+        return afterIndent;
+      }
+      return lbrace + 1;
+    }
+    return text.length();
   }
 
   public static @NotNull String stripCompactExtension(@NotNull String name) {

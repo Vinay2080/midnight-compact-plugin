@@ -66,4 +66,39 @@ public class CompactCreateFileActionTest extends BasePlatformTestCase {
     assertEquals(new CompactCreateFileAction(), action);
     assertEquals(new CompactCreateFileAction().hashCode(), action.hashCode());
   }
+
+  public void testDetermineInitialCaretOffsetInModule() {
+    PsiFile moduleFile = myFixture.configureByText(
+        "Module.compact",
+        "pragma language_version >= 0.26.0;\n\nimport CompactStandardLibrary;\n\nexport module Foo {\n  \n}\n"
+    );
+    int offset = CompactCreateFileAction.determineInitialCaretOffset(moduleFile);
+    String text = moduleFile.getText();
+    int lbrace = text.indexOf('{');
+    int rbrace = text.indexOf('}');
+    assertTrue("Caret offset must be after opening brace", offset > lbrace);
+    assertTrue("Caret offset must be before closing brace", offset < rbrace);
+  }
+
+  public void testDetermineInitialCaretOffsetInInterface() {
+    PsiFile ifaceFile = myFixture.configureByText(
+        "Interface.compact",
+        "pragma language_version >= 0.26.0;\n\nimport CompactStandardLibrary;\n\ncontract Foo {\n  \n}\n"
+    );
+    int offset = CompactCreateFileAction.determineInitialCaretOffset(ifaceFile);
+    String text = ifaceFile.getText();
+    int lbrace = text.indexOf('{');
+    int rbrace = text.indexOf('}');
+    assertTrue("Caret offset must be after opening brace", offset > lbrace);
+    assertTrue("Caret offset must be before closing brace", offset < rbrace);
+  }
+
+  public void testDetermineInitialCaretOffsetInTopLevelFile() {
+    PsiFile file = myFixture.configureByText(
+        "Contract.compact",
+        "pragma language_version >= 0.26.0;\n\nimport CompactStandardLibrary;\n\n"
+    );
+    int offset = CompactCreateFileAction.determineInitialCaretOffset(file);
+    assertEquals("Caret offset for top-level file should be at end of file", file.getText().length(), offset);
+  }
 }

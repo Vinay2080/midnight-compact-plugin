@@ -54,15 +54,8 @@ public class CompactFileTemplateTest extends BasePlatformTestCase {
 
     PsiFile file = myFixture.configureByText("MyContract.compact", text);
     assertFalse("Contract template produced PSI parse errors: " + getErrors(file), hasErrorElement(file));
-
-    CompactLedgerDeclaration ledger = PsiTreeUtil.findChildOfType(file, CompactLedgerDeclaration.class);
-    assertNotNull("Contract template should declare ledger state", ledger);
-
-    CompactConstructorDeclaration constructor = PsiTreeUtil.findChildOfType(file, CompactConstructorDeclaration.class);
-    assertNotNull("Contract template should declare constructor", constructor);
-
-    CompactCircuitDefinition circuit = PsiTreeUtil.findChildOfType(file, CompactCircuitDefinition.class);
-    assertNotNull("Contract template should declare circuit", circuit);
+    assertTrue("Contract template text should import CompactStandardLibrary",
+        text.contains("import CompactStandardLibrary;"));
 
     myFixture.enableInspections(
         dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection.class,
