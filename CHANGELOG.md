@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed an issue where typing an invalid or unrecognized character (such as `@`, `~`, or backticks) in the editor would accidentally consume and corrupt the following token.
+
 ## [1.4.0] - 2026-09-29
 
 ### Added
