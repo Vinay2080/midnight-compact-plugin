@@ -144,10 +144,24 @@ Evaluate the target and any newly authored AI code across the following 10 dimen
 
 ---
 
-## 5. Phase 3: Improvement Principles
+## 5. Phase 3: Improvement Principles & False-Positive Filters
 
-Adhere to these rules when proposing or making modifications:
+Adhere to these rules when evaluating, proposing, or making modifications:
 
+### 5.1 Pragmatic Triage & False-Positive Filters (Anti-Churn Guardrails)
+1. **The Tripwire Rule (No Preemptive Decompositions)**: If a file is <= 400 lines (even 380–395 lines) and methods are <= 40 lines, do **NOT** recommend or execute preemptive decomposition. The limits are hard ceiling tripwires, not sliding targets. Decompose only when an actual requirement or patch causes a concrete breach.
+2. **The Hot-Path Rule for Performance**: Do not flag minor string allocations or trivial iterations in non-hot paths (e.g., UI dialogs, one-off file creation actions, settings panels). Reserve performance, allocation, and algorithmic findings strictly for hot paths (lexer loops, resolve traversals, annotators, completion contributors, background indexing).
+3. **The Blast Radius & Rule of Three**: If logic is only used in one component, keep it cohesive in that component. Do not extract standalone classes, delegates, or interfaces without at least two real consumers. Leaf components (Actions, Inspections) with no downstream consumers have a blast radius of zero; do not over-abstract them.
+4. **The Zero-Risk Test First Rule**: Missing test coverage is a high-value, zero-risk improvement. Strongly prioritize adding unit/regression tests over churning working production code.
+
+### 5.2 Four-Tier Actionability Classification
+Every finding must be assigned one of four explicit action tiers:
+* **Tier 1 (Mandatory Fix / `[APPLY]`)**: Actual bugs, unhandled exceptions/cancellations (`ProcessCanceledException`), memory leaks on static fields, threading deadlocks, or confirmed invariant/limit breaches.
+* **Tier 2 (Test Coverage Gap / `[ADD TEST]`)**: Production code works, but edge cases, keywords, or error paths lack test assertions. Add tests without modifying working code.
+* **Tier 3 (Platform Polish / `[PIGGYBACK]`)**: Minor SDK enhancements (e.g., passing command names to `WriteCommandAction`). Apply *only* if already editing that exact method for a Tier-1 reason.
+* **Tier 4 (Theoretical / Premature / `[IGNORE]`)**: Speculative abstractions, cosmetic refactorings, or micro-optimizations outside hot paths. **Do not execute or recommend code changes for Tier 4.**
+
+### 5.3 Core Engineering Rules
 1. **Simplicity First**: Prefer clean, readable, straightforward code over clever abstractions.
 2. **Never Break Working Code Without Rationale**: Preserve established behavior, contracts, and conventions unless fixing a confirmed defect.
 3. **Surgical Refactoring**: Make targeted, minimal-diff improvements rather than broad, disruptive rewrites.
@@ -161,6 +175,7 @@ Adhere to these rules when proposing or making modifications:
 ### Step 1: Executive Summary
 * A concise assessment of the current code quality, architectural compliance, and critical findings.
 * High-level verdict: **[READY / REQUIRES MODIFICATION / CRITICAL BLOCKED]**.
+  * *Note*: If all existing and new tests pass and there are no Tier-1 defects or invariant breaches, emit **READY**. Do not force modifications for Tier-3 or Tier-4 items.
 
 ### Step 2: Dependency & Impact Summary
 * Summary of direct consumers and downstream risks.
@@ -168,16 +183,18 @@ Adhere to these rules when proposing or making modifications:
 
 ### Step 3: Detailed Review Findings Table
 
-| Location | Finding / Anti-Pattern | Category | Impact | Concrete Recommendation | Priority (Critical / High / Med / Low) |
-| -------- | ---------------------- | -------- | ------ | ----------------------- | -------------------------------------- |
-| *file:line* | *e.g., Hardcoded "Vector" type* | *Generalization* | *Fails on user custom structs* | *Use CompactResolveUtil to look up struct* | *High* |
+| Location | Finding / Anti-Pattern | Category | Impact | Action (`[APPLY]` / `[ADD TEST]` / `[PIGGYBACK]` / `[IGNORE]`) | Concrete Recommendation | Priority |
+| -------- | ---------------------- | -------- | ------ | ------------------------------------------------------------- | ----------------------- | -------- |
+| *file:line* | *e.g., Keyword rejection missing test* | *Testability* | *Silent regression on lexer refactor* | *`[ADD TEST]`* | *Add unit test in Test suite* | *Medium* |
+| *file:line* | *e.g., 385 lines nearing limit* | *Maintainability* | *None (within <= 400 limit today)* | *`[IGNORE]`* | *Keep as-is until tripwire tripped* | *Low* |
 
 ### Step 4: Existing Strengths to Preserve
 * List well-designed decisions, patterns, or safeguards in the current code that should **not** be modified.
 
 ### Step 5: Recommended Action Plan & Optimizations
 * Prioritized list of concrete modifications.
-* Code diffs or replacement snippets showing the before and after state.
+* Code diffs or replacement snippets showing the before and after state for **`[APPLY]`**, **`[ADD TEST]`**, and accepted **`[PIGGYBACK]`** items only.
+* Strictly exclude **`[IGNORE]`** findings from code diffs and action items.
 * If file/method limits are exceeded, specify the exact decomposition strategy.
 
 ### Step 6: Code Execution (If Mode = "REVIEW & APPLY")

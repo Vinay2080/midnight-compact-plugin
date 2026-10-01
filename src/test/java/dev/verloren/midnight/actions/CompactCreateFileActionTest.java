@@ -209,4 +209,53 @@ public class CompactCreateFileActionTest extends BasePlatformTestCase {
       assertTrue("Exception message should mention existing file", e.getMessage().contains("already exists"));
     }
   }
+
+  public void testValidateIdentifierAcceptsValidIdentifiers() {
+    assertNull("Valid CamelCase name must be accepted",
+        CompactCreateFileAction.validateIdentifier("MyContract", getProject()));
+    assertNull("Valid snake_case name with extension must be accepted",
+        CompactCreateFileAction.validateIdentifier("token_v2.compact", getProject()));
+    assertNull("Nested valid path must be accepted",
+        CompactCreateFileAction.validateIdentifier("pkg/sub/MyModule", getProject()));
+  }
+
+  public void testValidateIdentifierRejectsKeywords() {
+    String circuitErr = CompactCreateFileAction.validateIdentifier("circuit", getProject());
+    assertNotNull("Reserved keyword 'circuit' must be rejected", circuitErr);
+    assertTrue("Error message must mention keyword", circuitErr.contains("circuit"));
+
+    assertNotNull("Reserved keyword 'witness' must be rejected",
+        CompactCreateFileAction.validateIdentifier("witness", getProject()));
+    assertNotNull("Reserved keyword 'ledger' must be rejected",
+        CompactCreateFileAction.validateIdentifier("ledger", getProject()));
+    assertNotNull("Reserved keyword in nested path with extension must be rejected",
+        CompactCreateFileAction.validateIdentifier("sub/export.compact", getProject()));
+  }
+
+  public void testValidateIdentifierRejectsNonIdentifiers() {
+    assertNotNull("Name starting with digit must be rejected",
+        CompactCreateFileAction.validateIdentifier("123Token", getProject()));
+    assertNotNull("Name containing hyphen must be rejected",
+        CompactCreateFileAction.validateIdentifier("my-token", getProject()));
+    assertNotNull("Name with stray dot must be rejected",
+        CompactCreateFileAction.validateIdentifier("my.token", getProject()));
+  }
+
+  public void testValidateFileNameRejectsIllegalCharactersAndPathSeparators() {
+    assertNotNull("Colon must be rejected", CompactCreateFileAction.validateFileName("bad:name"));
+    assertNotNull("Asterisk must be rejected", CompactCreateFileAction.validateFileName("bad*name"));
+    assertNotNull("Question mark must be rejected", CompactCreateFileAction.validateFileName("bad?name"));
+    assertNotNull("Angle brackets must be rejected", CompactCreateFileAction.validateFileName("bad<name"));
+    assertNotNull("Pipe must be rejected", CompactCreateFileAction.validateFileName("bad|name"));
+    assertNotNull("Double quotes must be rejected", CompactCreateFileAction.validateFileName("bad\"name"));
+
+    assertNotNull("Leading slash must be rejected", CompactCreateFileAction.validateFileName("/leadingSlash"));
+    assertNotNull("Leading backslash must be rejected", CompactCreateFileAction.validateFileName("\\leadingSlash"));
+    assertNotNull("Trailing slash must be rejected", CompactCreateFileAction.validateFileName("trailingSlash/"));
+    assertNotNull("Trailing backslash must be rejected", CompactCreateFileAction.validateFileName("trailingSlash\\"));
+    assertNotNull("Empty segment must be rejected", CompactCreateFileAction.validateFileName("empty//segment"));
+    assertNotNull("Blank string must be rejected", CompactCreateFileAction.validateFileName("   "));
+    assertNotNull("Null string must be rejected", CompactCreateFileAction.validateFileName(null));
+  }
 }
+
