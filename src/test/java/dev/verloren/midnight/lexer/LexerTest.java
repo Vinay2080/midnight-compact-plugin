@@ -115,4 +115,28 @@ public class LexerTest {
             CompactTokenTypes.CONTRACT, CompactTokenTypes.WHITE_SPACE,
             CompactTokenTypes.WITNESS);
   }
+
+  @Test
+  public void lexesUnrecognizedCharactersWithoutSwallowingNextToken() {
+    assertTokens("@a", CompactTokenTypes.BAD_CHARACTER, CompactTokenTypes.IDENTIFIER);
+    assertTokens("~1", CompactTokenTypes.BAD_CHARACTER, CompactTokenTypes.DECIMAL_LITERAL);
+    assertTokens("`foo`", CompactTokenTypes.BAD_CHARACTER, CompactTokenTypes.IDENTIFIER, CompactTokenTypes.BAD_CHARACTER);
+  }
+
+  @Test
+  public void lexesCustomStructTypesAndGenericsMirror() {
+    assertTokens("struct Pair<A, B> { a: A, b: B }",
+            CompactTokenTypes.STRUCT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.IDENTIFIER,
+            CompactTokenTypes.LT,
+            CompactTokenTypes.IDENTIFIER, CompactTokenTypes.COMMA, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.IDENTIFIER,
+            CompactTokenTypes.GT, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.LBRACE, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.IDENTIFIER, CompactTokenTypes.COLON, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.IDENTIFIER, CompactTokenTypes.COMMA, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.IDENTIFIER, CompactTokenTypes.COLON, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.IDENTIFIER, CompactTokenTypes.WHITE_SPACE,
+            CompactTokenTypes.RBRACE);
+  }
 }

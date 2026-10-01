@@ -3,7 +3,6 @@ package dev.verloren.midnight.lexer;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
-import dev.verloren.midnight.parser.CompactParserDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +13,7 @@ import java.util.Map;
  *
  * <p>Extends IntelliJ's {@link LexerBase} and tokenizes an input character buffer
  * into atomic {@link IElementType} tokens. The lexer is invoked during syntax highlighting,
- * AST building in {@link CompactParserDefinition}, and word scanning for Find Usages.</p>
+ * AST building, and word scanning for Find Usages.</p>
  *
  * <p><b>Lexing Strategy:</b>
  * <ul>
@@ -203,10 +202,9 @@ public final class CompactLexer extends LexerBase {
         lexOperator();
         return;
       default:
-        finishHelper(TokenType.BAD_CHARACTER);
+        finishHelper(CompactTokenTypes.BAD_CHARACTER);
+        return;
     }
-
-    finishHelper(CompactTokenTypes.BAD_CHARACTER);
   }
 
   @Override
