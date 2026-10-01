@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-10-02 | highlighter / test | Stale version literal assertion in CompactHighlightingTest after lexer double-advancement fix | [2026-10-02-highlighter-stale-version-literal-assertion.md](2026-10-02-highlighter-stale-version-literal-assertion.md) | Medium | Resolved |
 | 2026-10-01 | actions / file-templates / security | Path traversal vulnerability, swallowed cancellation, and hardcoded strings in CompactCreateFileAction | [2026-10-01-actions-create-file-safety-and-localization.md](2026-10-01-actions-create-file-safety-and-localization.md) | High | Resolved |
 | 2026-10-01 | lexer / tokenization | Double advancement and character swallowing on unrecognized tokens | [2026-10-01-lexer-bad-character-double-advancement.md](2026-10-01-lexer-bad-character-double-advancement.md) | High | Resolved |
 | 2026-09-20 | completion / type system / PSI | Member autocompletion for generic struct variables (e.g. target. on Either<...>) | [2026-09-20-generic-struct-member-completion.md](2026-09-20-generic-struct-member-completion.md) | Medium | Resolved |
