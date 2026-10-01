@@ -4,6 +4,7 @@ import com.intellij.ide.actions.CreateFileFromTemplateAction;
 import com.intellij.ide.actions.CreateFileFromTemplateDialog;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -131,6 +132,19 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
   @Override
   protected String getDefaultTemplateProperty() {
     return LAST_TEMPLATE_PROPERTY;
+  }
+
+  @Override
+  protected @Nullable String getDefaultTemplateName(@NotNull PsiDirectory dir) {
+    String property = getDefaultTemplateProperty();
+    if (property == null) {
+      return null;
+    }
+    String value = PropertiesComponent.getInstance(dir.getProject()).getValue(property);
+    if (value != null && value.endsWith(COMPACT_EXTENSION)) {
+      return value.substring(0, value.length() - COMPACT_EXTENSION.length());
+    }
+    return value;
   }
 
   @Override
