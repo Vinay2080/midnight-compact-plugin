@@ -158,4 +158,55 @@ public class CompactCreateFileActionTest extends BasePlatformTestCase {
     assertEquals("Exact template name without suffix must be preserved",
         CompactFileTemplateGroupFactory.COMPACT_MODULE, action.getDefaultTemplateName(dir));
   }
+
+  public void testValidateFileCollisionDetectsExistingFile() {
+    PsiFile dummy = myFixture.configureByText("Existing.compact", "pragma language_version >= 0.26.0;");
+    PsiDirectory dir = dummy.getContainingDirectory();
+    assertNotNull(dir);
+
+    // Bare name should be flagged as already existing
+    String error = CompactCreateFileAction.validateFileCollision("Existing", dir);
+    assertNotNull("Existing file must be detected by collision validator", error);
+    assertTrue("Error must mention Existing.compact", error.contains("Existing.compact"));
+
+    // Name with extension should also be detected
+    String errorWithExt = CompactCreateFileAction.validateFileCollision("Existing.compact", dir);
+    assertNotNull("Existing file with extension must be detected", errorWithExt);
+
+    // Non-existing file should be accepted
+    assertNull("Non-existing file must pass collision check",
+        CompactCreateFileAction.validateFileCollision("BrandNewFile", dir));
+
+    // Nested path collision in existing subdirectory
+    PsiDirectory subDir = com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(
+        getProject(),
+        (com.intellij.openapi.util.ThrowableComputable<PsiDirectory, RuntimeException>) () -> dir.createSubdirectory("sub")
+    );
+    assertNotNull(subDir);
+    myFixture.addFileToProject("sub/Nested.compact", "pragma language_version >= 0.26.0;");
+
+    String errorNested = CompactCreateFileAction.validateFileCollision("sub/Nested", dir);
+    assertNotNull("Nested existing file must be detected", errorNested);
+    assertTrue(errorNested.contains("Nested.compact"));
+
+    // Nested non-existing file in existing subdirectory
+    assertNull(CompactCreateFileAction.validateFileCollision("sub/Other", dir));
+
+    // Nested non-existing subdirectory
+    assertNull(CompactCreateFileAction.validateFileCollision("newsub/Other", dir));
+  }
+
+  public void testCreateFileThrowsIncorrectOperationExceptionWhenFileExists() {
+    PsiFile dummy = myFixture.configureByText("AlreadyThere.compact", "pragma language_version >= 0.26.0;");
+    PsiDirectory dir = dummy.getContainingDirectory();
+    assertNotNull(dir);
+
+    CompactCreateFileAction action = new CompactCreateFileAction();
+    try {
+      action.createFile("AlreadyThere", CompactFileTemplateGroupFactory.COMPACT_CONTRACT, dir);
+      fail("Expected IncorrectOperationException when creating file that already exists");
+    } catch (com.intellij.util.IncorrectOperationException e) {
+      assertTrue("Exception message should mention existing file", e.getMessage().contains("already exists"));
+    }
+  }
 }

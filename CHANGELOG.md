@@ -8,6 +8,7 @@
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
 ### Fixed
+- Fixed an issue where creating a file with an already existing name logged an unexpected warning stack trace in the IDE log; the dialog now proactively checks for file collisions in real time, and underlying operation exceptions are propagated to display standard user error notifications.
 - Fixed template selection persistence in the New Compact File dialog so the IDE properly remembers the user's last selected file type (such as Contract, Module, or Interface) instead of defaulting back to the empty file option.
 - Fixed semantic syntax highlighting test assertions for version literals in pragma directives following lexer character advancement improvements, ensuring automated verification passes reliably.
 - Fixed validation in the New Compact File dialog to prevent invalid directory traversal and non-printable control characters, support case-insensitive file extensions, and improve responsiveness and localization during file creation.

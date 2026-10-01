@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.util.IncorrectOperationException;
 import dev.verloren.midnight.CompactBundle;
 import dev.verloren.midnight.icons.MidnightIcons;
 import dev.verloren.midnight.ide.fileTemplates.CompactDefaultTemplatePropertiesProvider;
@@ -51,8 +52,8 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
       @NotNull PsiDirectory directory,
       @NotNull CreateFileFromTemplateDialog.Builder builder
   ) {
-    InputValidator fileValidator = createFileValidator();
-    InputValidator identifierValidator = createIdentifierValidator(project);
+    InputValidator fileValidator = createFileValidator(directory);
+    InputValidator identifierValidator = createIdentifierValidator(project, directory);
 
     builder
         .setTitle(CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.dialog.title"))
@@ -83,16 +84,20 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
         .setValidator(fileValidator);
   }
 
-  private static @NotNull InputValidator createFileValidator() {
+  private static @NotNull InputValidator createFileValidator(@NotNull PsiDirectory directory) {
     return new InputValidatorEx() {
       @Override
       public @Nullable String getErrorText(String inputString) {
-        return validateFileName(inputString);
+        String nameError = validateFileName(inputString);
+        if (nameError != null) {
+          return nameError;
+        }
+        return validateFileCollision(inputString, directory);
       }
 
       @Override
       public boolean checkInput(String inputString) {
-        return validateFileName(inputString) == null;
+        return getErrorText(inputString) == null;
       }
 
       @Override
@@ -102,16 +107,23 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     };
   }
 
-  private static @NotNull InputValidator createIdentifierValidator(@NotNull Project project) {
+  private static @NotNull InputValidator createIdentifierValidator(
+      @NotNull Project project,
+      @NotNull PsiDirectory directory
+  ) {
     return new InputValidatorEx() {
       @Override
       public @Nullable String getErrorText(String inputString) {
-        return validateIdentifier(inputString, project);
+        String identifierError = validateIdentifier(inputString, project);
+        if (identifierError != null) {
+          return identifierError;
+        }
+        return validateFileCollision(inputString, directory);
       }
 
       @Override
       public boolean checkInput(String inputString) {
-        return validateIdentifier(inputString, project) == null;
+        return getErrorText(inputString) == null;
       }
 
       @Override
@@ -180,8 +192,8 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
           extraProperties,
           extraProperties
       );
-    } catch (ProcessCanceledException pce) {
-      throw pce;
+    } catch (ProcessCanceledException | IncorrectOperationException e) {
+      throw e;
     } catch (Exception e) {
       LOG.warn("Failed to create Compact file from template " + templateName, e);
       return null;
@@ -250,6 +262,58 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     String clean = stripCompactExtension(name);
     int lastSlash = Math.max(clean.lastIndexOf('/'), clean.lastIndexOf('\\'));
     return lastSlash >= 0 ? clean.substring(lastSlash + 1) : clean;
+  }
+
+  public static @Nullable String validateFileCollision(
+      @Nullable String inputString,
+      @NotNull PsiDirectory directory
+  ) {
+    if (inputString == null || inputString.trim().isEmpty()) {
+      return null;
+    }
+    String trimmed = inputString.trim();
+    String cleanName = stripCompactExtension(trimmed);
+    String simpleName = extractSimpleName(cleanName);
+    if (simpleName.isEmpty()) {
+      return null;
+    }
+
+    PsiDirectory targetDir = findTargetDirectory(directory, cleanName);
+    if (targetDir == null) {
+      return null;
+    }
+
+    String fileName = simpleName + COMPACT_EXTENSION;
+    if (targetDir.findFile(fileName) != null || targetDir.findSubdirectory(fileName) != null) {
+      return CompactBundle.message(
+          "action.dev.verloren.midnight.actions.CompactCreateFileAction.error.already.exists",
+          fileName
+      );
+    }
+    return null;
+  }
+
+  private static @Nullable PsiDirectory findTargetDirectory(
+      @NotNull PsiDirectory baseDir,
+      @NotNull String path
+  ) {
+    int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    if (lastSlash < 0) {
+      return baseDir;
+    }
+    String subPath = path.substring(0, lastSlash);
+    String[] segments = subPath.replace('\\', '/').split("/");
+    PsiDirectory current = baseDir;
+    for (String segment : segments) {
+      if (segment.isEmpty()) {
+        continue;
+      }
+      current = current.findSubdirectory(segment);
+      if (current == null) {
+        return null;
+      }
+    }
+    return current;
   }
 
   public static @Nullable String validateFileName(@Nullable String inputString) {
