@@ -5,6 +5,12 @@ Architecture Guardrails, Modularity Standards & Rule Alignment (`master`).
 
 ## Status
 - **Accomplished**:
+  - **Streamlined File Templates & Smart Caret Positioning (v1.4.0)**:
+    - Streamlined all 4 file templates (`Compact Contract`, `Compact Module`, `Compact Interface`, `Compact File`) to eliminate boilerplate dummy code (`counter`, `ping()`, `isValid()`, `Config struct`).
+    - Implemented `determineInitialCaretOffset` in `CompactCreateFileAction` to place the editor cursor directly inside declaration block bodies for modules and interfaces (`{ <caret> }`), or after imports for top-level contracts/files, primed for immediate typing and live template triggers (`cir`, `wit`, `led`, `cct`).
+    - Added unit test suite in `CompactCreateFileActionTest` covering initial caret offsets across modules, interfaces, and top-level files.
+    - Updated `CompactFileTemplateTest` to verify clean template evaluation without dummy structures.
+    - Multi-gate verification harness passed with 100% success rate (724 tests passing).
   - **New Rules Document**: Created [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md) establishing:
     - Downward-only layer dependency isolation (`[UI/Completion]` -> `[Resolution]` -> `[Type Engine]` -> `[PSI]`).
     - The Rule of Generalization (no hardcoded stdlib names in general code).

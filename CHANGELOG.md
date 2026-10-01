@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
+
 ### Fixed
 - Fixed validation in the New Compact File dialog to prevent invalid directory traversal and non-printable control characters, support case-insensitive file extensions, and improve responsiveness and localization during file creation.
 - Fixed an issue where typing an invalid or unrecognized character (such as `@`, `~`, or backticks) in the editor would accidentally consume and corrupt the following token.

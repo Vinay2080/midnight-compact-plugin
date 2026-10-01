@@ -27,8 +27,10 @@ Last Updated: September 2026 (v1.4.0 / Generic Struct Type Resolution & Field Su
 - **Architecture, Modularity & Generalization Guardrails (v1.3.5)**:
   - Codified architecture guardrails in `.agents/rules/architecture.rules.md` enforcing strict layer hierarchy (`[UI]` -> `[Resolution]` -> `[Type Engine]` -> `[PSI]`), the Rule of Generalization (anti-hardcoding invariant), mandatory User-Defined Mirror testing for standard library features, class size budget ($\le 400$ lines), and single source of truth for types.
   - `CompactArchitectureTest`: Automated architectural tests verifying package dependency rules, cycle prevention, and class budget limits.
-- **Create File Action Formatting Guard (v1.3.5)**:
-  - `CompactCreateFileAction`: Wrapped template post-creation formatting in `WriteCommandAction` to prevent `IncorrectOperationException`. Verified by `CompactCreateFileActionTest`.
+- **Create File Action Formatting Guard & Streamlined File Templates (v1.3.5 / v1.4.0)**:
+  - `CompactCreateFileAction`: Wrapped template post-creation formatting in `WriteCommandAction` to prevent `IncorrectOperationException`.
+  - Streamlined file templates: Stripped all dummy throwaway logic (`counter: Counter`, dummy structs/circuits) across Contract, Module, Interface, and File templates.
+  - Smart Caret Positioning (`determineInitialCaretOffset`): Places the cursor directly inside the declaration block body for modules and interfaces (`{ <caret> }`), or below standard library imports for contracts and files, ready for typing or triggering live templates.
 - **Compiler Tool Window Selection Synchronization (v1.3.4)**:
   - `CompactCompilerPanel`: Synchronizes active compiler version card selection with `MidnightProjectSettings` and active editor files.
   - Updates selection highlights cleanly when project settings change or when switching files without triggering unwanted background compilation tasks or causing UI freezes.
@@ -153,7 +155,7 @@ Last Updated: September 2026 (v1.4.0 / Generic Struct Type Resolution & Field Su
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **721 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Total Tests**: **724 passing tests** (0 failures, 0 skipped, 100% success rate)
 - **Active Test Suites**: **67 test classes**
 - **Execution Time**: ~2m 40s via `./gradlew test`
 
