@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Fixed
+- Fixed validation in the New Compact File dialog to prevent invalid directory traversal and non-printable control characters, support case-insensitive file extensions, and improve responsiveness and localization during file creation.
 - Fixed an issue where typing an invalid or unrecognized character (such as `@`, `~`, or backticks) in the editor would accidentally consume and corrupt the following token.
 
 ## [1.4.0] - 2026-09-29
