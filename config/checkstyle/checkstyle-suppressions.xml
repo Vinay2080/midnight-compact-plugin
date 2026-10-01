@@ -25,7 +25,6 @@
     <suppress checks="MethodLength" files="CompactCompilerPanel\.java"/>
     <suppress checks="MethodLength" files="CompactLexer\.java"/>
     <suppress checks="MethodLength" files="CompactParameterInfoHandler\.java"/>
-    <suppress checks="MethodLength" files="CompactCreateFileAction\.java"/>
     <suppress checks="MethodLength" files="CompactCompilerOutputParser\.java"/>
     <suppress checks="MethodLength" files="CompactExternalAnnotator\.java"/>
     <suppress checks="MethodLength" files="CompactProblemUtil\.java"/>

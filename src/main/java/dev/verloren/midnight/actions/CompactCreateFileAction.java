@@ -8,6 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import dev.verloren.midnight.CompactBundle;
 import dev.verloren.midnight.icons.MidnightIcons;
 import dev.verloren.midnight.ide.fileTemplates.CompactDefaultTemplatePropertiesProvider;
 import dev.verloren.midnight.ide.fileTemplates.CompactFileTemplateGroupFactory;
@@ -24,6 +26,7 @@ import dev.verloren.midnight.refactoring.CompactNamesValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -32,14 +35,57 @@ import java.util.Map;
 public class CompactCreateFileAction extends CreateFileFromTemplateAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CompactCreateFileAction.class);
   public static final String LAST_TEMPLATE_PROPERTY = "dev.verloren.midnight.template.last";
+  private static final String COMPACT_EXTENSION = ".compact";
+  private static final CompactNamesValidator NAMES_VALIDATOR = new CompactNamesValidator();
 
   public CompactCreateFileAction() {
-    super("Compact File", "Create a new Compact smart contract or module file", MidnightIcons.FILE);
+    super(
+        CompactBundle.messagePointer("action.dev.verloren.midnight.actions.CompactCreateFileAction.text"),
+        CompactBundle.messagePointer("action.dev.verloren.midnight.actions.CompactCreateFileAction.description"),
+        MidnightIcons.FILE
+    );
   }
 
   @Override
-  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull CreateFileFromTemplateDialog.Builder builder) {
-    InputValidator fileValidator = new InputValidatorEx() {
+  protected void buildDialog(
+      @NotNull Project project,
+      @NotNull PsiDirectory directory,
+      @NotNull CreateFileFromTemplateDialog.Builder builder
+  ) {
+    InputValidator fileValidator = createFileValidator();
+    InputValidator identifierValidator = createIdentifierValidator(project);
+
+    builder
+        .setTitle(CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.dialog.title"))
+        .addKind(
+            CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.kind.file"),
+            MidnightIcons.FILE,
+            CompactFileTemplateGroupFactory.COMPACT_FILE,
+            fileValidator
+        )
+        .addKind(
+            CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.kind.contract"),
+            MidnightIcons.FILE,
+            CompactFileTemplateGroupFactory.COMPACT_CONTRACT,
+            identifierValidator
+        )
+        .addKind(
+            CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.kind.module"),
+            MidnightIcons.FILE,
+            CompactFileTemplateGroupFactory.COMPACT_MODULE,
+            identifierValidator
+        )
+        .addKind(
+            CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.kind.interface"),
+            MidnightIcons.FILE,
+            CompactFileTemplateGroupFactory.COMPACT_INTERFACE,
+            identifierValidator
+        )
+        .setValidator(fileValidator);
+  }
+
+  private static @NotNull InputValidator createFileValidator() {
+    return new InputValidatorEx() {
       @Override
       public @Nullable String getErrorText(String inputString) {
         return validateFileName(inputString);
@@ -55,8 +101,10 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
         return checkInput(inputString);
       }
     };
+  }
 
-    InputValidator identifierValidator = new InputValidatorEx() {
+  private static @NotNull InputValidator createIdentifierValidator(@NotNull Project project) {
+    return new InputValidatorEx() {
       @Override
       public @Nullable String getErrorText(String inputString) {
         return validateIdentifier(inputString, project);
@@ -72,19 +120,14 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
         return checkInput(inputString);
       }
     };
-
-    builder
-        .setTitle("New Compact File")
-        .addKind("Empty compact file", MidnightIcons.FILE, CompactFileTemplateGroupFactory.COMPACT_FILE, fileValidator)
-        .addKind("Compact contract", MidnightIcons.FILE, CompactFileTemplateGroupFactory.COMPACT_CONTRACT, identifierValidator)
-        .addKind("Compact module", MidnightIcons.FILE, CompactFileTemplateGroupFactory.COMPACT_MODULE, identifierValidator)
-        .addKind("Compact interface", MidnightIcons.FILE, CompactFileTemplateGroupFactory.COMPACT_INTERFACE, identifierValidator)
-        .setValidator(fileValidator);
   }
 
   @Override
   public String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return "Create Compact File " + newName;
+    return CompactBundle.message(
+        "action.dev.verloren.midnight.actions.CompactCreateFileAction.action.name",
+        newName
+    );
   }
 
   @Override
@@ -99,13 +142,18 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     }
     Project project = dir.getProject();
     FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
-    FileTemplate template = templateManager.findInternalTemplate(templateName);
-    if (template == null) {
+    FileTemplate template;
+    try {
       template = templateManager.getInternalTemplate(templateName);
+    } catch (ProcessCanceledException pce) {
+      throw pce;
+    } catch (Exception e) {
+      LOG.warn("Compact file template not found: " + templateName, e);
+      return null;
     }
 
     String trimmed = name.trim();
-    String cleanName = trimmed.endsWith(".compact") ? trimmed.substring(0, trimmed.length() - ".compact".length()) : trimmed;
+    String cleanName = stripCompactExtension(trimmed);
     String simpleName = extractSimpleName(cleanName);
 
     Map<String, String> extraProperties = buildTemplateProperties(project, simpleName);
@@ -120,6 +168,8 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
           extraProperties,
           extraProperties
       );
+    } catch (ProcessCanceledException pce) {
+      throw pce;
     } catch (Exception e) {
       LOG.warn("Failed to create Compact file from template " + templateName, e);
       return null;
@@ -159,35 +209,54 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     }
   }
 
+  public static @NotNull String stripCompactExtension(@NotNull String name) {
+    if (name.toLowerCase(Locale.ROOT).endsWith(COMPACT_EXTENSION)) {
+      return name.substring(0, name.length() - COMPACT_EXTENSION.length());
+    }
+    return name;
+  }
+
   public static @NotNull String extractSimpleName(@NotNull String name) {
-    String clean = name.endsWith(".compact") ? name.substring(0, name.length() - ".compact".length()) : name;
+    String clean = stripCompactExtension(name);
     int lastSlash = Math.max(clean.lastIndexOf('/'), clean.lastIndexOf('\\'));
     return lastSlash >= 0 ? clean.substring(lastSlash + 1) : clean;
   }
 
   public static @Nullable String validateFileName(@Nullable String inputString) {
     if (inputString == null || inputString.trim().isEmpty()) {
-      return "File name cannot be empty";
+      return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.error.empty");
     }
     String trimmed = inputString.trim();
     for (int i = 0; i < trimmed.length(); i++) {
       char c = trimmed.charAt(i);
-      if (c == '*' || c == '?' || c == ':' || c == '<' || c == '>' || c == '|' || c == '"' || c == 0) {
-        return "File name contains illegal character: '" + c + "'";
+      if (c < 32 || c == '*' || c == '?' || c == ':' || c == '<' || c == '>' || c == '|' || c == '"') {
+        return CompactBundle.message(
+            "action.dev.verloren.midnight.actions.CompactCreateFileAction.error.illegal.char",
+            c < 32 ? String.format("\\u%04x", (int) c) : String.valueOf(c)
+        );
       }
     }
     if (trimmed.startsWith("/") || trimmed.startsWith("\\")) {
-      return "File name cannot start with a path separator";
+      return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.error.starts.with.separator");
     }
     if (trimmed.endsWith("/") || trimmed.endsWith("\\")) {
-      return "File name cannot end with a path separator";
+      return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.error.ends.with.separator");
     }
-    if (trimmed.contains("//") || trimmed.contains("\\\\") || trimmed.contains("/\\") || trimmed.contains("\\/")) {
-      return "File path cannot contain empty directory segments";
+
+    String[] segments = trimmed.replace('\\', '/').split("/");
+    for (String segment : segments) {
+      String segTrim = segment.trim();
+      if (segTrim.isEmpty()) {
+        return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.error.empty.segment");
+      }
+      if (".".equals(segTrim) || "..".equals(segTrim)) {
+        return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.error.traversal");
+      }
     }
+
     String simpleName = extractSimpleName(trimmed);
     if (simpleName.isEmpty()) {
-      return "File name cannot be empty";
+      return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.error.empty");
     }
     return null;
   }
@@ -198,12 +267,17 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
       return fileError;
     }
     String simpleName = extractSimpleName(inputString.trim());
-    CompactNamesValidator validator = new CompactNamesValidator();
-    if (validator.isKeyword(simpleName, project)) {
-      return "'" + simpleName + "' is a reserved Compact language keyword";
+    if (NAMES_VALIDATOR.isKeyword(simpleName, project)) {
+      return CompactBundle.message(
+          "action.dev.verloren.midnight.actions.CompactCreateFileAction.error.keyword",
+          simpleName
+      );
     }
-    if (!validator.isIdentifier(simpleName, project)) {
-      return "'" + simpleName + "' is not a valid Compact identifier";
+    if (!NAMES_VALIDATOR.isIdentifier(simpleName, project)) {
+      return CompactBundle.message(
+          "action.dev.verloren.midnight.actions.CompactCreateFileAction.error.invalid.identifier",
+          simpleName
+      );
     }
     return null;
   }
