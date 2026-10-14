@@ -84,4 +84,66 @@ public class CompactVersionManagerTest {
     Assert.assertTrue(assetName.startsWith("compactc_v0.34.0_"));
     Assert.assertTrue(assetName.endsWith(".zip"));
   }
+
+  @Test
+  public void testZipSlipPrevention() throws IOException {
+    File tempDir = FileUtil.createTempDirectory("compact-zip-slip-test", null, true);
+    File zipFile = new File(tempDir, "malicious.zip");
+    File destDir = new File(tempDir, "dest");
+    Assert.assertTrue(destDir.mkdirs());
+
+    try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(new java.io.FileOutputStream(zipFile))) {
+      java.util.zip.ZipEntry entry = new java.util.zip.ZipEntry("../escaped.txt");
+      zos.putNextEntry(entry);
+      zos.write("malicious payload".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+      zos.closeEntry();
+    }
+
+    try {
+      CompactVersionInstaller.extractZip(zipFile, destDir);
+      Assert.fail("Expected IOException due to Zip Slip vulnerability prevention");
+    } catch (IOException e) {
+      Assert.assertTrue(e.getMessage().contains("Zip entry is outside target directory"));
+    } finally {
+      FileUtil.delete(tempDir);
+    }
+  }
+
+  @Test
+  public void testFindExecutableInSubdirectoriesArchitecture() throws IOException {
+    File tempDir = FileUtil.createTempDirectory("compact-arch-test", null, true);
+    try {
+      File archDir = new File(tempDir, "x86_64-unknown-linux-musl");
+      Assert.assertTrue(archDir.mkdirs());
+      File exe = new File(archDir, "compactc");
+      Assert.assertTrue(exe.createNewFile());
+
+      File found = CompactVersionManager.findExecutableInVersionDir(tempDir);
+      Assert.assertNotNull(found);
+      Assert.assertTrue(found.getAbsolutePath().contains("x86_64-unknown-linux-musl"));
+    } finally {
+      FileUtil.delete(tempDir);
+    }
+  }
+
+  @Test
+  public void testDetectVersionFromExecutableFastPath() {
+    String path = "/home/user/.compact/versions/0.34.0/bin/compactc";
+    String version = CompactVersionManager.detectVersionFromExecutable(path);
+    Assert.assertEquals("0.34.0", version);
+  }
+
+  @Test
+  public void testCleanVersionEdgeCases() {
+    Assert.assertEquals("", CompactVersionManager.cleanVersion(""));
+    Assert.assertEquals("", CompactVersionManager.cleanVersion("   "));
+    Assert.assertEquals("0.22.0", CompactVersionManager.cleanVersion("0.22"));
+    Assert.assertEquals("0.34.0", CompactVersionManager.cleanVersion("v0.34.0"));
+  }
+
+  @Test
+  public void testIsVersionInstalledGraceful() {
+    Assert.assertFalse(CompactVersionManager.isVersionInstalled("999.999.999"));
+  }
 }
+

@@ -4,9 +4,7 @@
     "https://checkstyle.org/dtds/suppressions_1_2.dtd">
 
 <suppressions>
-    <!-- Phase 1 Legacy Baseline: Grandfathered oversized production classes (>400 lines) pending decomposition in Phase 3 & 4 -->
-    <suppress checks="FileLength" files="CompactVersionManager\.java"/>
-    <suppress checks="FileLength" files="CompactToolchainUtil\.java"/>
+
     <suppress checks="FileLength" files="CompactCompilerPanel\.java"/>
     <suppress checks="FileLength" files="CompactResolveUtil\.java"/>
     <suppress checks="FileLength" files="CompactHighlightingAnnotator\.java"/>
@@ -20,8 +18,6 @@
     <!-- Phase 1 Method Length Legacy Baseline: Pre-existing legacy methods pending SRP extraction in Phase 3 & 4 -->
     <suppress checks="MethodLength" files="CompactHighlightingAnnotator\.java"/>
     <suppress checks="MethodLength" files="CompactResolveUtil\.java"/>
-    <suppress checks="MethodLength" files="CompactVersionManager\.java"/>
-    <suppress checks="MethodLength" files="CompactToolchainUtil\.java"/>
     <suppress checks="MethodLength" files="CompactCompilerPanel\.java"/>
     <suppress checks="MethodLength" files="CompactLexer\.java"/>
     <suppress checks="MethodLength" files="CompactParameterInfoHandler\.java"/>

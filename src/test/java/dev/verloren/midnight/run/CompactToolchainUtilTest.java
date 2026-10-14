@@ -172,4 +172,65 @@ public class CompactToolchainUtilTest extends BasePlatformTestCase {
     assertEquals("dist/out/calculator", CompactToolchainUtil.deriveOutputDirectory(getProject(), "circuits/calculator.compact", "dist/out"));
     assertEquals("custom/gen/counter", CompactToolchainUtil.deriveOutputDirectory(getProject(), "circuits/counter.compact", "custom/gen/"));
   }
+
+  public void testCaseInsensitiveAndCapitalizedDeriveOutputDirectory() {
+    assertEquals("gen/calculator", CompactToolchainUtil.deriveOutputDirectory(getProject(), "Circuits/calculator.compact"));
+    assertEquals("gen/counter", CompactToolchainUtil.deriveOutputDirectory(getProject(), "SRC/counter.compact"));
+    assertEquals("gen/token", CompactToolchainUtil.deriveOutputDirectory(getProject(), "CONTRACTS/token.compact"));
+
+    if (getProject().getBasePath() != null) {
+      String basePath = getProject().getBasePath().replace('\\', '/');
+      String mixedCasingPath = basePath.toUpperCase() + "/circuits/test.compact";
+      assertEquals("gen/test", CompactToolchainUtil.deriveOutputDirectory(getProject(), mixedCasingPath));
+    }
+  }
+
+  public void testHostFileParseConfiguredPath() {
+    File temp = null;
+    try {
+      temp = File.createTempFile("host-compactc", ".cmd");
+      CompactToolchainUtil.ToolchainInfo info = CompactToolchainUtil.parseConfiguredPath(temp.getAbsolutePath());
+      assertNotNull("Host file should be parsed", info);
+      assertFalse("Host file should not be marked WSL", info.isWsl());
+      assertEquals(temp.getAbsolutePath(), info.executablePath());
+    } catch (Exception e) {
+      fail("Failed to create temporary host file: " + e.getMessage());
+    } finally {
+      if (temp != null) {
+        com.intellij.openapi.util.io.FileUtil.delete(temp);
+      }
+    }
+  }
+
+  public void testIsWindowsSystemExecutableSanitization() {
+    File sys32 = new File("C:/Windows/System32/compact.exe");
+    if (com.intellij.openapi.util.SystemInfo.isWindows) {
+      assertTrue("System32 compact.exe should be excluded on Windows",
+          CompactToolchainDiscovery.isWindowsSystemExecutable(sys32));
+      File customDir = new File("C:/MyPrograms/compact.exe");
+      assertFalse("Custom directory compact.exe should not be excluded",
+          CompactToolchainDiscovery.isWindowsSystemExecutable(customDir));
+    } else {
+      assertFalse(CompactToolchainDiscovery.isWindowsSystemExecutable(sys32));
+    }
+  }
+
+  public void testDelegationEquivalence() {
+    assertEquals(
+        CompactToolchainDiscovery.getInstalledWslDistributions(),
+        CompactToolchainUtil.getInstalledWslDistributions()
+    );
+    assertEquals(
+        CompactToolchainPathUtil.toWslPath("C:\\Users\\test"),
+        CompactToolchainUtil.toWslPath("C:\\Users\\test")
+    );
+    assertEquals(
+        CompactToolchainPathUtil.toWindowsPath("/mnt/c/Users/test"),
+        CompactToolchainUtil.toWindowsPath("/mnt/c/Users/test")
+    );
+    assertEquals(
+        CompactToolchainPathUtil.deriveOutputDirectory(getProject(), "circuits/demo.compact"),
+        CompactToolchainUtil.deriveOutputDirectory(getProject(), "circuits/demo.compact")
+    );
+  }
 }
