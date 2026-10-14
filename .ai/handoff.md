@@ -1,9 +1,22 @@
 # Current Handoff
 
 ## Current Feature
-Architecture Guardrails, Modularity Standards & Rule Alignment (`master`).
+Compact 0.35.0 Compiler & 0.27.0 Language Support (`ai/feature-compact-0-35-0` -> `master`).
 
 ## Status
+- **Accomplished**:
+  - **CompactToolchainUtil SRP Decomposition & Bug Fixes**:
+    - Decomposed oversized `CompactToolchainUtil` (713 lines) into focused delegates: `CompactToolchainDiscovery` (374 lines) and `CompactToolchainPathUtil` (184 lines), keeping `CompactToolchainUtil` at 297 lines.
+    - Fixed WSL vs host path resolution on Linux/macOS and case-insensitivity on Windows.
+    - Removed `CompactToolchainUtil` from `checkstyle-suppressions.xml` for both `FileLength` and `MethodLength`.
+  - **Compact 0.35.0 & Language 0.27.0 Support**:
+    - `CompactVersionManager`: Added release entry `("0.35.0", "0.27.0", "Midnight Ledger 9", false)` and added `"0.35.0"` to `KNOWN_VERSIONS`.
+    - `CompactTypeCompletionProvider`: Added built-in types `PublicAddress`, `Secp256r1`, `Curve25519` to lookups and static arrays.
+    - `CompactHighlightingAnnotator`: Added built-in functions `secp256r1EcdsaVerify`, `ed25519Verify`, `sha512` and types `PublicAddress`, `Secp256r1`, `Curve25519`.
+    - `standard-library.compact`: Declared `export struct PublicAddress { bytes: Bytes<32>; }` with JSDoc documentation.
+    - File templates: Updated fallback pragma to `0.27.0`.
+    - Automated tests: Added unit tests in `CompactVersionManagerTest`, `CompactTypeAndSizingCompletionTest`, `CompactAdvancedHighlightingTest`, and `CompactFileTemplateTest`.
+    - Automated multi-gate verification passed with 100% success rate (726 tests passing).
 - **Accomplished**:
   - **Streamlined File Templates & Smart Caret Positioning (v1.4.0)**:
     - Streamlined all 4 file templates (`Compact Contract`, `Compact Module`, `Compact Interface`, `Compact File`) to eliminate boilerplate dummy code (`counter`, `ping()`, `isValid()`, `Config struct`).
