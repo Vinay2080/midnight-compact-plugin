@@ -8,7 +8,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Semantic type representing a generic or parameterized type in Compact (e.g. {@code Either<Field, Boolean>}, {@code Vector<32, Uint<8>>}).
+ * Semantic type representing a generic or parameterized type in Compact
+ * (e.g. {@code Either<Field, Boolean>}, {@code Vector<32, Uint<8>>}, {@code Result<TVal, TErr>}).
  */
 public record CompactParameterizedType(
     @NotNull String rawName,
@@ -31,16 +32,27 @@ public record CompactParameterizedType(
     if (this.equals(other)) {
       return true;
     }
+    if (other instanceof CompactTypeVariable) {
+      return true;
+    }
     if (other instanceof CompactParameterizedType otherParam) {
       if (!rawName.equals(otherParam.rawName()) || typeArguments.size() != otherParam.typeArguments().size()) {
         return false;
       }
       for (int i = 0; i < typeArguments.size(); i++) {
-        if (!typeArguments.get(i).isAssignableTo(otherParam.typeArguments().get(i))) {
+        CompactType a = typeArguments.get(i);
+        CompactType b = otherParam.typeArguments().get(i);
+        if (a instanceof CompactTypeVariable || b instanceof CompactTypeVariable) {
+          continue;
+        }
+        if (!a.isAssignableTo(b)) {
           return false;
         }
       }
       return true;
+    }
+    if (other instanceof CompactStructType otherStruct) {
+      return rawName.equals(otherStruct.name());
     }
     if (other instanceof CompactPrimitiveType(String otherName)) {
       return CompactTypeInferenceUtil.isGenericAssignable(name(), otherName);
