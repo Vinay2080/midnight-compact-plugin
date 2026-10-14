@@ -69,3 +69,14 @@ Level 3: Chronic Anti-Pattern (>= 3 Occurrences)
 - **Escalation Level:** **Level 2 (Emerging Anti-Pattern)**
 - **Enforcement:**
   - Rule codified in `.agents/rules/psi-parser.rules.md`. All inspections must verify enclosing declaration context before flagging errors.
+
+### Pattern PAT-005: Path Traversal & Unvalidated File Boundaries
+- **Category:** File Operations & Security
+- **Occurrences:** 2 incidents
+  1. `2026-10-01-actions-create-file-safety-and-localization.md` (Directory traversal in file creation)
+  2. `2026-10-14-version-manager-decomposition-and-zip-slip-guard.md` (Zip Slip path traversal during toolchain archive extraction)
+- **Root Cause:** Trusting user input or zip entry names without canonical path normalization and destination containment validation.
+- **Escalation Level:** **Level 2 (Emerging Anti-Pattern)**
+- **Enforcement:**
+  - All file path construction and archive unpack operations must normalize paths via `toPath().normalize()` and verify `targetPath.startsWith(destDirPath)`.
+

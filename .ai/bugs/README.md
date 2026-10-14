@@ -193,6 +193,7 @@ After creating or updating a bug record:
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
 |:---|:---|:---|:---|:---|:---|
+| 2026-10-14 | version / toolchain / security | CompactVersionManager decomposition, Windows stream lock on cancel, and Zip Slip guard | [2026-10-14-version-manager-decomposition-and-zip-slip-guard.md](2026-10-14-version-manager-decomposition-and-zip-slip-guard.md) | High | Resolved |
 | 2026-10-02 | actions / file-templates / ui / validation | Swallowed IncorrectOperationException and missing file collision validation in CompactCreateFileAction | [2026-10-02-actions-create-file-already-exists-exception.md](2026-10-02-actions-create-file-already-exists-exception.md) | Medium | Resolved |
 | 2026-10-02 | actions / file-templates / persistence | File template selection persistence defaulting to empty file in CompactCreateFileAction | [2026-10-02-actions-file-template-selection-persistence.md](2026-10-02-actions-file-template-selection-persistence.md) | Medium | Resolved |
 | 2026-10-02 | highlighter / test | Stale version literal assertion in CompactHighlightingTest after lexer double-advancement fix | [2026-10-02-highlighter-stale-version-literal-assertion.md](2026-10-02-highlighter-stale-version-literal-assertion.md) | Medium | Resolved |
