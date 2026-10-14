@@ -1,12 +1,22 @@
 # Current State
 
-Last Updated: September 2026 (v1.4.0 / Generic Struct Type Resolution & Field Substitution, Typed Generic Either Helper Completions, Smart Struct Literal Completions, Architecture Guardrails & Modularity)
+Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language Support, CompactVersionManager SRP Decomposition)
 
 ---
 
 ## 1. Implementation Snapshot
 
 ### Implemented Subsystems
+- **Compact Compiler 0.35.0 & Language 0.27.0 Support (v1.4.1)**:
+  - `CompactVersionManager`: Added official toolchain `v0.35.0` (Language `0.27.0`, Midnight Ledger 9) to `RELEASES` mapping table and `KNOWN_VERSIONS`.
+  - `CompactHighlightingAnnotator`: Added builtin types `PublicAddress`, `Secp256r1`, `Curve25519` and cryptographic builtin functions `secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`.
+  - `CompactTypeCompletionProvider`: Added `PublicAddress`, `Secp256r1`, `Curve25519` to builtin completion lookups and sets.
+  - `standard-library.compact`: Declared `export struct PublicAddress { bytes: Bytes<32>; }` with JSDoc documentation.
+  - Internal File Templates: Updated default fallback pragma directives across Contract, Module, Interface, and File templates from `0.26.0` to `0.27.0`.
+  - Test Coverage: Unit and mirror tests added to `CompactVersionManagerTest`, `CompactTypeAndSizingCompletionTest`, `CompactAdvancedHighlightingTest`, and `CompactFileTemplateTest`.
+- **CompactVersionManager Decomposition & Archive Hardening (v1.4.1)**:
+  - Decomposed oversized `CompactVersionManager` into SRP leaf delegates (`CompactVersionInstaller`, `CompactWslStorageHelper`, `CompactVersionDetector`), bringing all classes $\le 400$ lines.
+  - Hardened archive extraction with Zip Slip canonical destination verification and fixed Windows file lock leaks on stream cancellation.
 - **Lexer & Parser**: Handwritten in Java 25. Complete coverage of Compact grammar, declarations, ledger types, type expressions, statements, expressions, and error recovery.
 - **PSI Infrastructure**: Element hierarchy (`CompactElement`, `CompactNamedElement`, declaration types, reference types, type nodes).
 - **Name Resolution & Reference Contributor**: Lexical scoping, namespace separation (`VALUE` vs `TYPE`), multi-file resolution via `include` statements.
@@ -155,7 +165,7 @@ Last Updated: September 2026 (v1.4.0 / Generic Struct Type Resolution & Field Su
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **724 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Total Tests**: **726 passing tests** (0 failures, 0 skipped, 100% success rate)
 - **Active Test Suites**: **67 test classes**
 - **Execution Time**: ~2m 40s via `./gradlew test`
 

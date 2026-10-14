@@ -8,7 +8,7 @@ project:
   current_version: "1.4.0"
 
 metrics:
-  passing_tests: 724
+  passing_tests: 726
   failing_tests: 0
   skipped_tests: 0
   test_suites: 67
@@ -56,6 +56,7 @@ phases:
   generic_struct_member_completion: complete (v1.3.5)
   either_and_default_helper_completions: complete (v1.3.5)
   architecture_guardrails_and_modularity: complete (v1.3.5)
+  toolchain_0_35_0_and_language_0_27_0: complete (v1.4.1)
   first_class_type_hierarchy_and_substitutor: planned (Phase 31)
   modular_completion_providers: planned (Phase 32)
   stub_indexing: planned (Phase 33)

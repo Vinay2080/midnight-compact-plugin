@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+- Added support for Compact compiler toolchain v0.35.0 (Compact language version 0.27.0, Midnight Ledger 9), enabling version management, official release downloads, WSL translation, and automatic pragma inspection matching.
+- Added autocompletion and semantic highlighting for new Compact language 0.27.0 builtin types (`PublicAddress`, `Secp256r1`, `Curve25519`) and cryptographic builtin functions (`secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`).
+- Added `PublicAddress` struct declaration to the Compact Standard Library reference (`standard-library.compact`).
+- Updated New Compact File template default fallback pragma directives from `0.26.0` to `0.27.0`.
+
 ### Changed
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
