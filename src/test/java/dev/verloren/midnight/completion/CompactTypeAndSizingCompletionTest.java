@@ -312,4 +312,27 @@ public class CompactTypeAndSizingCompletionTest extends CompactCompletionTestBas
     myFixture.type('\n');
     myFixture.checkResult("const x: Uint<64><caret>;\n");
   }
+
+  public void testCompact035TypesCompletion() {
+    myFixture.configureByText(CompactFileType.INSTANCE, "const x: Pub<caret>;");
+    myFixture.completeBasic();
+    List<String> lookupStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupStrings);
+    assertTrue("Should suggest 'PublicAddress'", lookupStrings.contains("PublicAddress"));
+
+    myFixture.configureByText(CompactFileType.INSTANCE, "const y: Sec<caret>;");
+    myFixture.completeBasic();
+    List<String> lookupStrings2 = myFixture.getLookupElementStrings();
+    assertNotNull(lookupStrings2);
+    assertTrue("Should suggest 'Secp256r1'", lookupStrings2.contains("Secp256r1"));
+
+    myFixture.configureByText(CompactFileType.INSTANCE, "const z: Cur<caret>;");
+    myFixture.completeBasic();
+    List<String> lookupStrings3 = myFixture.getLookupElementStrings();
+    if (lookupStrings3 != null) {
+      assertTrue("Should suggest 'Curve25519'", lookupStrings3.contains("Curve25519"));
+    } else {
+      myFixture.checkResult("const z: Curve25519;");
+    }
+  }
 }

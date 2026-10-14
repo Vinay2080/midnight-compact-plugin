@@ -40,14 +40,15 @@ public class CompactHighlightingAnnotator implements Annotator {
       "transientHash", "persistentHash", "transientCommit", "persistentCommit",
       "transcribe", "publicKey", "degradeToTransient",
       "default", "some", "none", "left", "right",
-      "merkleTreePathRoot", "merkleTreePathRootNoLeafHash", "nativeToken", "tokenType"
+      "merkleTreePathRoot", "merkleTreePathRootNoLeafHash", "nativeToken", "tokenType",
+      "secp256r1EcdsaVerify", "ed25519Verify", "sha512"
   );
 
   private static final Set<String> BUILTIN_TYPES = Set.of(
       "Field", "Boolean", "Uint", "Bytes", "Vector", "Opaque", "Cell", "Void",
-      "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar",
+      "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar", "Secp256r1", "Curve25519",
       "Counter", "Set", "Map", "List", "HistoricMerkleTree", "MerkleTree",
-      "Kernel", "ContractAddress", "ShieldedCoinInfo", "QualifiedShieldedCoinInfo",
+      "Kernel", "ContractAddress", "PublicAddress", "ShieldedCoinInfo", "QualifiedShieldedCoinInfo",
       "ZswapCoinPublicKey", "ShieldedSendResult",
       "Maybe", "Either", "MerkleTreeDigest", "MerkleTreePath", "MerkleTreePathEntry", "LeafPreimage"
   );

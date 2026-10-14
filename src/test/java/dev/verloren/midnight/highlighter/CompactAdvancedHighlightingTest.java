@@ -100,6 +100,31 @@ public class CompactAdvancedHighlightingTest extends BasePlatformTestCase {
     assertHasHighlight(highlights, "sk", CompactHighlighterColors.PARAMETER_USAGE);
   }
 
+  public void testCompact035BuiltinTypesAndFunctionsHighlighting() {
+    String code = """
+        circuit verifyAuth(
+            addr: PublicAddress,
+            r1: Secp256r1,
+            c25519: Curve25519,
+            msg: Bytes<32>
+        ): Boolean {
+            const hash = sha512(msg);
+            const v1 = secp256r1EcdsaVerify(r1, hash);
+            const v2 = ed25519Verify(c25519, msg);
+            return v1 && v2;
+        }
+        """;
+    myFixture.configureByText(CompactFileType.INSTANCE, code);
+    List<HighlightInfo> highlights = myFixture.doHighlighting();
+
+    assertHasHighlight(highlights, "PublicAddress", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "Secp256r1", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "Curve25519", CompactHighlighterColors.BUILTIN_TYPE);
+    assertHasHighlight(highlights, "sha512", CompactHighlighterColors.BUILTIN_FUNCTION);
+    assertHasHighlight(highlights, "secp256r1EcdsaVerify", CompactHighlighterColors.BUILTIN_FUNCTION);
+    assertHasHighlight(highlights, "ed25519Verify", CompactHighlighterColors.BUILTIN_FUNCTION);
+  }
+
   private static void assertHasHighlight(List<HighlightInfo> highlights, String text, TextAttributesKey expectedKey) {
     boolean found = highlights.stream().anyMatch(h ->
         text.equals(h.getText()) && expectedKey.equals(h.forcedTextAttributesKey)

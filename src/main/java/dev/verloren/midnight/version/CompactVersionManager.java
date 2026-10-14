@@ -39,6 +39,7 @@ public final class CompactVersionManager {
   private record ReleaseMapping(@NotNull String toolchain, @NotNull String language, @Nullable String ledger, boolean isLegacy) {}
 
   private static final List<ReleaseMapping> RELEASES = List.of(
+      new ReleaseMapping("0.35.0", "0.27.0", "Midnight Ledger 9", false),
       new ReleaseMapping("0.34.0", "0.26.0", "Midnight Ledger 9", false),
       new ReleaseMapping("0.31.1", "0.23.0", "Midnight Ledger 8", false),
       new ReleaseMapping("0.31.0", "0.23.0", "Midnight Ledger 8", false),
@@ -57,7 +58,7 @@ public final class CompactVersionManager {
    * Officially supported Midnight toolchain releases.
    */
   public static final List<String> KNOWN_VERSIONS = List.of(
-      "0.34.0", "0.31.1", "0.31.0", "0.30.0", "0.29.0",
+      "0.35.0", "0.34.0", "0.31.1", "0.31.0", "0.30.0", "0.29.0",
       "0.28.0", "0.26.0", "0.25.0", "0.24.0", "0.23.0", "0.22.0"
   );
 

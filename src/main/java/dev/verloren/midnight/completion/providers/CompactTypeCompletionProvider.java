@@ -19,8 +19,9 @@ public final class CompactTypeCompletionProvider {
 
   public static final String[] BUILTIN_TYPES = {
       "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "State", "Counter", "Void",
-      "Either", "Maybe", "ContractAddress", "Cell", "Set", "Map",
-      "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point"
+      "Either", "Maybe", "ContractAddress", "PublicAddress", "Cell", "Set", "Map",
+      "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point",
+      "Secp256r1", "Curve25519"
   };
 
   private CompactTypeCompletionProvider() {}
@@ -96,6 +97,7 @@ public final class CompactTypeCompletionProvider {
 
   private static void addPrimitiveTypeLookups(@NotNull List<LookupElement> elements) {
     String[] simpleTypes = {"Boolean", "Field", "State", "Counter", "Void", "ContractAddress",
+        "PublicAddress", "Secp256r1", "Curve25519",
         "JubjubScalar", "JubjubPoint", "Secp256k1Base", "Secp256k1Scalar", "Secp256k1Point"};
     for (String simple : simpleTypes) {
       elements.add(PrioritizedLookupElement.withPriority(

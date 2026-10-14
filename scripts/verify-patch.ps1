@@ -127,7 +127,7 @@ if ($report.gates.compilation.passed -and $report.gates.static_analysis.passed) 
 # ----------------------------------------------------
 if ($report.gates.compilation.passed -and $report.gates.static_analysis.passed -and -not $Quick) {
     Write-Host "`n[Gate 3] Running Automated Tests..." -ForegroundColor Yellow
-    $gradleArgs = @("test", "--console=plain")
+    $gradleArgs = @("cleanTest", "test", "--console=plain", "--no-configuration-cache")
     
     if ($AllTests) {
         Write-Host "  Running complete test suite (all tests)..." -ForegroundColor Cyan

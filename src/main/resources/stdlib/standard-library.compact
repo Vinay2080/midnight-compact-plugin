@@ -190,6 +190,13 @@ circuit merkleTreePathEntryRoot(
 export struct ContractAddress { bytes: Bytes<32>; }
 
 /**
+ * Publicly verifiable address on the Midnight ledger identifying an external caller or account.
+ *
+ * @param bytes 32-byte public address hash on the ledger.
+ */
+export struct PublicAddress { bytes: Bytes<32>; }
+
+/**
  * Private coin state for Midnight shielded transactions.
  *
  * @param nonce Unique random scalar differentiating coin instances.
