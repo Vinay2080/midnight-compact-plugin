@@ -14,13 +14,23 @@ public record CompactStructType(
     @NotNull Map<String, CompactType> fields
 ) implements CompactType {
 
+  public @NotNull CompactStructType withFields(@NotNull Map<String, CompactType> newFields) {
+    return new CompactStructType(name, newFields);
+  }
+
   @Override
   public boolean isAssignableTo(@NotNull CompactType other) {
     if (this.equals(other)) {
       return true;
     }
+    if (other instanceof CompactTypeVariable) {
+      return true;
+    }
     if (other instanceof CompactStructType otherStruct) {
       return name.equals(otherStruct.name());
+    }
+    if (other instanceof CompactParameterizedType param) {
+      return name.equals(param.rawName());
     }
     if (other instanceof CompactPrimitiveType(String otherName)) {
       return name.equals(otherName);

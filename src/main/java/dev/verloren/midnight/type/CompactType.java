@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * <p>Represents types for expressions, variables, and return types.
  * Permits primitive types, unsigned integers, numeric literal types, parameterized types,
- * struct types, enum types, and function types.</p>
+ * struct types, enum types, function types, and type variables.</p>
  */
 public sealed interface CompactType permits
     CompactPrimitiveType,
@@ -16,11 +16,16 @@ public sealed interface CompactType permits
     CompactParameterizedType,
     CompactStructType,
     CompactEnumType,
-    CompactFunctionType {
+    CompactFunctionType,
+    CompactTypeVariable {
 
   @NotNull String name();
 
   default boolean isAssignableTo(@NotNull CompactType other) {
     return this.equals(other);
+  }
+
+  default @NotNull CompactType substitute(@NotNull CompactTypeSubstitutor substitutor) {
+    return substitutor.substitute(this);
   }
 }
