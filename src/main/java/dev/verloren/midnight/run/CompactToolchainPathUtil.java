@@ -1,7 +1,6 @@
 package dev.verloren.midnight.run;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import dev.verloren.midnight.settings.MidnightSettingsState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,9 +109,7 @@ public final class CompactToolchainPathUtil {
     }
 
     String prefixWithSlash = projectPath + "/";
-    boolean matches = SystemInfo.isFileSystemCaseSensitive
-        ? path.startsWith(prefixWithSlash)
-        : path.regionMatches(true, 0, prefixWithSlash, 0, prefixWithSlash.length());
+    boolean matches = path.regionMatches(true, 0, prefixWithSlash, 0, prefixWithSlash.length());
     return matches ? path.substring(prefixWithSlash.length()) : path;
   }
 
@@ -149,9 +146,7 @@ public final class CompactToolchainPathUtil {
       stripped = false;
       for (String root : SOURCE_ROOTS) {
         String rootSlash = root + "/";
-        boolean matches = SystemInfo.isFileSystemCaseSensitive
-            ? result.startsWith(rootSlash)
-            : result.regionMatches(true, 0, rootSlash, 0, rootSlash.length());
+        boolean matches = result.regionMatches(true, 0, rootSlash, 0, rootSlash.length());
         if (matches && result.length() > root.length() + 1) {
           result = result.substring(root.length() + 1);
           stripped = true;
