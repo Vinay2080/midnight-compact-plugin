@@ -1,7 +1,6 @@
 package dev.verloren.midnight.type;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -44,12 +43,13 @@ public final class CompactTypeSubstitutor {
     return substitutions.isEmpty();
   }
 
-  public @Nullable CompactType substitute(@NotNull CompactTypeVariable variable) {
+  public @NotNull CompactType substitute(@NotNull CompactTypeVariable variable) {
     CompactType direct = substitutions.get(variable.name());
     if (direct != null) {
       return direct;
     }
-    return substitutions.get(variable.cleanName());
+    CompactType clean = substitutions.get(variable.cleanName());
+    return clean != null ? clean : variable;
   }
 
   /**
@@ -61,10 +61,7 @@ public final class CompactTypeSubstitutor {
       return type;
     }
     return switch (type) {
-      case CompactTypeVariable v -> {
-        CompactType sub = substitute(v);
-        yield sub != null ? sub : v;
-      }
+      case CompactTypeVariable v -> substitute(v);
       case CompactParameterizedType param -> substituteParameterizedType(param);
       case CompactStructType struct -> substituteStructType(struct);
       case CompactFunctionType func -> substituteFunctionType(func);
@@ -77,8 +74,8 @@ public final class CompactTypeSubstitutor {
 
   private @NotNull CompactType substituteParameterizedType(@NotNull CompactParameterizedType param) {
     List<CompactType> newArgs = param.typeArguments().stream()
-        .map(this::substitute)
-        .toList();
+            .map(this::substitute)
+            .toList();
     return new CompactParameterizedType(param.rawName(), newArgs);
   }
 
@@ -92,8 +89,8 @@ public final class CompactTypeSubstitutor {
 
   private @NotNull CompactType substituteFunctionType(@NotNull CompactFunctionType func) {
     List<CompactType> newParams = func.parameterTypes().stream()
-        .map(this::substitute)
-        .toList();
+            .map(this::substitute)
+            .toList();
     CompactType newReturn = substitute(func.returnType());
     return new CompactFunctionType(newParams, newReturn);
   }

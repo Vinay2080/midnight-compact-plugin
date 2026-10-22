@@ -1,6 +1,7 @@
 package dev.verloren.midnight.type;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
@@ -18,6 +19,17 @@ public record CompactPrimitiveType(String name) implements CompactType {
   public static final CompactPrimitiveType OPAQUE = new CompactPrimitiveType("Opaque");
   public static final CompactPrimitiveType UNKNOWN = new CompactPrimitiveType("Unknown");
 
+  public static @Nullable CompactPrimitiveType fromName(@NotNull String name) {
+    return switch (name) {
+      case "Boolean" -> BOOLEAN;
+      case "Field" -> FIELD;
+      case "Bytes" -> BYTES;
+      case "Opaque" -> OPAQUE;
+      case "Unknown" -> UNKNOWN;
+      default -> null;
+    };
+  }
+
   @Override
   public @NotNull String name() {
     return name;
@@ -34,7 +46,16 @@ public record CompactPrimitiveType(String name) implements CompactType {
     }
     if ("Bytes".equals(name) && other.name().startsWith("Bytes")) return true;
     if (name != null && name.startsWith("Bytes") && "Bytes".equals(other.name())) return true;
-    if (CompactTypeInferenceUtil.isGenericAssignable(this.name, other.name())) return true;
+    if (other instanceof CompactTypeVariable) {
+      return true;
+    }
+    if (this.name != null) {
+      String baseThis = CompactTypeInferenceUtil.getRawTypeName(this.name);
+      String baseOther = CompactTypeInferenceUtil.getRawTypeName(other.name());
+      if (baseThis.equals(baseOther) && (this.name.contains("<") || other.name().contains("<"))) {
+        return CompactTypeInferenceUtil.isGenericAssignable(this.name, other.name());
+      }
+    }
     return false;
   }
 

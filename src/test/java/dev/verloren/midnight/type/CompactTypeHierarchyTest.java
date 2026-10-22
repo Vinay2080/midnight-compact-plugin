@@ -18,8 +18,8 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     com.intellij.lang.LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-        dev.verloren.midnight.CompactLanguage.INSTANCE,
-        new dev.verloren.midnight.parser.CompactParserDefinition()
+            dev.verloren.midnight.CompactLanguage.INSTANCE,
+            new dev.verloren.midnight.parser.CompactParserDefinition()
     );
   }
 
@@ -45,9 +45,9 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
 
   public void testTypeSubstitutorDirectVariableReplacement() {
     CompactTypeSubstitutor substitutor = CompactTypeSubstitutor.builder()
-        .put("T", CompactPrimitiveType.FIELD)
-        .put("E", CompactPrimitiveType.BOOLEAN)
-        .build();
+            .put("T", CompactPrimitiveType.FIELD)
+            .put("E", CompactPrimitiveType.BOOLEAN)
+            .build();
 
     assertFalse(substitutor.isEmpty());
     assertEquals(4, substitutor.getMappings().size()); // Normalized with and without #
@@ -68,13 +68,13 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
 
   public void testParameterizedTypeSubstitutionStdlib() {
     CompactTypeSubstitutor substitutor = CompactTypeSubstitutor.builder()
-        .put("A", CompactPrimitiveType.FIELD)
-        .put("B", CompactPrimitiveType.BOOLEAN)
-        .build();
+            .put("A", CompactPrimitiveType.FIELD)
+            .put("B", CompactPrimitiveType.BOOLEAN)
+            .build();
 
     CompactType eitherType = new CompactParameterizedType("Either", List.of(
-        new CompactTypeVariable("A"),
-        new CompactTypeVariable("B")
+            new CompactTypeVariable("A"),
+            new CompactTypeVariable("B")
     ));
 
     CompactType substituted = substitutor.substitute(eitherType);
@@ -85,13 +85,13 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
   public void testParameterizedTypeSubstitutionUserDefinedMirror() {
     // Mandatory Mirror Test: User-defined generic struct Result<TVal, TErr>
     CompactTypeSubstitutor substitutor = CompactTypeSubstitutor.builder()
-        .put("TVal", CompactPrimitiveType.FIELD)
-        .put("TErr", CompactUintType.ofBits(32))
-        .build();
+            .put("TVal", CompactPrimitiveType.FIELD)
+            .put("TErr", CompactUintType.ofBits(32))
+            .build();
 
     CompactType resultType = new CompactParameterizedType("Result", List.of(
-        new CompactTypeVariable("TVal"),
-        new CompactTypeVariable("TErr")
+            new CompactTypeVariable("TVal"),
+            new CompactTypeVariable("TErr")
     ));
 
     CompactType substituted = substitutor.substitute(resultType);
@@ -102,9 +102,9 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
   public void testNestedParameterizedTypeSubstitutionMirror() {
     // Nested mirror test: Pair<A, Box<B>> -> Pair<Field, Box<Boolean>>
     CompactTypeSubstitutor substitutor = CompactTypeSubstitutor.builder()
-        .put("A", CompactPrimitiveType.FIELD)
-        .put("B", CompactPrimitiveType.BOOLEAN)
-        .build();
+            .put("A", CompactPrimitiveType.FIELD)
+            .put("B", CompactPrimitiveType.BOOLEAN)
+            .build();
 
     CompactType boxB = new CompactParameterizedType("Box", List.of(new CompactTypeVariable("B")));
     CompactType pairType = new CompactParameterizedType("Pair", List.of(new CompactTypeVariable("A"), boxB));
@@ -115,12 +115,12 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
 
   public void testStructTypeSubstitutionMirror() {
     CompactTypeSubstitutor substitutor = CompactTypeSubstitutor.builder()
-        .put("T", CompactPrimitiveType.FIELD)
-        .build();
+            .put("T", CompactPrimitiveType.FIELD)
+            .build();
 
     CompactStructType rawStruct = new CompactStructType("CustomStruct", Map.of(
-        "value", new CompactTypeVariable("T"),
-        "flag", CompactPrimitiveType.BOOLEAN
+            "value", new CompactTypeVariable("T"),
+            "flag", CompactPrimitiveType.BOOLEAN
     ));
 
     CompactType substituted = substitutor.substitute(rawStruct);
@@ -162,44 +162,44 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
 
   public void testBuildSubstitutorFromPsiDeclaration() {
     myFixture.configureByText(CompactFileType.INSTANCE,
-        """
-        struct Result<TVal, TErr> {
-          value: TVal,
-          error: TErr
-        }
-        """
+            """
+                    struct Result<TVal, TErr> {
+                      value: TVal,
+                      error: TErr
+                    }
+                    """
     );
 
     CompactStructDefinitionImpl structDef = PsiTreeUtil.findChildOfType(
-        myFixture.getFile(),
-        CompactStructDefinitionImpl.class
+            myFixture.getFile(),
+            CompactStructDefinitionImpl.class
     );
     assertNotNull("Struct definition should be found", structDef);
 
     CompactTypeSubstitutor substitutor = CompactTypeInferenceUtil.buildSubstitutor(
-        structDef,
-        List.of(CompactPrimitiveType.FIELD, CompactPrimitiveType.BOOLEAN)
+            structDef,
+            List.of(CompactPrimitiveType.FIELD, CompactPrimitiveType.BOOLEAN)
     );
 
     assertFalse(substitutor.isEmpty());
     assertEquals(
-        CompactPrimitiveType.FIELD,
-        substitutor.substitute(new CompactTypeVariable("TVal"))
+            CompactPrimitiveType.FIELD,
+            substitutor.substitute(new CompactTypeVariable("TVal"))
     );
     assertEquals(
-        CompactPrimitiveType.BOOLEAN,
-        substitutor.substitute(new CompactTypeVariable("TErr"))
+            CompactPrimitiveType.BOOLEAN,
+            substitutor.substitute(new CompactTypeVariable("TErr"))
     );
   }
 
   public void testParameterizedTypeAssignabilityWithVariables() {
     CompactType concreteResult = new CompactParameterizedType("Result", List.of(
-        CompactPrimitiveType.FIELD,
-        CompactPrimitiveType.BOOLEAN
+            CompactPrimitiveType.FIELD,
+            CompactPrimitiveType.BOOLEAN
     ));
     CompactType genericResult = new CompactParameterizedType("Result", List.of(
-        new CompactTypeVariable("TVal"),
-        new CompactTypeVariable("TErr")
+            new CompactTypeVariable("TVal"),
+            new CompactTypeVariable("TErr")
     ));
 
     // A concrete instantiation unifies with the generic signature
@@ -208,5 +208,33 @@ public class CompactTypeHierarchyTest extends BasePlatformTestCase {
     // Struct type with matching name is compatible
     CompactStructType structType = new CompactStructType("Result", Map.of());
     assertTrue(structType.isAssignableTo(genericResult));
+  }
+
+  public void testPrimitiveAndStructTypeVariableDistinctionMirror() {
+    // Builtin primitives must not be identified as type variables
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Boolean"));
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Field"));
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Bytes"));
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Opaque"));
+
+    // User-defined structs/nominal types must not be identified as type variables
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Token"));
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Result"));
+    assertFalse(CompactTypeInferenceUtil.isTypeVariable("Coin"));
+
+    // Valid type variables
+    assertTrue(CompactTypeInferenceUtil.isTypeVariable("T"));
+    assertTrue(CompactTypeInferenceUtil.isTypeVariable("#T"));
+    assertTrue(CompactTypeInferenceUtil.isTypeVariable("TVal"));
+    assertTrue(CompactTypeInferenceUtil.isTypeVariable("TErr"));
+
+    // Primitive distinctness: Boolean cannot be assigned to Field
+    assertFalse(CompactPrimitiveType.BOOLEAN.isAssignableTo(CompactPrimitiveType.FIELD));
+    assertFalse(CompactPrimitiveType.FIELD.isAssignableTo(CompactPrimitiveType.BOOLEAN));
+
+    // User-defined nominal struct cannot be assigned to Boolean or Field
+    CompactPrimitiveType tokenType = new CompactPrimitiveType("Token");
+    assertFalse(tokenType.isAssignableTo(CompactPrimitiveType.FIELD));
+    assertFalse(CompactPrimitiveType.FIELD.isAssignableTo(tokenType));
   }
 }

@@ -23,9 +23,9 @@ public class CompactTypeInferenceUtil {
    * Infers the resulting type of binary expression {@code left op right}.
    */
   public static @NotNull CompactType inferBinaryExprType(
-      @NotNull CompactExpression left,
-      @NotNull IElementType operator,
-      @NotNull CompactExpression right
+          @NotNull CompactExpression left,
+          @NotNull IElementType operator,
+          @NotNull CompactExpression right
   ) {
     CompactType leftType = left.getType();
 
@@ -34,17 +34,17 @@ public class CompactTypeInferenceUtil {
     }
 
     if (operator == CompactTokenTypes.EQEQ || operator == CompactTokenTypes.NEQ
-        || operator == CompactTokenTypes.LT || operator == CompactTokenTypes.LTE
-        || operator == CompactTokenTypes.GT || operator == CompactTokenTypes.GTE) {
+            || operator == CompactTokenTypes.LT || operator == CompactTokenTypes.LTE
+            || operator == CompactTokenTypes.GT || operator == CompactTokenTypes.GTE) {
       return CompactPrimitiveType.BOOLEAN;
     }
 
     if (operator == CompactTokenTypes.PLUS || operator == CompactTokenTypes.MINUS
-        || operator == CompactTokenTypes.STAR || operator == CompactTokenTypes.SLASH
-        || operator == CompactTokenTypes.PERCENT) {
+            || operator == CompactTokenTypes.STAR || operator == CompactTokenTypes.SLASH
+            || operator == CompactTokenTypes.PERCENT) {
       CompactType rightType = right.getType();
       if (leftType instanceof CompactNumericLiteralType && !(rightType instanceof CompactNumericLiteralType)
-          && !CompactPrimitiveType.UNKNOWN.equals(rightType)) {
+              && !CompactPrimitiveType.UNKNOWN.equals(rightType)) {
         return rightType;
       }
       return leftType;
@@ -71,6 +71,10 @@ public class CompactTypeInferenceUtil {
     if (trimmed.isEmpty()) {
       return CompactPrimitiveType.UNKNOWN;
     }
+    CompactPrimitiveType primitive = CompactPrimitiveType.fromName(trimmed);
+    if (primitive != null) {
+      return primitive;
+    }
     if (trimmed.matches("^\\d+$")) {
       return new CompactNumericLiteralType(trimmed);
     }
@@ -83,8 +87,8 @@ public class CompactTypeInferenceUtil {
       String rawName = trimmed.substring(0, angleIndex).trim();
       List<String> rawArgs = parseGenericArgs(trimmed);
       List<CompactType> argTypes = rawArgs.stream()
-          .map(CompactTypeInferenceUtil::parseType)
-          .toList();
+              .map(CompactTypeInferenceUtil::parseType)
+              .toList();
       return new CompactParameterizedType(rawName, argTypes);
     }
     if (isTypeVariable(trimmed)) {
@@ -137,11 +141,11 @@ public class CompactTypeInferenceUtil {
    * Constructs a {@link CompactTypeSubstitutor} mapping declared generic parameters to concrete argument types.
    */
   public static @NotNull CompactTypeSubstitutor buildSubstitutor(
-      @NotNull PsiElement declaration,
-      @NotNull List<CompactType> typeArguments
+          @NotNull PsiElement declaration,
+          @NotNull List<CompactType> typeArguments
   ) {
     List<CompactGenericParameterImpl> params = new ArrayList<>(
-        PsiTreeUtil.findChildrenOfType(declaration, CompactGenericParameterImpl.class)
+            PsiTreeUtil.findChildrenOfType(declaration, CompactGenericParameterImpl.class)
     );
     if (params.isEmpty() || typeArguments.isEmpty()) {
       return CompactTypeSubstitutor.empty();
@@ -169,11 +173,11 @@ public class CompactTypeInferenceUtil {
   }
 
   public static @NotNull Map<String, String> buildGenericSubstitution(
-      @NotNull PsiElement declaration,
-      @NotNull List<String> genericArgs
+          @NotNull PsiElement declaration,
+          @NotNull List<String> genericArgs
   ) {
     List<CompactGenericParameterImpl> params = new ArrayList<>(
-        PsiTreeUtil.findChildrenOfType(declaration, CompactGenericParameterImpl.class)
+            PsiTreeUtil.findChildrenOfType(declaration, CompactGenericParameterImpl.class)
     );
     if (params.isEmpty() || genericArgs.isEmpty()) {
       return Map.of();
@@ -198,17 +202,49 @@ public class CompactTypeInferenceUtil {
     if (from.equals(to)) {
       return true;
     }
-    CompactType fromType = parseType(from);
-    CompactType toType = parseType(to);
-    return fromType.isAssignableTo(toType);
+    String baseFrom = getRawTypeName(from);
+    String baseTo = getRawTypeName(to);
+    if (!baseFrom.equals(baseTo)) {
+      return false;
+    }
+    List<String> argsFrom = parseGenericArgs(from);
+    List<String> argsTo = parseGenericArgs(to);
+    if (argsFrom.isEmpty() || argsTo.isEmpty()) {
+      return true;
+    }
+    if (argsFrom.size() != argsTo.size()) {
+      return false;
+    }
+    for (int i = 0; i < argsFrom.size(); i++) {
+      String a = argsFrom.get(i);
+      String b = argsTo.get(i);
+      if (a.equals(b)) {
+        continue;
+      }
+      if (isTypeVariable(a) || isTypeVariable(b)) {
+        continue;
+      }
+      CompactType typeA = parseType(a);
+      CompactType typeB = parseType(b);
+      if (!typeA.isAssignableTo(typeB)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static boolean isTypeVariable(@NotNull String name) {
     if (name.isEmpty()) {
       return false;
     }
+    if (CompactPrimitiveType.fromName(name) != null) {
+      return false;
+    }
     String cleanName = name.startsWith("#") ? name.substring(1) : name;
-    return cleanName.matches("^[A-Z][0-9]?$") || cleanName.matches("^T[0-9]*$")
-        || cleanName.matches("^[A-Z][a-zA-Z0-9]*$");
+    if (name.startsWith("#")) {
+      return !cleanName.isEmpty();
+    }
+    return cleanName.matches("^[A-Z][0-9]?$") || cleanName.matches("^T[0-9]+$")
+            || cleanName.matches("^T[A-Z][a-zA-Z0-9]*$");
   }
 }
