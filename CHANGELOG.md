@@ -14,6 +14,8 @@
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
 ### Fixed
+- Fixed false-negative type checking where mismatched types in return statements and expressions were not flagged as errors due to overly broad generic type parameter detection.
+- Fixed code completion ranking in return statements so variables matching the expected return type correctly appear ahead of unrelated types.
 - Fixed an issue where cancelling a compiler toolchain download on Windows could fail due to file locks, leaving corrupted temporary files behind.
 - Hardened archive extraction for downloaded compiler toolchains against directory traversal risks.
 - Improved responsiveness and stability when switching or detecting Compact compiler versions across local systems and WSL environments.
