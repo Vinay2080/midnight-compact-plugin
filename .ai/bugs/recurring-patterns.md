@@ -80,3 +80,14 @@ Level 3: Chronic Anti-Pattern (>= 3 Occurrences)
 - **Enforcement:**
   - All file path construction and archive unpack operations must normalize paths via `toPath().normalize()` and verify `targetPath.startsWith(destDirPath)`.
 
+### Pattern PAT-006: Type Parameter Over-Generalization & Assignability Collapse
+- **Category:** Semantic Analysis & Type Inference
+- **Occurrences:** 2 incidents
+  1. `2026-09-20-inspection-generic-struct-type-and-field-resolution.md` (Uninstantiated generic type assignability)
+  2. `2026-10-23-type-hierarchy-variable-assignability.md` (Over-broad regex matching in `isTypeVariable` and loss of base type check in `isGenericAssignable`)
+- **Root Cause:** Overly permissive regex matching or unconstrained unification in type parsing (`isTypeVariable`) and generic assignability treating nominal and primitive types as generic type variables, collapsing type distinctness across inspections and completion.
+- **Escalation Level:** **Level 2 (Emerging Anti-Pattern)**
+- **Enforcement:**
+  - Rule codified in `.agents/rules/architecture.rules.md`. Type inference engines must strictly separate builtin primitives, nominal struct/enum types, and generic type parameters with explicit whitelist/exclusion guards.
+
+
