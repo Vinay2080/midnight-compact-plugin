@@ -34,8 +34,14 @@ Your objective is to:
 
 Before modifying or finalizing any code, investigate how the target interacts with the surrounding system. Do not isolate the target file—trace its entire ecosystem.
 
-### 3.1 Usage Discovery
-* Search for every class, method, interface, and component that directly or indirectly references, instantiates, or calls the target.
+### 3.1 Usage Discovery (MCP-First Priority)
+* **Strict MCP Tool Precedence**: AI agents **MUST use JetBrains MCP tools first** rather than issuing CLI search commands (`grep`, `ripgrep`, `find`, `Select-String`):
+  ```text
+  execute_tool search_symbol --q "<TargetSymbol>"
+  execute_tool get_symbol_info --filePath "<path>" --offset <offset>
+  execute_tool get_file_problems --filePath "<path>"
+  ```
+* Search for every class, method, interface, and component that directly or indirectly references, instantiates, or calls the target using IntelliJ's live index.
 * Check IntelliJ Platform extension points (`plugin.xml`), registrations, listeners, and service injections.
 * Identify whether consumers rely on direct concrete references, interfaces, or dynamic lookups.
 * Inspect all related unit tests, test fixtures, and test utilities.
@@ -199,14 +205,27 @@ Every finding must be assigned one of four explicit action tiers:
 
 ### Step 6: Code Execution (If Mode = "REVIEW & APPLY")
 * Execute the edits surgically using safe file replacement tools.
+* **AST Refactoring via MCP**: Use `execute_tool rename_refactoring --filePath "<path>" --offset <offset> --newName "<newName>"` for cross-file symbol renames.
+* **Format via MCP**: Immediately apply formatting via `execute_tool reformat_file --filePath "<path>"`.
+* **Diagnostics via MCP**: Verify `execute_tool get_file_problems` and `execute_tool lint_files` return 0 errors and 0 warnings.
 * Add or update unit tests (including mirror tests and error recovery tests).
 * Ensure all files conform to the line limit (<= 400 lines) and method limit (<= 40 lines).
-* Run project verification (e.g., `./scripts/verify-patch.ps1 -Quick` or `./gradlew test`).
+* **Test Verification (Priority 1 MCP)**: Execute tests via JetBrains MCP:
+  ```text
+  execute_tool execute_run_configuration --name "<TestRunConfigurationName>"
+  ```
+* **Multi-Gate Runner (Priority 2 CLI)**: Run project verification runner for full architectural and plugin structure checks:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -Quick
+  ```
 * Document all verified changes.
 
 ### Step 7: Verification & Test Checklist
-* [ ] All tests passing with zero failures.
-* [ ] No new compiler warnings, deprecations, or lint errors.
+* [ ] Live problems check via JetBrains MCP (`get_file_problems`) returns 0 errors, 0 warnings.
+* [ ] Full inspection via JetBrains MCP (`lint_files`) returns 0 issues.
+* [ ] Code formatting via JetBrains MCP (`reformat_file`) applied to all touched files.
+* [ ] Tests executed via JetBrains MCP (`execute_run_configuration`) pass 100%.
+* [ ] Multi-gate verification runner (`verify-patch.ps1`) passes with 0 failures.
 * [ ] Incomplete code / error resilience validated.
 * [ ] Mirror test coverage confirmed for standard vs. custom types.
 * [ ] Threading invariants (`ReadAction` / `WriteCommandAction` / zero EDT blocking) verified.

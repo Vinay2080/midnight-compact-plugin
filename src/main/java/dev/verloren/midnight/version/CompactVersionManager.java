@@ -123,18 +123,28 @@ public final class CompactVersionManager {
     return clean;
   }
 
+  public static @Nullable String getLedgerVersionForToolchain(@NotNull String toolchainVersion) {
+    String clean = cleanVersion(toolchainVersion);
+    for (ReleaseMapping r : RELEASES) {
+      if (r.toolchain.equals(clean)) {
+        return r.ledger;
+      }
+    }
+    return null;
+  }
+
   public static @NotNull String getVersionDescription(@NotNull String version) {
     String clean = cleanVersion(version);
     for (ReleaseMapping r : RELEASES) {
       if (r.toolchain.equals(clean)) {
-        String base = "Compact language " + r.language;
+        String base = "Language: " + r.language;
         if (r.ledger != null) {
-          return base + " (" + r.ledger + ")";
+          return base + " | " + r.ledger;
         }
-        return r.isLegacy ? base + " (Legacy Toolchain)" : base;
+        return r.isLegacy ? base + " | Legacy Toolchain" : base;
       }
     }
-    return "Compact compiler toolchain v" + clean;
+    return "Language: " + clean;
   }
 
   public static @NotNull SequencedMap<String, String> getInstalledVersions() {
@@ -277,6 +287,11 @@ public final class CompactVersionManager {
     return isArm
         ? "compactc_v" + version + "_aarch64-unknown-linux-musl.zip"
         : "compactc_v" + version + "_x86_64-unknown-linux-musl.zip";
+  }
+
+  public static @NotNull String getReleaseDownloadUrl(@NotNull String version) {
+    String clean = cleanVersion(version);
+    return "https://github.com/midnightntwrk/compact/releases/download/compactc-v" + clean + "/" + resolveReleaseAssetName(clean);
   }
 
   public static void uninstallVersion(@NotNull String version) {

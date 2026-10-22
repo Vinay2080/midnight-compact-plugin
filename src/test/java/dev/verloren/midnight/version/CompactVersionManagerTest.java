@@ -75,6 +75,8 @@ public class CompactVersionManagerTest {
 
   @Test
   public void testGetVersionDescription() {
+    Assert.assertEquals("Language: 0.27.0 | Midnight Ledger 9", CompactVersionManager.getVersionDescription("0.35.0"));
+    Assert.assertEquals("Midnight Ledger 9", CompactVersionManager.getLedgerVersionForToolchain("0.35.0"));
     Assert.assertTrue(CompactVersionManager.getVersionDescription("0.35.0").contains("0.27.0"));
     Assert.assertTrue(CompactVersionManager.getVersionDescription("0.35.0").contains("Midnight Ledger 9"));
     Assert.assertTrue(CompactVersionManager.getVersionDescription("0.34.0").contains("0.26.0"));
@@ -89,6 +91,10 @@ public class CompactVersionManagerTest {
     Assert.assertNotNull(assetName35);
     Assert.assertTrue(assetName35.startsWith("compactc_v0.35.0_"));
     Assert.assertTrue(assetName35.endsWith(".zip"));
+
+    String downloadUrl35 = CompactVersionManager.getReleaseDownloadUrl("0.35.0");
+    Assert.assertTrue(downloadUrl35.startsWith("https://github.com/midnightntwrk/compact/releases/download/compactc-v0.35.0/compactc_v0.35.0_"));
+    Assert.assertTrue(downloadUrl35.endsWith(".zip"));
 
     String assetName = CompactVersionManager.getReleaseAssetName("0.34.0");
     Assert.assertNotNull(assetName);

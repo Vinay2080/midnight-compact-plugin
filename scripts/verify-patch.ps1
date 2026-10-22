@@ -12,12 +12,15 @@
     Specifies a specific test class or pattern to run (e.g. dev.verloren.midnight.CompactBundleTest).
 .PARAMETER StrictBranch
     Fails Gate 0 if running directly on the master branch.
+.PARAMETER Clean
+    Forces a clean test execution (cleanTest), bypassing the Gradle test cache.
 #>
 param(
     [switch]$Quick,
     [switch]$AllTests,
     [string]$TestPattern = "",
-    [switch]$StrictBranch
+    [switch]$StrictBranch,
+    [switch]$Clean
 )
 
 $ErrorActionPreference = "Continue"
@@ -127,7 +130,10 @@ if ($report.gates.compilation.passed -and $report.gates.static_analysis.passed) 
 # ----------------------------------------------------
 if ($report.gates.compilation.passed -and $report.gates.static_analysis.passed -and -not $Quick) {
     Write-Host "`n[Gate 3] Running Automated Tests..." -ForegroundColor Yellow
-    $gradleArgs = @("cleanTest", "test", "--console=plain", "--no-configuration-cache")
+    $gradleArgs = @("test", "--console=plain")
+    if ($Clean) {
+        $gradleArgs = @("cleanTest") + $gradleArgs
+    }
     
     if ($AllTests) {
         Write-Host "  Running complete test suite (all tests)..." -ForegroundColor Cyan

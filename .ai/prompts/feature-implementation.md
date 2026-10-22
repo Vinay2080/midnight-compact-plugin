@@ -16,8 +16,8 @@ Before executing any feature implementation actions, the AI agent **MUST** verif
    - [`inspections-annotators.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/inspections-annotators.rules.md) (3-phase annotator lifecycle, quick-fix previews)
    - [`toolchain-wsl.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/toolchain-wsl.rules.md) (WSL translation, timeout sandboxing)
 3. The feature requirements are grounded in Compact compiler sources (`compact/compiler/`) or language specifications.
-4. The IntelliJ project is open and the `idea` MCP server is responsive.
-5. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
+4. The IntelliJ project is open and the `idea` MCP server is responsive. **AI agent MUST strictly use JetBrains MCP tools first** for code intelligence, symbol search, diagnostics, formatting, refactoring, and test execution before using terminal CLI commands.
+5. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available (for secondary multi-gate verification).
 
 ---
 
@@ -29,19 +29,19 @@ The agent must execute these 8 steps in exact chronological order:
 [Step 1: Workspace Isolation] ─── Create dedicated branch ai/<feature-slug>
         │
         ▼
-[Step 2: Ground Truth & Arch Pre-Flight] Load .agents/rules/, check layer boundaries & ADRs
+[Step 2: Ground Truth & Arch Pre-Flight] MCP search_symbol & get_symbol_info -> check layer boundaries & ADRs
         │
         ▼
 [Step 3: Modular Java 25 Implementation] Modern Java 25, <= 400 lines/file, SRP
         │
         ▼
-[Step 4: Multi-Tier & Mirror Testing] Golden AST, error recovery, stdlib + user-defined mirror tests
+[Step 4: Multi-Tier & Mirror Testing] Golden AST, error recovery, stdlib + mirror tests; MCP run config first
         │
         ▼
-[Step 5: Post-Edit Inspection] ── get_file_problems & lint_files via MCP
+[Step 5: Post-Edit Inspection] ── get_file_problems, lint_files & reformat_file via MCP
         │
         ▼
-[Step 6: Test & Arch Verification] scripts/verify-patch.ps1 (all gates & arch tests pass)
+[Step 6: Test & Arch Verification] MCP execute_run_configuration first -> scripts/verify-patch.ps1
         │
         ▼
 [Step 7: State Sync & Changelog] Update project-state.yaml, current-state.md, CHANGELOG.md
@@ -58,8 +58,13 @@ The agent must execute these 8 steps in exact chronological order:
   ```
   *(Never edit production files directly on `master`.)*
 
-### Step 2: Ground Truth & Architectural Alignment (Architectural Pre-Flight)
+### Step 2: Ground Truth & Architectural Alignment (MCP Symbol Discovery First)
 - Load and adhere to all active contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/).
+- **MCP Codebase Navigation (Priority 1)**: Use JetBrains MCP tools to explore reference symbols and declarations first:
+  ```text
+  execute_tool search_symbol --q "<TargetOrReferenceClass>"
+  execute_tool get_symbol_info --filePath "<path>" --offset <offset>
+  ```
 - Ground the feature in authoritative sources:
   - Official Compact compiler source in `compact/compiler/` (e.g. `parser.ss`, `standard-library.compact`, or `.ai/context/compact-semantics.md`).
   - Production reference plugins (`intellij-rust`, `intellij-solidity`, `intellij-scala`, `intellij-elixir`, `Rplugin`).
@@ -83,25 +88,34 @@ The agent must execute these 8 steps in exact chronological order:
   - Threading: PSI reads inside `ReadAction`; PSI mutations on EDT inside `WriteCommandAction`; zero `process.waitFor()` on EDT.
   - AST resilience: Guard against `null` and `PsiErrorElement`. Loops must advance tokens.
 
-### Step 4: Multi-Tier & "User-Defined Mirror" Test Implementation
+### Step 4: Multi-Tier & "User-Defined Mirror" Test Implementation (MCP Test Execution First)
 - Implement comprehensive automated tests in `src/test/java/dev/verloren/midnight/...`:
   - **Tier 1**: Golden AST tree tests (`.compact` -> `.txt`) asserting structure conformance.
   - **Tier 2**: Incomplete/broken code recovery (deliberately malformed syntax must produce `PsiErrorElement` without throwing exceptions or freezing editor).
   - **Tier 3**: Semantic resolution, type checking, or scope visibility (`VALUE` vs `TYPE` namespace separation).
   - **Tier 4**: Concurrency, cancellation, and stress resilience.
   - **Mandatory Generalization Guard**: If testing a standard library feature (`Either`, `Maybe`, `Vector`, `default`), implement a parallel **User-Defined Mirror Test** exercising identical behavior on a user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
+- Execute new tests via JetBrains MCP First (Priority 1):
+  ```text
+  execute_tool execute_run_configuration --name "<TestRunConfigurationName>"
+  ```
 
-### Step 5: Continuous Post-Edit Inspection Loop via MCP
-- Immediately after EVERY file edit, run IntelliJ inspections via MCP:
+### Step 5: Continuous Post-Edit Inspection Loop via MCP (Priority 1 Mandatory)
+- Immediately after EVERY file edit, run IntelliJ inspections and formatting via MCP:
   ```text
   execute_tool get_file_problems --filePath "<absolute-path>"
   execute_tool lint_files --files [\"<absolute-path>\"]
+  execute_tool reformat_file --filePath "<absolute-path>"
   ```
 - Strict Zero-Tolerance: 0 errors (`ERROR`), 0 warnings (`WARNING`), 0 weak warnings (`WEAK WARNING`), 0 grammar/spelling errors, and all modern Java 25 suggestions applied.
-- Fix all detected issues immediately before moving to the next edit.
+- Fix all detected issues immediately before moving to the next edit. AI MUST NOT deprioritize MCP tools in favor of CLI tools.
 
-### Step 6: Multi-Gate & Architectural Verification Harness
-- Run the automated verification harness:
+### Step 6: Multi-Gate & Architectural Verification Harness (MCP First, then Multi-Gate Runner)
+- **Priority 1 (JetBrains MCP)**: Run the test suite configuration in the IDE:
+  ```text
+  execute_tool execute_run_configuration --name "<FeatureTestSuiteConfiguration>"
+  ```
+- **Priority 2 (Verification Script)**: Run the automated verification harness to validate plugin descriptor and architecture:
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<NewFeatureTestClass>"
   ```
@@ -150,10 +164,10 @@ The agent must execute these 8 steps in exact chronological order:
 | Gate | Requirement | Mandatory Evidence in Agent Output |
 |:---|:---|:---|
 | **Gate 0: Isolation** | Branch created from master | Output of `git rev-parse --abbrev-ref HEAD` showing `ai/<feature-slug>` |
-| **Gate 1: Specification** | Ground truth cited | Source file in `compact/compiler/` or reference plugin cited |
+| **Gate 1: Specification** | Ground truth cited | Source file in `compact/compiler/` or reference plugin cited (via MCP `search_symbol`) |
 | **Gate 2: Java 25 & Invariants** | Clean modern implementation | Summary of records, sequenced collections, and threading guards used |
-| **Gate 3: Multi-Tier Tests** | Tiers 1-3 tests added | Test class names and count of added test methods |
-| **Gate 4: MCP Inspection** | 0 errors, 0 warnings | Tool output of `get_file_problems` (`errors: []`) and `lint_files` (`items: []`) |
+| **Gate 3: Multi-Tier Tests** | Tiers 1-3 tests added | Test class names and MCP test execution output (`execute_run_configuration`) |
+| **Gate 4: MCP Inspection** | 0 errors, 0 warnings | Tool output of `get_file_problems` (`errors: []`), `lint_files` (`items: []`), and `reformat_file` |
 | **Gate 5: Verification Harness** | All gates pass | Contents of [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) (`overall_status: "PASSED"`) |
 | **Gate 6: State Sync** | YAML & Markdown updated | Updated test count in `.ai/project-state.yaml` and `current-state.md` |
 | **Gate 7: Changelog** | User-facing entry | Quoted user note under `## [Unreleased]` in `CHANGELOG.md` |

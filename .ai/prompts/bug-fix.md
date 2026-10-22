@@ -15,8 +15,8 @@ Before executing any bug fix actions, the AI agent **MUST** verify:
    - [`modern-java25.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/modern-java25.rules.md) (Java 25 records, pattern matching, sequenced collections)
    - [`inspections-annotators.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/inspections-annotators.rules.md) (3-phase annotator lifecycle, quick-fix previews)
    - [`toolchain-wsl.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/toolchain-wsl.rules.md) (WSL translation, timeout sandboxing)
-3. The IntelliJ project is open and the `idea` MCP server is responsive.
-4. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
+3. The IntelliJ project is open and the `idea` MCP server is responsive. **AI agent MUST strictly use JetBrains MCP tools first** for code intelligence, symbol search, diagnostics, formatting, refactoring, and test execution before using terminal CLI commands.
+4. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available (for secondary multi-gate verification).
 
 ---
 
@@ -28,10 +28,10 @@ The agent must execute these 13 steps in exact chronological order without skipp
 [Step 1: Workspace Isolation] ─── Create dedicated branch ai/fix-<slug>
         │
         ▼
-[Step 2: Pre-Debug & Rules Load]  Read .agents/rules/ & query .ai/bugs/
+[Step 2: Pre-Debug & Rules Load]  Query MCP (search_symbol/get_symbol_info) & search .ai/bugs/
         │
         ▼
-[Step 3: Reproduction & Mirror Test] Write failing stdlib + user-defined mirror tests
+[Step 3: Reproduction & Mirror Test] Write failing tests; run via MCP execute_run_configuration first
         │
         ▼
 [Step 4: Architectural Root Cause] Trace defect to root semantic layer (Type/Scope/UI)
@@ -40,10 +40,10 @@ The agent must execute these 13 steps in exact chronological order without skipp
 [Step 5: Modular Java 25 Fix] ─── Fix at root layer; enforce <= 400-line limits & records
         │
         ▼
-[Step 6: Post-Edit Inspection] ── get_file_problems & lint_files via MCP
+[Step 6: Post-Edit Inspection] ── get_file_problems, lint_files & reformat_file via MCP
         │
         ▼
-[Step 7: Test & Arch Verification] scripts/verify-patch.ps1 & CompactArchitectureTest
+[Step 7: Test & Arch Verification] MCP execute_run_configuration first -> scripts/verify-patch.ps1
         │
         ▼
 [Step 8: Bug Knowledge Record] ── Create .ai/bugs/YYYY-MM-DD-...md & update index
@@ -72,16 +72,25 @@ The agent must execute these 13 steps in exact chronological order without skipp
   ```
   *(Never edit production files directly on `master`.)*
 
-### Step 2: Pre-Debug Search & Rules Context Loading
+### Step 2: Pre-Debug Search & Rules Context Loading (MCP First)
 - Load and adhere to all active contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/).
-- Search [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) and [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md) using `grep_search` or `find_by_name`.
+- **MCP Symbol Discovery (Priority 1)**: Use JetBrains MCP tools to explore code, declarations, and usages before using CLI search tools:
+  ```text
+  execute_tool search_symbol --q "<DefectClassNameOrSymbol>"
+  execute_tool get_symbol_info --filePath "<path>" --offset <offset>
+  ```
+- Search [`.ai/bugs/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/) and [`.ai/bugs/recurring-patterns.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/bugs/recurring-patterns.md).
 - Search terms must include: affected class name, subsystem, error message/symptom.
 - Record whether matching or related patterns were found.
 
-### Step 3: Reproduction Test & "User-Defined Mirror" Test
+### Step 3: Reproduction Test & "User-Defined Mirror" Test (MCP Execution First)
 - Before editing production code, write a minimal, targeted failing test in `src/test/java/dev/verloren/midnight/...`.
 - **Mandatory Generalization Guard**: If the defect involves a standard library construct (`Either`, `Maybe`, `Vector`, `default`), write a companion **User-Defined Mirror Test** exercising identical behavior on a user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
-- Execute the test:
+- **Execute the test via JetBrains MCP First (Priority 1)**:
+  ```text
+  execute_tool execute_run_configuration --name "<TestRunConfigurationName>"
+  ```
+- If the IDE run configuration is not configured or in headless environments, fallback to the verification script (Priority 2):
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<FullClassName>.<testMethodName>"
   ```
@@ -103,16 +112,21 @@ The agent must execute these 13 steps in exact chronological order without skipp
   - **Threading**: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI writes; zero blocking `waitFor()` on EDT.
   - **AST resilience**: Guard against `null` and `PsiErrorElement`. Loops must advance lexer/builder.
 
-### Step 6: Post-Edit Inspection Loop via MCP
-- Immediately after editing each file, run IntelliJ MCP inspection:
+### Step 6: Post-Edit Inspection Loop via MCP (Priority 1 Mandatory)
+- Immediately after editing each file, run IntelliJ MCP inspection and code style formatter:
   ```text
   execute_tool get_file_problems --filePath "<absolute-path>"
   execute_tool lint_files --files [\"<absolute-path>\"]
+  execute_tool reformat_file --filePath "<absolute-path>"
   ```
-- Verify 0 errors, 0 warnings, 0 weak warnings, and 0 unapplied language modernization hints. Fix any flagged issues immediately.
+- Strict Zero-Tolerance: 0 errors, 0 warnings, 0 weak warnings, and 0 unapplied language modernization hints. Fix any flagged issues immediately. AI MUST NOT skip or deprioritize MCP tools in favor of CLI compilers.
 
-### Step 7: Test & Architectural Verification
-- Run the automated verification harness including architecture compliance:
+### Step 7: Test & Architectural Verification (MCP First, then Multi-Gate Runner)
+- **Priority 1 (JetBrains MCP)**: Re-run tests via live IDE run configuration:
+  ```text
+  execute_tool execute_run_configuration --name "<TestRunConfigurationName>"
+  ```
+- **Priority 2 (Automated Verification Runner)**: Execute the multi-gate verification runner to validate full architecture and plugin integrity:
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<FullClassName>"
   ```
@@ -178,10 +192,10 @@ An AI agent **CANNOT** declare completion without producing the following verifi
 | Gate | Requirement | Mandatory Evidence in Agent Output |
 |:---|:---|:---|
 | **Gate 0: Isolation** | Branch created from master | Output of `git rev-parse --abbrev-ref HEAD` showing `ai/fix-...` |
-| **Gate 1: Pre-Debug Search** | Query executed in `.ai/bugs/` | Explicit statement of search query and citing matching bug ID or confirming `0 prior matching records found` |
-| **Gate 2: Reproduction** | Failing test executed before fix | Exact test method name and copy of failure assertion output |
+| **Gate 1: Pre-Debug Search** | MCP symbol & bug query | Explicit citation of JetBrains MCP `search_symbol` output and `.ai/bugs/` search result |
+| **Gate 2: Reproduction** | Failing test executed | Exact test method name and copy of failure assertion output (via MCP `execute_run_configuration` or runner) |
 | **Gate 3: Code & Threading** | Java 25 & path-scoped rules | Summary of records, sequenced collections, and `ReadAction`/`WriteCommandAction` guards used |
-| **Gate 4: MCP Inspection** | 0 errors, 0 warnings | Tool output of `get_file_problems` (`errors: []`) and `lint_files` (`items: []`) |
+| **Gate 4: MCP Inspection** | 0 errors, 0 warnings | Tool output of `get_file_problems` (`errors: []`), `lint_files` (`items: []`), and `reformat_file` |
 | **Gate 5: Verification Harness** | All gates pass | Contents of [`build/verification-report.json`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/build/verification-report.json) (`overall_status: "PASSED"`) |
 | **Gate 6: Bug Record** | File created & indexed | Path to `.ai/bugs/YYYY-MM-DD-...md` and updated line in `.ai/bugs/README.md` |
 | **Gate 7: Changelog** | User-facing entry | Quoted user note under `## [Unreleased]` in `CHANGELOG.md` |

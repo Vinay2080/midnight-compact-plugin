@@ -34,3 +34,14 @@ Guide engineers and autonomous agents when implementing features, inspections, c
 ### 5. Custom FakePsiElement & Reader Mode
 - For doc comments and synthetic AST nodes, implement `FakePsiElement` and implement `getOwner()`, `getParent()`, `getTextRange()`.
 - Implement `PsiDocCommentBase` to integrate seamlessly with Reader Mode and rendered documentation previews.
+
+### 6. Strict JetBrains MCP Tool Precedence
+- When developing, inspecting, or verifying plugin code, AI agents **MUST strictly prioritize JetBrains MCP tools first**:
+  * **Live Diagnostics**: `execute_tool get_file_problems --filePath "<path>"`
+  * **Inspections & Style**: `execute_tool lint_files --files ["<path>"]`
+  * **Code Formatting**: `execute_tool reformat_file --filePath "<path>"`
+  * **Safe Renaming**: `execute_tool rename_refactoring --filePath "<path>" --offset <offset> --newName "<name>"`
+  * **Symbol Navigation**: `execute_tool search_symbol --query "<name>"`
+  * **API & Signatures**: `execute_tool get_symbol_info --filePath "<path>" --offset <offset>`
+  * **Test Invocations**: `execute_tool execute_run_configuration --name "<RunConfig>"`
+- Terminal CLI commands are secondary verification or fallback tools. CLI commands must NEVER supersede JetBrains MCP tools.

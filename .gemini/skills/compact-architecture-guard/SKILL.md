@@ -47,3 +47,7 @@ Language features (struct literals, constructor inference, generic arguments, me
 - **Prohibited**: Storing `PsiElement`, `PsiFile`, `Document`, or `Project` in static fields, global collections, or non-disposable caches.
 - Read operations on PSI must execute within a `ReadAction` or on background threads.
 - Modifications must be wrapped in `WriteCommandAction` on the Event Dispatch Thread (EDT).
+
+### 6. Strict Tooling Precedence: JetBrains MCP Over CLI
+- AI agents must strictly prioritize JetBrains MCP tools first (`get_file_problems`, `lint_files`, `reformat_file`, `rename_refactoring`, `search_symbol`, `get_symbol_info`, `execute_run_configuration`).
+- Terminal CLI commands are secondary verification or fallback tools. CLI commands must NEVER take priority over JetBrains MCP tools.

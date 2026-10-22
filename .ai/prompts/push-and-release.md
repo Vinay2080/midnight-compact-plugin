@@ -10,7 +10,7 @@ Before executing a release or push, the AI agent **MUST** verify:
 1. `git status` on `master` is clean.
 2. A pre-flight drift check via [`.ai/prompts/sync-context-and-decisions.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/prompts/sync-context-and-decisions.md) has verified that machine state, ADRs, and tests are synchronized.
 3. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) and JDK 25 are available.
-4. IntelliJ MCP server is responsive for final inspection.
+4. IntelliJ MCP server is responsive. **AI agent MUST strictly use JetBrains MCP tools first** (`get_file_problems`, `lint_files`, `reformat_file`, `execute_run_configuration`) before running terminal CLI commands.
 
 ---
 
@@ -19,10 +19,10 @@ Before executing a release or push, the AI agent **MUST** verify:
 The agent must execute these 6 steps in exact chronological order:
 
 ```text
-[Step 1: Full Inspection Loop] ── get_file_problems & lint_files across touched files
+[Step 1: Full Inspection Loop] ── get_file_problems, lint_files & reformat_file via MCP
         │
         ▼
-[Step 2: Full Suite Verification] scripts/verify-patch.ps1 -AllTests
+[Step 2: Full Suite Verification] MCP execute_run_configuration first -> scripts/verify-patch.ps1 -AllTests
         │
         ▼
 [Step 3: User Changelog Cleanup]  Translate Unreleased into ## [X.Y.Z] - YYYY-MM-DD
@@ -37,16 +37,21 @@ The agent must execute these 6 steps in exact chronological order:
 [Step 6: Commit, Tag & Push] ──── Commit chore(release), create git tag, push to remote
 ```
 
-### Step 1: Full-Scope Post-Edit Inspection Loop via MCP
-- Run inspection on all modified and referenced files:
+### Step 1: Full-Scope Post-Edit Inspection Loop via MCP (Priority 1 Mandatory)
+- Run inspection and formatting on all modified and referenced files:
   ```text
   execute_tool get_file_problems --filePath "<absolute-path>"
   execute_tool lint_files --files [\"<absolute-path>\"]
+  execute_tool reformat_file --filePath "<absolute-path>"
   ```
 - Strict Zero-Tolerance: 0 errors (`ERROR`), 0 warnings (`WARNING`), 0 weak warnings (`WEAK WARNING`), 0 grammar/spelling errors, and all modern Java 25 language-level suggestions applied.
 
-### Step 2: Full Suite Automated Verification
-- Run the full test suite through the multi-gate runner:
+### Step 2: Full Suite Verification (MCP Test Run First, then CLI Runner)
+- **Priority 1 (JetBrains MCP)**: Execute full test suite configuration in the live IDE container:
+  ```text
+  execute_tool execute_run_configuration --name "<AllTestsRunConfigurationName>"
+  ```
+- **Priority 2 (Automated Multi-Gate Runner)**: Run the full test suite through the multi-gate runner:
   ```powershell
   powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -AllTests
   ```

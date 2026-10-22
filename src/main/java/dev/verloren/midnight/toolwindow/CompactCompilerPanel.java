@@ -299,6 +299,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
       record CardData(
           String version,
           String title,
+          String description,
           boolean isInstalled,
           boolean isActive,
           boolean isPragmaMatch,
@@ -313,14 +314,15 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
         boolean isDownloading = downloadingVersions.contains(v);
         String installedPath = installedMap.get(v);
 
-        String langVer = CompactVersionManager.getLanguageVersionForToolchain(v);
-        String cardTitle = v.equals(langVer) ? "Compact v" + v : "Compact v" + v + " (Language v" + langVer + ")";
+        String cardTitle = "Compact v" + v;
+        String desc = CompactVersionManager.getVersionDescription(v);
 
+        String langVer = CompactVersionManager.getLanguageVersionForToolchain(v);
         String versionToCheck = pragmaIsCompiler ? v : langVer;
         boolean isPragmaMatch = pragmaConstraint != null &&
             CompactSemVerUtil.satisfiesConstraint(versionToCheck, pragmaConstraint);
 
-        cardsData.add(new CardData(v, cardTitle, isInstalled, isActive, isPragmaMatch, isDownloading, installedPath));
+        cardsData.add(new CardData(v, cardTitle, desc, isInstalled, isActive, isPragmaMatch, isDownloading, installedPath));
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -331,6 +333,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
           CompactVersionCard card = new CompactVersionCard(
               cd.version(),
               cd.title(),
+              cd.description(),
               cd.isInstalled(),
               cd.isActive(),
               cd.isPragmaMatch(),

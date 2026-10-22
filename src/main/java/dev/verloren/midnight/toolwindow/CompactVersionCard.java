@@ -24,6 +24,7 @@ import java.awt.event.MouseEvent;
  */
 public class CompactVersionCard extends JPanel {
   private final String version;
+  private final String description;
   private final boolean isInstalled;
   private boolean isActive;
   private final String installedPath;
@@ -31,10 +32,11 @@ public class CompactVersionCard extends JPanel {
   private final Runnable onRemove;
 
   private final JBLabel titleLabel;
+  private final JBLabel descriptionLabel;
   private final JComponent actionIconComponent;
   private boolean isHovered = false;
 
-  private static final int CARD_HEIGHT = 42;
+  private static final int CARD_HEIGHT = 44;
 
   @SuppressWarnings("this-escape")
   public CompactVersionCard(
@@ -48,8 +50,25 @@ public class CompactVersionCard extends JPanel {
       @Nullable Runnable onSelect,
       @Nullable Runnable onRemove
   ) {
+    this(version, title, null, isInstalled, isActive, isPragmaMatch, isDownloading, installedPath, onSelect, onRemove);
+  }
+
+  @SuppressWarnings("this-escape")
+  public CompactVersionCard(
+      @NotNull String version,
+      @NotNull String title,
+      @Nullable String description,
+      boolean isInstalled,
+      boolean isActive,
+      boolean isPragmaMatch,
+      boolean isDownloading,
+      @Nullable String installedPath,
+      @Nullable Runnable onSelect,
+      @Nullable Runnable onRemove
+  ) {
     super(new BorderLayout(JBUI.scale(8), 0));
     this.version = version;
+    this.description = description;
     this.isInstalled = isInstalled;
     this.isActive = isActive;
     this.installedPath = installedPath;
@@ -65,10 +84,6 @@ public class CompactVersionCard extends JPanel {
     setMinimumSize(new Dimension(0, height));
     setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-    // Single Left Panel: Single Action Icon + Version Title + Pragma Match
-    JPanel contentPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, JBUI.scale(8), JBUI.scale(4)));
-    contentPanel.setOpaque(false);
 
     // Single Action Icon (either download, delete, or progress)
     Dimension iconBoxSize = new Dimension(JBUI.scale(22), JBUI.scale(22));
@@ -96,28 +111,58 @@ public class CompactVersionCard extends JPanel {
     } else {
       JBLabel dlLabel = new JBLabel(AllIcons.Actions.Download);
       dlLabel.setPreferredSize(iconBoxSize);
-      HelpTooltipKt.setToolTipText(dlLabel, HtmlChunk.text("Download Compact v" + version));
+      String assetName = dev.verloren.midnight.version.CompactVersionManager.getReleaseAssetName(version);
+      HelpTooltipKt.setToolTipText(dlLabel, HtmlChunk.text("Download Compact v" + version + " (" + assetName + ")"));
       actionIconComponent = dlLabel;
     }
-    contentPanel.add(actionIconComponent);
 
-    // Title
+    JPanel leftContainer = new JPanel(new BorderLayout(JBUI.scale(8), 0));
+    leftContainer.setOpaque(false);
+
+    JPanel iconBox = new JPanel(new GridBagLayout());
+    iconBox.setOpaque(false);
+    iconBox.add(actionIconComponent);
+    leftContainer.add(iconBox, BorderLayout.WEST);
+
+    JPanel textPanel = new JPanel();
+    textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+    textPanel.setOpaque(false);
+
+    JPanel headerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, JBUI.scale(6), 0));
+    headerRow.setOpaque(false);
+
     titleLabel = new JBLabel(title);
     titleLabel.setFont(JBFont.label().asBold());
     if (isActive) {
       titleLabel.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
     }
-    contentPanel.add(titleLabel);
+    headerRow.add(titleLabel);
 
-    // Pragma Match Badge
     if (isPragmaMatch) {
       JBLabel matchLabel = new JBLabel("✔ pragma match");
       matchLabel.setFont(JBFont.small());
       matchLabel.setForeground(new JBColor(new Color(36, 138, 61), new Color(63, 185, 80)));
-      contentPanel.add(matchLabel);
+      headerRow.add(matchLabel);
+    }
+    textPanel.add(headerRow);
+
+    if (description != null && !description.isEmpty()) {
+      JPanel descRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      descRow.setOpaque(false);
+      descriptionLabel = new JBLabel(description);
+      descriptionLabel.setFont(JBFont.small());
+      descriptionLabel.setForeground(JBColor.namedColor("VersionCard.descriptionForeground", new JBColor(new Color(110, 115, 122), new Color(150, 155, 162))));
+      descRow.add(descriptionLabel);
+      textPanel.add(descRow);
+    } else {
+      descriptionLabel = null;
     }
 
-    add(contentPanel, BorderLayout.CENTER);
+    leftContainer.add(textPanel, BorderLayout.CENTER);
+    add(leftContainer, BorderLayout.CENTER);
+
+    String tooltip = title + (description != null && !description.isEmpty() ? " - " + description : "");
+    setToolTipText(tooltip);
 
     // Mouse interactions
     MouseAdapter adapter = new MouseAdapter() {
@@ -169,7 +214,7 @@ public class CompactVersionCard extends JPanel {
       }
     };
 
-    attachMouseListener(contentPanel, adapter);
+    attachMouseListener(leftContainer, adapter);
     addMouseListener(adapter);
   }
 
@@ -221,11 +266,26 @@ public class CompactVersionCard extends JPanel {
       menu.add(downloadItem);
     }
 
+    JMenuItem copyUrlItem = new JMenuItem("Copy Asset Download URL", AllIcons.Actions.Copy);
+    copyUrlItem.addActionListener(_ -> {
+      String url = dev.verloren.midnight.version.CompactVersionManager.getReleaseDownloadUrl(version);
+      CopyPasteManager.getInstance().setContents(new StringSelection(url));
+    });
+    menu.add(copyUrlItem);
+
     menu.show(this, e.getX(), e.getY());
   }
 
   public String getVersion() {
     return version;
+  }
+
+  public @NotNull String getTitle() {
+    return titleLabel.getText();
+  }
+
+  public @Nullable String getDescription() {
+    return description;
   }
 
   public boolean isInstalled() {

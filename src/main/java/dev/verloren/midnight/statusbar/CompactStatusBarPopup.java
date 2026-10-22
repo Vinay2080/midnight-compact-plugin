@@ -113,7 +113,9 @@ public final class CompactStatusBarPopup {
 
     public SwitchCompilerVersionAction(@NotNull Project project, @NotNull String version, boolean isCurrent) {
       super(
-          version.isEmpty() ? "Use System / Auto-Detected Toolchain" : "Compact v" + version,
+          version.isEmpty()
+              ? "Use System / Auto-Detected Toolchain"
+              : "Compact v" + version + " (" + CompactVersionManager.getVersionDescription(version) + ")",
           version.isEmpty() ? "Reset to auto-detected toolchain" : "Switch project compiler to Compact v" + version,
           isCurrent ? AllIcons.Actions.Checked : null
       );

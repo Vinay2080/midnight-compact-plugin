@@ -28,18 +28,18 @@ public record CompactFunctionType(
     if (this.equals(other)) {
       return true;
     }
-    if (other instanceof CompactFunctionType otherFn) {
-      if (parameterTypes.size() != otherFn.parameterTypes().size()) {
+    if (other instanceof CompactFunctionType(List<CompactType> types, CompactType type)) {
+      if (parameterTypes.size() != types.size()) {
         return false;
       }
       for (int i = 0; i < parameterTypes.size(); i++) {
         // Contravariant parameter checking
-        if (!otherFn.parameterTypes().get(i).isAssignableTo(parameterTypes.get(i))) {
+        if (!types.get(i).isAssignableTo(parameterTypes.get(i))) {
           return false;
         }
       }
       // Covariant return type checking
-      return returnType.isAssignableTo(otherFn.returnType());
+      return returnType.isAssignableTo(type);
     }
     return false;
   }

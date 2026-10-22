@@ -10,8 +10,15 @@ Guide running and interpreting multi-gate automated verification for `midnight-c
 
 ## Verification Workflow
 
-### Command Invocation
-Always run the PowerShell verification script:
+### Strict Precedence: JetBrains MCP First
+Before running terminal verification scripts, AI agents **MUST invoke JetBrains MCP tools first**:
+1. **Live Diagnostics**: `execute_tool get_file_problems --filePath "<path>"` (0 errors, 0 warnings).
+2. **Code Inspections**: `execute_tool lint_files --files ["<path>"]`.
+3. **Code Style**: `execute_tool reformat_file --filePath "<path>"`.
+4. **Targeted Test Execution**: `execute_tool execute_run_configuration --name "<TestConfigurationName>"`.
+
+### Secondary / Final Multi-Gate Verification (CLI)
+After JetBrains MCP checks pass cleanly, run the multi-gate PowerShell verification script for full CI, plugin structure, and architecture validation:
 ```powershell
 .\scripts\verify-patch.ps1 -TestPattern "dev.verloren.midnight.<target_subsystem>.*"
 ```

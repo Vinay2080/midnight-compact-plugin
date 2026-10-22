@@ -37,3 +37,7 @@
    - All data carriers must be Java `record`s.
    - Pattern matching with switch expressions (`switch (type) { case CompactParameterizedType p -> ...; }`) must be used for algebraic data dispatch.
    - Sequenced collections (`getFirst()`, `getLast()`) and multi-line text blocks (`"""..."""`) are mandatory.
+
+7. **Strict Tooling Precedence (JetBrains MCP Priority)**:
+   - For all development, inspection, navigation, and verification loops, AI agents **MUST strictly prioritize JetBrains MCP tools first** (`get_file_problems`, `lint_files`, `reformat_file`, `rename_refactoring`, `search_symbol`, `get_symbol_info`, `execute_run_configuration`).
+   - Terminal CLI commands (`verify-patch.ps1`, `./gradlew test`) are secondary verification or fallback mechanisms. CLI commands must NEVER supersede JetBrains MCP tools.

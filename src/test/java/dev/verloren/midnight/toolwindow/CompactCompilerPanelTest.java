@@ -15,6 +15,18 @@ import java.awt.Component;
 
 public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(null);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(null);
+    super.tearDown();
+  }
+
   @SuppressWarnings("UnstableApiUsage")
 
   public void testFindTargetCompactFileProhibitsSlowOperationsOnEdt() {
@@ -53,7 +65,7 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     Disposer.register(getTestRootDisposable(), panel);
 
     panel.refreshCards();
-    waitForCards(panel);
+    waitForCards(panel, "0.25.0");
 
     CompactVersionCard card25 = findCard(panel, "0.25.0");
     CompactVersionCard card26 = findCard(panel, "0.26.0");
@@ -67,7 +79,7 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     fix.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
 
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    waitForCards(panel);
+    waitForCards(panel, "0.26.0");
 
     assertEquals("0.26.0", settings.selectedCompilerVersion);
 
@@ -80,11 +92,24 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     assertFalse("Card for old compiler version 0.25.0 should no longer be active", updatedCard25.isActive());
   }
 
-  private void waitForCards(CompactCompilerPanel panel) {
+  public void testVersion0350CardDisplaysDescriptionAndLanguage() {
+    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
+    Disposer.register(getTestRootDisposable(), panel);
+
+    panel.refreshCards();
+    waitForCards(panel, "0.35.0");
+
+    CompactVersionCard card35 = findCard(panel, "0.35.0");
+    assertNotNull("Card 0.35.0 should be present in known toolchain cards", card35);
+    assertEquals("Compact v0.35.0", card35.getTitle());
+    assertEquals("Language: 0.27.0 | Midnight Ledger 9", card35.getDescription());
+  }
+
+  private void waitForCards(CompactCompilerPanel panel, String expectedVersion) {
     long deadline = System.currentTimeMillis() + 5000;
     while (System.currentTimeMillis() < deadline) {
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-      if (findCard(panel, "0.26.0") != null) {
+      if (findCard(panel, expectedVersion) != null) {
         return;
       }
       TimeoutUtil.sleep(50);

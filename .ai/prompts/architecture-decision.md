@@ -11,6 +11,7 @@ Before authoring or modifying architectural records, the AI agent **MUST** verif
 2. Read and strictly follow all contracts in [`.agents/rules/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/), especially [`architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md).
 3. Existing ADRs in [`.ai/decisions/`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/decisions/) have been reviewed to prevent duplicating or violating established designs (ADR-001 through ADR-034).
 4. The proposed architectural change is grounded in upstream Compact compiler sources (`compact/compiler/`) or IntelliJ Platform SDK standards.
+5. The IntelliJ project is open and the `idea` MCP server is responsive. **AI agent MUST strictly use JetBrains MCP tools first** (`search_symbol`, `get_symbol_info`, `get_file_problems`) for codebase exploration, symbol investigation, and AST interface checks before using terminal CLI commands.
 
 ---
 
@@ -22,7 +23,7 @@ The agent must execute these 7 steps in exact order:
 [Step 1: Workspace Isolation] ── Create branch ai/adr-<slug>
         │
         ▼
-[Step 2: Ground Truth & Rules] Inspect compact/compiler/, .agents/rules/ & local reference plugins
+[Step 2: Ground Truth & Rules] MCP search_symbol & get_symbol_info -> inspect compiler & reference plugins
         │
         ▼
 [Step 3: Option Trade-Offs] ─── Evaluate 2-3 alternatives (correctness, threading, modularity <=400 lines)
@@ -46,7 +47,12 @@ The agent must execute these 7 steps in exact order:
   git checkout -b ai/adr-<slug>
   ```
 
-### Step 2: Ground Truth & Reference Plugin Benchmarks
+### Step 2: Ground Truth & Reference Plugin Benchmarks (MCP Navigation First)
+- **MCP Symbol & API Exploration (Priority 1)**: Use JetBrains MCP tools to explore reference implementations, symbol signatures, and class hierarchies before using CLI grep:
+  ```text
+  execute_tool search_symbol --q "<ReferenceClassOrSubsystem>"
+  execute_tool get_symbol_info --filePath "<path>" --offset <offset>
+  ```
 - Inspect upstream Compact compiler ground truth:
   - `compact/compiler/parser.ss`, `lexer.ss`, `langs.ss`, or `standard-library.compact`.
 - Load [`.agents/rules/architecture.rules.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.agents/rules/architecture.rules.md).

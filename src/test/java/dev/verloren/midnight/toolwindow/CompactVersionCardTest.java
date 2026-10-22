@@ -89,4 +89,24 @@ public class CompactVersionCardTest {
     Assert.assertEquals(installedCard.getMinimumSize().height, uninstalledCard.getMinimumSize().height);
     Assert.assertEquals(installedCard.getMaximumSize().height, uninstalledCard.getMaximumSize().height);
   }
+
+  @Test
+  public void testCardWithDescriptionAndTitle() {
+    CompactVersionCard card = new CompactVersionCard(
+        "0.35.0",
+        "Compact v0.35.0",
+        "Language: 0.27.0 | Midnight Ledger 9",
+        false,
+        false,
+        false,
+        false,
+        null,
+        () -> {},
+        null
+    );
+
+    Assert.assertEquals("0.35.0", card.getVersion());
+    Assert.assertEquals("Compact v0.35.0", card.getTitle());
+    Assert.assertEquals("Language: 0.27.0 | Midnight Ledger 9", card.getDescription());
+  }
 }

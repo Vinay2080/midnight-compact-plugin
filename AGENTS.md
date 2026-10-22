@@ -11,7 +11,7 @@
 >      - `git checkout -b ai/<task-slug>` (or use `.worktrees/<task-slug>`).
 > 2. **CONTINUOUS VERIFICATION & INVARIANTS**:
 >    - Never weaken tests or commit without explicit permission.
->    - Run `./scripts/verify-patch.ps1 -Quick` or `./gradlew test` to verify changes.
+>    - **STRICT MCP-FIRST MANDATE**: Always prioritize JetBrains IDE MCP tools (`get_file_problems`, `lint_files`, `execute_run_configuration`) FIRST for all diagnostics, code navigation, formatting, and test execution. Terminal / CLI commands (`./scripts/verify-patch.ps1 -Quick`, `./gradlew test`) are secondary verification or fallback.
 
 ---
 
@@ -60,10 +60,38 @@ Compact Source Text (.compact)
    - Use `CachedValuesManager` keyed to `PsiModificationTracker.MODIFICATION_COUNT`.
 6. **Modern Java 25 Standard**:
    - Use records for data carriers, sequenced collections (`getFirst()`/`getLast()`), pattern matching switch, and unnamed variables (`_`).
+7. **Strict JetBrains MCP Priority Over Terminal / CLI Commands**:
+   - For all code intelligence, diagnostics, symbol lookup, formatting, refactoring, and test execution, AI agents **MUST strictly prioritize JetBrains MCP tools first** (`jetbrains_air_ide` / `idea` MCP server):
+     * **Diagnostics & Static Problems**: Always run `get_file_problems` and `lint_files` via MCP before running terminal compilers or CLI linters.
+     * **Symbol Discovery & Navigation**: Always use `search_symbol` and `get_symbol_info` via MCP rather than CLI grep, ripgrep, find, or Select-String.
+     * **Code Formatting & Refactoring**: Always use `reformat_file` and `rename_refactoring` via MCP before manual or CLI transforms.
+     * **Test Execution**: Always invoke `execute_run_configuration` via MCP first for running tests in the IDE environment.
+   - Terminal / CLI commands (`powershell`, `verify-patch.ps1`, `./gradlew`) are secondary verification, fallback, or packaging tools when MCP is unavailable or for final multi-gate CI validation. CLI commands must NEVER take priority over JetBrains MCP tools.
 
 ---
 
-## 3. Path-Scoped Subsystem Rules
+## 3. Tooling Precedence: Strict JetBrains MCP Priority Over CLI
+
+Whenever an AI agent executes operations in this repository, it **MUST adhere to the following strict precedence**:
+
+```text
+[Operation]                 [Priority 1: JetBrains MCP (Mandatory First)]       [Priority 2: CLI / Terminal (Secondary / Fallback)]
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Code Diagnostics & Errors   execute_tool get_file_problems --filePath <path>    ./gradlew checkstyleMain / compileJava
+Full Inspection & Style     execute_tool lint_files --files ["<path>"]          ./gradlew check / qodana
+Symbol Search & Lookup      execute_tool search_symbol --q <name>               git grep / ripgrep / Select-String
+API Docs & Signatures       execute_tool get_symbol_info --filePath <path>      cat / grep / manual file scanning
+Code Formatting             execute_tool reformat_file --filePath <path>        ./gradlew spotlessApply / manual edits
+Safe Symbol Rename          execute_tool rename_refactoring --filePath <path>   find-and-replace / sed / manual edits
+Test Execution & Triage     execute_tool execute_run_configuration --name <cfg> .\scripts\verify-patch.ps1 / ./gradlew test
+Multi-Gate CI / Packaging   N/A (IDE context)                                   .\scripts\verify-patch.ps1 -AllTests / buildPlugin
+```
+
+AI agents must **never default to CLI commands** when a corresponding JetBrains MCP tool exists. Always query the IDE via MCP first.
+
+---
+
+## 4. Path-Scoped Subsystem Rules
 
 Detailed rules and code patterns are modularized into `.agents/rules/`:
 
@@ -78,7 +106,7 @@ Detailed rules and code patterns are modularized into `.agents/rules/`:
 
 ---
 
-## 4. Context Navigation & Knowledge Map
+## 5. Context Navigation & Knowledge Map
 
 All contextual assets and documentation live under `.ai/` and `docs/`:
 
@@ -96,9 +124,25 @@ All contextual assets and documentation live under `.ai/` and `docs/`:
 
 ---
 
-## 5. Verification & Quality Gates
+## 6. Verification & Quality Gates
 
-Run the verification runner before claiming task completion:
+AI agents must strictly follow the **MCP-First Verification Pipeline**:
+
+### Primary (Priority 1): JetBrains IDE MCP Verification
+Execute in-IDE diagnostics, code inspections, and test run configurations immediately after editing:
+```text
+# 1. Live Problem & Diagnostics Check (Zero Errors, Warnings, Weak Warnings)
+execute_tool get_file_problems --filePath "<absolute-path>"
+
+# 2. Comprehensive Code Inspection & Style Linting
+execute_tool lint_files --files [\"<absolute-path>\"]
+
+# 3. Targeted Test Execution via IDE Run Configuration
+execute_tool execute_run_configuration --name "<TestRunConfigurationName>"
+```
+
+### Secondary / Final Gate (Priority 2): Multi-Gate Script & CI Runner
+Run the verification runner to validate build packaging, plugin structure, and full CI regression:
 
 ```powershell
 # Fast compilation and plugin structure check
@@ -113,10 +157,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern
 
 ---
 
-## 6. Protected Artifacts Guard
+## 7. Protected Artifacts Guard
 
 The following files and contracts are **PROTECTED ARTIFACTS**. AI agents must not modify or weaken them without explicit human approval:
-1. **Core Architectural Invariants** in Section 2.
+1. **Core Architectural Invariants** in Section 2 (including MCP-first priority).
 2. **Accepted Architectural Decision Records** in [`.ai/decisions/`](file:///.ai/decisions/).
 3. **Security Boundaries & Vulnerability Policies** in [`.ai/security/`](file:///.ai/security/).
 4. **Existing Unit / Integration Tests**: Never delete or ignore failing tests to artificially pass verification gates.

@@ -8,8 +8,8 @@ This document defines the mandatory, deterministic execution protocol for auditi
 
 Before running synchronization, the AI agent **MUST** verify:
 1. `git status` is clean on `master` (no unstaged user edits).
-2. The IntelliJ project is open and the `idea` MCP server is responsive.
-3. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) is available.
+2. The IntelliJ project is open and the `idea` MCP server is responsive. **AI agent MUST strictly use JetBrains MCP tools first** (`get_file_problems`, `lint_files`, `execute_run_configuration`) before resorting to CLI commands.
+3. Gradle wrapper (`.\gradlew.bat` / `./gradlew`) is available (for secondary multi-gate verification).
 
 ---
 
@@ -24,7 +24,7 @@ The agent must execute these 8 steps in exact chronological order:
 [Step 2: Git History Audit] ─── Inspect git log -n 15 and code diffs
         │
         ▼
-[Step 3: Test Verification] ─── Run scripts/verify-patch.ps1 -Quick
+[Step 3: Test Verification] ─── MCP execute_run_configuration first -> scripts/verify-patch.ps1 -Quick
         │
         ▼
 [Step 4: Machine State Sync] ── Update .ai/project-state.yaml metrics & ADRs
@@ -52,8 +52,15 @@ The agent must execute these 8 steps in exact chronological order:
 - Run `git log -n 15 --oneline` to inspect recent commits.
 - Identify newly added features, bug fixes, refactorings, or extension points that lack documentation in `.ai/`.
 
-### Step 3: Verification & Test Extraction
-- Run `powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -Quick`.
+### Step 3: Verification & Test Extraction (MCP First, then Multi-Gate Runner)
+- **Priority 1 (JetBrains MCP)**: Execute quick test configuration via MCP:
+  ```text
+  execute_tool execute_run_configuration --name "<FastTestRunConfiguration>"
+  ```
+- **Priority 2 (Verification Runner)**: Run fast verification script:
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -Quick
+  ```
 - Verify compilation and plugin structure pass cleanly.
 
 ### Step 4: Synchronize Machine State (`.ai/project-state.yaml`)

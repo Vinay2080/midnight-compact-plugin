@@ -27,7 +27,7 @@ SESSION START
 [4. Implement] ─────────────────── Write modern Java 25 adhering to threading & PSI models
   │
   ▼
-[5. Test & Validate] ────────────── Continuous inspection via MCP, run scripts/verify-patch.ps1
+[5. Test & Validate] ────────────── MCP problems, lint & run config first -> scripts/verify-patch.ps1
   │
   ▼
 [6. Code Review Self-Check] ─────── Verify against Section 9 anti-bikeshedding & invariant bar
@@ -103,6 +103,7 @@ Before proposing or editing anything, the agent **MUST** route the task using th
 
 ### Phase 2: Inspect Implementation & Ground Truth
 - Never write code based on generic assumptions.
+- **MCP Codebase Navigation (Priority 1)**: Use JetBrains MCP `search_symbol` and `get_symbol_info` to inspect declarations, types, and usages across the codebase before using CLI grep/find.
 - Read targeted production classes and existing test fixtures before proposing edits.
 - For bug fixes: **Search `.ai/bugs/` first**. Query by feature, class, or symptom.
 
@@ -120,18 +121,25 @@ Before proposing or editing anything, the agent **MUST** route the task using th
   - Unnamed variables `_` for unused parameters and exceptions.
   - Threading: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI mutations; no blocking `waitFor()` on EDT.
   - Robustness: Guard against `null` and `PsiErrorElement`. Loops must advance lexer tokens.
+  - **MCP Refactoring & Formatting**: Use `execute_tool rename_refactoring` for symbol renaming and `execute_tool reformat_file` for IntelliJ code style formatting.
 
 ### Phase 5: Test & Validate
 - **Mandatory "User-Defined Mirror" Test**: If testing a stdlib construct (`Either`, `Maybe`), write an identical parallel test using a custom user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
-- **Mandatory Post-Edit Code Inspection (Every Edit)**:
-  - Run IntelliJ inspections via MCP immediately after EVERY edit:
+- **Mandatory Post-Edit Code Inspection via MCP (Priority 1 Mandatory)**:
+  - Run IntelliJ inspections and code style formatting via MCP immediately after EVERY edit:
     ```text
     execute_tool get_file_problems --filePath "<absolute-path>"
-    execute_tool lint_files --files [\"<absolute-path>\"]
+    execute_tool lint_files --files ["<absolute-path>"]
+    execute_tool reformat_file --filePath "<absolute-path>"
     ```
   - Zero-tolerance: 0 errors, 0 warnings, 0 weak warnings, 0 typos.
-- **Deterministic Multi-Gate Verification**:
-  - Execute the automated runner:
+- **Test Execution via MCP (Priority 1)**:
+  - Execute test run configuration directly in the live IDE container:
+    ```text
+    execute_tool execute_run_configuration --name "<TestRunConfigurationName>"
+    ```
+- **Deterministic Multi-Gate Verification (Priority 2 CLI / Fallback)**:
+  - Execute the automated runner for multi-gate packaging and full regression verification:
     ```powershell
     powershell -ExecutionPolicy Bypass -File .\scripts\verify-patch.ps1 -TestPattern "<target>"
     ```
@@ -178,15 +186,16 @@ Before proceeding to commits, the agent **MUST re-read every modified documentat
 ```text
 FINAL TASK GATE CHECKLIST:
 [ ] 1. Inspect implementation diff (changes match requirements).
-[ ] 2. Run verification harness (scripts/verify-patch.ps1 passes all gates).
-[ ] 3. Post-edit inspection clean (get_file_problems and lint_files report 0 errors, 0 warnings, 0 weak warnings).
-[ ] 4. Determine affected documentation/state files (via Decision Rules).
-[ ] 5. Update every applicable documentation/state file (including .ai/bugs/ for bug fixes).
-[ ] 6. Anti-assumption re-read executed on all modified files.
-[ ] 7. Commit changes on task branch with conventional commit messages.
-[ ] 8. Merge into master (--ff-only) and re-verify master.
-[ ] 9. Delete temporary task branch.
-[ ] 10. Explicitly report the status of each artifact in the Final Artifact Completion Table.
+[ ] 2. JetBrains MCP post-edit diagnostics and formatting clean (get_file_problems, lint_files, reformat_file report 0 errors, 0 warnings, 0 weak warnings).
+[ ] 3. JetBrains MCP test run configuration passed (execute_run_configuration).
+[ ] 4. Multi-gate verification harness passed (scripts/verify-patch.ps1 passes all gates).
+[ ] 5. Determine affected documentation/state files (via Decision Rules).
+[ ] 6. Update every applicable documentation/state file (including .ai/bugs/ for bug fixes).
+[ ] 7. Anti-assumption re-read executed on all modified files.
+[ ] 8. Commit changes on task branch with conventional commit messages.
+[ ] 9. Merge into master (--ff-only) and re-verify master.
+[ ] 10. Delete temporary task branch.
+[ ] 11. Explicitly report the status of each artifact in the Final Artifact Completion Table.
 ```
 
 ### Mandatory Final Artifact Completion Table

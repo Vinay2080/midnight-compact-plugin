@@ -38,7 +38,7 @@ val isExplicitlyDisabled = requestedTasks.any { task ->
 // Running in development environment (e.g. running the sandbox IDE)
 val isDevRun = requestedTasks.any { task -> task.contains("runIde", ignoreCase = true) }
 
-// By default in development environment (runIde / sandbox), enable Material Theme UI.
+// By default, in development environment (runIde / sandbox), enable Material Theme UI.
 // If run via another command (e.g. runIdeNoMtui, -PnoMtui, -Pmtui=false, NO_MTUI=1, etc.), disable it.
 // When building, packaging, or publishing the plugin (buildPlugin, publishPlugin), NEVER include Material Theme UI.
 val enableMtui = !isBuildOrPublish && !isExplicitlyDisabled && (isDevRun || requestedTasks.isEmpty())
@@ -113,6 +113,9 @@ jacoco {
 }
 
 tasks {
+    test {
+        maxParallelForks = 1
+    }
     jacocoTestReport {
         dependsOn(test)
         reports {
