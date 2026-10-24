@@ -1,12 +1,23 @@
 # Current State
 
-Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language Support, CompactVersionManager SRP Decomposition)
+Last Updated: October 2026 (v1.4.2 / First-Class Type Hierarchy & Substitutor, Compact 0.35.0 Toolchain & 0.27.0 Language Support, CompactVersionManager SRP Decomposition)
 
 ---
 
 ## 1. Implementation Snapshot
 
 ### Implemented Subsystems
+- **First-Class Type Hierarchy & Type Substitutor (Phase 31 / v1.4.2)**:
+  - `CompactType`: Sealed interface representing first-class types (`CompactPrimitiveType`, `CompactParameterizedType`, `CompactStructType`, `CompactTypeVariable`, `CompactFunctionType`).
+  - `CompactTypeVariable`: Dedicated first-class representation of type variables supporting letters (`T`, `#T`), multi-letter parameters (`TVal`, `TErr`), and numbered parameters (`T1`, `T2`).
+  - `CompactTypeSubstitutor`: Generic type argument substitution engine mapping variables to concrete instantiated types while preserving unmapped variables.
+  - `CompactTypeInferenceUtil`: Integrated first-class substitutor into type inference and assignment checks with strict primitive priority (`CompactPrimitiveType.fromName`) and nominal base type matching.
+  - Test Coverage: 11 multi-tier unit and user-defined mirror tests in `CompactTypeHierarchyTest` verifying equivalence, substitution, user-defined generics (`Result<TVal, TErr>`), and primitive type precedence.
+- **Refined Compiler Version Panel Cards & Concurrency Stability (v1.4.2)**:
+  - `CompactCompilerPanel`: Synchronized card presentation displaying toolchain title, language specification, and ledger version (`Compact v0.35.0`, `Language: 0.27.0 | Midnight Ledger 9`).
+  - Test Concurrency Stabilization: Isolated version manager state between test executions (`CompactVersionManager.setInstalledVersionsForTesting(null)`) and sequential test execution budget.
+- **Cross-Platform Toolchain Output Directory Matching (v1.4.2)**:
+  - `CompactToolchainPathUtil`: Case-insensitive output directory matching across platforms, ensuring build artifacts and project source roots align correctly on Windows and Unix file systems.
 - **Compact Compiler 0.35.0 & Language 0.27.0 Support (v1.4.1)**:
   - `CompactVersionManager`: Added official toolchain `v0.35.0` (Language `0.27.0`, Midnight Ledger 9) to `RELEASES` mapping table and `KNOWN_VERSIONS`.
   - `CompactHighlightingAnnotator`: Added builtin types `PublicAddress`, `Secp256r1`, `Curve25519` and cryptographic builtin functions `secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`.
@@ -165,8 +176,8 @@ Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language 
 
 ## 2. Test Suite & Verification Metrics
 
-- **Total Tests**: **726 passing tests** (0 failures, 0 skipped, 100% success rate)
-- **Active Test Suites**: **67 test classes**
+- **Total Tests**: **765 passing tests** (0 failures, 0 skipped, 100% success rate)
+- **Active Test Suites**: **68 test classes**
 - **Execution Time**: ~2m 40s via `./gradlew test`
 
 ### Test Suite Breakdown
@@ -181,6 +192,7 @@ Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language 
 | `dev.verloren.midnight.documentation.CompactDocumentationTest` | 22 | Passed |
 | `dev.verloren.midnight.resolve.CompactResolveTest` | 21 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactLiveTemplateTest` | 19 | Passed |
+| `dev.verloren.midnight.actions.CompactCreateFileActionTest` | 18 | Passed |
 | `dev.verloren.midnight.editor.CompactQuoteTypingTest` | 18 | Passed |
 | `dev.verloren.midnight.resolve.CompactCrossFileResolveTest` | 17 | Passed |
 | `dev.verloren.midnight.highlighter.CompactHighlightingTest` | 16 | Passed |
@@ -191,6 +203,7 @@ Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language 
 | `dev.verloren.midnight.intention.CompactPhase28IntentionsTest` | 12 | Passed |
 | `dev.verloren.midnight.lexer.LexerTest` | 12 | Passed |
 | `dev.verloren.midnight.parameterInfo.CompactParameterInfoHandlerTest` | 12 | Passed |
+| `dev.verloren.midnight.type.CompactTypeHierarchyTest` | 11 | Passed |
 | `dev.verloren.midnight.annotator.CompactExternalAnnotatorTest` | 11 | Passed |
 | `dev.verloren.midnight.findUsages.CompactFindUsagesTest` | 10 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationNameGeneratorTest` | 10 | Passed |
@@ -207,15 +220,15 @@ Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language 
 | `dev.verloren.midnight.parser.ErrorRecoveryParserTest` | 6 | Passed |
 | `dev.verloren.midnight.completion.CompactInsertHandlersTest` | 6 | Passed |
 | `dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolverTest` | 6 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 5 | Passed |
 | `dev.verloren.midnight.run.CompactRunConfigurationTest` | 5 | Passed |
 | `dev.verloren.midnight.statusbar.CompactStatusBarWidgetTest` | 5 | Passed |
 | `dev.verloren.midnight.editor.CompactSurroundWithTest` | 5 | Passed |
+| `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 4 | Passed |
 | `dev.verloren.midnight.editor.CompactFoldingTest` | 4 | Passed |
 | `dev.verloren.midnight.version.CompactSemVerUtilTest` | 4 | Passed |
 | `dev.verloren.midnight.editor.CompactEditorFeaturesTest` | 4 | Passed |
 | `dev.verloren.midnight.annotator.CompactQuickFixPreviewSideEffectTest` | 4 | Passed |
-| `dev.verloren.midnight.toolwindow.CompactCompilerPanelTest` | 4 | Passed |
-| `dev.verloren.midnight.toolwindow.CompactVersionCardTest` | 3 | Passed |
 | `dev.verloren.midnight.editor.CompactInlayHintsTest` | 3 | Passed |
 | `dev.verloren.midnight.lexer.PragmaTest` | 3 | Passed |
 | `dev.verloren.midnight.settings.MidnightProjectSettingsTest` | 3 | Passed |
@@ -235,12 +248,11 @@ Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language 
 | `dev.verloren.midnight.parser.EndToEndParserTest` | 2 | Passed |
 | `dev.verloren.midnight.editor.CompactBreadcrumbsTest` | 2 | Passed |
 | `dev.verloren.midnight.highlighter.CompactColorSettingsPageTest` | 1 | Passed |
-| `dev.verloren.midnight.actions.CompactCreateFileActionTest` | 1 | Passed |
 | `dev.verloren.midnight.psi.ElementFactoryConsistencyTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.DeclarationParserTest` | 1 | Passed |
-| **Total Across 67 Suites** | **721** | **100% Passed** |
+| **Total Across 68 Suites** | **765** | **100% Passed** |
 
 ---
 
@@ -251,7 +263,8 @@ Last Updated: October 2026 (v1.4.1 / Compact 0.35.0 Toolchain & 0.27.0 Language 
 2. **Deep Flow Type Inference**: Type inference is structural and AST-driven (`CompactTypeInferenceUtil`). Full bidirectional flow analysis across complex higher-order expressions will be augmented alongside the language server PSI bridge (Phase 35).
 
 ### Roadmap & Evolution (Phases 31–36)
-- **Phase 31: First-Class Type Hierarchy & Substitutor / Stub Indexing**
+- **Phase 31: First-Class Type Hierarchy & Substitutor (Complete) / Stub Indexing (Planned)**
+  - First-class sealed `CompactType` hierarchy, `CompactTypeVariable`, and `CompactTypeSubstitutor` (Completed in v1.4.2).
   - Project-wide stub index (`CompactStubIndex`) for cross-file declarations without parsing full AST.
   - Fast global Go to Symbol (`Ctrl+Alt+Shift+N`) across large Compact repositories.
 - **Phase 32: Modular Completion Providers & Advanced Refactorings**

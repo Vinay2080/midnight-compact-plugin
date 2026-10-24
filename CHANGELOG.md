@@ -6,14 +6,17 @@
 
 ### Added
 - Added support for Compact compiler toolchain v0.35.0 (Compact language version 0.27.0, Midnight Ledger 9), enabling version management, official release downloads, WSL translation, and automatic pragma inspection matching.
+- Added first-class type hierarchy and generic type substitution support, providing accurate type variable representation, generic parameter instantiation, and robust type checking for generic structs and circuits.
 - Added autocompletion and semantic highlighting for new Compact language 0.27.0 builtin types (`PublicAddress`, `Secp256r1`, `Curve25519`) and cryptographic builtin functions (`secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`).
 - Added `PublicAddress` struct declaration to the Compact Standard Library reference (`standard-library.compact`).
 - Updated New Compact File template default fallback pragma directives from `0.26.0` to `0.27.0`.
 
 ### Changed
+- Refined Compact compiler version cards in the sidebar tool window to present clear version descriptions, target language specification, and Midnight Ledger levels.
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
 ### Fixed
+- Fixed toolchain output directory matching on Windows and case-insensitive platforms so output folders aligned with project source roots are recognized correctly regardless of path casing.
 - Fixed false-negative type checking where mismatched types in return statements and expressions were not flagged as errors due to overly broad generic type parameter detection.
 - Fixed code completion ranking in return statements so variables matching the expected return type correctly appear ahead of unrelated types.
 - Fixed an issue where cancelling a compiler toolchain download on Windows could fail due to file locks, leaving corrupted temporary files behind.
