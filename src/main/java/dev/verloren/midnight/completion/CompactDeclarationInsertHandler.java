@@ -18,16 +18,67 @@ import dev.verloren.midnight.ide.templates.CompactTypeExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Universal insert handler for top-level declarations that creates and starts
- * an interactive live template containing tab stops for the declaration name, parameters,
- * return type, and body.
+ * Universal insert handler for top-level Compact declarations that initializes and launches
+ * an interactive live template containing tab stops for declaration names, parameter lists,
+ * return types, and code block bodies.
  *
- * <p>Uses {@link CompactDeclarationNameGenerator} to generate auto-numbered declaration
- * names (e.g. {@code circuit1}, {@code circuit2}, {@code witness1}) that avoid collisions
- * with existing declarations in the file or imported modules.</p>
+ * <h3>IntelliJ Platform Lifecycle &amp; Threading Contract</h3>
+ * <ul>
+ *   <li><b>Subsystem Role:</b> {@link InsertHandler} implementation attached to top-level declaration
+ *       lookup elements (e.g. {@code circuit}, {@code witness}, {@code struct}, {@code enum}, {@code contract})
+ *       created by {@link dev.verloren.midnight.completion.providers.CompactKeywordCompletionProvider}.</li>
+ *   <li><b>Calling Pipeline:</b> Invoked on the Event Dispatch Thread (EDT) by IntelliJ's
+ *       {@code com.intellij.codeInsight.completion.CodeCompletionHandlerBase} immediately after the user
+ *       commits a declaration keyword item from the completion lookup window.</li>
+ *   <li><b>Threading Model:</b> Synchronous EDT execution within an existing Write Action. Integrates
+ *       with {@link TemplateManager} to launch interactive multi-variable live templates.</li>
+ *   <li><b>Headless &amp; Test Fallback:</b> Detects when {@link TemplateManager} is unavailable (e.g., in unit
+ *       test or headless execution environments) and gracefully falls back to injecting static skeleton text
+ *       via {@link #buildFallbackString(String)}.</li>
+ * </ul>
+ *
+ * <h3>Design Decisions &amp; Architectural Rationale</h3>
+ * <ul>
+ *   <li><b>Java Record Immutability:</b> Implemented as a concise, immutable record parameterised by
+ *       {@link CompactDeclarationType}, making handler instances reusable across completion items.</li>
+ *   <li><b>Dynamic Collision-Resistant Naming:</b> Collaborates with {@link CompactDeclarationNameGenerator}
+ *       to inspect the surrounding PSI scope and propose unique, non-colliding default names
+ *       (e.g., {@code circuit1}, {@code witness2}).</li>
+ *   <li><b>Memory Leak Guards:</b> Zero storage of {@link Project}, {@link Editor}, or {@link PsiFile}
+ *       references in record components.</li>
+ * </ul>
+ *
+ * <h3>Insertion &amp; Template Lifecycle Pipeline</h3>
+ * <pre>{@code
+ *   handleInsert(context, item)
+ *              │
+ *              ├── Step 1: Deduplicate preceding "export " if already typed on line
+ *              │
+ *              ├── Step 2: Guard check: existing identifier / signature follows caret?
+ *              │     └─► Suffix present: insert trailing space only, exit without template
+ *              │
+ *              ▼
+ *   insertTemplate(project, editor, tailOffset)
+ *              │
+ *              ├── Step 3: Resolve collision-free declaration name via CompactDeclarationNameGenerator
+ *              ├── Step 4: Construct Live Template with tab stops (NAME -> PARAMS -> RET -> BODY)
+ *              └── Step 5: TemplateManager.startTemplate() [or fallback document insertion]
+ * }</pre>
+ *
+ * @param declarationType the target Compact declaration construct (circuit, struct, ledger, etc.)
+ * @see CompactDeclarationType
+ * @see CompactDeclarationNameGenerator
+ * @see TemplateManager
+ * @see Template
  */
 public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType declarationType) implements InsertHandler<LookupElement> {
 
+  /**
+   * Handles post-completion document mutation and starts the declaration live template.
+   *
+   * @param context insertion context containing editor, document, and offset information
+   * @param item    the selected lookup element
+   */
   @Override
   @SuppressWarnings("DuplicatedCode")
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
@@ -37,7 +88,8 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
     int tailOffset = context.getTailOffset();
     CharSequence chars = document.getCharsSequence();
 
-    // Deduplicate export if 'export' was already preceding on the line and item starts with 'export'
+    // Step 1: Deduplicate export prefix if 'export' was already preceding on the line
+    // and the chosen lookup item itself starts with 'export' (e.g. user typed 'export ' then picked 'export circuit').
     int lineStart = document.getLineStartOffset(document.getLineNumber(startOffset));
     boolean hasPrecedingExport = CompactCompletionContext.hasPrecedingExportOnLine(chars, lineStart, startOffset);
     boolean itemHasExport = item.getLookupString().startsWith("export");
@@ -50,7 +102,10 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
       chars = document.getCharsSequence();
     }
 
-    // Guard: check if an identifier, signature, or colon already follows the caret on the current line
+    // Step 2: Guard against overwriting or mangling existing declarations.
+    // If an identifier, parameter list, brace, or colon already follows the caret on the current line
+    // (e.g. developer typed 'circuit' in front of existing 'myFunc(): Void { ... }'),
+    // do NOT launch a template over it; simply ensure a single space separator is present.
     int lineEnd = document.getLineEndOffset(document.getLineNumber(tailOffset));
     String lineSuffix = chars.subSequence(tailOffset, lineEnd).toString().trim();
     if (!lineSuffix.isEmpty() && (lineSuffix.matches("^[a-zA-Z_].*")
@@ -64,6 +119,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
       return;
     }
 
+    // Step 3: Launch the interactive declaration live template
     insertTemplate(context.getProject(), editor, tailOffset);
   }
 
@@ -92,6 +148,12 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
     }
   }
 
+  /**
+   * Constructs the template structure, variables, and tab-stop segments appropriate for {@link #declarationType}.
+   *
+   * @param template      the mutable live template builder
+   * @param suggestedName the contextual default declaration name
+   */
   private void buildTemplate(@NotNull Template template, @NotNull String suggestedName) {
     switch (declarationType) {
       case CIRCUIT -> {
@@ -147,6 +209,12 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
     }
   }
 
+  /**
+   * Generates a static declaration snippet used when {@link TemplateManager} is unavailable.
+   *
+   * @param suggestedName default declaration name
+   * @return formatted skeleton string
+   */
   private @NotNull String buildFallbackString(@NotNull String suggestedName) {
     return switch (declarationType) {
       case CIRCUIT -> " " + suggestedName + "(): Void {\n  \n}";
