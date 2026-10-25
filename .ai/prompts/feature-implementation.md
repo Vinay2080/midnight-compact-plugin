@@ -87,6 +87,7 @@ The agent must execute these 8 steps in exact chronological order:
   - Multi-line text blocks (`"""..."""`) for templates, messages, and snippets.
   - Threading: PSI reads inside `ReadAction`; PSI mutations on EDT inside `WriteCommandAction`; zero `process.waitFor()` on EDT.
   - AST resilience: Guard against `null` and `PsiErrorElement`. Loops must advance tokens.
+  - **Architectural Javadocs & Continuous Codebase Documentation**: Adhere strictly to [`document-codebase.md`](file:///prompts/document-codebase.md). Every new or modified class must include class-level Javadoc detailing caller subsystems, threading contracts, lookahead edge cases, and step-by-step numbered inline comments for non-trivial logic. Never introduce undocumented classes or methods.
 
 ### Step 4: Multi-Tier & "User-Defined Mirror" Test Implementation (MCP Test Execution First)
 - Implement comprehensive automated tests in `src/test/java/dev/verloren/midnight/...`:

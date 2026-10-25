@@ -67,6 +67,10 @@ Compact Source Text (.compact)
      * **Code Formatting & Refactoring**: Always use `reformat_file` and `rename_refactoring` via MCP before manual or CLI transforms.
      * **Test Execution**: Always invoke `execute_run_configuration` via MCP first for running tests in the IDE environment.
    - Terminal / CLI commands (`powershell`, `verify-patch.ps1`, `./gradlew`) are secondary verification, fallback, or packaging tools when MCP is unavailable or for final multi-gate CI validation. CLI commands must NEVER take priority over JetBrains MCP tools.
+8. **Architectural Javadocs & Continuous Codebase Documentation**:
+   - Whenever introducing, fixing, or modifying code (bug fixes, refactoring, or new features), agents and developers must update and enrich class-level Javadocs and inline comments adhering to [`.ai/prompts/document-codebase.md`](file:///prompts/document-codebase.md).
+   - Document caller subsystems, threading contracts (`@RequiresReadLock`, EDT, `WriteCommandAction`), lookahead edge cases, and step-by-step algorithms.
+   - Never leave newly added or modified methods undocumented, and never leave existing comments stale or out-of-sync with implementation changes.
 
 ---
 
@@ -120,6 +124,7 @@ All contextual assets and documentation live under `.ai/` and `docs/`:
 | **Compact Semantics** | [`.ai/context/compact-semantics.md`](file:///.ai/context/compact-semantics.md) | Verified Compact language syntax, typing rules, and grammar. |
 | **Architectural Decisions** | [`.ai/decisions/README.md`](file:///.ai/decisions/README.md) | Index of Architectural Decision Records (`ADR-001` through `ADR-034`). |
 | **Bug Knowledge Base** | [`.ai/bugs/README.md`](file:///.ai/bugs/README.md) | Searchable index of resolved debugging incidents and lessons learned. |
+| **Codebase Documentation Standard** | [`.ai/prompts/document-codebase.md`](file:///prompts/document-codebase.md) | Standard for architectural Javadocs, inline comments, threading contracts, and lifecycle documentation. |
 | **User Changelog** | [`CHANGELOG.md`](file:///CHANGELOG.md) | Curated user-facing release notes (keep clean of internal engineering details). |
 
 ---

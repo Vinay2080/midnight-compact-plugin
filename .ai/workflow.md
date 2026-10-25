@@ -122,6 +122,7 @@ Before proposing or editing anything, the agent **MUST** route the task using th
   - Threading: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI mutations; no blocking `waitFor()` on EDT.
   - Robustness: Guard against `null` and `PsiErrorElement`. Loops must advance lexer tokens.
   - **MCP Refactoring & Formatting**: Use `execute_tool rename_refactoring` for symbol renaming and `execute_tool reformat_file` for IntelliJ code style formatting.
+  - **Architectural Comments & Javadocs**: Every new or modified class/method must be documented adhering to [`prompts/document-codebase.md`](file:///prompts/document-codebase.md) (subsystem callers, threading contracts, lookahead edge cases, step-by-step inline numbering). Never leave new code undocumented or existing comments stale.
 
 ### Phase 5: Test & Validate
 - **Mandatory "User-Defined Mirror" Test**: If testing a stdlib construct (`Either`, `Maybe`), write an identical parallel test using a custom user-defined generic struct (`Result<TVal, TErr>`, `Pair<A, B>`).
@@ -167,6 +168,7 @@ Evaluate each documentation artifact against these exact criteria:
 | **[`.ai/project-state.yaml`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/project-state.yaml)** | Passing test counts, test suite registrations, ADR registrations. | Tasks that do not change test metrics or architecture. |
 | **[`.ai/handoff.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/.ai/handoff.md)** | Meaningful progress, active task state, discoveries, next priorities. | Trivial queries where no state changed. |
 | **[`AGENTS.md`](file:///C:/Users/shaki/IdeaProjects/midnight-plugin/AGENTS.md)** | Permanent instructions, invariants, or tool priorities. | Transient state or feature progress. |
+| **Codebase Javadocs & Comments** | Any production code edited, refactored, or fixed. Follow [`prompts/document-codebase.md`](file:///prompts/document-codebase.md). | Pure documentation/markdown edits. |
 
 ---
 

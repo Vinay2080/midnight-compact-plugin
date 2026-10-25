@@ -111,6 +111,7 @@ The agent must execute these 13 steps in exact chronological order without skipp
   - **Java 25 Standards**: Records for DTOs and cache keys; sequenced collections (`getFirst()`, `getLast()`); pattern matching switch expressions; unnamed variables `_`.
   - **Threading**: `ReadAction` for PSI reads; EDT `WriteCommandAction` for PSI writes; zero blocking `waitFor()` on EDT.
   - **AST resilience**: Guard against `null` and `PsiErrorElement`. Loops must advance lexer/builder.
+  - **Architectural Comments & Javadoc Updates**: Adhere to [`document-codebase.md`](file:///prompts/document-codebase.md). Document the root cause, edge case handling, and threading contracts directly in code. Keep all inline comments and class Javadocs synchronized with the fix.
 
 ### Step 6: Post-Edit Inspection Loop via MCP (Priority 1 Mandatory)
 - Immediately after editing each file, run IntelliJ MCP inspection and code style formatter:
