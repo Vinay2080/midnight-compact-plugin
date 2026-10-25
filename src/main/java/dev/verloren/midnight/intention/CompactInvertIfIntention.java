@@ -21,9 +21,47 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * In-editor intention to invert an {@code if} condition and swap its {@code then} and {@code else} branches.
+ * In-editor intention action to invert an {@code if} condition and swap its {@code then} and {@code else} branches.
  *
- * <p>Available anywhere on the {@code if} statement header line.</p>
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Registered under {@code <intentionAction>} in {@code plugin.xml}:
+ * <ul>
+ *   <li><b>Availability Context:</b> Available in the Alt+Enter context actions popup when the caret
+ *       is positioned anywhere on the {@code if} condition header line before descending into body statements.</li>
+ *   <li><b>Logical & Relational Inversion:</b> Automatically inverts relational operators
+ *       ({@code ==} &harr; {@code !=}, {@code <} &harr; {@code >=}, {@code <=} &harr; {@code >}),
+ *       unwraps negated unary expressions ({@code !expr} &harr; {@code expr}), and wraps general expressions
+ *       in {@code !(...) }.</li>
+ *   <li><b>Safe Offset Replacement:</b> When mutating the document, replaces the {@code else} branch first,
+ *       followed by the {@code then} branch, and finally the condition. This descending text offset order
+ *       ensures that document modifications do not displace or invalidate upcoming replace ranges.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action for Availability:</b> {@link #isAvailable} runs under a Read Action ({@code @RequiresReadLock})
+ *       on the EDT during lightbulb / popup evaluation.</li>
+ *   <li><b>Write Action for Invocation:</b> {@link #invoke} mutates the editor {@link Document} on the EDT
+ *       inside the platform's default write action.</li>
+ * </ul>
+ *
+ * <h3>Condition Inversion Matrix</h3>
+ * <pre>
+ *   Original Expression       Inverted Expression
+ *   ──────────────────────────────────────────────────
+ *   a == b                    a != b
+ *   a != b                    a == b
+ *   a &lt; b                     a &gt;= b
+ *   a &lt;= b                    a &gt; b
+ *   a &gt; b                     a &lt;= b
+ *   a &gt;= b                    a &lt; b
+ *   !a                        a
+ *   (cond)                    !(cond)
+ * </pre>
+ *
+ * @see dev.verloren.midnight.parser.CompactElementTypes#IF_STATEMENT
  */
 public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
 
@@ -32,7 +70,12 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     return "Compact control flow";
   }
 
-
+  /**
+   * Helper traversing parent nodes to find the enclosing IF_STATEMENT element.
+   *
+   * @param element the PSI element at the caret
+   * @return enclosing if statement node, or {@code null}
+   */
   @Nullable
   private PsiElement findIfStatement(@NotNull PsiElement element) {
     PsiElement current = element;
@@ -45,19 +88,24 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     return null;
   }
 
+  /**
+   * Checks whether the intention is applicable at the current editor position.
+   */
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    // Step 1: Ensure caret is inside an if statement
     PsiElement ifStmt = findIfStatement(element);
     if (ifStmt == null) {
       return false;
     }
 
+    // Step 2: Ensure if statement has both condition, then-branch, and else-branch
     IfParts parts = parseIfParts(ifStmt);
     if (parts.condition == null || parts.thenBranch == null || parts.elseBranch == null) {
       return false;
     }
 
-    // Available anywhere on the if condition header line before descending into then-branch lines
+    // Step 3: Bound availability to the if-header line (suppress inside nested then-body lines)
     Document doc = editor.getDocument();
     int caretLine = doc.getLineNumber(element.getTextOffset());
     int thenLine = doc.getLineNumber(parts.thenBranch.getTextOffset());
@@ -69,6 +117,9 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     return true;
   }
 
+  /**
+   * Performs the condition inversion and branch swapping.
+   */
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiElement ifStmt = findIfStatement(element);
@@ -86,24 +137,28 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     String thenText = parts.thenBranch.getText();
     String elseText = parts.elseBranch.getText();
 
-    // Replace else branch first (higher offset)
+    // Step 1: Replace else branch first (at higher text offset) to prevent shifting then-branch offset
     TextRange elseRange = parts.elseBranch.getTextRange();
     document.replaceString(elseRange.getStartOffset(), elseRange.getEndOffset(), thenText);
 
-    // Replace then branch next
+    // Step 2: Replace then branch next
     TextRange thenRange = parts.thenBranch.getTextRange();
     document.replaceString(thenRange.getStartOffset(), thenRange.getEndOffset(), elseText);
 
-    // Replace condition
+    // Step 3: Replace condition at lowest text offset
     TextRange condRange = parts.condition.getTextRange();
     document.replaceString(condRange.getStartOffset(), condRange.getEndOffset(), invertedCondition);
   }
 
+  /**
+   * Mathematically inverts a condition expression string.
+   */
   private static String invertConditionText(@NotNull PsiElement condition) {
     CompactExpression expr = condition instanceof CompactExpression
         ? (CompactExpression) condition
         : PsiTreeUtil.findChildOfType(condition, CompactExpression.class);
 
+    // Case 1: Invert binary comparison operators
     if (expr instanceof CompactBinaryExprImpl binaryExpr) {
       CompactExpression[] operands = PsiTreeUtil.getChildrenOfType(binaryExpr, CompactExpression.class);
       ASTNode opNode = binaryExpr.getNode().findChildByType(dev.verloren.midnight.lexer.CompactTokenSets.OPERATORS);
@@ -119,6 +174,7 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
         if (op == CompactTokenTypes.GTE) return left + " < " + right;
       }
     } else if (expr instanceof CompactUnaryExprImpl unaryExpr) {
+      // Case 2: Unwrap negated expressions (!expr -> expr)
       ASTNode opNode = unaryExpr.getNode().findChildByType(dev.verloren.midnight.lexer.CompactTokenSets.OPERATORS);
       if (opNode != null && opNode.getElementType() == CompactTokenTypes.NOT) {
         CompactExpression inner = PsiTreeUtil.findChildOfType(unaryExpr, CompactExpression.class);
@@ -128,6 +184,7 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
       }
     }
 
+    // Case 3: Wrap general expressions in ! negation
     String text = condition.getText().trim();
     if (text.startsWith("(") && text.endsWith(")")) {
       return "!" + text;
@@ -135,12 +192,18 @@ public class CompactInvertIfIntention extends PsiElementBaseIntentionAction {
     return "!(" + text + ")";
   }
 
+  /**
+   * Value container holding parsed sub-elements of an if-else statement.
+   */
   private static class IfParts {
     PsiElement condition;
     PsiElement thenBranch;
     PsiElement elseBranch;
   }
 
+  /**
+   * Parses the constituent condition, then-branch, and else-branch components of an if statement.
+   */
   @NotNull
   private static IfParts parseIfParts(@NotNull PsiElement ifStmt) {
     IfParts parts = new IfParts();

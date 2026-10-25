@@ -19,10 +19,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * In-editor intention to add an explicit type annotation to an untyped {@code const} binding.
+ * In-editor intention action to add an explicit type annotation to an untyped {@code const} variable binding.
  *
- * <p>Available anywhere on the {@code const} statement line (general suggestion), as well as directly
- * on the variable name or assignment operator.</p>
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Registered under {@code <intentionAction>} in {@code plugin.xml}:
+ * <ul>
+ *   <li><b>Contextual Availability:</b> Available anywhere on the {@code const} statement line
+ *       or directly on the variable identifier or {@code =} token when no explicit type annotation exists.</li>
+ *   <li><b>Static Type Inference:</b> Queries {@link CompactExpression#getType()} on the binding's initializer
+ *       expression to infer the static type. If the type is known (not {@link CompactPrimitiveType#UNKNOWN}),
+ *       the intention dynamically renders the action text (e.g. {@code "Specify type explicitly as 'Field'"}).</li>
+ *   <li><b>Document Mutation:</b> Inserts {@code ": " + type.name()} immediately after the variable pattern node.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action for Availability:</b> {@link #isAvailable} runs under a Read Action ({@code @RequiresReadLock})
+ *       on the EDT.</li>
+ *   <li><b>Write Action for Invocation:</b> {@link #invoke} mutates the editor {@link Document} on the EDT
+ *       within the platform's default write action.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.intention.CompactRemoveRedundantTypeIntention
+ * @see dev.verloren.midnight.type.CompactType
+ * @see dev.verloren.midnight.psi.CompactConstBindingImpl
  */
 public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntentionAction {
 
@@ -31,10 +53,12 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     return "Compact type annotation";
   }
 
-
   /**
    * Finds the {@link CompactConstBindingImpl} associated with the given element, whether the caret
    * is directly inside the binding or anywhere on the surrounding {@code const} statement line.
+   *
+   * @param element the PSI element at the caret
+   * @return matching {@link CompactConstBindingImpl}, or {@code null}
    */
   @Nullable
   public static CompactConstBindingImpl findConstBinding(@NotNull PsiElement element) {
@@ -54,6 +78,12 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     return null;
   }
 
+  /**
+   * Extracts the explicit type element from a const binding pattern, if already annotated.
+   *
+   * @param constBinding binding to inspect
+   * @return declared {@link CompactTypeElement}, or {@code null} if untyped
+   */
   @Nullable
   public static CompactTypeElement getDeclaredTypeElement(@NotNull CompactConstBindingImpl constBinding) {
     for (PsiElement child : constBinding.getChildren()) {
@@ -69,17 +99,23 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     return null;
   }
 
+  /**
+   * Checks whether an untyped binding with an inferrable initializer is present under the caret.
+   */
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    // Step 1: Locate enclosing const binding
     CompactConstBindingImpl binding = findConstBinding(element);
     if (binding == null) {
       return false;
     }
 
+    // Step 2: Skip if an explicit type is already declared
     if (getDeclaredTypeElement(binding) != null) {
       return false;
     }
 
+    // Step 3: Ensure a variable pattern and initializer expression exist
     CompactPatternImpl pattern = PsiTreeUtil.findChildOfType(binding, CompactPatternImpl.class);
     if (pattern == null) {
       return false;
@@ -90,6 +126,7 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
       return false;
     }
 
+    // Step 4: Infer initializer type; skip if unknown
     CompactType type = initializer.getType();
     if (CompactPrimitiveType.UNKNOWN.equals(type) || type.name().isBlank()) {
       return false;
@@ -99,6 +136,9 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
     return true;
   }
 
+  /**
+   * Inserts the explicit type annotation into the document.
+   */
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     CompactConstBindingImpl binding = findConstBinding(element);

@@ -23,10 +23,37 @@ import java.util.List;
 import java.util.SequencedMap;
 
 /**
- * Context action to switch or download the required Compact compiler version based on pragma.
+ * Context intention action to switch or download the required Compact compiler version based on pragma directives.
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Registered under {@code <intentionAction>} in {@code plugin.xml}:
+ * <ul>
+ *   <li><b>Contextual Availability:</b> Appears in the Alt+Enter menu when the caret is placed
+ *       on an unsatisfied {@code pragma language_version} or {@code pragma compiler_version} form.</li>
+ *   <li><b>Smart Target Resolution:</b> Checks locally installed compilers first (sorted newest first)
+ *       to find any compiler satisfying the SemVer constraint; if none are installed, resolves
+ *       the downloadable release tag from GitHub.</li>
+ *   <li><b>Asynchronous Toolchain Switch:</b> Delegates to {@link CompactVersionManager#ensureAndSwitchVersion}
+ *       which performs network downloads on background tasks and reconfigures project toolchain settings.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>No Automatic Write Action:</b> Overrides {@link #startInWriteAction()} to return {@code false}
+ *       because switching or downloading a compiler requires background modal tasks and user dialogs.</li>
+ *   <li><b>Read Action for Availability:</b> {@link #isAvailable} runs under {@code @RequiresReadLock} on the EDT.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.version.CompactVersionManager
+ * @see dev.verloren.midnight.psi.CompactPragmaForm
  */
 public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntentionAction {
 
+  /**
+   * Value record holding resolved toolchain information for display and switching.
+   */
   private record TargetVersionResolution(
       @NotNull String toolchainVer,
       @NotNull String displayVer,
@@ -38,11 +65,17 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
     return "Compact compiler version";
   }
 
+  /**
+   * Overridden to false because toolchain download and setup runs asynchronously outside write actions.
+   */
   @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  /**
+   * Checks whether the intention is available on an unsatisfied pragma form.
+   */
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     CompactPragmaForm pragma = PsiTreeUtil.getParentOfType(element, CompactPragmaForm.class, false);
@@ -84,6 +117,9 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
     return true;
   }
 
+  /**
+   * Triggers compiler toolchain download or switch.
+   */
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     if (IntentionPreviewUtils.isIntentionPreviewActive()) {
@@ -108,6 +144,9 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
     CompactVersionManager.ensureAndSwitchVersion(project, target.toolchainVer(), vFile);
   }
 
+  /**
+   * Determines the optimal target compiler version matching the pragma constraint.
+   */
   private static @NotNull TargetVersionResolution resolveTarget(
       @NotNull CompactPragmaForm pragma,
       @Nullable String activeVer,

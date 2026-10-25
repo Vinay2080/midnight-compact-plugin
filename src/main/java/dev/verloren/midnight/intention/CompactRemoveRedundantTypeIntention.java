@@ -13,10 +13,31 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * In-editor intention to remove an explicit type annotation from a {@code const} binding.
+ * In-editor intention action to remove an explicit type annotation from a {@code const} variable binding.
  *
- * <p>Available anywhere on the {@code const} statement line (general suggestion) as well as directly
- * on the type annotation itself.</p>
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Registered under {@code <intentionAction>} in {@code plugin.xml}:
+ * <ul>
+ *   <li><b>Contextual Availability:</b> Available anywhere on the {@code const} statement line
+ *       or directly when the caret is placed on an explicit type annotation (e.g. {@code : Field} in
+ *       {@code const x: Field = 1;}).</li>
+ *   <li><b>Whitespace & Colon Cleanup:</b> Locates the leading {@link CompactTokenTypes#COLON} token,
+ *       consumes preceding spaces, and safely deletes or replaces the span with a single space before
+ *       the {@code =} assignment operator to ensure clean code formatting without syntax errors.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action for Availability:</b> {@link #isAvailable} runs under a Read Action ({@code @RequiresReadLock})
+ *       on the EDT.</li>
+ *   <li><b>Write Action for Invocation:</b> {@link #invoke} mutates the editor {@link Document} on the EDT
+ *       within the platform's default write action.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.intention.CompactSpecifyTypeExplicitlyIntention
+ * @see dev.verloren.midnight.psi.CompactConstBindingImpl
  */
 public class CompactRemoveRedundantTypeIntention extends PsiElementBaseIntentionAction {
 
@@ -25,14 +46,18 @@ public class CompactRemoveRedundantTypeIntention extends PsiElementBaseIntention
     return "Compact type annotation";
   }
 
-
+  /**
+   * Checks whether the intention is applicable at the current editor position.
+   */
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    // Step 1: Locate enclosing const binding
     CompactConstBindingImpl binding = CompactSpecifyTypeExplicitlyIntention.findConstBinding(element);
     if (binding == null) {
       return false;
     }
 
+    // Step 2: Ensure an explicit type annotation is present
     CompactTypeElement typeElem = CompactSpecifyTypeExplicitlyIntention.getDeclaredTypeElement(binding);
     if (typeElem == null) {
       return false;
@@ -42,6 +67,9 @@ public class CompactRemoveRedundantTypeIntention extends PsiElementBaseIntention
     return true;
   }
 
+  /**
+   * Removes the type annotation and cleans up surrounding whitespace and colon tokens.
+   */
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     CompactConstBindingImpl binding = CompactSpecifyTypeExplicitlyIntention.findConstBinding(element);
@@ -54,7 +82,7 @@ public class CompactRemoveRedundantTypeIntention extends PsiElementBaseIntention
       return;
     }
 
-    // Find colon token before typeElem
+    // Step 1: Find the colon token before the type element
     PsiElement optionallyTypedPattern = typeElem.getParent();
     ASTNode colonNode = optionallyTypedPattern != null
         ? optionallyTypedPattern.getNode().findChildByType(CompactTokenTypes.COLON)
@@ -68,12 +96,12 @@ public class CompactRemoveRedundantTypeIntention extends PsiElementBaseIntention
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
 
-    // Consume any space before colon if present
+    // Step 2: Consume any space preceding the colon
     while (startOffset > 0 && chars.charAt(startOffset - 1) == ' ') {
       startOffset--;
     }
 
-    // Ensure that if there's no space before '=', we insert one, or if there is already a space, keep one.
+    // Step 3: Ensure spacing before '=' is preserved cleanly
     boolean hasTrailingSpace = endOffset < chars.length() && chars.charAt(endOffset) == ' ';
     if (!hasTrailingSpace && endOffset < chars.length() && chars.charAt(endOffset) == '=') {
       document.replaceString(startOffset, endOffset, " ");
