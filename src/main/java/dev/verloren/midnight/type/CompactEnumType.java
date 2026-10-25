@@ -8,12 +8,33 @@ import java.util.Objects;
 
 /**
  * Semantic type representing a declared user enum type with variants.
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Models nominal enum definitions:
+ * <ul>
+ *   <li><b>Navigation & Resolution:</b> Powers variant lookup in
+ *       {@link dev.verloren.midnight.reference.CompactEnumMemberReference}.</li>
+ *   <li><b>Code Completion:</b> Variant list is offered during dot-access completion
+ *       ({@code State.<caret>}) via {@link dev.verloren.midnight.completion.providers.CompactMemberAccessCompletionProvider}.</li>
+ * </ul>
+ * </p>
+ *
+ * @see dev.verloren.midnight.type.CompactType
+ * @see dev.verloren.midnight.reference.CompactEnumMemberReference
+ * @see dev.verloren.midnight.psi.CompactEnumDefinition
  */
 public record CompactEnumType(
     @NotNull String name,
     @NotNull List<String> variants
 ) implements CompactType {
 
+  /**
+   * Evaluates nominal assignability to a target enum type.
+   *
+   * @param other target type to test assignment against
+   * @return {@code true} if nominal enum names match
+   */
   @Override
   public boolean isAssignableTo(@NotNull CompactType other) {
     if (this.equals(other)) {

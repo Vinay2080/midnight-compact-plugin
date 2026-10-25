@@ -10,13 +10,49 @@ import java.util.Map;
 /**
  * First-class type substitution engine for substituting type parameters/variables
  * across the sealed {@link CompactType} hierarchy.
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Performs deep recursive substitution of generic type variables:
+ * <ul>
+ *   <li><b>Instantiation:</b> When a generic struct, circuit, or function is instantiated with concrete
+ *       type arguments (e.g. {@code Vector<32, Field>}), {@link CompactTypeInferenceUtil#buildSubstitutor}
+ *       constructs a substitutor mapping {@code T -> Field}.</li>
+ *   <li><b>Deep Traversal:</b> Recursively walks parameterized types, struct fields, and function signatures,
+ *       replacing matching {@link CompactTypeVariable} instances while preserving immutable semantics.</li>
+ *   <li><b>Pattern Matching Switch:</b> Leverages modern Java pattern matching switch expressions
+ *       over the sealed {@link CompactType} interface.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Hash Prefix Normalization</h3>
+ * <p>
+ * To ensure seamless substitution regardless of whether type variables were declared with or without
+ * the {@code #} prefix (e.g. {@code #T} vs {@code T}), the constructor automatically indexes both forms
+ * in its internal substitution map.
+ * </p>
+ *
+ * @see dev.verloren.midnight.type.CompactType
+ * @see dev.verloren.midnight.type.CompactTypeVariable
+ * @see dev.verloren.midnight.type.CompactTypeInferenceUtil
  */
 public final class CompactTypeSubstitutor {
 
+  /**
+   * Pre-allocated empty singleton substitutor performing no modifications.
+   */
   public static final CompactTypeSubstitutor EMPTY = new CompactTypeSubstitutor(Map.of());
 
+  /**
+   * Immutable map of type variable names (both with and without '#' prefix) to replacement types.
+   */
   private final Map<String, CompactType> substitutions;
 
+  /**
+   * Constructs a substitutor with dual-indexed variable names for prefix tolerance.
+   *
+   * @param substitutions raw mapping of variable names to replacement types
+   */
   public CompactTypeSubstitutor(@NotNull Map<String, CompactType> substitutions) {
     Map<String, CompactType> map = new LinkedHashMap<>();
     for (Map.Entry<String, CompactType> entry : substitutions.entrySet()) {
@@ -31,18 +67,40 @@ public final class CompactTypeSubstitutor {
     this.substitutions = Collections.unmodifiableMap(map);
   }
 
+  /**
+   * Returns the shared empty substitutor singleton.
+   *
+   * @return empty {@link CompactTypeSubstitutor}
+   */
   public static @NotNull CompactTypeSubstitutor empty() {
     return EMPTY;
   }
 
+  /**
+   * Factory method creating a substitutor, returning {@link #EMPTY} if the map is empty.
+   *
+   * @param map mapping of variable names to replacement types
+   * @return active or empty substitutor
+   */
   public static @NotNull CompactTypeSubstitutor create(@NotNull Map<String, CompactType> map) {
     return map.isEmpty() ? EMPTY : new CompactTypeSubstitutor(map);
   }
 
+  /**
+   * Checks whether this substitutor contains no substitution mappings.
+   *
+   * @return {@code true} if empty
+   */
   public boolean isEmpty() {
     return substitutions.isEmpty();
   }
 
+  /**
+   * Substitutes an individual type variable, checking both exact and normalized clean names.
+   *
+   * @param variable the type variable to resolve
+   * @return the mapped replacement type, or {@code variable} if unmapped
+   */
   public @NotNull CompactType substitute(@NotNull CompactTypeVariable variable) {
     CompactType direct = substitutions.get(variable.name());
     if (direct != null) {
@@ -54,7 +112,10 @@ public final class CompactTypeSubstitutor {
 
   /**
    * Recursively substitutes type variables across any {@link CompactType} instance
-   * using modern Java 25 pattern matching switch expressions.
+   * using modern Java pattern matching switch expressions.
+   *
+   * @param type source type containing potential type variables
+   * @return transformed type with variables replaced
    */
   public @NotNull CompactType substitute(@NotNull CompactType type) {
     if (substitutions.isEmpty()) {
@@ -72,6 +133,9 @@ public final class CompactTypeSubstitutor {
     };
   }
 
+  /**
+   * Deeply substitutes type arguments inside a parameterized type.
+   */
   private @NotNull CompactType substituteParameterizedType(@NotNull CompactParameterizedType param) {
     List<CompactType> newArgs = param.typeArguments().stream()
             .map(this::substitute)
@@ -79,6 +143,9 @@ public final class CompactTypeSubstitutor {
     return new CompactParameterizedType(param.rawName(), newArgs);
   }
 
+  /**
+   * Deeply substitutes field types inside a struct type.
+   */
   private @NotNull CompactType substituteStructType(@NotNull CompactStructType struct) {
     Map<String, CompactType> newFields = new LinkedHashMap<>();
     for (Map.Entry<String, CompactType> entry : struct.fields().entrySet()) {
@@ -87,6 +154,9 @@ public final class CompactTypeSubstitutor {
     return new CompactStructType(struct.name(), newFields);
   }
 
+  /**
+   * Deeply substitutes parameter and return types inside a function type.
+   */
   private @NotNull CompactType substituteFunctionType(@NotNull CompactFunctionType func) {
     List<CompactType> newParams = func.parameterTypes().stream()
             .map(this::substitute)
@@ -95,14 +165,27 @@ public final class CompactTypeSubstitutor {
     return new CompactFunctionType(newParams, newReturn);
   }
 
+  /**
+   * Returns the unmodifiable underlying substitution mappings.
+   *
+   * @return map of variable names to replacement types
+   */
   public @NotNull Map<String, CompactType> getMappings() {
     return substitutions;
   }
 
+  /**
+   * Creates a fluent builder for incrementally constructing a {@link CompactTypeSubstitutor}.
+   *
+   * @return new {@link Builder}
+   */
   public static @NotNull Builder builder() {
     return new Builder();
   }
 
+  /**
+   * Fluent builder for assembling {@link CompactTypeSubstitutor} instances.
+   */
   public static final class Builder {
     private final Map<String, CompactType> map = new LinkedHashMap<>();
 
