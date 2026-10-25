@@ -14,11 +14,46 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Quick-fix attached to compiler version mismatch annotations and inspections.
+ * Quick-fix and intention action to switch or download a compatible Compact compiler version.
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Implements both {@link LocalQuickFix} and {@link com.intellij.codeInsight.intention.IntentionAction}:
+ * <ul>
+ *   <li><b>Dual Usage:</b> Attached to {@link dev.verloren.midnight.inspection.CompactPragmaVersionInspection}
+ *       problem descriptors and available directly in the editor intention menu.</li>
+ *   <li><b>Toolchain Integration:</b> Delegates to {@link CompactVersionManager#ensureAndSwitchVersion}
+ *       to automatically download missing compiler releases from GitHub or switch active project SDKs.</li>
+ *   <li><b>Dynamic User Label:</b> Dynamically renders action text distinguishing between switching to
+ *       an already installed version vs downloading and installing a new release.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Invocation:</b> Executed on the Event Dispatch Thread (EDT) when selected by the user.</li>
+ *   <li><b>Background Download:</b> Toolchain download operations are spawned in background progress tasks
+ *       by {@link CompactVersionManager}.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.version.CompactVersionManager
+ * @see dev.verloren.midnight.inspection.CompactPragmaVersionInspection
  */
 public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implements LocalQuickFix {
+
+  /**
+   * The target language or compiler version string requested.
+   */
   private final String targetVersion;
+
+  /**
+   * {@code true} if targeting a {@code compiler_version} pragma; {@code false} for {@code language_version}.
+   */
   private final boolean isCompilerPragma;
+
+  /**
+   * Explicit toolchain release tag override (e.g. {@code "0.2.1"}), or {@code null}.
+   */
   private final @Nullable String explicitToolchainVersion;
 
   public CompactSwitchCompilerQuickFix(@NotNull String targetVersion) {
@@ -39,6 +74,9 @@ public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implement
     this.explicitToolchainVersion = explicitToolchainVersion;
   }
 
+  /**
+   * Resolves the concrete compiler toolchain version string.
+   */
   public @NotNull String getToolchainVersion() {
     if (explicitToolchainVersion != null && !explicitToolchainVersion.isBlank()) {
       return CompactVersionManager.cleanVersion(explicitToolchainVersion);
@@ -48,6 +86,9 @@ public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implement
         : CompactVersionManager.resolveToolchainVersionForLanguage(targetVersion);
   }
 
+  /**
+   * Renders the dynamic action label depending on whether the compiler is already installed.
+   */
   @Override
   public @NotNull String getText() {
     String toolchainVer = getToolchainVersion();
@@ -90,6 +131,9 @@ public class CompactSwitchCompilerQuickFix extends BaseIntentionAction implement
     invoke(project, null, file);
   }
 
+  /**
+   * Invokes the toolchain switch or download routine via {@link CompactVersionManager}.
+   */
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) throws IncorrectOperationException {
     if (IntentionPreviewUtils.isIntentionPreviewActive()) {

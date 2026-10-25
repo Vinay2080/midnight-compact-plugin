@@ -19,11 +19,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Quick-fix to update the pragma expression to match the active compiler.
+ * Quick-fix and intention action to update a file's {@code pragma} directive to match the active compiler.
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Implements both {@link LocalQuickFix} and {@link com.intellij.codeInsight.intention.IntentionAction}:
+ * <ul>
+ *   <li><b>Dual Usage:</b> Attached to {@link dev.verloren.midnight.inspection.CompactPragmaVersionInspection}
+ *       and available in the Alt+Enter intention actions menu.</li>
+ *   <li><b>Document Mutation:</b> Rewrites the pragma statement to {@code pragma <id> >= <activeVersion>;}
+ *       inside a {@link WriteCommandAction}.</li>
+ *   <li><b>Post-Fix Analysis Trigger:</b> Calls {@link CompactProblemUtil#clearProblemsAndRestart}
+ *       to immediately wipe stale warnings and refresh compiler analysis.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Write Action Mandatory:</b> Document text replacement runs on the Event Dispatch Thread (EDT)
+ *       wrapped inside {@link WriteCommandAction#runWriteCommandAction}.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.psi.CompactPragmaForm
+ * @see dev.verloren.midnight.annotator.CompactProblemUtil
  */
 public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements LocalQuickFix {
+
+  /**
+   * The version of the active compiler to set in the pragma directive.
+   */
   private final String activeVersion;
 
+  /**
+   * Constructs the quick-fix with the active compiler version.
+   *
+   * @param activeVersion compiler version string
+   */
   public CompactUpdatePragmaQuickFix(@NotNull String activeVersion) {
     this.activeVersion = activeVersion;
   }
@@ -63,10 +94,14 @@ public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements 
     invokeWithPragma(project, file, null);
   }
 
+  /**
+   * Performs the document rewrite and triggers daemon re-analysis.
+   */
   private void invokeWithPragma(@NotNull Project project, @Nullable PsiFile file, @Nullable CompactPragmaForm explicitPragma) {
     if (file == null) {
       return;
     }
+    // Step 1: Locate the pragma element in the file
     CompactPragmaForm pragma = explicitPragma != null
         ? explicitPragma
         : PsiTreeUtil.findChildOfType(file, CompactPragmaForm.class);
@@ -78,17 +113,20 @@ public class CompactUpdatePragmaQuickFix extends BaseIntentionAction implements 
       return;
     }
 
+    // Step 2: Formulate the replacement pragma string
     PsiElement id = pragma.getPragmaIdentifier();
     String idText = id != null ? id.getText() : "language_version";
     boolean isCompilerPragma = "compiler_version".equals(idText);
     String versionToSet = isCompilerPragma ? activeVersion : CompactVersionManager.getLanguageVersionForToolchain(activeVersion);
     String newPragma = "pragma " + idText + " >= " + versionToSet + ";";
 
+    // Step 3: Mutate document text inside a WriteCommandAction
     WriteCommandAction.runWriteCommandAction(project, () -> {
       document.replaceString(pragma.getTextRange().getStartOffset(), pragma.getTextRange().getEndOffset(), newPragma);
       PsiDocumentManager.getInstance(project).commitDocument(document);
     });
 
+    // Step 4: Refresh diagnostics (unless generating intention preview)
     if (!IntentionPreviewUtils.isIntentionPreviewActive()) {
       CompactProblemUtil.clearProblemsAndRestart(project, file.getVirtualFile());
     }
