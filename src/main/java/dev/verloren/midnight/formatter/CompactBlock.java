@@ -16,20 +16,88 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Formatting block implementation for Compact AST nodes.
+ * Formatting block implementation adapting Compact AST nodes for IntelliJ's formatting engine.
  *
- * <p>Extends {@link AbstractBlock} to calculate:
+ * <h3>Subsystem Role &amp; Architecture</h3>
+ * <p>Extends {@link AbstractBlock}. Represents a single node in the formatting block tree constructed by
+ * {@link CompactFormattingModelBuilder}. Each block corresponds to an {@link ASTNode} and governs:
  * <ul>
- *   <li><b>Spacing ({@link #getSpacing(Block, Block)}):</b> Applies spacing rules across delimiters, colons, ternary operators, and blocks.</li>
- *   <li><b>Indentation ({@link #computeChildIndent(ASTNode, ASTNode)}):</b> Assigns 2-space normal indent for statement blocks, struct field lists, enum variant lists, contract circuits, and module bodies.</li>
- *   <li><b>Smart Enter & Incompleteness ({@link #isIncomplete()} / {@link #getChildAttributes(int)}):</b> Automatically indents when pressing Enter inside unclosed blocks or parameter lists.</li>
+ *   <li><b>Contextual Spacing ({@link #getSpacing}):</b> Implements precise spacing logic beyond static builder rules:
+ *       <ul>
+ *         <li>Disambiguates angle brackets ({@code <}, {@code >}) between generic type parameters/arguments
+ *             (tight spacing: {@code Bytes<32>}) and binary comparison operators (spaced: {@code a < b}).</li>
+ *         <li>Disambiguates colons ({@code :}) between ternary operators (spaced: {@code a ? b : c}) and
+ *             type annotations (tight prefix, spaced suffix: {@code x: Field}).</li>
+ *         <li>Maintains single-space padding inside struct literal braces ({@code Point { x: 1 }}) and export forms.</li>
+ *         <li>Suppresses whitespace before commas, semicolons, brackets, and callable opening parentheses.</li>
+ *       </ul>
+ *   </li>
+ *   <li><b>Contextual Indentation ({@link #computeChildIndent}):</b> Calculates normal 2-space indentation for
+ *       statement blocks, struct fields, enum members, contract methods, and module declarations while keeping
+ *       enclosing delimiters (braces/brackets) flush.</li>
+ *   <li><b>Smart Enter &amp; Incomplete Syntax ({@link #isIncomplete} / {@link #getChildAttributes}):</b>
+ *       Informs the editor of missing closing delimiters ({@code }}, {@code )}, {@code ]}, {@code >}) so that
+ *       pressing Enter inside an unclosed block automatically indents the cursor to the correct nesting level.</li>
  * </ul>
  * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Instantiated initially by {@link CompactFormattingModelBuilder} for the root file node.
+ * IntelliJ's formatter recursively calls {@link #buildChildren()} to construct the block hierarchy,
+ * followed by multiple passes of {@link #getSpacing} and {@link #getIndent} to compute document diffs.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Evaluated on pooled background worker threads during code formatting,
+ *       or on the Event Dispatch Thread (EDT) during interactive typing/Enter handling.</li>
+ *   <li><b>Read Action:</b> Requires a platform Read Action ({@code @RequiresReadLock}) while traversing
+ *       the AST and querying element types.</li>
+ *   <li><b>Memory Constraints:</b> Blocks are transient objects discarded immediately after reformatting.</li>
+ * </ul>
+ *
+ * <h3>Formatting Mechanics Diagram</h3>
+ * <pre>
+ *   [ASTNode (CompactBlock)]
+ *              │
+ *              ├── buildChildren() ──► Skips whitespace, creates child CompactBlocks
+ *              │
+ *              ├── computeChildIndent()
+ *              │     ├── Inside BLOCK { ... } ────────► Normal Indent (+2 spaces)
+ *              │     ├── Inside Struct/Enum/Module ───► Normal Indent (+2 spaces)
+ *              │     └── Braces / Brackets / Outer ───► None Indent
+ *              │
+ *              └── getSpacing(child1, child2)
+ *                    ├── SpacingBuilder fallback
+ *                    ├── Colons &amp; Ternary operators
+ *                    ├── Generic angle brackets vs comparison operators
+ *                    └── Struct literal &amp; Export braces
+ * </pre>
+ *
+ * @see dev.verloren.midnight.formatter.CompactFormattingModelBuilder
+ * @see dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
+ * @see com.intellij.psi.formatter.common.AbstractBlock
  */
 public class CompactBlock extends AbstractBlock {
+
+  /**
+   * The indentation assigned to this block relative to its parent.
+   */
   private final Indent myIndent;
+
+  /**
+   * Shared spacing builder supplying declarative token spacing rules.
+   */
   private final SpacingBuilder mySpacingBuilder;
 
+  /**
+   * Constructs a Compact formatting block for the specified AST node.
+   *
+   * @param node           the underlying AST node
+   * @param indent         the computed indent for this block, or null
+   * @param wrap           the wrap strategy for this block, or null
+   * @param alignment      the alignment group for this block, or null
+   * @param spacingBuilder the shared declarative spacing builder
+   */
   public CompactBlock(
       @NotNull ASTNode node,
       @Nullable Indent indent,

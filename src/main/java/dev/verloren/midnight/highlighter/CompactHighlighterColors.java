@@ -10,10 +10,54 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
  * Central dictionary of {@link TextAttributesKey}s and {@link AttributesDescriptor}s for Compact syntax
  * and semantic highlighting.
  *
- * <p>Maps every meaningful Compact language construct to standard IntelliJ semantic highlight
- * attributes so that the user's active color scheme controls the visual presentation.</p>
+ * <h3>Subsystem Role &amp; Architecture</h3>
+ * <p>Serves as the single source of truth for all syntax highlighting attributes used across both
+ * lexical highlighting ({@link CompactSyntaxHighlighter}) and AST-based semantic analysis ({@link CompactHighlightingAnnotator}).
+ * It establishes a two-tiered color fallback taxonomy:
+ * <ul>
+ *   <li><b>Platform Defaults Fallback:</b> Every Compact {@link TextAttributesKey} inherits from a standard
+ *       IntelliJ platform key (e.g., {@link DefaultLanguageHighlighterColors#FUNCTION_DECLARATION},
+ *       {@link DefaultLanguageHighlighterColors#GLOBAL_VARIABLE}, {@link DefaultLanguageHighlighterColors#CLASS_NAME}).
+ *       This guarantees that third-party color schemes (Darcula, One Dark, Dracula, GitHub Light) automatically
+ *       render Compact code harmoniously without requiring custom scheme definitions.</li>
+ *   <li><b>Custom Scheme Overrides:</b> Exposes every key through {@link #DESCRIPTORS} in the IDE settings
+ *       (Settings &gt; Editor &gt; Color Scheme &gt; Compact) allowing developers to customize colors for
+ *       specialized ZK primitives like {@code witness}, {@code circuit}, {@code ledger}, and {@code disclose}.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading &amp; Memory Model</h3>
+ * <ul>
+ *   <li><b>Stateless Dictionary:</b> Pure static immutable constants instantiated once during class loading.</li>
+ *   <li><b>Thread Safety:</b> Fully thread-safe across all background annotator threads and EDT render loops.</li>
+ *   <li><b>Private Constructor:</b> Enforces non-instantiability.</li>
+ * </ul>
+ *
+ * <h3>Color Taxonomy Overview</h3>
+ * <pre>
+ *   Compact Token / AST Node
+ *             │
+ *             ├── Lexical Pass (CompactSyntaxHighlighter)
+ *             │     ├── KEYWORD, MODIFIER, BUILTIN_TYPE, STRING, NUMBER, COMMENTS
+ *             │     └── OPERATOR, PARENTHESES, BRACES, BRACKETS, BAD_CHARACTER
+ *             │
+ *             └── Semantic Pass (CompactHighlightingAnnotator)
+ *                   ├── Declarations: CIRCUIT, WITNESS, CONTRACT, MODULE, STRUCT, ENUM, LEDGER
+ *                   ├── Calls &amp; Usages: CIRCUIT_CALL, WITNESS_CALL, BUILTIN_FUNCTION, FIELD_ACCESS
+ *                   ├── Mutability: LOCAL_VARIABLE_WRITE, LEDGER_WRITE
+ *                   └── Escapes: VALID_STRING_ESCAPE, INVALID_STRING_ESCAPE
+ * </pre>
+ *
+ * @see dev.verloren.midnight.highlighter.CompactSyntaxHighlighter
+ * @see dev.verloren.midnight.highlighter.CompactHighlightingAnnotator
+ * @see dev.verloren.midnight.highlighter.CompactColorSettingsPage
+ * @see com.intellij.openapi.editor.DefaultLanguageHighlighterColors
  */
 public final class CompactHighlighterColors {
+
+  /**
+   * Private constructor preventing instantiation of this static dictionary class.
+   */
   private CompactHighlighterColors() {}
 
   // =========================================================================

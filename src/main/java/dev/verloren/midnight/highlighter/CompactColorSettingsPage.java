@@ -13,12 +13,43 @@ import javax.swing.*;
 import java.util.Map;
 
 /**
- * Color Settings Page for Midnight Compact in IDE Settings (Settings -> Editor -> Color Scheme -> Compact).
+ * Color Settings Page for Midnight Compact in IDE Settings (Settings &gt; Editor &gt; Color Scheme &gt; Compact).
  *
- * <p>Exposes all lexical and semantic syntax highlighting categories and provides a rich demo code snippet.</p>
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.colorSettingsPage} extension point.
+ * Provides the interactive UI page in IntelliJ's Color Scheme preferences where users can preview and customize
+ * font colors, styles (bold/italic), backgrounds, and effects for all Compact language tokens and semantic constructs:
+ * <ul>
+ *   <li><b>Attribute Descriptors:</b> Exposes hierarchical categories defined in {@link CompactHighlighterColors#DESCRIPTORS}
+ *       (Keywords, Types, Declarations, Calls &amp; Usages, Literals, Comments, Operators, Pragmas).</li>
+ *   <li><b>XML Tag Mapping:</b> Maps embedded XML tags (e.g. {@code <circuit_decl>}, {@code <witness_call>}, {@code <ledger_write>})
+ *       to corresponding {@link TextAttributesKey}s in {@link #ADDITIONAL_TAGS}.</li>
+ *   <li><b>Rich Demo Contract:</b> Feeds a comprehensive demo contract ({@code ShieldedToken.compact}) in {@link #getDemoText()}
+ *       exercising all zero-knowledge, state, and syntax categories in a single realistic preview buffer.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked by {@code com.intellij.application.options.colors.NewColorAndFontPanel} when the user navigates
+ * to the Compact color settings page. IntelliJ combines the lexical highlighter from {@link #getHighlighter()}
+ * with the annotated tags from {@link #getAdditionalHighlightingTagToDescriptorMap()} to render the demo editor.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Instantiated and invoked exclusively on the Event Dispatch Thread (EDT)
+ *       during IDE settings dialog interactions.</li>
+ *   <li><b>Thread Safety:</b> All descriptor maps and string constants are immutable and thread-safe.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.highlighter.CompactHighlighterColors
+ * @see dev.verloren.midnight.highlighter.CompactSyntaxHighlighter
+ * @see com.intellij.openapi.options.colors.ColorSettingsPage
  */
 public class CompactColorSettingsPage implements ColorSettingsPage {
 
+  /**
+   * Mapping from XML tag names in {@link #getDemoText()} to semantic {@link TextAttributesKey}s.
+   */
   private static final Map<String, TextAttributesKey> ADDITIONAL_TAGS = Map.ofEntries(
       Map.entry("modifier", CompactHighlighterColors.MODIFIER),
       Map.entry("circuit_decl", CompactHighlighterColors.CIRCUIT_DECLARATION),

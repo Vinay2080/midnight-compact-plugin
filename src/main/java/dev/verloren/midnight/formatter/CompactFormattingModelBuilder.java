@@ -8,18 +8,76 @@ import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Builds the code formatting model for Compact files (reformat code action {@code Ctrl+Alt+L}).
+ * Builds the code formatting model for Compact smart contract files.
  *
- * <p>Constructs a tree of {@link CompactBlock} instances and defines the canonical {@link SpacingBuilder}
- * enforcing spacing rules around operators, keywords, punctuation, and delimiters.</p>
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.lang.formatter} extension point
+ * for {@link dev.verloren.midnight.CompactLanguage}. Powers the IDE's automated code reformatting
+ * (Reformat Code action {@code Ctrl+Alt+L} / {@code Cmd+Option+L}), rearrange code, and format-on-save:
+ * <ul>
+ *   <li><b>AST Block Hierarchy:</b> Constructs a hierarchy of {@link CompactBlock} elements mirroring
+ *       the Compact AST, computing indentation and line wrapping.</li>
+ *   <li><b>Spacing Builder:</b> Assembles declarative {@link SpacingBuilder} rules specifying whitespace
+ *       around operators, delimiters, keywords, parentheses, and braces via {@link #createSpacingBuilder}.</li>
+ *   <li><b>2-Space Canonical Indent:</b> Integrates with {@link CompactLanguageCodeStyleSettingsProvider}
+ *       to apply the standard 2-space indentation style canonical to Compact contracts.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked by {@code com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl} when reformatting is triggered.
+ * IntelliJ passes a {@link FormattingContext} containing the target PSI element, document range, and active
+ * {@link CodeStyleSettings}, receiving back a {@link FormattingModel} that calculates document text edits.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Called on pooled background worker threads managed by the formatting subsystem,
+ *       or inside an EDT write command action when applying document modifications.</li>
+ *   <li><b>Read Action:</b> Requires a platform Read Action ({@code @RequiresReadLock}) while constructing the
+ *       block tree and inspecting AST nodes.</li>
+ * </ul>
+ *
+ * <h3>Formatting Model Pipeline</h3>
+ * <pre>
+ *   [User presses Ctrl+Alt+L / "Reformat Code"]
+ *                         │
+ *                         ▼
+ *        [CompactFormattingModelBuilder]
+ *                         │
+ *        createModel(FormattingContext)
+ *                         │
+ *          ┌──────────────┴──────────────┐
+ *          ▼                             ▼
+ *   [createSpacingBuilder]        [Root CompactBlock]
+ *   Spacing rules for tokens      Tree of AST formatting blocks
+ *          │                             │
+ *          └──────────────┬──────────────┘
+ *                         ▼
+ *            [FormattingModelProvider]
+ *                         │
+ *              Reformatted Document
+ * </pre>
+ *
+ * @see dev.verloren.midnight.formatter.CompactBlock
+ * @see dev.verloren.midnight.formatter.CompactLanguageCodeStyleSettingsProvider
+ * @see com.intellij.formatting.FormattingModelBuilder
+ * @see com.intellij.formatting.SpacingBuilder
  */
 public class CompactFormattingModelBuilder implements FormattingModelBuilder {
 
+  /**
+   * Constructs the formatting model for the specified formatting context.
+   *
+   * @param formattingContext context containing the target PSI element, file, and code style settings
+   * @return a fully configured {@link FormattingModel} for the Compact file
+   */
   @Override
   public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    // Step 1: Retrieve project code style settings and construct declarative spacing builder
     CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     SpacingBuilder spacingBuilder = createSpacingBuilder(settings);
 
+    // Step 2: Instantiate root formatting block starting at file root with none-indent
     CompactBlock rootBlock = new CompactBlock(
         formattingContext.getPsiElement().getNode(),
         Indent.getNoneIndent(),
@@ -28,6 +86,7 @@ public class CompactFormattingModelBuilder implements FormattingModelBuilder {
         spacingBuilder
     );
 
+    // Step 3: Wrap root block in platform formatting model bound to the target PSI file
     return FormattingModelProvider.createFormattingModelForPsiFile(
         formattingContext.getContainingFile(),
         rootBlock,
@@ -35,6 +94,12 @@ public class CompactFormattingModelBuilder implements FormattingModelBuilder {
     );
   }
 
+  /**
+   * Creates the canonical spacing builder defining whitespace rules across Compact tokens.
+   *
+   * @param settings the active code style settings
+   * @return configured {@link SpacingBuilder} with rules for operators, delimiters, keywords, and braces
+   */
   public static @NotNull SpacingBuilder createSpacingBuilder(@NotNull CodeStyleSettings settings) {
     return new SpacingBuilder(settings, CompactLanguage.INSTANCE)
         // Assignment operators: space around

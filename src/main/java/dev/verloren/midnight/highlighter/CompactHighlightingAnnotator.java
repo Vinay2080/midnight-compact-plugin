@@ -20,21 +20,68 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
- * Semantic annotator for the Midnight Compact smart contract language.
+ * Semantic highlighting annotator for the Midnight Compact smart contract language.
  *
- * <p>Enriches lexical highlighting with fine-grained semantic distinctions for:
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.annotator} extension point
+ * for {@link dev.verloren.midnight.CompactLanguage}. Serves as Tier 2 of the highlighting engine,
+ * augmenting the basic lexical token colors from {@link CompactSyntaxHighlighter} with deep,
+ * context-sensitive semantic colors derived from PSI tree inspection and reference resolution:
  * <ul>
- *   <li>Declarations (circuits, witnesses, contracts, modules, structs, enums, enum members, fields, type aliases, type parameters, consts, params, locals, ledgers, imports)</li>
- *   <li>Calls and usages (circuit calls, witness calls, builtin functions, struct field accesses, enum member accesses, constant usages, param usages, local usages, ledger usages)</li>
- *   <li>Type references and built-in type primitives</li>
- *   <li>String escape sequences (valid and invalid)</li>
- *   <li>Documentation comments ({@code ///}, {@code /**}) vs standard comments</li>
- *   <li>Pragma directives and version literals</li>
+ *   <li><b>Declarations:</b> Specific colors for circuits, witnesses, contracts, modules, structs,
+ *       enums, enum members, struct fields, type aliases, generic type parameters, and ledger variables.</li>
+ *   <li><b>Calls vs Usages:</b> Differentiates circuit calls from witness calls ({@code wit_...()}),
+ *       builtin cryptographic functions ({@code disclose}, {@code persistentHash}), and struct field accesses.</li>
+ *   <li><b>Read vs Write Usages:</b> Distinguishes read access from mutating assignment write access
+ *       for both ledger state ({@link CompactHighlighterColors#LEDGER_WRITE}) and local variables
+ *       ({@link CompactHighlighterColors#LOCAL_VARIABLE_WRITE}).</li>
+ *   <li><b>Doc Comments &amp; Tags:</b> Parses embedded JSDoc/RustDoc style tags ({@code @param}, {@code @return},
+ *       {@code @notice}) and tag values within documentation comments.</li>
+ *   <li><b>String Escape Validation:</b> Synthesizes micro-ranges inside string literals to colorize valid
+ *       escapes (such as {@code \n}, {@code \xHH}, {@code \u005Cu{...}}) and visually flag invalid escape sequences.</li>
+ *   <li><b>Pragma Metadata:</b> Colorizes pragma directives and version requirement strings.</li>
  * </ul>
  * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked by IntelliJ's daemon code analyzer ({@code GeneralHighlightingPass}) on background threads
+ * while the developer edits code. It traverses PSI elements in the active editor viewport, creating silent
+ * informational annotations via {@link AnnotationHolder#newSilentAnnotation(HighlightSeverity)}.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Always runs on pooled background daemon threads managed by {@code DaemonCodeAnalyzer}.</li>
+ *   <li><b>Read Action:</b> Requires a platform Read Action ({@code @RequiresReadLock}) while traversing PSI
+ *       trees and resolving references via {@link CompactResolveUtil}.</li>
+ *   <li><b>Non-Intrusive Highlighting:</b> Emits {@link HighlightSeverity#INFORMATION} annotations with text attributes,
+ *       avoiding error gutters or wavy underlines.</li>
+ * </ul>
+ *
+ * <h3>Semantic Highlighting Architecture</h3>
+ * <pre>
+ *   [GeneralHighlightingPass (Background Daemon)]
+ *                          │
+ *                          ▼
+ *             [CompactHighlightingAnnotator]
+ *                          │
+ *   ┌──────────────────────┼──────────────────────┐
+ *   ▼                      ▼                      ▼
+ * [Lexical Enhancements]  [Declaration Pass]    [Reference &amp; Usage Pass]
+ * - Doc Comments &amp; Tags   - Circuits &amp; Witnesses- Calls: Circuit vs Witness
+ * - String Escapes        - Contracts &amp; Modules - Members: Field vs Enum
+ * - Modifiers &amp; Pragmas   - Ledgers &amp; Constants - Mutability: Read vs Write
+ * </pre>
+ *
+ * @see dev.verloren.midnight.highlighter.CompactSyntaxHighlighter
+ * @see dev.verloren.midnight.highlighter.CompactHighlighterColors
+ * @see dev.verloren.midnight.resolve.CompactResolveUtil
+ * @see com.intellij.lang.annotation.Annotator
  */
 public class CompactHighlightingAnnotator implements Annotator {
 
+  /**
+   * Set of standard built-in cryptographic and utility function identifiers provided by the Compact runtime.
+   */
   private static final Set<String> BUILTIN_FUNCTIONS = Set.of(
       "assert", "disclose", "fold", "slice", "pad", "emit", "map",
       "transientHash", "persistentHash", "transientCommit", "persistentCommit",
@@ -44,6 +91,9 @@ public class CompactHighlightingAnnotator implements Annotator {
       "secp256r1EcdsaVerify", "ed25519Verify", "sha512"
   );
 
+  /**
+   * Set of standard built-in primitive and container type identifiers recognized by the Compact type system.
+   */
   private static final Set<String> BUILTIN_TYPES = Set.of(
       "Field", "Boolean", "Uint", "Bytes", "Vector", "Opaque", "Cell", "Void",
       "JubjubScalar", "Secp256k1Base", "Secp256k1Scalar", "Secp256r1", "Curve25519",
@@ -53,6 +103,12 @@ public class CompactHighlightingAnnotator implements Annotator {
       "Maybe", "Either", "MerkleTreeDigest", "MerkleTreePath", "MerkleTreePathEntry", "LeafPreimage"
   );
 
+  /**
+   * Annotates the given PSI element with rich semantic text attributes based on its resolved role.
+   *
+   * @param element the PSI element to analyze
+   * @param holder  annotation holder receiving newly constructed text attribute highlights
+   */
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof PsiFile) {

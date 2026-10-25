@@ -13,10 +13,51 @@ import dev.verloren.midnight.lexer.CompactTokenTypes;
 import org.jspecify.annotations.NonNull;
 
 /**
- * Syntax highlighter for Compact source code.
+ * High-speed lexical syntax highlighter for Compact source code.
  *
- * <p>Maps lexical tokens from {@link CompactLexer} to IntelliJ {@link TextAttributesKey}s
- * for editor syntax highlighting.</p>
+ * <h3>Subsystem Role &amp; Architecture</h3>
+ * <p>Extends {@link SyntaxHighlighterBase}. Serves as Tier 1 of IntelliJ's two-tiered syntax highlighting engine:
+ * <ul>
+ *   <li><b>Tier 1 (Lexical Highlighting - This Class):</b> Operates instantaneously during editor opening
+ *       and raw typing by tokenizing document character streams with {@link CompactLexer}. Does not require
+ *       an abstract syntax tree (AST) or symbol resolution, ensuring zero typing latency.</li>
+ *   <li><b>Tier 2 (Semantic Highlighting - {@link CompactHighlightingAnnotator}):</b> Runs asynchronously
+ *       in the background once the PSI tree is built, enriching the basic colors with declaration roles,
+ *       call targets, variable mutability, doc tags, and string escapes.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Instantiated by {@link CompactSyntaxHighlighterFactory} whenever an editor, preview pane,
+ * or color settings page opens a Compact source file. IntelliJ invokes {@link #getHighlightingLexer()}
+ * to obtain a fresh lexer instance, followed by repeated calls to {@link #getTokenHighlights(IElementType)}
+ * for each token in the viewport.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Invoked on the Event Dispatch Thread (EDT) or pooled rendering threads
+ *       during syntax highlighting and editor painting passes.</li>
+ *   <li><b>Locking:</b> Does not require any Read or Write actions because it operates strictly on lexical token
+ *       types without accessing PSI trees or document models.</li>
+ *   <li><b>Reentrancy:</b> The returned {@link CompactLexer} is an independent instance per highlighter,
+ *       ensuring safe concurrent lexing across multiple editor tabs.</li>
+ * </ul>
+ *
+ * <h3>Highlighting Tier Flow</h3>
+ * <pre>
+ *   [Raw Document Keystroke]
+ *              │
+ *              ▼
+ *   [CompactSyntaxHighlighter (Tier 1: Lexical)] ──► Instant basic colors (Keywords, Literals, Punctuation)
+ *              │
+ *              ▼ (Background Parser Daemon)
+ *   [CompactHighlightingAnnotator (Tier 2: Semantic)] ──► Deep contextual colors (Circuits, Witnesses, Ledgers)
+ * </pre>
+ *
+ * @see dev.verloren.midnight.highlighter.CompactHighlighterColors
+ * @see dev.verloren.midnight.highlighter.CompactHighlightingAnnotator
+ * @see dev.verloren.midnight.highlighter.CompactSyntaxHighlighterFactory
+ * @see com.intellij.openapi.fileTypes.SyntaxHighlighterBase
  */
 public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
 
