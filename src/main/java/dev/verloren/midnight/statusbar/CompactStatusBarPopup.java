@@ -36,12 +36,56 @@ import java.util.*;
 
 /**
  * Builds the lightweight, zero-latency popup menu for the Compact status bar widget.
+ *
+ * <p><h3>Architectural Role &amp; Layout</h3>
+ * Provides an IntelliJ standard {@link ListPopup} when the user interacts with {@link CompactStatusBarWidget}.
+ * The popup menu organizes toolchain management into four distinct sections:
+ * <ol>
+ *   <li><b>Active Header:</b> Displays the currently selected or auto-detected compiler version.</li>
+ *   <li><b>Installed Releases:</b> Lists all locally cached Compact compilers sorted descending by SemVer,
+ *       with a checkmark indicator on the active release. Includes an option to reset to auto-detected system compiler.</li>
+ *   <li><b>Available Downloads:</b> Lists recognized official releases that are not yet downloaded,
+ *       allowing single-click download and activation.</li>
+ *   <li><b>Navigation Shortcuts:</b> Direct actions to open the "Compact Compiler" tool window and plugin settings dialog.</li>
+ * </ol>
+ *
+ * <p><h3>Menu Hierarchy Diagram</h3>
+ * <pre>
+ *   ┌──────────────────────────────────────────────────────────┐
+ *   │ ── Active Compiler: v0.24.0 ──────────────────────────── │
+ *   │ ✔ Compact v0.24.0 (Midnight compact compiler 0.24.0)     │
+ *   │   Compact v0.23.0 (Midnight compact compiler 0.23.0)     │
+ *   │   Use System / Auto-Detected Toolchain                   │
+ *   │ ── Download Compact Compiler ─────────────────────────── │
+ *   │   Download v0.22.0...                                    │
+ *   │ ──────────────────────────────────────────────────────── │
+ *   │   Open Compact Compiler Panel                            │
+ *   │   Configure Midnight Settings...                         │
+ *   └──────────────────────────────────────────────────────────┘
+ * </pre>
+ *
+ * <p><h3>Threading Contract &amp; Concurrency</h3>
+ * All popup actions extend {@link DumbAwareAction} and specify {@link ActionUpdateThread#BGT} to ensure
+ * zero UI stutter on the Event Dispatch Thread (EDT). Actions that download compiler binaries dispatch
+ * asynchronously onto background tasks using {@link ProgressManager}.
+ *
+ * @see CompactStatusBarWidget
+ * @see dev.verloren.midnight.toolwindow.CompactCompilerPanel
+ * @see dev.verloren.midnight.version.CompactVersionManager
  */
 public final class CompactStatusBarPopup {
 
+  /** Private constructor preventing utility instantiation. */
   private CompactStatusBarPopup() {
   }
 
+  /**
+   * Constructs the action group popup and binds speedsearch for quick keyboard filtering.
+   *
+   * @param project current active project
+   * @param context action context from the triggering status bar component
+   * @return interactive {@link ListPopup}
+   */
   public static @NotNull ListPopup createPopup(@NotNull Project project, @NotNull DataContext context) {
     DefaultActionGroup group = new DefaultActionGroup();
 
@@ -111,6 +155,13 @@ public final class CompactStatusBarPopup {
     private final String version;
     private final boolean isCurrent;
 
+    /**
+     * Constructs a compiler version switch action.
+     *
+     * @param project   the active project
+     * @param version   the version to switch to, or empty string for auto-detection
+     * @param isCurrent true if this version is currently selected
+     */
     public SwitchCompilerVersionAction(@NotNull Project project, @NotNull String version, boolean isCurrent) {
       super(
           version.isEmpty()
@@ -165,6 +216,12 @@ public final class CompactStatusBarPopup {
     private final Project project;
     private final String version;
 
+    /**
+     * Constructs a download action for the specified version.
+     *
+     * @param project the active project
+     * @param version target version string to download
+     */
     public DownloadCompilerVersionAction(@NotNull Project project, @NotNull String version) {
       super("Download v" + version + "...", "Download and activate Compact v" + version, AllIcons.Actions.Download);
       this.project = project;
@@ -216,6 +273,11 @@ public final class CompactStatusBarPopup {
   public static class OpenCompilerToolWindowAction extends DumbAwareAction {
     private final Project project;
 
+    /**
+     * Constructs an action to open the sidebar tool window.
+     *
+     * @param project the active project
+     */
     public OpenCompilerToolWindowAction(@NotNull Project project) {
       super("Open Compact Compiler Panel", "Show the Compact Compiler sidebar panel", MidnightIcons.SIDEBAR_TOOLWINDOW);
       this.project = project;
@@ -241,6 +303,11 @@ public final class CompactStatusBarPopup {
   public static class OpenMidnightSettingsAction extends DumbAwareAction {
     private final Project project;
 
+    /**
+     * Constructs an action to open the settings dialog.
+     *
+     * @param project the active project
+     */
     public OpenMidnightSettingsAction(@NotNull Project project) {
       super("Configure Midnight Settings...", "Open settings", AllIcons.General.GearPlain);
       this.project = project;
@@ -257,6 +324,13 @@ public final class CompactStatusBarPopup {
     }
   }
 
+  /**
+   * Posts an IDE balloon notification under the "Midnight Notifications" group.
+   *
+   * @param project target project
+   * @param content notification message text
+   * @param type    notification severity
+   */
   private static void notifyUser(@NotNull Project project, @NotNull String content, @NotNull NotificationType type) {
     NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Midnight Notifications");
     if (group != null) {
