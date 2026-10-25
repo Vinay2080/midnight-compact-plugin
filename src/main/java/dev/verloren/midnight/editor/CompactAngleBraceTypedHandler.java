@@ -16,21 +16,73 @@ import dev.verloren.midnight.psi.CompactFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handles automatic pairing of angle brackets ({@code <...>}) in Compact code.
+ * Typed handler automating angle bracket pairing ({@code <...>}) in Compact source files.
  *
- * <p>When a user types {@code <} after a generic type name, built-in type, or generic
- * declaration keyword, this handler automatically inserts the closing {@code >} and
- * places the caret between them ({@code <|>}), mirroring the behavior of {@code ()},
- * {@code {}}, and {@code []}.</p>
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.typedHandler} extension point.
+ * Solves the classic language engineering challenge where angle brackets serve dual roles as both
+ * binary comparison operators ({@code a < b}) and generic type delimiter pairs ({@code Vector<32, Field>}):
+ * <ul>
+ *   <li><b>Context-Aware Auto-Insertion:</b> Automatically inserts matching closing {@code >} when {@code <}
+ *       is typed following a built-in type ({@code Vector}, {@code Uint}, {@code Bytes}, {@code Opaque},
+ *       {@code Field}, {@code Boolean}), built-in generic functions ({@code default}, {@code slice}),
+ *       type-like capitalized identifiers ({@code Point}, {@code T}), or generic declaration keywords
+ *       ({@code circuit}, {@code struct}, {@code enum}, {@code contract}) via {@link #shouldComplete}.</li>
+ *   <li><b>Over-Type / Step-Over:</b> When the developer types {@code >} directly before an existing closing
+ *       angle bracket, advances the caret forward without inserting an unwanted duplicate bracket.</li>
+ *   <li><b>Lexical Balance Safety:</b> Employs {@link #calculateBalance} to ensure that brackets are only
+ *       auto-paired when the enclosing statement is not already balanced, preventing syntax corruption.</li>
+ * </ul>
+ * </p>
  *
- * <p>When a user types {@code >} immediately before an existing closing angle bracket,
- * this handler moves the caret forward without inserting a duplicate bracket.</p>
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked by IntelliJ's editor action pipeline:
+ * <ol>
+ *   <li>{@link #beforeCharTyped}: When typing {@code <}, evaluates {@link #shouldComplete} and sets
+ *       {@link #OPENING_TYPED_KEY} in editor user data. When typing {@code >}, checks for over-type step-over.</li>
+ *   <li>The platform's default typing handler inserts the character into the document.</li>
+ *   <li>{@link #charTyped}: Consumes {@link #OPENING_TYPED_KEY}, calculates balance, and inserts {@code >}
+ *       immediately after the caret if appropriate.</li>
+ * </ol>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Always executed on the Event Dispatch Thread (EDT) during interactive keystrokes.</li>
+ *   <li><b>Read Action:</b> Runs within the platform's editor write/typing command; queries the document and
+ *       {@link HighlighterIterator} without acquiring explicit locks.</li>
+ * </ul>
+ *
+ * <h3>Typing Heuristic Architecture</h3>
+ * <pre>
+ *   [User types '&lt;']
+ *           │
+ *           ▼
+ *   shouldComplete(editor)
+ *           │
+ *   Preceding token inspection:
+ *     ├── Built-in Types: Vector, Uint, Bytes, Opaque, Field, Boolean ──► Auto-pair
+ *     ├── Built-in Exprs: default&lt;, slice&lt; ────────────────────────────► Auto-pair
+ *     ├── Declaration Keywords: circuit, struct, enum, type ──────────► Auto-pair
+ *     ├── Type-Like Identifier: UpperCamelCase or Single Uppercase (T) ──► Auto-pair
+ *     └── Comparison / Comment / String / Other ──────────────────────► Skip pairing
+ * </pre>
+ *
+ * @see dev.verloren.midnight.editor.CompactAngleBraceBackspaceHandler
+ * @see dev.verloren.midnight.editor.CompactDelimiterTypedHandler
+ * @see com.intellij.codeInsight.editorActions.TypedHandlerDelegate
  */
 public class CompactAngleBraceTypedHandler extends TypedHandlerDelegate {
 
+  /**
+   * Transient editor user data key tracking whether an auto-pairable opening angle bracket was typed in beforeCharTyped.
+   */
   private static final Key<Boolean> OPENING_TYPED_KEY =
       Key.create("dev.verloren.midnight.editor.COMPACT_ANGLE_OPENING_TYPED");
 
+  /**
+   * Tokens representing top-level declaration keywords that accept generic type parameter lists.
+   */
   private static final TokenSet GENERIC_DECLARATION_KEYWORDS = TokenSet.create(
       CompactTokenTypes.CIRCUIT,
       CompactTokenTypes.WITNESS,
@@ -41,6 +93,9 @@ public class CompactAngleBraceTypedHandler extends TypedHandlerDelegate {
       CompactTokenTypes.CONTRACT
   );
 
+  /**
+   * Structural boundary tokens that terminate angle bracket balance scanning.
+   */
   private static final TokenSet INVALID_INSIDE_TOKENS = TokenSet.create(
       CompactTokenTypes.LBRACE,
       CompactTokenTypes.RBRACE,

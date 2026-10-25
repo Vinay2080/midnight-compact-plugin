@@ -17,25 +17,88 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Provides statement and block surrounding descriptors for Compact.
+ * Descriptor that identifies enclosing statements and expressions eligible for "Surround With..."
+ * actions (Ctrl+Alt+T / Cmd+Alt+T) in Compact source code.
+ *
+ * <h3>Architectural Role &amp; Extension Point</h3>
+ * <p>Registered as a {@code lang.surroundDescriptor} extension for language {@code Compact} in {@code plugin.xml}.
+ * Implements {@link SurroundDescriptor} to participate in IntelliJ's code surrounding action system. When a developer
+ * selects a code fragment (or positions the caret on a statement) and invokes "Surround With", this descriptor:</p>
+ * <ol>
+ *   <li>Resolves the selected range into a normalized array of contiguous {@link PsiElement} statement or expression nodes.</li>
+ *   <li>Filters out whitespace and structural braces that should not be enveloped.</li>
+ *   <li>Supplies the available {@link Surrounder} implementations (e.g. {@code { ... }} block, {@code if (expr) { ... }}).</li>
+ * </ol>
+ *
+ * <h3>Element Resolution Pipeline</h3>
+ * <pre>
+ *   Selection Range (startOffset, endOffset)
+ *                     │
+ *                     ▼
+ *      [Clamp offsets to file boundaries]
+ *                     │
+ *            ┌────────┴────────┐
+ *            │                 │
+ *      Point Caret       Range Selection
+ *            │                 │
+ *            ▼                 ▼
+ *    [Find leaf]      [Find leaf1 &amp; leaf2, skipping whitespace]
+ *            │                 │
+ *            ▼                 ▼
+ *   [findSurround     [Resolve candidate1 &amp; candidate2]
+ *     Candidate]               │
+ *            │                 ▼
+ *            │        [Compute common ancestor / direct children]
+ *            │                 │
+ *            │                 ▼
+ *            │        [Collect contiguous sibling nodes]
+ *            │                 │
+ *            └────────┬────────┘
+ *                     │
+ *                     ▼
+ *       PsiElement[] candidate elements to surround
+ * </pre>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action:</b> Invoked on EDT under a platform read lock. All AST and PSI traversals are read-only.</li>
+ * </ul>
+ *
+ * @see CompactSurrounderBase
+ * @see CompactBlockSurrounder
+ * @see CompactIfSurrounder
  */
 public class CompactSurroundDescriptor implements SurroundDescriptor {
+
+  /**
+   * Pre-allocated array of available surrounders for Compact statements.
+   */
   private static final Surrounder[] SURROUNDERS = new Surrounder[]{
           new CompactIfSurrounder(),
           new CompactBlockSurrounder()
   };
 
+  /**
+   * Identifies and returns the array of PSI elements to be enclosed by a surrounder based on the
+   * editor selection range or caret position.
+   *
+   * @param file the PSI file being edited
+   * @param startOffset starting offset of the editor selection
+   * @param endOffset ending offset of the editor selection
+   * @return array of eligible {@link PsiElement} nodes, or {@link PsiElement#EMPTY_ARRAY} if none found
+   */
   @Override
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+    // 1. Validate file type and non-empty content
     if (!(file instanceof CompactFile) || file.getTextLength() == 0) {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    // Clamp offsets
+    // 2. Clamp offsets within file text bounds
     startOffset = Math.clamp(startOffset, 0, file.getTextLength());
     endOffset = Math.clamp(endOffset, 0, file.getTextLength());
 
-    // Caret at single point
+    // 3. Handle single point caret (no active text selection)
     if (startOffset == endOffset) {
       PsiElement element = file.findElementAt(startOffset);
       if (element instanceof PsiWhiteSpace || element == null) {
@@ -51,10 +114,11 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    // Range selection
+    // 4. Handle active text range selection: find boundary leaves
     PsiElement element1 = file.findElementAt(startOffset);
     PsiElement element2 = file.findElementAt(Math.max(0, endOffset - 1));
 
+    // Skip leading and trailing whitespace tokens
     if (element1 instanceof PsiWhiteSpace) {
       int next = element1.getTextRange().getEndOffset();
       if (next < file.getTextLength()) {
@@ -70,6 +134,7 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
       return PsiElement.EMPTY_ARRAY;
     }
 
+    // 5. Locate candidate statements or expressions enclosing boundary leaves
     PsiElement cand1 = findSurroundCandidate(element1);
     PsiElement cand2 = findSurroundCandidate(element2);
 
@@ -83,6 +148,7 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
       return new PsiElement[]{cand1};
     }
 
+    // 6. Harmonize parents: find common parent if candidates reside at different depths
     PsiElement parent = cand1.getParent();
     if (parent == null || parent != cand2.getParent()) {
       PsiElement commonParent = PsiTreeUtil.findCommonParent(cand1, cand2);
@@ -96,6 +162,7 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
       }
     }
 
+    // 7. Collect all contiguous siblings between cand1 and cand2, skipping whitespace and standalone braces
     List<PsiElement> statements = new ArrayList<>();
     PsiElement current = cand1;
     while (current != null) {
@@ -111,16 +178,33 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
     return statements.isEmpty() ? PsiElement.EMPTY_ARRAY : statements.toArray(PsiElement.EMPTY_ARRAY);
   }
 
+  /**
+   * Returns the array of registered surrounder strategies.
+   *
+   * @return array of {@link Surrounder} implementations
+   */
   @Override
   public Surrounder @NotNull [] getSurrounders() {
     return SURROUNDERS;
   }
 
+  /**
+   * Indicates whether this descriptor is exclusive, suppressing surrounders from other descriptors.
+   *
+   * @return {@code false} to permit co-existence with generic surrounders
+   */
   @Override
   public boolean isExclusive() {
     return false;
   }
 
+  /**
+   * Climbs the PSI tree upward from a leaf element to locate the nearest statement, expression,
+   * or block child suitable for surrounding.
+   *
+   * @param leaf the leaf element at or near the caret/selection
+   * @return the candidate {@link PsiElement}, or {@code null} if none qualifies
+   */
   private static PsiElement findSurroundCandidate(@NotNull PsiElement leaf) {
     if (isBraceToken(leaf)) {
       return null;
@@ -150,6 +234,13 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
     return null;
   }
 
+  /**
+   * Climbs from {@code child} upward until reaching a node whose parent is {@code parent}.
+   *
+   * @param parent the ancestor element
+   * @param child the descendant element
+   * @return the direct child of {@code parent} that is an ancestor of {@code child}
+   */
   private static PsiElement findDirectChildOf(@NotNull PsiElement parent, @NotNull PsiElement child) {
     PsiElement current = child;
     while (current != null && current.getParent() != parent) {
@@ -158,6 +249,12 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
     return current;
   }
 
+  /**
+   * Checks whether the given PSI element represents an isolated opening or closing curly brace token.
+   *
+   * @param elem the PSI element to test
+   * @return {@code true} if {@code elem} is an {@code LBRACE} or {@code RBRACE} token; {@code false} otherwise
+   */
   private static boolean isBraceToken(@NotNull PsiElement elem) {
     if (elem.getNode() == null) return false;
     return elem.getNode().getElementType() == CompactTokenTypes.LBRACE ||

@@ -19,18 +19,56 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Provides code folding for Compact language constructs in IntelliJ IDEA.
+ * Builds code folding regions for Compact language constructs in the IntelliJ editor.
  *
- * <p>Supports collapsing of:
+ * <h3>Architectural Role &amp; Extension Point</h3>
+ * <p>Registered as a {@code lang.foldingBuilder} extension for language {@code Compact} in {@code plugin.xml}.
+ * Extends {@link CustomFoldingBuilder} and implements {@link DumbAware}, enabling folding regions to be calculated
+ * during background index rebuilding without blocking user typing or file navigation.</p>
+ *
+ * <h3>Foldable Regions &amp; Placeholders</h3>
+ * <table border="1">
+ *   <caption>Foldable Code Constructs</caption>
+ *   <tr><th>Region Type</th><th>Condition</th><th>Collapsed Placeholder</th></tr>
+ *   <tr><td>Include / Import Groups</td><td>Contiguous runs of &ge; 2 declarations across multiple lines</td><td>{@code "include ..."} or {@code "import ..."}</td></tr>
+ *   <tr><td>Multi-line Block Comments</td><td>{@code /* ... *&#47;} spanning &ge; 2 lines</td><td>{@code "/*...*&#47;"}</td></tr>
+ *   <tr><td>Doc Comments</td><td>{@code /// ...} doc comment lines</td><td>{@code "///..."}</td></tr>
+ *   <tr><td>Brace Blocks</td><td>Multi-line {@code { ... }} bodies of contracts, modules, circuits, ledgers, structs, enums, or blocks</td><td>{@code "{...}"}</td></tr>
+ * </table>
+ *
+ * <h3>Folding Pipeline</h3>
+ * <pre>
+ *   [Editor Document &amp; Root CompactFile]
+ *                    │
+ *                    ▼
+ *   [CompactFoldingBuilder.buildLanguageFoldRegions]
+ *                    │
+ *                    ├─► foldImportsAndIncludes (groups contiguous includes/imports)
+ *                    ├─► foldComments (scans block comments &amp; doc comment sequences)
+ *                    └─► foldBraceBlocks (locates { ... } boundaries on declarations &amp; blocks)
+ *                    │
+ *                    ▼
+ *         List&lt;FoldingDescriptor&gt;
+ * </pre>
+ *
+ * <h3>Threading Contract</h3>
  * <ul>
- *   <li>Curly brace code blocks ({@code { ... }}) in contracts, modules, circuits, ledgers, structs, and enums.</li>
- *   <li>Multi-line block comments ({@code /* ... *&#47;}) and contiguous doc-comment blocks ({@code /// ...}).</li>
- *   <li>Contiguous {@code include} and {@code import} declarations at the top of files.</li>
+ *   <li><b>Read Action:</b> Invoked on background threads under a platform read lock during code analysis.</li>
+ *   <li><b>Dumb Mode:</b> Fully {@link DumbAware}; operates solely on local PSI/AST topology without requiring index lookups.</li>
  * </ul>
- * </p>
+ *
+ * @see CustomFoldingBuilder
  */
 public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbAware {
 
+  /**
+   * Traverses the Compact PSI file to register folding descriptors for imports, comments, and brace blocks.
+   *
+   * @param descriptors output list accumulating discovered folding regions
+   * @param root the root element of the file (must be {@link CompactFile})
+   * @param document the editor document corresponding to {@code root}
+   * @param quick whether a fast, low-detail scan is requested during initial editor opening
+   */
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
                                           @NotNull PsiElement root,
@@ -45,6 +83,14 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     foldBraceBlocks(descriptors, root, document);
   }
 
+  /**
+   * Identifies contiguous groups of {@code include} and {@code import} declarations at the top level
+   * of the file and registers a combined folding descriptor for runs of 2 or more statements.
+   *
+   * @param descriptors output list of descriptors
+   * @param root the root file element
+   * @param document the editor document
+   */
   private void foldImportsAndIncludes(@NotNull List<FoldingDescriptor> descriptors,
                                       @NotNull PsiElement root,
                                       @NotNull Document document) {
@@ -72,6 +118,15 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     flushImportGroup(descriptors, groupStart, groupEnd, groupCount, document);
   }
 
+  /**
+   * Flushes a contiguous group of import/include declarations into a folding descriptor if it contains &ge; 2 entries.
+   *
+   * @param descriptors output list of descriptors
+   * @param groupStart first declaration in the contiguous group
+   * @param groupEnd last declaration in the contiguous group
+   * @param groupCount number of declarations in the group
+   * @param document the editor document
+   */
   private void flushImportGroup(
       @NotNull List<FoldingDescriptor> descriptors,
       @Nullable PsiElement groupStart,
@@ -87,6 +142,13 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     }
   }
 
+  /**
+   * Discovers and registers folding regions for multi-line block comments and triple-slash doc comments.
+   *
+   * @param descriptors output list of descriptors
+   * @param root the root file element
+   * @param document the editor document
+   */
   private void foldComments(@NotNull List<FoldingDescriptor> descriptors,
                             @NotNull PsiElement root,
                             @NotNull Document document) {
@@ -108,6 +170,14 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     });
   }
 
+  /**
+   * Discovers and registers folding regions for multi-line curly-brace blocks in contracts,
+   * circuits, modules, ledgers, structs, and control statements.
+   *
+   * @param descriptors output list of descriptors
+   * @param root the root file element
+   * @param document the editor document
+   */
   private void foldBraceBlocks(@NotNull List<FoldingDescriptor> descriptors,
                                @NotNull PsiElement root,
                                @NotNull Document document) {
@@ -122,10 +192,23 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     });
   }
 
+  /**
+   * Checks whether the given text range spans across two or more lines in the document.
+   *
+   * @param range the text range to check
+   * @param document the editor document
+   * @return {@code true} if range spans multiple lines; {@code false} if single line
+   */
   private boolean isMultiLine(@NotNull TextRange range, @NotNull Document document) {
     return document.getLineNumber(range.getStartOffset()) < document.getLineNumber(range.getEndOffset());
   }
 
+  /**
+   * Determines whether the given element is a declaration or block construct eligible for brace folding.
+   *
+   * @param element the candidate PSI element
+   * @return {@code true} if foldable construct; {@code false} otherwise
+   */
   private boolean isFoldableBlockElement(@NotNull PsiElement element) {
     return element instanceof CompactExternalContractDeclaration ||
             element instanceof CompactContractImplementsDeclaration ||
@@ -139,6 +222,12 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
             element instanceof CompactBlock;
   }
 
+  /**
+   * Computes the exact text range encompassing opening and closing curly braces for a foldable element.
+   *
+   * @param element the declaration or block element
+   * @return {@link TextRange} from opening brace to closing brace, or {@code null} if delimiters are missing
+   */
   private @Nullable TextRange getBraceRange(@NotNull PsiElement element) {
     ASTNode lbrace = null;
     ASTNode rbrace = null;
@@ -167,6 +256,13 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     return null;
   }
 
+  /**
+   * Produces the collapsed summary string displayed in the editor when a region is collapsed.
+   *
+   * @param node the AST node representing the folded region
+   * @param range the text range of the folded region
+   * @return summary placeholder string (e.g. {@code "{...}"}, {@code "/*...*&#47;"}, {@code "include ..."})
+   */
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     IElementType type = node.getElementType();
@@ -186,6 +282,12 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
     return "{...}";
   }
 
+  /**
+   * Specifies whether the folded region should be collapsed by default upon opening a file.
+   *
+   * @param node the AST node of the region
+   * @return {@code false} to leave regions expanded initially
+   */
   @Override
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     return false;

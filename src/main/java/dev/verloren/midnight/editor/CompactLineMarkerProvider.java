@@ -25,25 +25,69 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Line marker provider adding visual gutter indicators and navigation for:
+ * Line marker provider that renders contextual gutter icons and navigability targets for
+ * Compact declarations, interface implementations, and Zero-Knowledge privacy constructs.
+ *
+ * <h3>Architectural Role &amp; Extension Point</h3>
+ * <p>Registered as a {@code codeInsight.lineMarkerProvider} extension for language {@code Compact}
+ * in {@code plugin.xml}. Implements {@link LineMarkerProvider} to decorate editor gutters with visual
+ * indicators and cross-navigation popups, enriching the developer experience when working with
+ * Midnight's hybrid public/private smart contract paradigm.</p>
+ *
+ * <h3>Gutter Indicator Taxonomy</h3>
+ * <table border="1">
+ *   <caption>Compact Gutter Marker Taxonomy</caption>
+ *   <tr><th>Syntax Target</th><th>Visual Icon</th><th>Navigation / Semantic Behavior</th></tr>
+ *   <tr><td>{@code disclose} keyword</td><td>{@link AllIcons.Nodes#KeymapEditor}</td><td>ZK Disclosure boundary indicator (private witness to circuit).</td></tr>
+ *   <tr><td>{@code implements} in contract</td><td>{@link AllIcons.Gutter#ImplementingMethod}</td><td>Navigate UP to implemented interface contract declaration.</td></tr>
+ *   <tr><td>Interface Contract name</td><td>{@link AllIcons.Gutter#ImplementedMethod}</td><td>Navigate DOWN to all project contracts implementing this interface.</td></tr>
+ *   <tr><td>Interface Circuit name</td><td>{@link AllIcons.Gutter#ImplementedMethod}</td><td>Navigate DOWN to concrete circuit definitions implementing this signature.</td></tr>
+ *   <tr><td>{@code witness} declaration name</td><td>{@link AllIcons.Nodes#AbstractMethod}</td><td>Visual indicator: Private off-chain witness query.</td></tr>
+ *   <tr><td>Concrete Circuit (overriding)</td><td>{@link AllIcons.Gutter#ImplementingMethod}</td><td>Navigate UP to matching interface circuit signature.</td></tr>
+ *   <tr><td>Concrete Circuit (exported)</td><td>{@link AllIcons.Actions#Lightning}</td><td>Visual indicator: Exported on-chain ZK circuit entry point.</td></tr>
+ *   <tr><td>{@code ledger} declaration name</td><td>{@link AllIcons.Nodes#DataTables}</td><td>Visual indicator: On-chain ledger state (sealed / unsealed).</td></tr>
+ * </table>
+ *
+ * <h3>Navigation Resolution Architecture</h3>
+ * <pre>
+ *   [Gutter Marker on AST Element]
+ *                 │
+ *                 ├─► DISCLOSE Token ────────► Tooltip: ZK Privacy Boundary
+ *                 ├─► IMPLEMENTS Token ──────► Upward navigation to Interface
+ *                 │
+ *                 └─► IDENTIFIER Token
+ *                       ├─► ExternalContractDecl ──► Search project for 'contract implements'
+ *                       ├─► ExternalCircuit ───────► Search implementors for matching circuit
+ *                       ├─► WitnessDeclaration ────► Witness indicator
+ *                       ├─► CircuitDefinition ─────► Check super circuit (UP) or Exported (Lightning)
+ *                       └─► LedgerDeclaration ─────► Ledger state indicator
+ * </pre>
+ *
+ * <h3>Threading Contract</h3>
  * <ul>
- *   <li>Interface & implementation hierarchy (navigating between contract interfaces and concrete implementors).</li>
- *   <li>Circuit-level implementation navigation (jumping between abstract interface circuits and concrete circuit definitions).</li>
- *   <li>ZK privacy boundaries (disclose keyword indicators).</li>
- *   <li>Private off-chain witness query declarations.</li>
- *   <li>Exported on-chain ZK circuits.</li>
- *   <li>Sealed and unsealed ledger state variables.</li>
+ *   <li><b>Read Action:</b> Invoked on background daemon analysis threads under a platform read lock.</li>
+ *   <li><b>Project Search:</b> Multi-file lookups utilize {@link FileTypeIndex} scoped to {@link GlobalSearchScope#projectScope(Project)}.</li>
  * </ul>
+ *
+ * @see NavigationGutterIconBuilder
+ * @see CompactExternalContractDeclaration
+ * @see CompactContractImplementsDeclaration
  */
 public class CompactLineMarkerProvider implements LineMarkerProvider {
 
+  /**
+   * Computes gutter icon presentation and navigation targets for a single PSI element.
+   *
+   * @param element the leaf PSI element being inspected
+   * @return {@link LineMarkerInfo} describing the icon, tooltip, and navigation target, or {@code null} if none
+   */
   @Override
   public @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     if (element.getNode() == null) {
       return null;
     }
 
-    // 1. Check for a disclosed keyword token (ZK boundary)
+    // 1. Check for a disclose keyword token (Zero-Knowledge privacy boundary)
     if (element.getNode().getElementType() == CompactTokenTypes.DISCLOSE) {
       return new LineMarkerInfo<>(
           element,
@@ -56,7 +100,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
       );
     }
 
-    // 2. Check for 'implements' keyword inside 'contract implements InterfaceName';
+    // 2. Check for 'implements' keyword inside 'contract implements InterfaceName'
     if (element.getNode().getElementType() == CompactTokenTypes.IMPLEMENTS) {
       PsiElement parent = element.getParent();
       if (parent instanceof CompactContractImplementsDeclaration impl) {
@@ -90,7 +134,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
         }
       }
 
-      // 3b. Interface circuit name: navigate DOWN to concrete circuit implementations
+      // 3b. Interface circuit name: navigate DOWN to concrete circuit implementations across project
       if (parent instanceof CompactExternalCircuit externalCircuit && element.equals(externalCircuit.getNameIdentifier())) {
         CompactExternalContractDeclaration contractDecl = PsiTreeUtil.getParentOfType(externalCircuit, CompactExternalContractDeclaration.class);
         if (contractDecl != null) {
@@ -107,7 +151,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
         }
       }
 
-      // 3c. Witness declaration
+      // 3c. Witness declaration: private off-chain witness query
       if (parent instanceof CompactWitnessDeclaration witness && element.equals(witness.getNameIdentifier())) {
         return new LineMarkerInfo<>(
             element,
@@ -146,7 +190,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
         }
       }
 
-      // 3e. Ledger declaration
+      // 3e. Ledger declaration: on-chain ledger state
       if (parent instanceof CompactLedgerDeclaration ledger && element.equals(ledger.getNameIdentifier())) {
         String typeDesc = ledger.isSealed() ? "Sealed on-chain ledger state" : "On-chain ledger state";
         return new LineMarkerInfo<>(
@@ -164,6 +208,13 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
     return null;
   }
 
+  /**
+   * Searches the current file and all other Compact files in the project for contract definitions
+   * declaring that they implement the specified interface contract declaration.
+   *
+   * @param contractDecl the external contract interface declaration
+   * @return list of matching {@link CompactContractImplementsDeclaration} PSI elements
+   */
   public static @NotNull List<PsiElement> findContractImplementations(@NotNull CompactExternalContractDeclaration contractDecl) {
     List<PsiElement> result = new ArrayList<>();
     String name = contractDecl.getName();
@@ -171,6 +222,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
       return result;
     }
 
+    // Check implementations within the same file first
     PsiFile containingFile = contractDecl.getContainingFile();
     if (containingFile instanceof CompactFile cf) {
       for (CompactContractImplementsDeclaration impl : PsiTreeUtil.findChildrenOfType(cf, CompactContractImplementsDeclaration.class)) {
@@ -180,6 +232,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
       }
     }
 
+    // Search across all other project files via FileTypeIndex
     Project project = contractDecl.getProject();
     Collection<VirtualFile> files = FileTypeIndex.getFiles(CompactFileType.INSTANCE, GlobalSearchScope.projectScope(project));
     for (VirtualFile file : files) {
@@ -198,6 +251,14 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
     return result;
   }
 
+  /**
+   * Searches for concrete circuit definitions matching {@code circuitName} within any contract
+   * implementing {@code contractDecl}.
+   *
+   * @param contractDecl the external contract interface declaration
+   * @param circuitName the circuit identifier to locate
+   * @return list of concrete {@link CompactCircuitDefinition} elements
+   */
   public static @NotNull List<PsiElement> findCircuitImplementations(
       @NotNull CompactExternalContractDeclaration contractDecl,
       @Nullable String circuitName
@@ -220,6 +281,13 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
     return result;
   }
 
+  /**
+   * Resolves the corresponding interface circuit declaration in the implemented contract interface,
+   * if this circuit definition overrides one.
+   *
+   * @param circuit the concrete circuit definition
+   * @return the matching {@link CompactExternalCircuit} in the implemented interface, or {@code null}
+   */
   public static @Nullable CompactExternalCircuit findSuperCircuit(@NotNull CompactCircuitDefinition circuit) {
     String circuitName = circuit.getName();
     if (circuitName == null || circuitName.isEmpty()) {

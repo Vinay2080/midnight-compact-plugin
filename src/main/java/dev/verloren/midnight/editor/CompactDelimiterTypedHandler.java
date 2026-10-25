@@ -19,12 +19,42 @@ import java.util.Map;
  * Intercepts typed delimiters and structural punctuation symbols to step over (skip)
  * the editor caret when the matching character is already present immediately ahead.
  *
- * <p>Supports closing delimiters ({@code )}, {@code ]}, {@code }}, {@code >}),
- * structural punctuation ({@code :}, {@code ;}, {@code ,}), and closing string quotes
- * ({@code "}, {@code '}).</p>
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.typedHandler} extension point.
+ * Implements smooth "over-typing" ergonomics for Compact smart contract code:
+ * <ul>
+ *   <li><b>Closing Delimiters:</b> Intercepts {@code )}, {@code ]}, {@code }}, and {@code >}. If the user
+ *       types a closing bracket that was already auto-inserted by pair-matching, moves the caret past
+ *       the bracket instead of inserting a redundant character.</li>
+ *   <li><b>Structural Punctuation:</b> Intercepts colons ({@code :}), semicolons ({@code ;}), and commas ({@code ,}).
+ *       Prevents duplicate punctuation when typing at the boundary of generated templates or completion insertions.</li>
+ *   <li><b>Closing String Quotes:</b> Intercepts single and double quotes ({@code "} and {@code '}) at the trailing
+ *       boundary of string literals, stepping the caret forward.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked by IntelliJ's typing engine in {@link #beforeCharTyped} prior to character insertion.
+ * If the typed character matches the document text and lexer token directly under the caret,
+ * the caret is moved forward by 1 position and {@link Result#STOP} is returned to halt default insertion.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Always executed on the Event Dispatch Thread (EDT) within an active
+ *       editor keystroke event.</li>
+ *   <li><b>Read Action:</b> Uses {@link HighlighterIterator} to inspect the lexer token under the caret
+ *       without requiring a full PSI read lock.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.editor.CompactAngleBraceTypedHandler
+ * @see dev.verloren.midnight.editor.CompactQuoteHandler
+ * @see com.intellij.codeInsight.editorActions.TypedHandlerDelegate
  */
 public final class CompactDelimiterTypedHandler extends TypedHandlerDelegate {
 
+  /**
+   * Mapping from punctuation and delimiter characters to their corresponding lexical token types.
+   */
   private static final Map<Character, IElementType> DELIMITER_TOKENS = Map.of(
       ')', CompactTokenTypes.RPAREN,
       ']', CompactTokenTypes.RBRACKET,
