@@ -68,15 +68,87 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Modern Compact Compiler management and execution tool window panel.
+ *
+ * <p><h3>Architectural Overview</h3>
+ * Inspired by the Ethereum Remix IDE Solidity compiler sidebar, this panel acts as the central
+ * developer dashboard for Midnight Compact smart contracts within IntelliJ IDEA. It unifies:
+ * <ul>
+ *   <li><b>Active Contract Status:</b> Tracks the currently focused {@code .compact} file, extracts its
+ *       {@code pragma language_version} or {@code pragma compiler_version} constraint via live AST inspection,
+ *       and validates whether the active compiler toolchain satisfies the contract requirements.</li>
+ *   <li><b>Compilation Execution:</b> Provides an instant "Run Contract" action that generates an ephemeral
+ *       {@link CompactRunConfiguration} or falls back to direct execution via
+ *       {@link CompactToolchainUtil#createCommandLine(Project, List, String)}, supporting flags such as {@code --skip-zk}.</li>
+ *   <li><b>Toolchain Version Manager:</b> Displays a real-time list of installed and publicly available Compact
+ *       compiler versions via {@link CompactVersionCard} widgets, supporting one-click downloading, version switching,
+ *       and uninstallation with zero UI latency.</li>
+ * </ul>
+ *
+ * <p><h3>Visual Structure &amp; Layout</h3>
+ * <pre>
+ *   ┌────────────────────────────────────────────────────────────────────────┐
+ *   │ [TOP PANEL]                                                            │
+ *   │   Contract.compact                                  pragma ^0.24.0     │
+ *   │   Compiler v0.24.0 (Language v0.2.0) satisfies pragma (^0.24.0)        │
+ *   │   [ ] Skip ZK proof generation (--skip-zk)         [▶ Run Contract]    │
+ *   ├────────────────────────────────────────────────────────────────────────┤
+ *   │ COMPACT COMPILER VERSIONS                                              │
+ *   │ ┌────────────────────────────────────────────────────────────────────┐ │
+ *   │ │ [🗑] Compact v0.24.0 (Language v0.2.0)            ✔ pragma match   │ │
+ *   │ └────────────────────────────────────────────────────────────────────┘ │
+ *   │ ┌────────────────────────────────────────────────────────────────────┐ │
+ *   │ │ [⬇] Compact v0.23.0                                                │ │
+ *   │ └────────────────────────────────────────────────────────────────────┘ │
+ *   └────────────────────────────────────────────────────────────────────────┘
+ * </pre>
+ *
+ * <p><h3>Event Subscriptions &amp; Calling Pipelines</h3>
+ * The panel listens to multiple IDE events to maintain live synchronization:
+ * <ol>
+ *   <li><b>Active File Changes:</b> Subscribes to {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
+ *       to automatically track the newly focused {@code .compact} document.</li>
+ *   <li><b>Live Document Typing:</b> Registers an {@link EditorFactory} document listener with a 300ms
+ *       debounced {@link Alarm}. Edits past character 250 that do not modify pragma declarations are skipped
+ *       to ensure zero EDT typing latency.</li>
+ *   <li><b>Toolchain Version Switching:</b> Subscribes to {@link CompactCompilerEventListener#TOPIC}
+ *       to synchronize card selection and pragma badges when compiler changes occur from the status bar or settings.</li>
+ * </ol>
+ *
+ * <p><h3>Threading Contract &amp; Concurrency</h3>
+ * <ul>
+ *   <li><b>EDT (Event Dispatch Thread):</b> All Swing layout, card addition, active file labels, and button actions.</li>
+ *   <li><b>Pooled Background Threads:</b> {@link #refreshCards()} collects known releases, scans local disk directories,
+ *       and executes SemVer sorting off the UI thread, dispatching results back to EDT via {@code invokeLater}.</li>
+ *   <li><b>Read Action:</b> AST inspection of {@link CompactPragmaForm} is safely wrapped inside
+ *       {@link ReadAction#computeBlocking(com.intellij.openapi.util.ThrowableComputable)}.</li>
+ *   <li><b>Background Progress Tasks:</b> Compiler downloads execute inside {@link Task.Backgroundable}
+ *       with cancellation support and indeterminate progress indicators.</li>
+ * </ul>
+ *
+ * @see CompactCompilerToolWindowFactory
+ * @see CompactVersionCard
+ * @see CompactCompilerEventListener
+ * @see dev.verloren.midnight.version.CompactVersionManager
  */
 public class CompactCompilerPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance(CompactCompilerPanel.class);
 
+  /** Active project reference. */
   private final Project project;
+
+  /** Container panel hosting the vertically stacked {@link CompactVersionCard} items. */
   private final JPanel cardsPanel;
+
+  /** Header label displaying the active {@code .compact} file name. */
   private final JBLabel activeFileNameLabel = new JBLabel();
+
+  /** Badge label displaying the active pragma constraint string (e.g. {@code "pragma ^0.2.0"}). */
   private final JBLabel pragmaBadge = new JBLabel();
+
+  /** Status label displaying whether the active compiler satisfies the file's pragma requirement. */
   private final JBLabel compilerStatusLabel = new JBLabel();
+
+  /** Debounce alarm used to throttle pragma re-parsing during rapid document editing. */
   private final Alarm pragmaUpdateAlarm;
 
   /**
@@ -113,12 +185,24 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     }
   };
 
+  /** Checkbox toggling whether to pass {@code --skip-zk} during compilation to bypass zero-knowledge proving key generation. */
   private final JBCheckBox skipZkCheckBox = new JBCheckBox("Skip ZK proof generation (--skip-zk)");
 
+  /** Concurrent set tracking version strings currently undergoing background download. */
   private final Set<String> downloadingVersions = ConcurrentHashMap.newKeySet();
+
+  /** Cached pragma constraint text extracted from the active file (e.g., {@code "^0.2.0"}). */
   private String currentPragmaConstraint = null;
+
+  /** True if the active pragma constraint targets {@code compiler_version} rather than {@code language_version}. */
   private boolean currentPragmaIsCompilerVersion = false;
 
+  /**
+   * Initializes the compiler panel, constructs layout sections, attaches editor event listeners,
+   * and triggers the initial file and compiler version discovery.
+   *
+   * @param project the active IntelliJ project
+   */
   @SuppressWarnings("this-escape")
   public CompactCompilerPanel(@NotNull Project project) {
     super(new BorderLayout());
@@ -212,11 +296,20 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     }, this);
   }
 
+  /**
+   * Disposes background resources, canceling any pending pragma debouncing alarm requests.
+   */
   @Override
   public void dispose() {
     pragmaUpdateAlarm.cancelAllRequests();
   }
 
+  /**
+   * Constructs the top status card panel displaying current contract details, pragma compatibility,
+   * proof generation toggles, and the "Run Contract" button.
+   *
+   * @return the configured top panel component
+   */
   private JPanel createTopPanel() {
     JPanel card = new JPanel(new BorderLayout(0, JBUI.scale(6))) {
       @Override
@@ -276,6 +369,10 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     return card;
   }
 
+  /**
+   * Discovers and refreshes the list of compiler version cards asynchronously on a pooled thread,
+   * sorting them descending by SemVer and rebuilding the card list on EDT.
+   */
   public void refreshCards() {
     MidnightProjectSettings settings = MidnightProjectSettings.getInstance(project);
     String selectedVer = settings.selectedCompilerVersion != null ? settings.selectedCompilerVersion.trim() : "";
@@ -292,10 +389,13 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
       Map<String, String> installedMap = CompactVersionManager.getInstalledVersions();
       allVersionKeys.addAll(installedMap.keySet());
 
-      // Sort descending by SemVer
+      // 2. Sort descending by SemVer
       List<String> sortedVersions = new ArrayList<>(allVersionKeys);
       sortedVersions.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
 
+      /**
+       * Immutable value carrier holding pre-calculated card layout attributes off EDT.
+       */
       record CardData(
           String version,
           String title,
@@ -307,6 +407,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
           String installedPath
       ) {}
 
+      // 3. Populate CardData models off EDT
       List<CardData> cardsData = new ArrayList<>();
       for (String v : sortedVersions) {
         boolean isInstalled = installedMap.containsKey(v) || CompactVersionManager.isVersionInstalled(v);
@@ -325,6 +426,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
         cardsData.add(new CardData(v, cardTitle, desc, isInstalled, isActive, isPragmaMatch, isDownloading, installedPath));
       }
 
+      // 4. Dispatch rebuilt card components onto Swing EDT
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) return;
 
@@ -382,6 +484,8 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   /**
    * Instantly updates UI selection on EDT with zero perceived latency,
    * then updates settings and triggers background reparsing.
+   *
+   * @param version the semantic version to activate
    */
   private void selectVersionImmediately(@NotNull String version) {
     MidnightProjectSettings.getInstance(project).selectedCompilerVersion = version;
@@ -402,6 +506,11 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     notifyUser("Switched project compiler to Compact v" + version + ".", NotificationType.INFORMATION);
   }
 
+  /**
+   * Prompts the user with a confirmation dialog before downloading and activating a compiler version.
+   *
+   * @param version semantic version to download
+   */
   private void downloadAndActivateVersion(@NotNull String version) {
     if (downloadingVersions.contains(version)) {
       return;
@@ -440,6 +549,12 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     });
   }
 
+  /**
+   * Prompts the user with a confirmation dialog before uninstalling and deleting a compiler binary.
+   *
+   * @param version semantic version to delete
+   * @param path    local filesystem path of the binary
+   */
   private void onRemoveVersion(@NotNull String version, @Nullable String path) {
     String msg = "Are you sure you want to remove Compact compiler v" + version + " from local storage?";
     if (path != null) {
@@ -466,12 +581,16 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   }
 
   /**
-   * Intelligently resolves the target .compact file:
-   * 1. Currently focused editor if it's a .compact file.
-   * 2. Any currently open editor tabs containing a .compact file.
+   * Intelligently resolves the target {@code .compact} file:
+   * <ol>
+   *   <li>Currently focused editor if it represents a {@code .compact} file.</li>
+   *   <li>Any currently open editor tabs containing a {@code .compact} file.</li>
+   * </ol>
+   *
+   * @return the resolved {@link VirtualFile}, or {@code null} if no Compact contract is currently open
    */
   public @Nullable VirtualFile findTargetCompactFile() {
-    // 1. Focused editor file
+    // 1. Check currently focused editor file
     VirtualFile[] selected = FileEditorManager.getInstance(project).getSelectedFiles();
     for (VirtualFile f : selected) {
       if (f != null && f.isValid() && "compact".equalsIgnoreCase(f.getExtension())) {
@@ -479,7 +598,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
       }
     }
 
-    // 2. Any open editor file
+    // 2. Fall back to any open editor file
     VirtualFile[] open = FileEditorManager.getInstance(project).getOpenFiles();
     for (VirtualFile f : open) {
       if (f != null && f.isValid() && "compact".equalsIgnoreCase(f.getExtension())) {
@@ -490,10 +609,19 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     return null;
   }
 
+  /**
+   * Updates file details and pragma compatibility checks using the default resolved target file.
+   */
   public void updateActiveFileInfo() {
     updateActiveFileInfo(null);
   }
 
+  /**
+   * Updates contract filename, extracts pragma version constraints via AST inspection,
+   * evaluates active compiler compatibility, and updates UI status labels on EDT.
+   *
+   * @param preferredFile explicitly provided file, or {@code null} to resolve automatically
+   */
   public void updateActiveFileInfo(@Nullable VirtualFile preferredFile) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (project.isDisposed()) return;
@@ -603,6 +731,11 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     }, ModalityState.any());
   }
 
+  /**
+   * Computes human-readable display text for the active compiler and associated language version.
+   *
+   * @return formatted string (e.g., {@code "v0.24.0 (Language v0.2.0)"})
+   */
   private String getActiveCompilerDisplay() {
     MidnightProjectSettings settings = MidnightProjectSettings.getInstance(project);
     String ver = (settings != null && settings.selectedCompilerVersion != null && !settings.selectedCompilerVersion.trim().isEmpty())
@@ -615,6 +748,10 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     return "Not configured";
   }
 
+  /**
+   * Compiles the active contract file by generating a temporary run configuration,
+   * falling back to direct process execution if configuration generation fails.
+   */
   private void onCompileContract() {
     VirtualFile file = findTargetCompactFile();
     if (file == null) {
@@ -638,6 +775,12 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     }
   }
 
+  /**
+   * Executes the compiler process directly via command-line invocation on a pooled thread,
+   * attaching a process listener to refresh IDE inspections upon completion.
+   *
+   * @param file the target {@code .compact} file to compile
+   */
   private void executeDirectly(@NotNull VirtualFile file) {
     List<String> args = new ArrayList<>();
     if (skipZkCheckBox.isSelected()) {
@@ -668,10 +811,19 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     }
   }
 
+  /**
+   * Clears inspection problems and restarts the daemon code analyzer for the target contract.
+   */
   private void restartDaemon() {
     CompactProblemUtil.clearProblemsAndRestart(project, findTargetCompactFile());
   }
 
+  /**
+   * Posts an IntelliJ balloon notification under the "Midnight Notifications" group.
+   *
+   * @param content notification message text
+   * @param type    severity type (INFORMATION, WARNING, ERROR)
+   */
   private void notifyUser(@NotNull String content, @NotNull NotificationType type) {
     NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Midnight Notifications");
     if (group != null) {

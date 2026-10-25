@@ -21,23 +21,91 @@ import java.awt.event.MouseEvent;
 /**
  * Minimal, classic version card displaying a single action icon (download or delete),
  * version title, and pragma compatibility badge with fixed uniform dimensions.
+ *
+ * <p><h3>Visual Design &amp; Layout</h3>
+ * Built with a fixed vertical dimension (44 scaled pixels) ensuring identical height across all cards
+ * regardless of whether badges or secondary text are present. Uses anti-aliased rounded rectangle
+ * painting with theme-aware background and border palettes:
+ * <pre>
+ *   ┌────────────────────────────────────────────────────────────────────────┐
+ *   │ [Action Icon]   Compact v0.24.0   ✔ pragma match                       │
+ *   │                 Midnight compact compiler 0.24.0                       │
+ *   └────────────────────────────────────────────────────────────────────────┘
+ * </pre>
+ * <ul>
+ *   <li><b>Action Icon:</b> Left-aligned action trigger showing either a download icon (for uninstalled releases),
+ *       a trash/GC button (for locally cached releases), or an animated progress spinner (during download).</li>
+ *   <li><b>Title &amp; Match Badge:</b> Bold version title (rendered in hyperlink color when active), accompanied
+ *       by a green checkmark badge when the toolchain satisfies the active file's {@code pragma} constraint.</li>
+ *   <li><b>Description:</b> Optional secondary subtitle displaying language version compatibility details.</li>
+ * </ul>
+ *
+ * <p><h3>User Interactions &amp; Context Menu</h3>
+ * Supports both mouse clicks and contextual popups:
+ * <ul>
+ *   <li><b>Left Click:</b> If installed, immediately switches the active compiler. If uninstalled, triggers confirmation and background download.</li>
+ *   <li><b>Context Menu (Right Click):</b> Offers shortcut actions including "Remove Version", "Copy Executable Path", "Download &amp; Switch",
+ *       and "Copy Asset Download URL".</li>
+ * </ul>
+ *
+ * <p><h3>Threading Contract</h3>
+ * As a Swing component, all lifecycle modifications, listener callbacks, and paint operations
+ * MUST execute exclusively on the Swing Event Dispatch Thread (EDT).
+ *
+ * @see CompactCompilerPanel
+ * @see dev.verloren.midnight.version.CompactVersionManager
  */
 public class CompactVersionCard extends JPanel {
+
+  /** Semantic version string represented by this card (e.g., {@code "0.24.0"}). */
   private final String version;
+
+  /** Optional descriptive subtitle or language compatibility note. */
   private final String description;
+
+  /** Whether the compiler binary for this version is already downloaded and present in local storage. */
   private final boolean isInstalled;
+
+  /** Whether this version is currently selected as the active project compiler. */
   private boolean isActive;
+
+  /** Absolute file system path to the local compiler executable, or {@code null} if not installed. */
   private final String installedPath;
+
+  /** Callback invoked when the user selects this card to make it active or initiate download. */
   private final Runnable onSelect;
+
+  /** Callback invoked when the user requests removal/uninstall of this version. */
   private final Runnable onRemove;
 
+  /** Label displaying the primary card title (e.g., {@code "Compact v0.24.0"}). */
   private final JBLabel titleLabel;
+
+  /** Secondary label displaying the compiler description, or {@code null} if no description was supplied. */
   private final JBLabel descriptionLabel;
+
+  /** Left-hand action component (download label, delete button, or progress spinner). */
   private final JComponent actionIconComponent;
+
+  /** Tracks mouse hover state to trigger dynamic background highlights. */
   private boolean isHovered = false;
 
+  /** Base card height in unscaled pixels before DPI scaling. */
   private static final int CARD_HEIGHT = 44;
 
+  /**
+   * Constructs a version card without an explicit description subtitle.
+   *
+   * @param version        semantic version string
+   * @param title          display title for the header row
+   * @param isInstalled    true if already present in local plugin storage
+   * @param isActive       true if currently configured as the project compiler
+   * @param isPragmaMatch  true if this version matches the contract's pragma constraint
+   * @param isDownloading  true if a background download task is currently active for this version
+   * @param installedPath  local executable path, or {@code null}
+   * @param onSelect       callback triggered on card selection or download click
+   * @param onRemove       callback triggered on removal action
+   */
   @SuppressWarnings("this-escape")
   public CompactVersionCard(
       @NotNull String version,
@@ -53,6 +121,20 @@ public class CompactVersionCard extends JPanel {
     this(version, title, null, isInstalled, isActive, isPragmaMatch, isDownloading, installedPath, onSelect, onRemove);
   }
 
+  /**
+   * Constructs a fully specified version card with an optional description subtitle.
+   *
+   * @param version        semantic version string
+   * @param title          display title for the header row
+   * @param description    optional subtitle description text
+   * @param isInstalled    true if already present in local plugin storage
+   * @param isActive       true if currently configured as the project compiler
+   * @param isPragmaMatch  true if this version matches the contract's pragma constraint
+   * @param isDownloading  true if a background download task is currently active for this version
+   * @param installedPath  local executable path, or {@code null}
+   * @param onSelect       callback triggered on card selection or download click
+   * @param onRemove       callback triggered on removal action
+   */
   @SuppressWarnings("this-escape")
   public CompactVersionCard(
       @NotNull String version,
@@ -218,6 +300,14 @@ public class CompactVersionCard extends JPanel {
     addMouseListener(adapter);
   }
 
+  /**
+   * Sets whether this version card represents the currently selected project compiler.
+   *
+   * <p>Updates title label foreground color to the active hyperlink accent and triggers a repaint.
+   * Must be called on the Event Dispatch Thread (EDT).
+   *
+   * @param active true if this version is the project's active compiler
+   */
   public void setActive(boolean active) {
     this.isActive = active;
     if (active) {
@@ -228,6 +318,13 @@ public class CompactVersionCard extends JPanel {
     repaint();
   }
 
+  /**
+   * Recursively attaches the mouse listener adapter to all child components except the delete button,
+   * ensuring clicks anywhere on the card surface trigger card selection or popup display.
+   *
+   * @param component the root component to attach to
+   * @param adapter   the unified mouse adapter handling hover and click events
+   */
   private void attachMouseListener(@NotNull Component component, @NotNull MouseAdapter adapter) {
     if (component == actionIconComponent && isInstalled) {
       return;
@@ -240,6 +337,15 @@ public class CompactVersionCard extends JPanel {
     }
   }
 
+  /**
+   * Constructs and displays the contextual popup menu at the mouse trigger coordinates.
+   *
+   * <p>If installed, provides options to remove the version or copy the local binary path.
+   * If uninstalled, provides an option to download and switch to this version.
+   * In both cases, provides an action to copy the release asset download URL to the clipboard.
+   *
+   * @param e mouse event triggering the popup (pressed or released)
+   */
   private void showContextMenu(MouseEvent e) {
     JBPopupMenu menu = new JBPopupMenu();
     if (isInstalled) {
@@ -276,30 +382,54 @@ public class CompactVersionCard extends JPanel {
     menu.show(this, e.getX(), e.getY());
   }
 
+  /**
+   * Returns the semantic version string associated with this card (e.g. {@code "0.24.0"}).
+   */
   public String getVersion() {
     return version;
   }
 
+  /**
+   * Returns the primary header title text displayed on this card.
+   */
   public @NotNull String getTitle() {
     return titleLabel.getText();
   }
 
+  /**
+   * Returns the optional description subtitle text, or {@code null} if omitted.
+   */
   public @Nullable String getDescription() {
     return description;
   }
 
+  /**
+   * Returns true if this compiler version binary is downloaded and present in local storage.
+   */
   public boolean isInstalled() {
     return isInstalled;
   }
 
+  /**
+   * Returns true if this card represents the currently selected project compiler.
+   */
   public boolean isActive() {
     return isActive;
   }
 
+  /**
+   * Returns the absolute path to the local compiler binary on disk, or {@code null} if not installed.
+   */
   public @Nullable String getInstalledPath() {
     return installedPath;
   }
 
+  /**
+   * Custom painting routine rendering smooth rounded rectangle borders and background fills
+   * responsive to active, hovered, and default states.
+   *
+   * @param g graphics context
+   */
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
