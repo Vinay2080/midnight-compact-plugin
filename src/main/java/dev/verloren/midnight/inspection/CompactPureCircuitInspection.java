@@ -15,14 +15,27 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Inspection enforcing purity constraints on {@code pure circuit} declarations.
  *
- * <p>In the Compact compiler ({@code identify-pure-circuits.ss}), a pure circuit:
+ * <h3>Compiler Rule Grounding</h3>
+ * <p>
+ * Grounded in the official Compact compiler pass {@code identify-pure-circuits.ss}:
  * <ul>
- *   <li>Cannot access (read or write) on-chain {@code ledger} state.</li>
- *   <li>Cannot invoke {@code witness} declarations.</li>
- *   <li>Cannot emit contract events ({@code emit}).</li>
- *   <li>Cannot call non-pure / impure circuits.</li>
+ *   <li><b>No Ledger Access:</b> Pure circuits cannot read or write on-chain {@code ledger} state variables.</li>
+ *   <li><b>No Witness Calls:</b> Pure circuits cannot invoke {@code witness} declarations.</li>
+ *   <li><b>No Event Emissions:</b> Pure circuits cannot emit contract events ({@code emit}).</li>
+ *   <li><b>No Impure Circuit Calls:</b> Pure circuits cannot invoke other circuits unless they are also marked {@code pure}.</li>
  * </ul>
  * </p>
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <ul>
+ *   <li><b>Extension Point:</b> Registered as a {@code <localInspection>} in {@code plugin.xml}.</li>
+ *   <li><b>Daemon Execution:</b> Invoked during background analysis by {@code LocalInspectionsPass}.</li>
+ *   <li><b>Quick-Fix:</b> Provides {@link CompactRemovePureModifierFix} to remove the {@code pure} keyword
+ *       if the developer intends to keep side-effecting operations.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.inspection.fix.CompactRemovePureModifierFix
+ * @see dev.verloren.midnight.psi.CompactCircuitDefinition#isPure()
  */
 public class CompactPureCircuitInspection extends LocalInspectionTool {
 
@@ -49,6 +62,9 @@ public class CompactPureCircuitInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Scans a pure circuit's body for impure operations.
+   */
   private static void checkPureCircuit(@NotNull CompactCircuitDefinition circuit, @NotNull ProblemsHolder holder) {
     CompactBlock body = circuit.getBody();
     if (body == null) {
@@ -63,7 +79,7 @@ public class CompactPureCircuitInspection extends LocalInspectionTool {
         continue;
       }
 
-      // Check emit expression
+      // Step 1: Check emit expression
       if (child.getNode() != null && child.getNode().getElementType() == CompactElementTypes.EMIT_EXPR) {
         holder.registerProblem(
             child,
@@ -73,7 +89,7 @@ public class CompactPureCircuitInspection extends LocalInspectionTool {
         );
       }
 
-      // Check call expression
+      // Step 2: Check call expression (witness calls or non-pure circuit calls)
       if (child instanceof CompactCallExprImpl call) {
         PsiElement resolved = call.resolveCallee();
         if (resolved instanceof CompactWitnessDeclaration witness) {
@@ -97,7 +113,7 @@ public class CompactPureCircuitInspection extends LocalInspectionTool {
         }
       }
 
-      // Check ledger access via reference expression
+      // Step 3: Check ledger access via reference expression
       if (child instanceof CompactReferenceExprImpl ref) {
         if (ref.getParent() instanceof CompactCallExprImpl) {
           continue;

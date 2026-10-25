@@ -19,12 +19,40 @@ import java.util.Set;
 /**
  * Inspection detecting recursive circuit calls (both direct self-recursion and mutual recursion).
  *
- * <p>In the Compact compiler ({@code reject-recursive-circuits.ss}), Zero-Knowledge proving circuits
- * require bounded static unrolling into arithmetic constraint systems. Recursive circuits cannot be
- * flattened or synthesized into proving keys and are strictly rejected at compile time.</p>
+ * <h3>Zero-Knowledge Domain & Compiler Rules</h3>
+ * <p>
+ * Grounded in the Compact compiler pass {@code reject-recursive-circuits.ss}:
+ * <ul>
+ *   <li><b>Static Constraint Unrolling:</b> Zero-Knowledge proving circuits must compile into static,
+ *       bounded arithmetic constraint graphs (R1CS / Plonk constraints). Recursive execution paths
+ *       cannot be unrolled at compile time and are fundamentally prohibited in ZK circuit semantics.</li>
+ *   <li><b>Direct vs Mutual Recursion:</b> Detects both direct self-calls (e.g. {@code circuit A() { A(); }})
+ *       and indirect multi-step call chains (e.g. {@code A -> B -> C -> A}) using depth-bounded cycle detection.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Cycle Detection Visual Diagram</h3>
+ * <pre>
+ *   [Circuit A] ──calls──&gt; [Circuit B] ──calls──&gt; [Circuit C]
+ *        ▲                                             │
+ *        └──────────────────calls back─────────────────┘  (Mutual Recursion Detected)
+ * </pre>
+ *
+ * <h3>Threading & Performance Guards</h3>
+ * <ul>
+ *   <li><b>Read Action Mandatory:</b> Operates under {@code @RequiresReadLock} on daemon worker threads.</li>
+ *   <li><b>Cycle Barrier & Depth Bound:</b> Recursion search is bounded by {@link #MAX_SEARCH_DEPTH} (10)
+ *       and a {@code Set<CompactCircuitDefinition> visited} barrier to prevent infinite traversal.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.psi.CompactCircuitDefinition
+ * @see dev.verloren.midnight.psi.CompactCallExprImpl
  */
 public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
 
+  /**
+   * Maximum call chain traversal depth to avoid freezing the IDE on extremely deep call graphs.
+   */
   private static final int MAX_SEARCH_DEPTH = 10;
 
   @Override
@@ -48,6 +76,9 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Evaluates all calls inside a circuit body to flag self-recursion or mutual recursion.
+   */
   private static void checkCircuitRecursion(@NotNull CompactCircuitDefinition circuit, @NotNull ProblemsHolder holder) {
     CompactBlock body = circuit.getBody();
     if (body == null) {
@@ -63,7 +94,7 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
 
       PsiElement resolved = call.resolveCallee();
       if (resolved instanceof CompactCircuitDefinition targetCircuit) {
-        // Direct self-recursion
+        // Case 1: Direct self-recursion
         if (targetCircuit.isEquivalentTo(circuit)) {
           holder.registerProblem(
               call,
@@ -71,7 +102,7 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
               ProblemHighlightType.GENERIC_ERROR_OR_WARNING
           );
         } else {
-          // Mutual / indirect recursion
+          // Case 2: Mutual / indirect recursion through transitive call chains
           Set<CompactCircuitDefinition> visited = new HashSet<>();
           visited.add(circuit);
           if (canReachTarget(targetCircuit, circuit, visited, 0)) {
@@ -83,6 +114,7 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
           }
         }
       } else if (resolved == null) {
+        // Fallback for incomplete code where callee does not resolve yet but names match
         CompactReferenceExprImpl ref = PsiTreeUtil.findChildOfType(call, CompactReferenceExprImpl.class);
         if (ref != null && circuit.getName() != null && circuit.getName().equals(ref.getText())) {
           holder.registerProblem(
@@ -96,6 +128,9 @@ public class CompactRecursiveCircuitInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Depth-bounded depth-first search for reachability from {@code current} to {@code target}.
+   */
   private static boolean canReachTarget(
       @NotNull CompactCircuitDefinition current,
       @NotNull CompactCircuitDefinition target,

@@ -20,6 +20,34 @@ import java.util.*;
 /**
  * Inspection validating that the project's configured Compact compiler satisfies
  * the contract's {@code pragma language_version} (or {@code pragma compiler_version}) directive.
+ *
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Bridges language file directives with toolchain management:
+ * <ul>
+ *   <li><b>SemVer Evaluation:</b> Uses {@link CompactSemVerUtil#satisfiesConstraint} to compare
+ *       the active compiler version against SemVer constraints (e.g. {@code ^0.2.0}, {@code >=0.1.0}).</li>
+ *   <li><b>Quick Fixes:</b> Offers two automated quick-fixes:
+ *       <ol>
+ *         <li>{@link CompactSwitchCompilerQuickFix}: Switches the project SDK / active toolchain to an installed
+ *             or downloadable compiler satisfying the pragma.</li>
+ *         <li>{@link CompactUpdatePragmaQuickFix}: Updates the pragma directive in the file to match the active compiler.</li>
+ *       </ol>
+ *   </li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Inspection Pass:</b> Runs in a Read Action ({@code @RequiresReadLock}) on background worker threads.</li>
+ *   <li><b>Toolchain Resolution:</b> Version checks query cached metadata from {@link CompactVersionManager}
+ *       and {@link CompactToolchainUtil}.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.version.CompactVersionManager
+ * @see dev.verloren.midnight.version.CompactSemVerUtil
+ * @see dev.verloren.midnight.annotator.CompactSwitchCompilerQuickFix
+ * @see dev.verloren.midnight.annotator.CompactUpdatePragmaQuickFix
  */
 public class CompactPragmaVersionInspection extends LocalInspectionTool {
 
@@ -40,7 +68,11 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Validates a pragma form against the project's active Compact compiler version.
+   */
   private static void checkPragma(@NotNull CompactPragmaForm pragma, @NotNull ProblemsHolder holder) {
+    // Step 1: Extract constraint text from pragma form
     String constraint = pragma.getConstraintText();
     if (constraint == null || constraint.trim().isEmpty()) {
       constraint = pragma.getRequiredVersion();
@@ -49,6 +81,7 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
       return;
     }
 
+    // Step 2: Differentiate compiler_version vs language_version
     PsiElement id = pragma.getPragmaIdentifier();
     String idText = id != null ? id.getText() : "language_version";
     boolean isCompilerPragma = "compiler_version".equals(idText);
@@ -56,6 +89,7 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
     String activeVer = CompactToolchainUtil.getActiveCompilerVersion(holder.getProject());
     String reqVer = pragma.getRequiredVersion();
 
+    // Step 3: Handle case where no compiler is configured or installed
     if (activeVer == null || activeVer.trim().isEmpty()) {
       List<LocalQuickFix> fixes = buildCompilerQuickFixes(constraint, reqVer, isCompilerPragma, null);
       holder.registerProblem(
@@ -67,6 +101,7 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
       return;
     }
 
+    // Step 4: Validate active version against SemVer constraint
     String effectiveActiveVer = isCompilerPragma ? activeVer : CompactVersionManager.getLanguageVersionForToolchain(activeVer);
     boolean satisfies = CompactSemVerUtil.satisfiesConstraint(effectiveActiveVer, constraint);
 
@@ -87,6 +122,9 @@ public class CompactPragmaVersionInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Assembles quick-fix options for switching or installing compatible compiler toolchains.
+   */
   private static @NotNull List<LocalQuickFix> buildCompilerQuickFixes(
       @NotNull String constraint,
       @Nullable String reqVer,

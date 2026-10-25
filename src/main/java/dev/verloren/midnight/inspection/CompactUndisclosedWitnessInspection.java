@@ -13,11 +13,35 @@ import dev.verloren.midnight.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Inspection enforcing Witness Protection (WPP) disclosure rules.
+ * Inspection enforcing Witness Protection Policy (WPP) disclosure boundaries.
  *
- * <p>In the Compact compiler ({@code track-witness-data.ss}), values originating from private
- * {@code witness} calls cannot be assigned to public on-chain {@code ledger} fields unless
- * explicitly wrapped in a {@code disclose(...)} call to prevent accidental data leaks.</p>
+ * <h3>Zero-Knowledge Security Grounding</h3>
+ * <p>
+ * Implements the security checks defined by Compact compiler pass {@code track-witness-data.ss}:
+ * <ul>
+ *   <li><b>Data Leakage Prevention:</b> In Midnight zero-knowledge applications, {@code witness} calls
+ *       provide private, off-chain client secrets. Assigning private witness values directly to public
+ *       on-chain {@code ledger} state variables creates an unintentional privacy leak.</li>
+ *   <li><b>Explicit Disclosure Boundary:</b> The developer must explicitly wrap private data in a
+ *       {@code disclose(...)} expression (e.g. {@code $ledgerVar = disclose(privateWitnessCall());})
+ *       to acknowledge and authorize publishing the value to the blockchain.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Quick Fix</h3>
+ * <p>
+ * Provides {@link CompactWrapWithDiscloseFix} to automatically wrap the offending expression in
+ * {@code disclose(...)} when triggered by the developer.
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action Mandatory:</b> Executes within {@code @RequiresReadLock} on daemon worker threads.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.inspection.fix.CompactWrapWithDiscloseFix
+ * @see dev.verloren.midnight.psi.CompactWitnessDeclaration
+ * @see dev.verloren.midnight.psi.CompactLedgerDeclaration
  */
 public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
 
@@ -42,6 +66,9 @@ public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Inspects assignment expressions to ensure private witness data assigned to ledger fields is wrapped in disclose(...).
+   */
   private static void checkWitnessAssignment(@NotNull PsiElement assignExpr, @NotNull ProblemsHolder holder) {
     PsiElement[] children = assignExpr.getChildren();
     if (children.length < 2) {
@@ -51,7 +78,7 @@ public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
     PsiElement lhs = children[0];
     PsiElement rhs = children[children.length - 1];
 
-    // Check if LHS targets a ledger declaration
+    // Step 1: Check if LHS targets an on-chain ledger declaration
     CompactReferenceExprImpl lhsRef = lhs instanceof CompactReferenceExprImpl
         ? (CompactReferenceExprImpl) lhs
         : PsiTreeUtil.findChildOfType(lhs, CompactReferenceExprImpl.class);
@@ -65,12 +92,12 @@ public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
       return;
     }
 
-    // Check if RHS is wrapped in disclose(...)
+    // Step 2: Check if RHS is already wrapped in disclose(...)
     if (isWrappedInDisclose(rhs)) {
       return;
     }
 
-    // Check if RHS is a direct witness call
+    // Step 3: Check if RHS is a direct witness invocation
     if (rhs instanceof CompactCallExprImpl rhsCall) {
       PsiElement callee = rhsCall.resolveCallee();
       if (callee instanceof CompactWitnessDeclaration) {
@@ -84,7 +111,7 @@ public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
       }
     }
 
-    // Check if RHS is a variable originating from a witness call
+    // Step 4: Check if RHS is a variable originating from a witness call
     CompactReferenceExprImpl rhsRef = rhs instanceof CompactReferenceExprImpl
         ? (CompactReferenceExprImpl) rhs
         : PsiTreeUtil.findChildOfType(rhs, CompactReferenceExprImpl.class);
@@ -112,8 +139,9 @@ public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
     }
   }
 
-
-
+  /**
+   * Tests whether an element is enclosed directly within a disclose(...) expression.
+   */
   private static boolean isWrappedInDisclose(@NotNull PsiElement element) {
     if (element.getNode() != null && element.getNode().getElementType() == CompactElementTypes.DISCLOSE_EXPR) {
       return true;

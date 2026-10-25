@@ -24,16 +24,31 @@ import org.jspecify.annotations.Nullable;
 /**
  * Static inspection verifying type compatibility in Compact expressions and control statements.
  *
- * <p>Checks:
+ * <h3>Inspection Coverage & Type Checks</h3>
  * <ul>
- *   <li>Condition expressions in {@code if} statements evaluate to {@code Boolean}.</li>
- *   <li>Operands of logical {@code &&} and {@code ||} evaluate to {@code Boolean}.</li>
- *   <li>Relational comparison operators ({@code <}, {@code >}) are not applied to {@code Boolean} values.</li>
- *   <li>Equality operators ({@code ==}, {@code !=}) compare assignable types.</li>
- *   <li>Initializer expressions in {@code const} bindings match declared type annotations.</li>
- *   <li>Ternary conditions evaluate to {@code Boolean}, and branch expressions have compatible types.</li>
+ *   <li><b>Control Flow Conditions:</b> Condition expressions in {@code if} statements and ternary operators
+ *       must evaluate to {@link CompactPrimitiveType#BOOLEAN}.</li>
+ *   <li><b>Logical Operators:</b> Operands of logical {@code &&} and {@code ||} must evaluate to {@code Boolean}.</li>
+ *   <li><b>Relational Operators:</b> Relational operators ({@code <}, {@code <=}, {@code >}, {@code >=}) cannot
+ *       be applied to {@code Boolean} values. Operands must be unsigned integers or numeric literals.</li>
+ *   <li><b>Equality Operators:</b> Equality operators ({@code ==}, {@code !=}) compare assignable or mutually
+ *       unsigned numeric types.</li>
+ *   <li><b>Arithmetic Operators:</b> Arithmetic operations ({@code +}, {@code -}, {@code *}, {@code /}, {@code %})
+ *       cannot be applied to {@code Boolean} values.</li>
+ *   <li><b>Local Variable Initializers:</b> Initializer expressions in {@code const} variable bindings must be
+ *       assignable to the declared type annotation.</li>
+ *   <li><b>Return Statements:</b> Values in {@code return} statements must match the enclosing callable's
+ *       annotated return type (or {@code Void}).</li>
+ *   <li><b>Ternary Branches:</b> The true and false branches of ternary expressions must have mutually compatible types.</li>
  * </ul>
- * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action Mandatory:</b> Executes within {@code @RequiresReadLock} on daemon worker threads.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.type.CompactType
+ * @see dev.verloren.midnight.type.CompactTypeInferenceUtil
  */
 public class CompactTypeMismatchInspection extends LocalInspectionTool {
 
@@ -68,6 +83,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Verifies that ternary condition is Boolean and branch types are compatible.
+   */
   private static void checkTernaryExpr(@NotNull CompactTernaryExpr ternaryExpr, @NotNull ProblemsHolder holder) {
     CompactExpression condition = ternaryExpr.getCondition();
     if (condition != null) {
@@ -99,6 +117,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Verifies that return statement expressions match the callable's return type signature.
+   */
   private static void checkReturnStatement(@NotNull PsiElement returnStatement, @NotNull ProblemsHolder holder) {
     PsiElement enclosing = PsiTreeUtil.getParentOfType(
         returnStatement,
@@ -149,6 +170,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Verifies that the condition in an if statement evaluates to Boolean.
+   */
   private static void checkIfStatement(@NotNull PsiElement ifStatement, @NotNull ProblemsHolder holder) {
     CompactExpression condition = PsiTreeUtil.findChildOfType(ifStatement, CompactExpression.class);
     if (condition == null) {
@@ -170,6 +194,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Verifies that local const variable initializers match declared type annotations.
+   */
   private static void checkConstBinding(@NotNull CompactConstBindingImpl constBinding, @NotNull ProblemsHolder holder) {
     CompactTypeElement declaredTypeElement = getDeclaredTypeElement(constBinding);
 
@@ -192,6 +219,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Extracts the explicit type element from a const binding pattern.
+   */
   private static @Nullable CompactTypeElement getDeclaredTypeElement(@NonNull CompactConstBindingImpl constBinding) {
     CompactTypeElement declaredTypeElement = null;
     for (PsiElement child : constBinding.getChildren()) {
@@ -208,6 +238,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     return declaredTypeElement;
   }
 
+  /**
+   * Evaluates operand types for binary expressions based on operator category.
+   */
   private static void checkBinaryExpr(@NotNull CompactBinaryExprImpl binaryExpr, @NotNull ProblemsHolder holder) {
     CompactExpression[] children = PsiTreeUtil.getChildrenOfType(binaryExpr, CompactExpression.class);
     if (children == null || children.length < 2) {
@@ -295,6 +328,9 @@ public class CompactTypeMismatchInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Evaluates operand types for unary expressions.
+   */
   private static void checkUnaryExpr(@NotNull CompactUnaryExprImpl unaryExpr, @NotNull ProblemsHolder holder) {
     ASTNode operatorNode = unaryExpr.getNode().findChildByType(CompactTokenSets.OPERATORS);
     if (operatorNode == null) {

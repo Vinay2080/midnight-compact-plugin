@@ -18,10 +18,42 @@ import dev.verloren.midnight.type.CompactType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Inspection flagging unresolved identifiers, enum members, and struct fields in Compact source code.
+ * Inspection flagging unresolved identifiers, imported symbols, enum members, and struct fields in Compact source code.
  *
- * <p>Extends {@link LocalInspectionTool} and registers error annotations with {@link ProblemHighlightType#LIKE_UNKNOWN_SYMBOL}.
- * Guards against reporting false errors on {@link PsiErrorElement} subtrees during editing.</p>
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Forms the core static unresolved symbol diagnostic for the plugin:
+ * <ul>
+ *   <li><b>Highlighting Style:</b> Marks unresolved tokens with {@link ProblemHighlightType#LIKE_UNKNOWN_SYMBOL}
+ *       (typically rendered as red wavy underlines in the editor).</li>
+ *   <li><b>Scope of Analysis:</b>
+ *       <ol>
+ *         <li>Unresolved reference expressions ({@link CompactReferenceExprImpl}).</li>
+ *         <li>Unresolved selectively imported symbols ({@link dev.verloren.midnight.psi.CompactImportElementImpl}).</li>
+ *         <li>Unresolved enum variant references ({@link CompactEnumMemberReference}).</li>
+ *         <li>Unresolved struct fields ({@link CompactStructFieldReference}).</li>
+ *       </ol>
+ *   </li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Edge Case & Broken Syntax Mitigations</h3>
+ * <ul>
+ *   <li><b>Error Element Guard:</b> Completely skips subtrees containing {@link PsiErrorElement}
+ *       to prevent reporting cascade errors while the user is actively typing broken syntax.</li>
+ *   <li><b>Unknown Base Suppression:</b> In struct field access (e.g. {@code obj.field}), unresolved field
+ *       errors are only reported if {@code obj}'s type is known and resolved (not {@link CompactPrimitiveType#UNKNOWN}).
+ *       This avoids false-positive field errors when the root variable itself is unresolved or invalid.</li>
+ * </ul>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action Mandatory:</b> Executes within {@code @RequiresReadLock} on daemon worker threads.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.reference.CompactReferenceBase
+ * @see dev.verloren.midnight.reference.CompactStructFieldReference
+ * @see dev.verloren.midnight.reference.CompactEnumMemberReference
  */
 public class CompactUnresolvedReferenceInspection extends LocalInspectionTool {
 
@@ -35,10 +67,12 @@ public class CompactUnresolvedReferenceInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
+        // Step 1: Suppress false-positives in broken syntax subtrees
         if (element instanceof PsiErrorElement || PsiTreeUtil.getParentOfType(element, PsiErrorElement.class) != null) {
           return;
         }
 
+        // Step 2: Check unresolved reference expressions, imported symbols, and member accesses
         switch (element) {
           case CompactReferenceExprImpl refExpr -> {
             PsiReference ref = refExpr.getReference();
@@ -78,7 +112,7 @@ public class CompactUnresolvedReferenceInspection extends LocalInspectionTool {
               CompactExpression base = memberExpr.getBaseExpression();
               if (base != null) {
                 CompactType baseType = base.getType();
-                // Only report unresolved field if base type is known and not UNKNOWN
+                // Step 3: Only report unresolved field if base type is known and not UNKNOWN
                 if (!CompactPrimitiveType.UNKNOWN.equals(baseType) && ref.resolve() == null) {
                   PsiElement memberId = memberExpr.getMemberIdentifier();
                   PsiElement target = memberId != null ? memberId : memberExpr;

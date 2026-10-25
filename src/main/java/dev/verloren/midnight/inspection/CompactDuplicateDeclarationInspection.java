@@ -16,10 +16,31 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Inspection reporting duplicate declaration identifiers declared in the same lexical scope.
+ * Inspection reporting duplicate declaration identifiers declared within the same lexical scope.
  *
- * <p>Separates value declarations from type declarations to allow legal name sharing across distinct namespaces,
- * while flagging duplicate siblings in modules, blocks, structs, and contracts.</p>
+ * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
+ * <p>
+ * Registered under {@code <localInspection>} in {@code plugin.xml}:
+ * <ul>
+ *   <li><b>Daemon Execution:</b> Invoked during on-the-fly highlighting to warn developers when
+ *       re-declaring existing variable, circuit, or type identifiers.</li>
+ *   <li><b>Namespace Isolation:</b> Strictly partitions declarations into two distinct buckets:
+ *       {@code valueDeclarations} (variables, parameters, circuits, ledger, witnesses) and
+ *       {@code typeDeclarations} (structs, enums, type aliases, contracts). Sharing a name across
+ *       different namespaces is legal in Compact grammar.</li>
+ *   <li><b>Scope Attribution:</b> Correctly maps every {@link CompactNamedElement} to its exact owning
+ *       lexical container (e.g. struct fields belong to their struct, local variables belong to their block).</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action Mandatory:</b> Executes within a Read Action ({@code @RequiresReadLock}) on pooled
+ *       daemon worker threads.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.resolve.CompactResolveUtil.Namespace
+ * @see dev.verloren.midnight.psi.CompactNamedElement
  */
 public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
 
@@ -44,6 +65,9 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Tests whether an element acts as an isolated declaration container.
+   */
   private static boolean isScopeContainer(PsiElement element) {
     return element instanceof CompactFile
         || element instanceof CompactModuleDefinition
@@ -56,10 +80,14 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
         || element instanceof CompactExternalContractDeclaration;
   }
 
+  /**
+   * Collects all direct declarations in a scope container and reports collisions within each namespace.
+   */
   private static void checkScope(@NotNull PsiElement scope, @NotNull ProblemsHolder holder) {
     Map<String, List<CompactNamedElement>> valueDeclarations = new LinkedHashMap<>();
     Map<String, List<CompactNamedElement>> typeDeclarations = new LinkedHashMap<>();
 
+    // Step 1: Scan all named elements within the scope
     for (CompactNamedElement named : PsiTreeUtil.findChildrenOfType(scope, CompactNamedElement.class)) {
       if (named instanceof CompactImportElementImpl
           || named instanceof CompactGenericParameterImpl
@@ -70,6 +98,7 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
         continue;
       }
 
+      // Step 2: Ensure the declaration directly belongs to this specific scope level
       PsiElement declarationScope = getDeclarationScope(named);
       if (declarationScope == scope) {
         String name = named.getName();
@@ -77,15 +106,20 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
           continue;
         }
 
+        // Step 3: Partition into value or type namespace buckets
         Map<String, List<CompactNamedElement>> targetMap = isTypeDeclaration(named) ? typeDeclarations : valueDeclarations;
         targetMap.computeIfAbsent(name, _ -> new ArrayList<>()).add(named);
       }
     }
 
+    // Step 4: Report duplicates (first declaration is considered primary; subsequent ones are flagged)
     reportDuplicates(valueDeclarations, holder);
     reportDuplicates(typeDeclarations, holder);
   }
 
+  /**
+   * Registers problem annotations for any identifier with more than one declaration in the scope.
+   */
   private static void reportDuplicates(Map<String, List<CompactNamedElement>> map, ProblemsHolder holder) {
     for (Map.Entry<String, List<CompactNamedElement>> entry : map.entrySet()) {
       List<CompactNamedElement> duplicates = entry.getValue();
@@ -104,6 +138,9 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
     }
   }
 
+  /**
+   * Classifies an element as a type declaration.
+   */
   private static boolean isTypeDeclaration(CompactNamedElement element) {
     return element instanceof CompactTypeDefinition
         || element instanceof CompactStructDefinition
@@ -111,6 +148,9 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
         || element instanceof CompactExternalContractDeclaration;
   }
 
+  /**
+   * Determines the exact owning scope container for a given declaration element.
+   */
   private static PsiElement getDeclarationScope(CompactNamedElement element) {
     if (element instanceof CompactStructFieldImpl) {
       return PsiTreeUtil.getParentOfType(element, CompactStructDefinition.class);
@@ -155,6 +195,9 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
     return element.getContainingFile();
   }
 
+  /**
+   * Checks whether a pattern binding is acting as a parameter in a callable parameter list.
+   */
   private static boolean isPatternParameter(@NotNull PsiElement declaration) {
     if (!(declaration instanceof CompactPatternImpl)) {
       return false;
@@ -164,6 +207,9 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
         || hasAncestorOfType(declaration, dev.verloren.midnight.parser.CompactElementTypes.ARROW_PARAMETER_LIST);
   }
 
+  /**
+   * Walks upward testing for a specific AST element type without crossing block boundaries.
+   */
   private static boolean hasAncestorOfType(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType type) {
     for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
       if (parent.getNode() != null && parent.getNode().getElementType() == type) {

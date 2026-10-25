@@ -17,9 +17,33 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Inspection flagging mutations to {@code sealed ledger} fields outside {@code constructor}.
  *
- * <p>In the Compact compiler ({@code check-sealed-fields.ss}), sealed ledger fields
- * can only be initialised and mutated during contract deployment within the {@code constructor}.
- * Modifying sealed fields in circuits is strictly prohibited.</p>
+ * <h3>Compiler Rule Grounding</h3>
+ * <p>
+ * Implements the verification rules of Compact compiler pass {@code check-sealed-fields.ss}:
+ * <ul>
+ *   <li><b>Immutable After Deployment:</b> In Midnight contracts, fields declared with the {@code sealed}
+ *       modifier (e.g. {@code sealed ledger admin: Address;}) can only be written during initial contract deployment
+ *       within the {@code constructor}.</li>
+ *   <li><b>Post-Deployment Immutability:</b> Mutating sealed fields inside standard contract circuits
+ *       is strictly illegal and will cause the compiler to reject the contract.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Module Initialization Special Case</h3>
+ * <p>
+ * Compact syntax restricts {@code constructor} to top-level contract definitions. Modules cannot
+ * declare constructors directly. Reusable library modules (e.g., token standards) often initialize
+ * sealed fields inside an initialization circuit intended to be invoked by the deploying contract's
+ * constructor. As such, assignments within a {@link CompactModuleDefinition} are exempt from this inspection.
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read Action Mandatory:</b> Executes within {@code @RequiresReadLock} on daemon worker threads.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.psi.CompactLedgerDeclaration#isSealed()
+ * @see dev.verloren.midnight.psi.CompactConstructorDeclaration
  */
 public class CompactSealedFieldMutationInspection extends LocalInspectionTool {
 
@@ -44,20 +68,21 @@ public class CompactSealedFieldMutationInspection extends LocalInspectionTool {
     };
   }
 
+  /**
+   * Evaluates an assignment expression to detect forbidden mutations to sealed ledger variables.
+   */
   private static void checkAssignment(@NotNull PsiElement assignExpr, @NotNull ProblemsHolder holder) {
-    // If inside constructor, mutating sealed field is legal
+    // Step 1: If inside constructor, mutating sealed field is legal
     if (PsiTreeUtil.getParentOfType(assignExpr, CompactConstructorDeclaration.class) != null) {
       return;
     }
 
-    // In Compact, modules cannot declare constructors (syntax restricts constructor to top-level contracts).
-    // Library modules (e.g. OpenZeppelin contracts) encapsulate sealed field initialisation inside module
-    // circuits (such as initialize) intended to be called during the importing contract's constructor.
+    // Step 2: Exempt library module circuits intended for constructor execution
     if (PsiTreeUtil.getParentOfType(assignExpr, CompactModuleDefinition.class) != null) {
       return;
     }
 
-    // Find the target on the LHS
+    // Step 3: Find the LHS target reference expression
     PsiElement firstChild = assignExpr.getFirstChild();
     if (firstChild == null) {
       return;
@@ -70,6 +95,7 @@ public class CompactSealedFieldMutationInspection extends LocalInspectionTool {
       targetRef = PsiTreeUtil.findChildOfType(firstChild, CompactReferenceExprImpl.class);
     }
 
+    // Step 4: Resolve LHS target and flag if it is a sealed ledger declaration
     if (targetRef != null) {
       PsiElement resolved = targetRef.resolve();
       if (resolved instanceof CompactLedgerDeclaration ledger && ledger.isSealed()) {
