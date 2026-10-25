@@ -16,7 +16,7 @@ import org.jspecify.annotations.NonNull;
  * PSI wrapper representing a Compact documentation comment ({@code /** ... *&#47;} or {@code ///}).
  *
  * <p>Implements {@link PsiDocCommentBase} so that IntelliJ's documentation subsystem, Reader Mode,
- * and in-editor "Render Documentation Comments" gutter icons recognize and render Compact doc comments.</p>
+ * and in-editor "Render Documentation Comments" gutter icons recognise and render Compact doc comments.</p>
  */
 public class CompactDocComment extends FakePsiElement implements PsiDocCommentBase {
 

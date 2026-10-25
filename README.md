@@ -1,9 +1,9 @@
 # Midnight Compact Language Plugin for IntelliJ IDEA
 
 [![IntelliJ Platform](https://img.shields.io/badge/IntelliJ%20Platform-Plugin-blue.svg)](https://plugins.jetbrains.com)
-[![Plugin Version](https://img.shields.io/badge/Version-v1.2.3-blue.svg)](CHANGELOG.md)
+[![Plugin Version](https://img.shields.io/badge/Version-v1.4.0-blue.svg)](CHANGELOG.md)
 [![Java Toolchain](https://img.shields.io/badge/JDK-25-orange.svg)](build.gradle.kts)
-[![Build & Tests](https://img.shields.io/badge/Tests-444%20Passing-brightgreen.svg)](test_output.txt)
+[![Build & Tests](https://img.shields.io/badge/Tests-765%20Passing-brightgreen.svg)](test_output.txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Midnight Network](https://img.shields.io/badge/Midnight-Network-purple.svg)](https://midnight.network)
 
@@ -21,34 +21,35 @@ Writing Compact smart contracts requires navigating complex ZK privacy primitive
 - **Zero Feedback Loop**: Syntax errors, unclosed blocks, and missing type declarations are only caught after manual terminal compiler invocations.
 - **Difficult Navigation**: Tracing variable bindings, circuit parameters, struct fields, and imported modules across multi-file contracts requires manual text searches.
 - **Risky Refactoring**: Renaming circuits, state variables, or struct types across contracts is error-prone and can break ZK verification circuits.
-- **Toolchain Inconvenience**: Switching between multiple Compact compiler versions (e.g. `0.23` vs `0.26` / toolchains `0.31.1` vs `0.34.0`) requires manually modifying global system paths or terminal environments.
+- **Toolchain Inconvenience**: Switching between multiple Compact compiler versions (e.g. `0.23` vs `0.27` / toolchains `0.31.1` vs `0.35.0`) requires manually modifying global system paths or terminal environments.
 - **ZK Constraint Traps**: Accidentally modifying ledger state in `pure` circuits, attempting recursion inside circuit constraints, mutating `sealed` fields, or assigning undisclosed witness data directly to ledger state results in cryptic compiler failures or security bugs.
 
 ### Our Solution
-The **Midnight Compact Language Plugin** transforms IntelliJ IDEA and IntelliJ-based IDEs into a comprehensive smart-contract development environment. Built with a custom handwritten lexer, recursive-descent Pratt parser, typed Abstract Syntax Tree (PSI) model, type inference engine, embedded Remix-style compiler tool window, multi-version compiler manager, non-blocking status bar monitor, and 10 static semantic inspections with one-click quick-fixes.
+The **Midnight Compact Language Plugin** transforms IntelliJ IDEA and IntelliJ-based IDEs into a comprehensive smart-contract development environment. Built with a custom handwritten lexer, recursive-descent Pratt parser, typed Abstract Syntax Tree (PSI) model, first-class generic type hierarchy & substitutor, embedded Remix-style compiler tool window, multi-version compiler manager, non-blocking status bar monitor, full intention actions suite, and 10 static semantic inspections with one-click quick-fixes.
 
 ---
 
 ## ⚡ Feature Matrix at a Glance
 
-| Feature | Keybinding (Win/Linux) | Keybinding (macOS) | Description |
-| :--- | :--- | :--- | :--- |
-| **Syntax Highlighting** | *Automatic* | *Automatic* | Lexer token coloring, keyword classification, literals, and comments |
-| **Go to Declaration** | `Ctrl + B` / `F12` | `Cmd + B` | Scoped reference resolution for variables, circuits, structs, and modules |
-| **Go to Type Declaration** | `Ctrl + Shift + B` | `Cmd + Shift + B` | Navigate directly to the underlying struct, enum, or type alias |
-| **Contextual Code Completion** | `Ctrl + Space` | `Cmd + Space` | Context-aware completion for keywords, types, values, and members |
-| **Parameter Info** | `Ctrl + P` | `Cmd + P` | Live tooltip with parameter names, types, and active argument tracking |
-| **Inlay Parameter Hints** | *Automatic* | *Automatic* | Declarative inline hints for circuit and constructor arguments |
-| **Find Usages** | `Alt + F7` | `Option + F7` | Fast, index-backed search for all element occurrences across the project |
-| **Inplace Rename** | `Shift + F6` | `Shift + F6` | Safe refactoring with identifier validation and keyword collision guards |
-| **Remix-Style Compiler Panel** | *Right Stripe* | *Right Stripe* | Dedicated tool window: version switcher, pragma badge, 1-click compile |
-| **Status Bar Monitor** | *Status Bar* | *Status Bar* | Instant compiler version monitor with popup menu and quick actions |
-| **Gutter Line Markers** | *Gutter Icons* | *Gutter Icons* | Bidirectional navigation between interface definitions and implementations |
-| **Structure View** | `Alt + 7` | `Cmd + 7` | Outline tree of contracts, circuits, witnesses, structs, and enums |
-| **Quick Documentation** | `Ctrl + Q` / `F1` | `Ctrl + J` | Inferred signatures, doc comments (`///`), and member definitions |
-| **Code Formatting** | `Ctrl + Alt + L` | `Cmd + Option + L` | Canonical 2-space indentation and binary operator spacing |
-| **Semantic Inspections** | `Alt + Enter` | `Option + Enter` | 10 real-time inspections with automated quick-fixes |
-| **Compiler Run Action** | `Shift + F10` / `▶` | `Control + R` / `▶` | Gutter and toolbar execution for Compact compiler build targets |
+| Feature                               | Keybinding (Win/Linux) | Keybinding (macOS)    | Description                                                                         |
+|:--------------------------------------|:-----------------------|:----------------------|:------------------------------------------------------------------------------------|
+| **Syntax Highlighting**               | *Automatic*            | *Automatic*           | Lexer token coloring, keyword classification, literals, and comments                |
+| **Go to Declaration**                 | `Ctrl + B` / `F12`     | `Cmd + B`             | Scoped reference resolution for variables, circuits, structs, and modules           |
+| **Go to Type Declaration**            | `Ctrl + Shift + B`     | `Cmd + Shift + B`     | Navigate directly to the underlying struct, enum, or type alias                     |
+| **Contextual Code Completion**        | `Ctrl + Space`         | `Cmd + Space`         | Context-aware completion for keywords, types, values, members, and generics         |
+| **Smart Complete Statement**          | `Ctrl + Shift + Enter` | `Cmd + Shift + Enter` | Non-destructive statement and declaration completion (`CompactSmartEnterProcessor`) |
+| **Parameter Info**                    | `Ctrl + P`             | `Cmd + P`             | Live tooltip with parameter names, types, and active argument tracking              |
+| **Inlay Parameter Hints**             | *Automatic*            | *Automatic*           | Declarative inline hints for circuit and constructor arguments                      |
+| **Find Usages**                       | `Alt + F7`             | `Option + F7`         | Fast, index-backed search for all element occurrences across the project            |
+| **Inplace Rename**                    | `Shift + F6`           | `Shift + F6`          | Safe refactoring with identifier validation and keyword collision guards            |
+| **Remix-Style Compiler Panel**        | *Right Stripe*         | *Right Stripe*        | Dedicated tool window: version switcher, pragma badge, 1-click compile              |
+| **Status Bar Monitor**                | *Status Bar*           | *Status Bar*          | Instant compiler version monitor with popup menu and quick actions                  |
+| **Gutter Line Markers**               | *Gutter Icons*         | *Gutter Icons*        | Bidirectional navigation between interface definitions and implementations          |
+| **Structure View**                    | `Alt + 7`              | `Cmd + 7`             | Outline tree of contracts, circuits, witnesses, structs, and enums                  |
+| **Quick Documentation**               | `Ctrl + Q` / `F1`      | `Ctrl + J`            | Inferred signatures, doc comments (`///`), and member definitions                   |
+| **Code Formatting**                   | `Ctrl + Alt + L`       | `Cmd + Option + L`    | Canonical 2-space indentation and binary operator spacing                           |
+| **Semantic Inspections & Intentions** | `Alt + Enter`          | `Option + Enter`      | 10 real-time inspections with quick-fixes, plus 8 context intention actions         |
+| **Compiler Run Action**               | `Shift + F10` / `▶`    | `Control + R` / `▶`   | Gutter and toolbar execution for Compact compiler build targets                     |
 
 ---
 
@@ -57,43 +58,45 @@ The **Midnight Compact Language Plugin** transforms IntelliJ IDEA and IntelliJ-b
 ### 🛠️ 1. Remix-Style "Compact Compiler" Tool Window
 Located on the right-hand stripe of the IDE, the **Compact Compiler** panel provides a familiar, web-IDE-style experience directly inside IntelliJ:
 - **Active Contract Tracking**: Automatically tracks the active `.compact` contract in the editor, updating contract metadata dynamically upon tab changes or document edits.
+- **Compiler Version Cards**: Synchronised version cards presenting toolchain release, target language specification, and Midnight Ledger levels (e.g. `Compact v0.35.0`, `Language: 0.27.0 | Midnight Ledger 9`).
 - **Live Compiler Version Switcher**: Instant dropdown to switch between installed compiler toolchains without touching terminal or environment variables.
-- **Dynamic Pragma Compatibility Badges**: Real-time SemVer constraint evaluation displaying color-coded status badges:
+- **Dynamic Pragma Compatibility Badges**: Real-time SemVer constraint evaluation displaying colour-coded status badges:
   - `✔ pragma match` (green): Active compiler satisfies the file's `pragma language_version` constraint.
   - `⚠ version mismatch` (amber): Active compiler violates the file's pragma constraint.
-- **1-Click Contract Compilation**: "Compile Current Contract" button builds the active contract in the background, rendering build artifacts, compiler diagnostics, and console output in the IDE.
+- **1-Click Contract Compilation**: "Compile Current Contract" button builds the active contract in the background, rendering build artefacts, compiler diagnostics, and console output in the IDE.
 - **Integrated Version Manager**: "Download More..." modal to discover, install, or remove compiler versions.
 
 ### 📦 2. Multi-Version Isolated Compiler Management
 Manage multiple compiler toolchains simultaneously without system conflicts:
-- **Isolated Directory Layout**: Compilers are cleanly isolated under `~/.compact/versions/<version>/` (e.g. `~/.compact/versions/0.34.0/compact`).
-- **Automated Binary Downloader**: Automatically fetches, verifies, and unpacks release archives for the host OS and architecture with background progress indicators.
+- **Isolated Directory Layout**: Compilers are cleanly isolated under `~/.compact/versions/<version>/` (e.g. `~/.compact/versions/0.35.0/compact`).
+- **Automated Binary Downloader**: Automatically fetches, verifies, and unpacks release archives for the host OS and architecture with background progress indicators and Zip Slip extraction security.
 - **Per-Project Version Persistence**: Project-specific compiler choices are saved in `.idea/midnight.xml` (`MidnightProjectSettings`), allowing different repositories to target different Compact versions simultaneously.
 - **Hierarchical Resolution Chain**:
   1. Per-project configured version (`.idea/midnight.xml`).
   2. Global IDE setting (Preferences → Languages & Frameworks → Midnight Compact).
   3. Auto-detected system binary (`PATH` or Windows Subsystem for Linux / WSL).
-- **SemVer Constraint Engine**: Evaluates compound pragma clauses (`||`, `&&`), version ranges (`>=`, `>`, `<=`, `<`, `^`, `~`), bare version rules (e.g. `0.23` interpreted as `>= 0.23`), and two-digit normalization (`0.26` -> toolchain `0.34.0`).
+- **SemVer Constraint Engine**: Evaluates compound pragma clauses (`||`, `&&`), version ranges (`>=`, `>`, `<=`, `<`, `^`, `~`), bare version rules (e.g. `0.23` interpreted as `>= 0.23`), and two-digit normalisation (`0.27` -> toolchain `0.35.0`, `0.26` -> toolchain `0.34.0`).
 
 ### 📊 3. Status Bar Toolchain & Environment Monitor
 A lightweight status bar widget (`CompactStatusBarWidget`) placed alongside native IDE controls:
-- **Real-Time Display**: Shows the active Compact compiler and language version (e.g. `Compact: v0.34.0 (0.26.0)`).
+- **Real-Time Display**: Shows the active Compact compiler and language version (e.g. `Compact: v0.35.0 (0.27.0)`).
 - **Non-Blocking $O(1)$ Execution**: Guarantees zero UI-thread freezes by operating strictly on in-memory state.
 - **Native Speed-Search Popup**:
   - View installed compiler versions with checkmark indicators.
   - 1-click switcher between installed compilers.
   - Reset to auto-detected system or WSL toolchain.
-  - Launch background compiler downloader.
+  - Launch the background compiler downloader.
   - Jump directly to the Remix-style Compact Compiler tool window.
   - Open plugin configuration settings (`ShowSettingsUtil`).
 
 ### 🎨 4. Lexer, Parser & PSI Architecture
 - **Handwritten State-Machine Lexer** (`CompactLexer`): Developed in Java 25 for maximum throughput and zero-allocation token streaming.
 - **Pratt Precedence-Climbing Parser** (`CompactParser`): Complete coverage of the official Compact language grammar (`Lparser` / `Lsrc`), supporting assignment, ternary, logical, equality, relational, type casts (`as`), arithmetic, unary, member access, call, and tuple index expressions.
-- **Resilient Syntax Recovery**: Boundary synchronization prevents isolated syntax errors from corrupting highlighting, navigation, or completion in the remainder of the file.
+- **Resilient Syntax Recovery**: Boundary synchronisation prevents isolated syntax errors from corrupting highlighting, navigation, or completion in the remainder of the file.
 - **Full Token Classification**:
   - *Keywords*: `contract`, `circuit`, `witness`, `ledger`, `disclose`, `pragma`, `import`, `export`, `struct`, `enum`, `module`, `implements`, `pure`, `return`, `if`, `else`, `for`, `const`, `default`, `new`, `of`, `pad`, `sealed`, `slice`, `assert`, `as`.
-  - *Primitive & Built-in Types*: `Boolean`, `Field`, `Uint`, `Bytes`, `Opaque`, `Vector`, `Cell`, `Map`, `Set`, `Counter`, `JubjubScalar`, `Secp256k1Base`, `Secp256k1Scalar`.
+  - *Primitive & Built-in Types*: `Boolean`, `Field`, `Uint`, `Bytes`, `Opaque`, `Vector`, `Cell`, `Map`, `Set`, `Counter`, `JubjubScalar`, `Secp256k1Base`, `Secp256k1Scalar`, `PublicAddress`, `Secp256r1`, `Curve25519`.
+  - *Built-in Cryptographic Functions*: `secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`, `transientHash`, `persistentHash`, `transientCommit`, `persistentCommit`, `publicKey`, etc.
   - *Literals*: Hexadecimal (`0x`), Binary (`0b`), Octal (`0o`), Decimal, Strings (with escape sequence parsing), and SemVer version literals.
 
 ### 🧭 5. Scoped Symbol Resolution & Navigation
@@ -103,6 +106,9 @@ A lightweight status bar widget (`CompactStatusBarWidget`) placed alongside nati
   - Struct, enum, and type alias definitions.
   - Struct fields (`record.field`) and enum variants (`Color.Red`).
   - Qualified module imports and aliased imports (`import { a as b } from M`).
+- **First-Class Generic Type Hierarchy & Substitution**:
+  - Sealed `CompactType` hierarchy (`CompactPrimitiveType`, `CompactParameterizedType`, `CompactStructType`, `CompactTypeVariable`, `CompactFunctionType`).
+  - `CompactTypeSubstitutor` accurately resolves and substitutes generic struct fields (such as `is_left`, `left`, `right` for `Either<Bytes<32>, ContractAddress>`) without false-positive unresolved field warnings or type mismatches.
 - **Go to Type Declaration (`Ctrl+Shift+B` / `Cmd+Shift+B`)**:
   - Navigate directly from any variable, parameter, expression, or ledger field to its underlying struct, enum, or type alias definition.
   - Unwraps generic type containers (e.g. `Cell<T>`, `Vector<T, N>`) down to nominal declarations.
@@ -117,10 +123,14 @@ A lightweight status bar widget (`CompactStatusBarWidget`) placed alongside nati
 
 ### 💡 6. Code Insight, Completion & Documentation
 - **Context-Aware Completion (`Ctrl+Space`)**:
-  - **Keywords**: Filtered by declaration vs. statement context.
+  - **Keywords**: Filtered by declaration vs. statement context with comment suppression.
   - **Types**: Built-in primitives and user-defined structs/enums/aliases at type positions.
-  - **Values**: In-scope variables, consts, circuit names, and parameters at expression positions.
-  - **Members**: Qualified member suggestions after typing `Enum.` or `structInstance.`.
+  - **Values**: In-scope variables, consts, circuit names, and parameters at expression positions, prioritised by matching return types.
+  - **Members & Generics**: Member completion (`target.<caret>`) for parameterised and generic struct instances with concrete type argument substitution.
+  - **Typed Struct Literals & Constructors**: Smart typed completions for `Either<T1, T2> { ... }`, constructor helpers `left<L, R>(...)`, `right<L, R>(...)`, and contextual `default<Type>` with angle bracket and type parameter inference.
+  - **Auto-Numbered Declarations**: Scope-aware automatic numbering and gap filling (`circuit1`, `circuit2`, `witness1`, etc.) via `CompactDeclarationNameGenerator`.
+  - **Pragma Directives**: Contextual autocompletion for `language_version` and `compiler_version` with live SemVer operator assistance.
+  - **Boolean Literals**: Prioritised suggestions for `true` and `false` in conditional expressions (`if`, `assert`, boolean struct fields).
 - **Parameter Info & Signature Help (`Ctrl+P` / `Cmd+P`)**:
   - In-editor tooltip showing parameter names and types during function, circuit, and constructor invocations.
   - Dynamically highlights active parameter based on caret location in argument lists.
@@ -128,6 +138,7 @@ A lightweight status bar widget (`CompactStatusBarWidget`) placed alongside nati
   - Displays inline parameter name hints for circuit and constructor calls.
 - **Quick Documentation (`Ctrl+Q` / `F1`)**:
   - Hover tooltips with inferred signatures, doc comments (`///` and `/** */`), struct field listings, and enum variant details formatted in HTML.
+  - Rich HTML documentation for pragma directives and Compact Standard Library modules.
 - **Structure View & Breadcrumbs (`Alt+7` / `Cmd+7`)**:
   - Visual hierarchical outline of contracts, modules, circuits, witnesses, structs, and enums.
   - Interactive editor breadcrumbs for rapid orientation in deeply nested contracts.
@@ -135,27 +146,37 @@ A lightweight status bar widget (`CompactStatusBarWidget`) placed alongside nati
 ### 🛡️ 7. Semantic Inspections & Quick-Fixes
 The plugin includes 10 dedicated static inspections with real-time error detection and quick-fixes (`Alt+Enter` / `Option+Enter`):
 
-| Inspection | Severity | Description | Quick-Fix |
-| :--- | :--- | :--- | :--- |
-| **Unresolved Reference** | `Warning` | Flags unknown variables, circuits, enum members, and struct fields | — |
-| **Duplicate Declaration** | `Warning` | Flags duplicate declarations in the same scope (aware of `VALUE` vs `TYPE` namespaces) | — |
-| **Unused Local Variable** | `Warning` | Identifies local `const` bindings that have zero usages in their scope | **Delete unused variable** |
-| **Type Mismatch** | `Error` | Validates boolean conditionals, negation (`!`), and operator compatibility | — |
-| **Pure Circuit Constraint** | `Warning` | Flags ledger mutations or side effects inside circuits declared as `pure` | — |
-| **Sealed Field Mutation** | `Warning` | Flags reassignments to ledger fields declared with the `sealed` modifier | — |
-| **Recursive Circuit** | `Warning` | Detects direct or mutual circuit recursion violating ZK circuit limits | — |
-| **Constructor Restriction** | `Warning` | Validates constructor rules, ledger state initialization, and initializers | — |
-| **Undisclosed Witness** | `Warning` | Flags witness values assigned to ledger state without `disclose(...)` | — |
-| **Pragma Version Mismatch** | `Error` | Flags contract pragma constraints incompatible with active compiler | **Switch compiler** / **Download compiler** / **Update pragma** |
+| Inspection                  | Severity  | Description                                                                            | Quick-Fix                                                                             |
+|:----------------------------|:----------|:---------------------------------------------------------------------------------------|:--------------------------------------------------------------------------------------|
+| **Unresolved Reference**    | `Warning` | Flags unknown variables, circuits, enum members, and struct fields                     | —                                                                                     |
+| **Duplicate Declaration**   | `Warning` | Flags duplicate declarations in the same scope (aware of `VALUE` vs `TYPE` namespaces) | —                                                                                     |
+| **Unused Local Variable**   | `Warning` | Identifies local `const` bindings that have zero usages in their scope                 | **Delete unused variable**                                                            |
+| **Type Mismatch**           | `Error`   | Validates boolean conditionals, negation (`!`), and operator compatibility             | —                                                                                     |
+| **Pure Circuit Constraint** | `Warning` | Flags ledger mutations or side effects inside circuits declared as `pure`              | —                                                                                     |
+| **Sealed Field Mutation**   | `Warning` | Flags reassignments to ledger fields declared with the `sealed` modifier               | —                                                                                     |
+| **Recursive Circuit**       | `Warning` | Detects direct or mutual circuit recursion violating ZK circuit limits                 | —                                                                                     |
+| **Constructor Restriction** | `Warning` | Validates constructor rules, ledger state initialization, and initializers             | —                                                                                     |
+| **Undisclosed Witness**     | `Warning` | Flags witness values assigned to ledger state without `disclose(...)`                  | —                                                                                     |
+| **Pragma Version Mismatch** | `Error`   | Flags contract pragma constraints incompatible with active compiler                    | **Switch compiler (offline prioritized)** / **Download compiler** / **Update pragma** |
 
-### 🔍 8. Refactoring & Symbol Search
+### 🔍 8. Refactoring & Intention Actions Suite
 - **Safe Rename (`Shift+F6`)**: Inplace renaming for circuits, variables, parameters, struct fields, and types. Validates proposed names (`CompactNamesValidator`) to prevent syntax errors or keyword collisions.
 - **Find Usages (`Alt+F7`)**: Project-wide usage search backed by a custom `WordsScanner`.
+- **In-Editor Intentions Suite (`Alt+Enter` / `Option+Enter`)**:
+  - **Toggle Pure Circuit**: Instantly switch circuit declarations between stateful and `pure`.
+  - **Toggle Export**: Add or remove `export` modifier across contracts, circuits, structs, enums, modules, types, ledgers, and witnesses.
+  - **Surround With `disclose(...)`**: Wrap unshielded witness expressions in `disclose(...)` to fulfill ZK visibility constraints.
+  - **Invert If Condition**: Automatically invert boolean predicates and cleanly swap branching blocks.
+  - **Specify Type Explicitly / Remove Redundant Type**: Add or strip explicit type annotations on local variable declarations.
+  - **Switch Compiler Version / Update Pragma**: Quick-switch active compiler to a satisfying installed version or synchronise contract pragma directives.
 
 ### 📐 9. Formatting & Editor Ergonomics
+- **Smart Complete Statement (`Ctrl+Shift+Enter` / `Cmd+Shift+Enter`)**: Non-destructive `CompactSmartEnterProcessor` completing statements, circuits, constructor blocks, and parameterised types.
+- **Universal Delimiter & Symbol Skipping**: Automatically skips over closing delimiters (`)`, `]`, `}`, `>`), structural punctuation (`:`, `;`, `,`), and closing quotes (`"`, `'`) during typing without inserting duplicate characters.
+- **Angle Bracket Auto-Pairing & Overtyping**: Automatic angle bracket (`<>`) pairing, cursor placement, overtyping step-over, and paired backspace deletion for generic types and parameterised expressions.
+- **Automatic Quote Pairing (`"` and `'`)**: Automatic quotation mark insertion with caret placement inside quotes, closing quote step-over, and comment isolation.
 - **AST-Based Formatter (`Ctrl+Alt+L`)**: Automatically formats Compact source code with 2-space canonical indentation and operator spacing.
-- **Smart Indent & Enter Handling**: Automatically indents new lines when pressing `Enter` inside blocks, contracts, or unclosed parentheses.
-- **Paired Brace & Quote Matching**: Automatic insertion and balance verification for `{}`, `()`, `[]`, `<>`, `""`, and `''`.
+- **Smart Indent & Doc Comment Enter Handling**: Clean multi-line indentation and comment continuation in `/* ... */` and `/** ... */` without duplicate asterisks or broken delimiters.
 - **Commenter**: Toggle line comments (`Ctrl+/`) and block comments (`Ctrl+Shift+/`).
 - **Surround With (`Ctrl+Alt+T`)**: Surround statements or expressions with blocks or parentheses.
 - **Spellchecking Strategy**: Compact-aware spellchecker skipping keywords and cryptographic primitives.
@@ -175,7 +196,7 @@ The plugin includes 10 dedicated static inspections with real-time error detecti
   - `inc`: `include` relative file directive.
   - `imp`: `import` statement.
   - `type`: Type alias definition.
-- **File Templates**: New file wizard supporting "Compact Contract", "Compact Module", "Compact Interface", and "Compact File".
+- **File Templates**: Streamlined new file templates for "Compact Contract", "Compact Module", "Compact Interface", and "Compact File" with smart caret placement inside declaration blocks and dynamic pragma version resolution.
 
 ### 🌐 10. External Annotator & Toolchain Runners
 - **Background Diagnostic Pipeline**: Asynchronous background execution of the `compact` compiler with cancellation support on keystrokes, projecting compiler errors directly into the editor and Problems tool window.
@@ -190,7 +211,7 @@ Configured with `dependencySupport` extension points. When opening projects with
 - `@midnight-ntwrk/midnight-js-contracts`
 - `@openzeppelin/compact-contracts`
 
-IntelliJ Platform IDEs (including IntelliJ IDEA and WebStorm) will automatically recognize the project as a Midnight project and suggest installing this plugin.
+IntelliJ Platform IDEs (including IntelliJ IDEA and WebStorm) will automatically recognise the project as a Midnight project and suggest installing this plugin.
 
 ---
 
@@ -198,15 +219,15 @@ IntelliJ Platform IDEs (including IntelliJ IDEA and WebStorm) will automatically
 
 The plugin is compatible with IntelliJ-based IDEs starting from version **2026.2** (Build `262+`):
 
-| IDE | Edition | Status |
-| :--- | :--- | :--- |
-| **IntelliJ IDEA** | Community & Ultimate | **Full Support** |
-| **WebStorm** | Commercial | **Full Support** (via dependency recommendation) |
-| **CLion** | Commercial | **Full Support** |
-| **GoLand** | Commercial | **Full Support** |
-| **PyCharm** | Community & Professional | **Full Support** |
-| **Rider** | Commercial | **Full Support** |
-| **Android Studio** | Free | **Full Support** (version 2026.2+ base) |
+| IDE                | Edition                  | Status                                           |
+|:-------------------|:-------------------------|:-------------------------------------------------|
+| **IntelliJ IDEA**  | Community & Ultimate     | **Full Support**                                 |
+| **WebStorm**       | Commercial               | **Full Support** (via dependency recommendation) |
+| **CLion**          | Commercial               | **Full Support**                                 |
+| **GoLand**         | Commercial               | **Full Support**                                 |
+| **PyCharm**        | Community & Professional | **Full Support**                                 |
+| **Rider**          | Commercial               | **Full Support**                                 |
+| **Android Studio** | Free                     | **Full Support** (version 2026.2+ base)          |
 
 ---
 
@@ -226,7 +247,7 @@ Download the release `.zip` from [Releases](https://github.com/Vinay2080/midnigh
 #### Option A: Automatic Setup via Remix Tool Window (Recommended)
 1. Open any `.compact` file.
 2. Click the **Compact Compiler** tab on the right edge of the IDE.
-3. If no compiler is found, click **Download More...** and choose your desired version (e.g. `0.34.0` for Compact `0.26`).
+3. If no compiler is found, click **Download More...** and choose your desired version (e.g. `0.35.0` for Compact `0.27`).
 4. The plugin downloads, unpacks, and configures the compiler automatically.
 
 #### Option B: Manual Toolchain Configuration
@@ -241,22 +262,23 @@ Download the release `.zip` from [Releases](https://github.com/Vinay2080/midnigh
 
 ## ⌨️ Keyboard Shortcuts Reference
 
-| Action | Windows / Linux | macOS |
-| :--- | :--- | :--- |
-| **Go to Declaration** | `Ctrl + B` / `F12` | `Cmd + B` |
-| **Go to Type Declaration** | `Ctrl + Shift + B` | `Cmd + Shift + B` |
-| **Basic Code Completion** | `Ctrl + Space` | `Cmd + Space` |
-| **Parameter Info** | `Ctrl + P` | `Cmd + P` |
-| **Quick Documentation** | `Ctrl + Q` | `F1` / `Ctrl + J` |
-| **Show Context Actions / Quick-Fix** | `Alt + Enter` | `Option + Enter` |
-| **Rename Element** | `Shift + F6` | `Shift + F6` |
-| **Find Usages** | `Alt + F7` | `Option + F7` |
-| **Reformat Code** | `Ctrl + Alt + L` | `Cmd + Option + L` |
-| **Toggle Line Comment** | `Ctrl + /` | `Cmd + /` |
-| **Toggle Block Comment** | `Ctrl + Shift + /` | `Cmd + Option + /` |
-| **Surround With...** | `Ctrl + Alt + T` | `Cmd + Option + T` |
-| **File Structure Popup** | `Ctrl + F12` | `Cmd + F12` |
-| **Open Structure Tool Window** | `Alt + 7` | `Cmd + 7` |
+| Action                               | Windows / Linux        | macOS                 |
+|:-------------------------------------|:-----------------------|:----------------------|
+| **Go to Declaration**                | `Ctrl + B` / `F12`     | `Cmd + B`             |
+| **Go to Type Declaration**           | `Ctrl + Shift + B`     | `Cmd + Shift + B`     |
+| **Basic Code Completion**            | `Ctrl + Space`         | `Cmd + Space`         |
+| **Smart Complete Statement**         | `Ctrl + Shift + Enter` | `Cmd + Shift + Enter` |
+| **Parameter Info**                   | `Ctrl + P`             | `Cmd + P`             |
+| **Quick Documentation**              | `Ctrl + Q`             | `F1` / `Ctrl + J`     |
+| **Show Context Actions / Quick-Fix** | `Alt + Enter`          | `Option + Enter`      |
+| **Rename Element**                   | `Shift + F6`           | `Shift + F6`          |
+| **Find Usages**                      | `Alt + F7`             | `Option + F7`         |
+| **Reformat Code**                    | `Ctrl + Alt + L`       | `Cmd + Option + L`    |
+| **Toggle Line Comment**              | `Ctrl + /`             | `Cmd + /`             |
+| **Toggle Block Comment**             | `Ctrl + Shift + /`     | `Cmd + Option + /`    |
+| **Surround With...**                 | `Ctrl + Alt + T`       | `Cmd + Option + T`    |
+| **File Structure Popup**             | `Ctrl + F12`           | `Cmd + F12`           |
+| **Open Structure Tool Window**       | `Alt + 7`              | `Cmd + 7`             |
 
 ---
 
@@ -266,16 +288,18 @@ Download the release `.zip` from [Releases](https://github.com/Vinay2080/midnigh
 .
 ├── src/main/java/dev/verloren/midnight/
 │   ├── CompactFileType.java               # File type registration & SVG icon binding
+│   ├── actions/                           # New file wizard action & dialog validation
 │   ├── annotator/                         # External annotator & compiler error diagnostics
-│   ├── completion/                        # Context-aware completion contributor
+│   ├── completion/                        # Context-aware completion contributor & providers
 │   ├── documentation/                     # Hover docs & Quick Documentation provider
-│   ├── editor/                            # Commenter, brace matcher, quote handler, breadcrumbs, inlays
+│   ├── editor/                            # Commenter, brace/quote matchers, delimiter handlers, inlays
 │   ├── findUsages/                        # Find Usages provider & custom WordsScanner
 │   ├── formatter/                         # AST formatting model & code style settings
 │   ├── highlighter/                       # Syntax highlighter factory & annotator
+│   ├── icons/                             # Official Midnight file & action SVG icons
 │   ├── ide/                               # File templates & live templates
 │   ├── inspection/                        # 10 semantic inspections & quick-fixes
-│   ├── intention/                         # In-editor pragma intention actions
+│   ├── intention/                         # In-editor pragma & code intention actions
 │   ├── lexer/                             # Handwritten state-machine lexer & token types
 │   ├── navigation/                        # Go to Declaration, Type Declaration, Class/Symbol
 │   ├── parameterInfo/                     # Parameter Info & signature help tooltip handler
@@ -285,12 +309,14 @@ Download the release `.zip` from [Releases](https://github.com/Vinay2080/midnigh
 │   ├── reference/                         # PSI reference implementations
 │   ├── resolve/                           # Scoped symbol resolution & include resolver
 │   ├── run/                               # Run configurations & gutter line markers
+│   ├── scope/                             # Custom Compact resolve scope provider
 │   ├── settings/                          # Application & project-level settings
 │   ├── statusbar/                         # Status bar widget & speed-search popup
 │   ├── stdlib/                            # Bundled standard library service
 │   ├── structure/                         # Structure view model & tree elements
+│   ├── symbol/                            # Choose by name & symbol navigation contributors
 │   ├── toolwindow/                        # Remix-style Compact Compiler tool window
-│   ├── type/                              # Type inference engine & primitives
+│   ├── type/                              # Type inference engine, sealed hierarchy & substitutor
 │   └── version/                           # Multi-version compiler manager & SemVer engine
 ├── src/main/resources/
 │   ├── META-INF/plugin.xml                # Plugin manifest & extension points
@@ -324,7 +350,7 @@ The plugin codebase strictly enforces modern Java idioms up to Java 25:
 ### Post-Edit Code Inspection Standard
 All contributions and edits are subject to a **continuous post-edit inspection loop**:
 - After **every single edit**, files are checked using the IDE inspection tools (`get_file_problems` and `lint_files`).
-- **Zero Tolerance Policy**: Code must maintain **0 errors, 0 warnings, and 0 weak warnings**. All warnings, weak warnings, style hints, and potential bugs must be resolved immediately before proceeding.
+- **Zero Tolerance Policy**: Code must maintain **0 errors, zero warnings, and zero weak warnings**. All warnings, weak warnings, style hints, and potential bugs must be resolved immediately before proceeding.
 
 ### Build Commands
 
@@ -332,7 +358,7 @@ All contributions and edits are subject to a **continuous post-edit inspection l
 # Launch a sandbox IDE with the Midnight plugin pre-installed
 ./gradlew runIde
 
-# Run all 444+ automated unit & integration tests
+# Run all 765 automated unit & integration tests
 ./gradlew test
 
 # Run a specific test class
@@ -343,7 +369,7 @@ All contributions and edits are subject to a **continuous post-edit inspection l
 ```
 
 ### Testing Standard
-The test suite consists of **444 automated tests across 52 test classes**, adhering to a 5-tier testing standard:
+The test suite consists of **765 automated tests across 68 test classes**, adhering to a 5-tier testing standard:
 - **Tier 1 (Golden Tree Conformance)**: Full AST assertions verifying PSI trees against golden reference files.
 - **Tier 2 (Partial Parsing & Error Recovery)**: Broken syntax recovery assertions ensuring uninterrupted editing.
 - **Tier 3 (Precedence & Associativity Matrix)**: Exhaustive operator precedence verification.
@@ -355,27 +381,29 @@ The test suite consists of **444 automated tests across 52 test classes**, adher
 ## 🗺️ Roadmap & Upcoming Goals
 
 - [x] **Remix-Style Tool Window & Compiler Manager**: Interactive tool window with live contract tracking and multi-version downloads.
-- [x] **Status Bar Monitor**: Real-time toolchain version indicator with quick switcher popup.
+- [x] **Status Bar Monitor**: Real-time toolchain version indicator with a quick switcher popup.
 - [x] **Go to Type Declaration & Parameter Info**: Direct type jumps and interactive argument signature help.
 - [x] **Standard Library & ZKIR Indexing**: Bundled, auto-indexed standard library and ZKIR primitives.
 - [x] **Cross-File Resolution & Include Processing**: Multi-file resolution for `include` directives and module imports.
 - [x] **AST Code Formatter**: 2-space canonical indentation and operator spacing.
 - [x] **10 Static Inspections & Quick-Fixes**: Comprehensive semantic checks for ZK contracts.
-- [ ] **Smart Enter & In-Editor Intentions**: Automated statement completion and enhanced quick-fixes (`CompactSmartEnterProcessor`).
-- [ ] **ZKIR Disassembler & Bytecode Viewer**: Visual inspector for compiled zero-knowledge intermediate representation artifacts.
+- [x] **Smart Enter & In-Editor Intentions Suite**: Non-destructive statement completion (`Ctrl+Shift+Enter`) and comprehensive intentions suite (`Alt+Enter`).
+- [x] **First-Class Generic Type Hierarchy & Substitutor**: Algebraic type engine with type variables, parameter substitution, and parameterised struct member resolution.
+- [ ] **Project-Wide Stub Indexing**: Index cross-file declarations (`CompactStubIndex`) across unreferenced workspace files without full AST parsing.
+- [ ] **ZKIR Disassembler & Bytecode Viewer**: Visual inspector for compiled zero-knowledge intermediate representation artefacts.
 - [ ] **Test Runner Integration**: Direct test execution and gutter runners for Compact contract test suites.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! If you encounter any bugs, have feature suggestions, or want to contribute improvements:
+Contributions are welcome! If you encounter any bugs, have feature suggestions, or want to contribute to improvements:
 1. Check the [Issue Tracker](https://github.com/Vinay2080/midnight-plugin/issues) for open tasks or report a new issue.
 2. Review [`ARCHITECTURE.md`](ARCHITECTURE.md), [`DEVELOPER_GUIDE.md`](DEVELOPER_GUIDE.md), and [`AGENTS.md`](AGENTS.md) for technical guidelines, modern Java 25 requirements, and inspection protocols.
-3. Fork the repository, create your feature branch in an isolated worktree (`ai/<task-slug>`), adhere to the modern Java 25 standards, verify 0 errors / 0 warnings / 0 weak warnings via live inspections after every edit, ensure all tests pass (`./gradlew test`), and submit a Pull Request.
+3. Fork the repository, create your feature branch in an isolated worktree (`ai/<task-slug>`), adhere to the modern Java 25 standards, verify zero errors / 0 warnings / 0 weak warnings via live inspections after every edit, ensure all tests pass (`./gradlew test`), and submit a Pull Request.
 
 ---
 
-## 📄 License
+## 📄 Licence
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT Licence](LICENSE).

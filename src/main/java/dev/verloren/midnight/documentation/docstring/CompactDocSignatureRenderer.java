@@ -12,7 +12,6 @@ import dev.verloren.midnight.psi.CompactConstructorDeclaration;
 import dev.verloren.midnight.psi.CompactContractImplementsDeclaration;
 import dev.verloren.midnight.psi.CompactEnumDefinition;
 import dev.verloren.midnight.psi.CompactEnumMemberImpl;
-import dev.verloren.midnight.psi.CompactExportDeclaration;
 import dev.verloren.midnight.psi.CompactExternalContractDeclaration;
 import dev.verloren.midnight.psi.CompactImportDeclarationImpl;
 import dev.verloren.midnight.psi.CompactLedgerDeclaration;
