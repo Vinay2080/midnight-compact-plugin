@@ -24,17 +24,68 @@ import java.util.List;
 /**
  * Parameter Info Handler for the Compact smart contract language ({@code codeInsight.parameterInfo}).
  *
- * <p>Provides parameter and struct-field tooltip hints during method/circuit invocations and struct
- * instantiation when the user presses {@code Ctrl + P} (or when typing parameter delimiters {@code (} or {@code {}):
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.codeInsight.parameterInfo} extension point
+ * for {@link dev.verloren.midnight.CompactLanguage}. Implements {@link ParameterInfoHandler} to deliver
+ * live, context-aware parameter and struct-field tooltip hints during method invocations and struct instantiations:
  * <ul>
- *   <li><b>Circuit, Witness, Constructor & External Circuit Calls:</b> Shows parameter signatures, highlighting
- *       the current active parameter based on caret position and top-level commas.</li>
- *   <li><b>Struct Literals:</b> Shows struct field names and types, highlighting either the explicit named
- *       field under the caret or the next unassigned field.</li>
- *   <li><b>Dynamic Active Parameter Tracking:</b> Recomputes caret offset within argument lists, correctly handling
- *       nested calls and nested struct literals.</li>
+ *   <li><b>Callable Invocations:</b> Displays parameter signatures for circuits, witnesses, constructors,
+ *       and external contract circuits, highlighting the active argument based on caret position.</li>
+ *   <li><b>Struct Literals:</b> Displays declared struct fields and types, dynamically tracking either the
+ *       field identifier under the caret or the next unassigned field.</li>
+ *   <li><b>Delimiter-Aware Nesting:</b> Correctly handles nested calls (e.g. {@code f(g(1, 2), 3)}) and
+ *       nested struct literals by filtering comma counts based on bracket nesting depth.</li>
  * </ul>
  * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked across several interactive editor workflows:
+ * <ol>
+ *   <li><b>Triggering:</b> When the user presses {@code Ctrl + P} (Cmd + P) or types an opening delimiter
+ *       ({@code (} or {@code {}), IntelliJ invokes {@link #findElementForParameterInfo}.</li>
+ *   <li><b>Candidate Resolution:</b> {@link #createItemsToShow} resolves the target callee or struct definition
+ *       via {@link CompactResolveUtil} and packages parameter signatures into {@link CompactParametersDescription}.</li>
+ *   <li><b>Popup Display:</b> {@link #showParameterInfo} positions and displays the tooltip popup.</li>
+ *   <li><b>Active Tracking:</b> As the user types or moves the caret, IntelliJ calls
+ *       {@link #findElementForUpdatingParameterInfo} and {@link #updateParameterInfo} to recalculate
+ *       {@link UpdateParameterInfoContext#setCurrentParameter(int)}.</li>
+ *   <li><b>Rendering:</b> {@link #updateUI} highlights the active parameter in bold while validating argument bounds.</li>
+ * </ol>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> All methods are called on the Event Dispatch Thread (EDT) in response to
+ *       user typing, cursor movement, or keyboard shortcuts.</li>
+ *   <li><b>Read Action:</b> Requires a platform Read Action ({@code @RequiresReadLock}) while traversing the AST,
+ *       inspecting token bounds, and resolving PSI references.</li>
+ *   <li><b>Write Actions:</b> Read-only tooltip provider; never executes write actions.</li>
+ * </ul>
+ *
+ * <h3>Parameter Calculation Architecture</h3>
+ * <pre>
+ *   [User presses Ctrl+P or types '(' / '{']
+ *                        │
+ *                        ▼
+ *          [CompactParameterInfoHandler]
+ *                        │
+ *          ┌─────────────┴─────────────┐
+ *          ▼                           ▼
+ *    [Function/Circuit Call]     [Struct Literal]
+ *    CompactCallExprImpl         CompactStructLiteralExprImpl
+ *          │                           │
+ *    Count top-level commas      Match current field name
+ *    between '(' and ')'         or next unassigned field
+ *          │                           │
+ *          └─────────────┬─────────────┘
+ *                        ▼
+ *        [CompactParametersDescription]
+ *          (Renders tooltip with bold active parameter)
+ * </pre>
+ *
+ * @see dev.verloren.midnight.parameterInfo.CompactParametersDescription
+ * @see dev.verloren.midnight.resolve.CompactResolveUtil
+ * @see com.intellij.lang.parameterInfo.ParameterInfoHandler
  */
 public class CompactParameterInfoHandler implements ParameterInfoHandler<PsiElement, CompactParametersDescription> {
 

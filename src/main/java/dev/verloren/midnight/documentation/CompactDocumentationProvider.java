@@ -32,12 +32,68 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * Quick Documentation provider for Compact declarations, references, and doc comments.
+ * Quick Documentation and Doc Comment provider for Compact smart contract files.
  *
- * <p>Extends {@link AbstractDocumentationProvider} to format rich HTML documentation popups.
- * Delegates parsing to {@link CompactDocParser}, signature rendering to
- * {@link CompactDocSignatureRenderer}, and standard library documentation to
- * {@link CompactStandardLibraryDoc}.</p>
+ * <h3>Subsystem Role &amp; Extension Point</h3>
+ * <p>Registered in {@code plugin.xml} via the {@code com.intellij.lang.documentationProvider} extension
+ * point for {@link dev.verloren.midnight.CompactLanguage}. Powers all interactive documentation features:
+ * <ul>
+ *   <li><b>Quick Documentation (Ctrl+Q / Cmd+J / Hover):</b> Formats rich HTML documentation popups displaying
+ *       colorized code definitions, description text, {@code @param}/{@code @return} sections, and throws specifications.</li>
+ *   <li><b>Quick Navigate Info (Ctrl + Mouse Hover):</b> Generates concise one-line signature tooltips via {@link #getQuickNavigateInfo}.</li>
+ *   <li><b>In-Editor Rendered Documentation:</b> Implements {@link #collectDocComments}, {@link #findDocComment},
+ *       and {@link #generateRenderedDoc} to support Reader Mode and gutter documentation toggles (Ctrl+Alt+Q).</li>
+ *   <li><b>Standard Library Grounding:</b> Supplies built-in documentation for core ZKIR and standard library
+ *       constructs via {@link CompactStandardLibraryDoc}.</li>
+ *   <li><b>Completion Item Documentation:</b> Generates on-the-fly documentation for code completion lookup items
+ *       (e.g. pragma version directives) via {@link #getDocumentationElementForLookupItem}.</li>
+ *   <li><b>Pragma Directives:</b> Provides dedicated documentation explanations and constraints for
+ *       {@code language_version} and {@code compiler_version} pragmas.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Calling Pipeline &amp; Lifecycle</h3>
+ * <p>Invoked by {@code com.intellij.codeInsight.documentation.DocumentationManager}:
+ * <ol>
+ *   <li>The platform identifies the target symbol via {@link #getCustomDocumentationElement}.</li>
+ *   <li>{@link #generateDoc} resolves the definition signature via {@link CompactDocSignatureRenderer},
+ *       parses doc comments via {@link CompactDocParser}, and inspects inherited docs ({@link #resolveInheritedDoc}).</li>
+ *   <li>Formats the resulting HTML adhering to IntelliJ's standard {@link DocumentationMarkup} structure.</li>
+ * </ol>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> Query methods run either on pooled background worker threads (during hover or async doc fetching)
+ *       or on the Event Dispatch Thread (EDT).</li>
+ *   <li><b>Read Action:</b> All methods require a platform Read Action ({@code @RequiresReadLock}) while inspecting
+ *       PSI elements, traversing siblings, and resolving references.</li>
+ *   <li><b>Write Actions:</b> Pure read-only documentation formatting; never acquires write actions.</li>
+ * </ul>
+ *
+ * <h3>Documentation Rendering Pipeline</h3>
+ * <pre>
+ *   [User presses Ctrl+Q or hovers over symbol/doc]
+ *                          │
+ *                          ▼
+ *            [CompactDocumentationProvider]
+ *                          │
+ *          ┌───────────────┼───────────────┐
+ *          ▼               ▼               ▼
+ *   [Definition Header] [Description]   [Doc Sections]
+ *   CompactDocSignature  CompactDoc     Parameters, Returns,
+ *   Renderer             Parser/Stdlib  Pragma constraints
+ *          │               │               │
+ *          └───────────────┼───────────────┘
+ *                          ▼
+ *         Rich HTML Popup (DocumentationMarkup)
+ * </pre>
+ *
+ * @see dev.verloren.midnight.documentation.CompactDocComment
+ * @see dev.verloren.midnight.documentation.docstring.CompactDocParser
+ * @see dev.verloren.midnight.documentation.docstring.CompactDocSignatureRenderer
+ * @see dev.verloren.midnight.documentation.docstring.CompactStandardLibraryDoc
+ * @see com.intellij.lang.documentation.AbstractDocumentationProvider
  */
 public class CompactDocumentationProvider extends AbstractDocumentationProvider {
 
