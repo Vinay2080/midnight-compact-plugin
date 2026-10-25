@@ -17,15 +17,59 @@ import java.util.List;
 import java.util.SequencedMap;
 
 /**
- * Cross-platform discovery, coordinator, and execution utility for the Compact smart contract compiler toolchain.
+ * Central coordinator and command builder for the Midnight Compact smart contract compiler toolchain.
  *
- * <p>Supports both the official {@code compact} CLI tool (e.g. {@code compact compile ...}) and direct {@code compactc}
- * compilers across Windows, WSL (Windows Subsystem for Linux), macOS, and Linux.</p>
+ * <h3>Architectural Role</h3>
+ * <p>Serves as the primary facade for discovering, validating, and launching the Compact compiler across
+ * diverse runtime environments. Unifies support for:</p>
+ * <ul>
+ *   <li>The low-level standalone compiler binary ({@code compactc})</li>
+ *   <li>The high-level Midnight developer CLI ({@code compact}) invoking {@code compact compile}</li>
+ *   <li>Native OS host execution on Windows, macOS, and Linux</li>
+ *   <li>Windows Subsystem for Linux (WSL) execution with automatic path translation</li>
+ *   <li>Project-local {@code node_modules/.bin} npm packages ({@code @midnight-ntwrk/compactc})</li>
+ *   <li>Plugin-managed compiler versions downloaded via {@link CompactVersionManager}</li>
+ * </ul>
+ *
+ * <h3>Toolchain Resolution Waterfall</h3>
+ * <pre>
+ *   [CompactToolchainUtil.getToolchainInfo(project)]
+ *                          │
+ *                          ├─► 1. Project-level custom compiler path / selected version
+ *                          │      (MidnightProjectSettings)
+ *                          │
+ *                          ├─► 2. Global application settings (MidnightSettingsState)
+ *                          │
+ *                          ├─► 3. Project node_modules/.bin (compactc / compact)
+ *                          │
+ *                          ├─► 4. Managed downloaded versions (~/.compact/versions/)
+ *                          │
+ *                          └─► 5. System PATH &amp; Conventional locations
+ *                                 ├─► WSL Linux probe (/home/user/.local/bin, /usr/bin)
+ *                                 ├─► System PATH (PathEnvironmentVariableUtil)
+ *                                 └─► Common package managers (npm, pnpm, yarn, brew, cargo)
+ * </pre>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Read / Execution:</b> Safe to invoke from background execution threads. Lookups read project/global
+ *       settings state and perform local filesystem existence probes.</li>
+ * </ul>
+ *
+ * @see CompactToolchainDiscovery
+ * @see CompactToolchainPathUtil
+ * @see CompactRunProfileState
+ * @see CompactVersionManager
  */
 public final class CompactToolchainUtil {
 
   /**
-   * Encapsulates discovered compiler toolchain metadata.
+   * Encapsulates discovered compiler toolchain metadata required to construct command lines.
+   *
+   * @param executablePath absolute path to the binary on host or within WSL Linux filesystem
+   * @param isWsl whether the executable resides inside a Windows Subsystem for Linux environment
+   * @param wslDistribution name of the target WSL distribution (e.g. {@code "Ubuntu"}), or {@code null}
+   * @param isCompactCli {@code true} if the binary is the higher-level {@code compact} CLI; {@code false} if {@code compactc}
    */
   public record ToolchainInfo(
       @NotNull String executablePath,
@@ -33,20 +77,36 @@ public final class CompactToolchainUtil {
       @Nullable String wslDistribution,
       boolean isCompactCli
   ) {
+    /**
+     * Checks whether the toolchain metadata contains a non-empty executable path.
+     *
+     * @return {@code true} if valid; {@code false} otherwise
+     */
     public boolean isValid() {
       return !executablePath.isEmpty();
     }
   }
 
+  /**
+   * Private constructor to prevent instantiation of static utility class.
+   */
   private CompactToolchainUtil() {
   }
 
+  /**
+   * Discovers installed WSL distributions by delegating to {@link CompactToolchainDiscovery}.
+   *
+   * @return list of WSL distribution names
+   */
   public static @NotNull List<String> getInstalledWslDistributions() {
     return CompactToolchainDiscovery.getInstalledWslDistributions();
   }
 
   /**
-   * Resolves compiler toolchain info using settings, project node_modules, system PATH, package managers, and WSL.
+   * Resolves compiler toolchain metadata by executing the multi-tier resolution waterfall.
+   *
+   * @param project current project context, or {@code null}
+   * @return resolved {@link ToolchainInfo}, or {@code null} if no compiler is found
    */
   public static @Nullable ToolchainInfo getToolchainInfo(@Nullable Project project) {
     ToolchainInfo projectInfo = resolveFromProjectSettings(project);
@@ -164,11 +224,23 @@ public final class CompactToolchainUtil {
     return null;
   }
 
+  /**
+   * Resolves and returns the absolute executable path of the active Compact compiler.
+   *
+   * @param project current project context, or {@code null}
+   * @return executable path string, or {@code null} if toolchain is unresolvable
+   */
   public static @Nullable String getCompilerExecutablePath(@Nullable Project project) {
     ToolchainInfo info = getToolchainInfo(project);
     return info != null ? info.executablePath() : null;
   }
 
+  /**
+   * Determines the active SemVer version string of the Compact compiler for the given project.
+   *
+   * @param project current project context
+   * @return SemVer string (e.g. {@code "0.24.0"}), or {@code null} if unresolvable
+   */
   public static @Nullable String getActiveCompilerVersion(@Nullable Project project) {
     if (project != null) {
       MidnightProjectSettings projectSettings = MidnightProjectSettings.getInstance(project);
@@ -191,11 +263,22 @@ public final class CompactToolchainUtil {
     return CompactVersionManager.detectVersionFromExecutable(info.executablePath());
   }
 
+  /**
+   * Constructs a fully-configured {@link GeneralCommandLine} ready to execute the Compact compiler,
+   * handling WSL execution wrapping (via {@code wsl.exe -d <distro> -e <exe>}) or native host execution.
+   *
+   * @param project current project context
+   * @param compilerArgs list of CLI parameters (flags, contract path, output directory)
+   * @param workingDir optional working directory, or {@code null}
+   * @return executable {@link GeneralCommandLine}
+   * @throws ExecutionException if no valid toolchain could be discovered
+   */
   public static @NotNull GeneralCommandLine createCommandLine(
       @Nullable Project project,
       @NotNull List<String> compilerArgs,
       @Nullable String workingDir
   ) throws ExecutionException {
+    // 1. Resolve compiler toolchain metadata
     ToolchainInfo info = getToolchainInfo(project);
     if (info == null) {
       throw new ExecutionException("""
@@ -208,6 +291,7 @@ public final class CompactToolchainUtil {
             • Configure in IntelliJ: Settings -> Languages & Frameworks -> Midnight Compact""");
     }
 
+    // 2. Instantiate and configure command line parameters for WSL or Host OS
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (info.isWsl()) {
       configureWslParameters(cmd, info, compilerArgs);
@@ -220,6 +304,13 @@ public final class CompactToolchainUtil {
     return cmd;
   }
 
+  /**
+   * Configures parameters for executing the compiler within a Windows Subsystem for Linux (WSL) container.
+   *
+   * @param cmd target command line object
+   * @param info WSL toolchain metadata
+   * @param compilerArgs raw CLI arguments to be converted into Linux WSL paths
+   */
   private static void configureWslParameters(
       @NotNull GeneralCommandLine cmd,
       @NotNull ToolchainInfo info,
@@ -239,6 +330,13 @@ public final class CompactToolchainUtil {
     }
   }
 
+  /**
+   * Configures parameters for executing the compiler natively on the host operating system.
+   *
+   * @param cmd target command line object
+   * @param info host toolchain metadata
+   * @param compilerArgs CLI arguments
+   */
   private static void configureHostParameters(
       @NotNull GeneralCommandLine cmd,
       @NotNull ToolchainInfo info,

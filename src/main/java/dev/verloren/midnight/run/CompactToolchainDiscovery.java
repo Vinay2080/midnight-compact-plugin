@@ -15,11 +15,51 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Handles cross-platform discovery, WSL probing, system PATH resolution, and configured path parsing
- * for the Compact smart contract compiler toolchain.
+ * Discovery utility responsible for detecting and resolving the Compact compiler toolchain across
+ * diverse host operating systems, WSL distributions, system PATH directories, and package managers.
+ *
+ * <h3>Architectural Role</h3>
+ * <p>Acts as the low-level discovery engine for {@link CompactToolchainUtil}. Implements multi-tier probing
+ * for both standalone compiler binaries ({@code compactc}) and the Midnight CLI tool ({@code compact}).
+ * Provides robust Windows Subsystem for Linux (WSL) inspection via {@link WslDistributionManager},
+ * shields the plugin from Windows' native NTFS compression utility ({@code compact.exe}), and scans
+ * common runtime locations across Node/npm, pnpm, Yarn, Homebrew, and Cargo.</p>
+ *
+ * <h3>Toolchain Discovery Waterfall</h3>
+ * <pre>
+ *   [CompactToolchainDiscovery.findInWsl / findInCommonLocations]
+ *                                │
+ *            ┌───────────────────┴───────────────────┐
+ *            │                                       │
+ *       Windows / WSL                           macOS / Linux
+ *            │                                       │
+ *            ├─► Probe WslDistributionManager        ├─► /usr/local/bin, /opt/homebrew/bin
+ *            ├─► Scan \\wsl.localhost\               ├─► ~/.nvm/versions/node/
+ *            │     ├─► ~/.compact/bin                ├─► ~/.local/bin
+ *            │     ├─► ~/.compact/versions/          └─► ~/.cargo/bin
+ *            │     └─► /usr/local/bin
+ *            └─► Check AppData/Roaming/npm
+ * </pre>
+ *
+ * <h3>Windows Native Conflict Guard</h3>
+ * <p>Windows includes a native system tool {@code C:\Windows\System32\compact.exe} used for filesystem
+ * compression. {@link #isWindowsSystemExecutable(File)} explicitly guards against selecting this binary,
+ * preventing accidental invocations of the OS compression utility.</p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>I/O Bound:</b> File system existence checks are performed synchronously. Should be called
+ *       from background threads or cached during intensive operations.</li>
+ * </ul>
+ *
+ * @see CompactToolchainUtil
+ * @see CompactToolchainPathUtil
  */
 public final class CompactToolchainDiscovery {
 
+  /**
+   * Private constructor to prevent instantiation of static utility class.
+   */
   private CompactToolchainDiscovery() {
   }
 
@@ -55,9 +95,14 @@ public final class CompactToolchainDiscovery {
   }
 
   /**
-   * Parses a user-configured path string from settings (which can be a Windows path, WSL path, or UNC path).
+   * Parses a user-configured path string from settings, resolving Windows paths, WSL UNC paths,
+   * or direct Linux container paths into a structured {@link CompactToolchainUtil.ToolchainInfo}.
+   *
+   * @param customPath raw path string entered by user
+   * @return resolved {@link CompactToolchainUtil.ToolchainInfo}, or {@code null} if file does not exist
    */
   public static @Nullable CompactToolchainUtil.ToolchainInfo parseConfiguredPath(@NotNull String customPath) {
+    // 1. Non-Windows POSIX host: directly locate executable
     if (!SystemInfo.isWindows) {
       File hostExe = findExecutableFile(customPath);
       if (hostExe != null && !isWindowsSystemExecutable(hostExe)) {
@@ -67,15 +112,20 @@ public final class CompactToolchainDiscovery {
     }
 
     String normalized = customPath.replace('\\', '/');
+
+    // 2. Check for WSL UNC paths (//wsl$/... or //wsl.localhost/...)
     CompactToolchainUtil.ToolchainInfo uncInfo = parseWslUncPath(normalized);
     if (uncInfo != null) {
       return uncInfo;
     }
+
+    // 3. Check for direct Linux container paths (/home/..., /usr/..., wsl:...)
     CompactToolchainUtil.ToolchainInfo linuxInfo = parseDirectLinuxOrWslPath(normalized);
     if (linuxInfo != null) {
       return linuxInfo;
     }
 
+    // 4. Fallback to Windows host executable resolution
     File resolved = findExecutableFile(customPath);
     if (resolved != null && !isWindowsSystemExecutable(resolved)) {
       boolean isCli = isCompactCliName(resolved.getName());
@@ -84,6 +134,12 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Parses WSL network UNC paths ({@code "//wsl$/<distro>/..."} or {@code "//wsl.localhost/<distro>/..."}).
+   *
+   * @param normalized forward-slash normalized path string
+   * @return {@link CompactToolchainUtil.ToolchainInfo} if valid WSL UNC path; {@code null} otherwise
+   */
   private static @Nullable CompactToolchainUtil.ToolchainInfo parseWslUncPath(@NotNull String normalized) {
     if (!normalized.startsWith("//wsl$/") && !normalized.startsWith("//wsl.localhost/")) {
       return null;
@@ -99,6 +155,12 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Parses direct Linux container paths (e.g. {@code "/home/user/.local/bin/compact"} or {@code "wsl:Ubuntu:/usr/bin/compact"}).
+   *
+   * @param normalized forward-slash normalized path string
+   * @return {@link CompactToolchainUtil.ToolchainInfo} if recognized Linux/WSL format; {@code null} otherwise
+   */
   private static @Nullable CompactToolchainUtil.ToolchainInfo parseDirectLinuxOrWslPath(@NotNull String normalized) {
     if (!normalized.startsWith("/home/") && !normalized.startsWith("/usr/")
         && !normalized.startsWith("/root/") && !normalized.startsWith("wsl:")) {
@@ -118,6 +180,12 @@ public final class CompactToolchainDiscovery {
     return new CompactToolchainUtil.ToolchainInfo(linuxPath, true, distro, isCli);
   }
 
+  /**
+   * Scans installed WSL distributions to find which distribution contains the specified Linux path.
+   *
+   * @param linuxPath absolute Linux path (e.g. {@code "/home/alice/.compact/bin/compactc"})
+   * @return the name of the containing WSL distribution (e.g. {@code "Ubuntu"}), or {@code null} if not found
+   */
   public static @Nullable String findWslDistroForPath(@NotNull String linuxPath) {
     String subPath = linuxPath.startsWith("/") ? linuxPath.substring(1) : linuxPath;
     String winSubPath = subPath.replace('/', '\\');
@@ -131,6 +199,12 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Guards against accidentally invoking Windows' native NTFS file compression utility ({@code C:\Windows\System32\compact.exe}).
+   *
+   * @param file the candidate executable file
+   * @return {@code true} if {@code file} resides in a Windows system directory; {@code false} otherwise
+   */
   public static boolean isWindowsSystemExecutable(@NotNull File file) {
     if (!SystemInfo.isWindows) {
       return false;
@@ -150,12 +224,25 @@ public final class CompactToolchainDiscovery {
         || path.contains("\\windows\\winsxs\\");
   }
 
+  /**
+   * Checks whether the given executable name corresponds to the higher-level Midnight {@code compact} CLI
+   * rather than the low-level {@code compactc} compiler binary.
+   *
+   * @param path file path or executable name to test
+   * @return {@code true} if the binary represents {@code compact} CLI; {@code false} if {@code compactc}
+   */
   public static boolean isCompactCliName(@NotNull String path) {
     String name = new File(path).getName().toLowerCase();
     return name.equals("compact") || name.startsWith("compact.")
         || name.equals("compact.exe") || name.equals("compact.cmd");
   }
 
+  /**
+   * Probes all installed WSL distributions for installed Compact toolchains across user home folders
+   * (e.g. {@code ~/.compact/bin}, {@code ~/.local/bin}, {@code ~/.cargo/bin}) and system directories.
+   *
+   * @return {@link CompactToolchainUtil.ToolchainInfo} if discovered in WSL; {@code null} otherwise
+   */
   public static @Nullable CompactToolchainUtil.ToolchainInfo findInWsl() {
     for (String distro : getInstalledWslDistributions()) {
       File distroWslLocalhost = new File("\\\\wsl.localhost\\" + distro);
@@ -272,6 +359,13 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Resolves an executable file from a direct path, automatically appending platform extensions
+   * ({@code .cmd}, {@code .bat}, {@code .exe}, {@code .ps1} on Windows) if omitted.
+   *
+   * @param path file path string
+   * @return resolved {@link File} object, or {@code null} if no matching executable exists
+   */
   public static @Nullable File findExecutableFile(@NotNull String path) {
     File direct = new File(path);
     if (direct.exists() && direct.isFile() && !isWindowsSystemExecutable(direct)) {
@@ -289,6 +383,13 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Searches a specific directory for an executable with the specified base name, checking platform extensions.
+   *
+   * @param dir target directory
+   * @param baseName binary name without extension (e.g. {@code "compactc"})
+   * @return resolved {@link File}, or {@code null} if not found
+   */
   public static @Nullable File findExecutableInDir(@NotNull File dir, @NotNull String baseName) {
     if (!dir.isDirectory()) {
       return null;
@@ -310,6 +411,12 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Scans system PATH directories to locate an executable with the given base name.
+   *
+   * @param baseName binary name (e.g. {@code "compact"} or {@code "compactc"})
+   * @return resolved {@link File} on PATH, or {@code null} if not present
+   */
   public static @Nullable File findExecutableInPath(@NotNull String baseName) {
     String pathEnv = PathEnvironmentVariableUtil.getPathVariableValue();
     if (pathEnv == null || pathEnv.isBlank()) {
@@ -331,6 +438,12 @@ public final class CompactToolchainDiscovery {
     return null;
   }
 
+  /**
+   * Probes conventional global toolchain installations across Node/npm, pnpm, Yarn, Homebrew, and Cargo.
+   *
+   * @param baseName binary name (e.g. {@code "compact"} or {@code "compactc"})
+   * @return resolved {@link File} in standard locations, or {@code null} if not found
+   */
   public static @Nullable File findInCommonLocations(@NotNull String baseName) {
     for (File dir : getCommonLocationsSearchDirs()) {
       if (dir.isDirectory()) {

@@ -6,24 +6,76 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Handles cross-platform path conversions (Windows host, WSL, and POSIX) and deterministic
- * output directory calculations for Compact smart contract compilation.
+ * Utility class providing cross-platform path conversions and deterministic output directory
+ * calculations for the Compact smart contract compiler toolchain.
+ *
+ * <h3>Architectural Role</h3>
+ * <p>Handles translations between Windows host paths, WSL Linux paths, and UNC network shares.
+ * Provides deterministic artifact directory naming logic that maps contract source paths (e.g.
+ * {@code "src/contracts/counter.compact"}) into clean output paths (e.g. {@code "gen/counter"})
+ * while stripping boilerplate source folders (such as {@code "src"}, {@code "contracts"}, {@code "circuits"}).</p>
+ *
+ * <h3>Path Conversion Pipeline</h3>
+ * <pre>
+ *   Windows Host Path: "C:\Projects\midnight\contracts\token.compact"
+ *                               │
+ *                               ▼
+ *   [CompactToolchainPathUtil.toWslPath]
+ *                               │
+ *                               ▼
+ *   WSL Linux Path:    "/mnt/c/Projects/midnight/contracts/token.compact"
+ * </pre>
+ *
+ * <h3>Output Directory Derivation Pipeline</h3>
+ * <pre>
+ *   Contract Source Path:  "C:/MyProject/src/contracts/escrow/vault.compact"
+ *                                       │
+ *                                       ▼
+ *   [stripProjectPrefix]         ──► "src/contracts/escrow/vault.compact"
+ *   [stripLeadingDriveAndSlashes]──► (if standalone)
+ *   [stripExtension]             ──► "src/contracts/escrow/vault"
+ *   [stripSourceRoots]           ──► "escrow/vault" (strips 'src/', 'contracts/')
+ *                                       │
+ *                                       ▼
+ *   Resulting Artifact Directory: "gen/escrow/vault"
+ * </pre>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Pure Function:</b> Stateless and thread-safe. All methods perform pure string manipulations
+ *       and can be called concurrently without synchronization.</li>
+ * </ul>
+ *
+ * @see CompactToolchainUtil
+ * @see CompactToolchainDiscovery
  */
 public final class CompactToolchainPathUtil {
 
+  /**
+   * Recognized standard source root directory names stripped when deriving clean output directories.
+   */
   private static final String[] SOURCE_ROOTS = {"circuits", "contracts", "src", "compact", "source", "contract"};
 
+  /**
+   * Private constructor to prevent instantiation of static utility class.
+   */
   private CompactToolchainPathUtil() {
   }
 
   /**
-   * Converts a Windows file path (or UNC WSL path) to its Linux WSL path equivalent.
+   * Converts a Windows file path (e.g. {@code "C:\dir\file.compact"}) or WSL UNC network path
+   * (e.g. {@code "\\wsl$\Ubuntu\home\..."}) to its Linux WSL path equivalent (e.g. {@code "/mnt/c/dir/file.compact"}).
+   *
+   * @param path Windows or UNC path string
+   * @return normalized Linux path string for use inside WSL
    */
   public static @NotNull String toWslPath(@NotNull String path) {
     if (path.isEmpty() || path.startsWith("-")) {
       return path;
     }
     String normalized = path.replace('\\', '/');
+
+    // 1. Handle WSL UNC paths (//wsl$/... or //wsl.localhost/...)
     if (normalized.startsWith("//wsl$/") || normalized.startsWith("//wsl.localhost/")) {
       int prefixLen = normalized.startsWith("//wsl$/") ? 7 : 16;
       int nextSlash = normalized.indexOf('/', prefixLen);
@@ -31,6 +83,8 @@ public final class CompactToolchainPathUtil {
         return normalized.substring(nextSlash);
       }
     }
+
+    // 2. Handle standard Windows drive letters (C:\... -> /mnt/c/...)
     if (normalized.length() >= 2 && Character.isLetter(normalized.charAt(0)) && normalized.charAt(1) == ':') {
       char drive = Character.toLowerCase(normalized.charAt(0));
       String rest = normalized.substring(2);
@@ -43,7 +97,11 @@ public final class CompactToolchainPathUtil {
   }
 
   /**
-   * Converts a Linux WSL path (e.g. /mnt/c/path) to its Windows file path equivalent.
+   * Converts a Linux WSL mount path (e.g. {@code "/mnt/c/dir/file.compact"}) into its Windows host
+   * file path equivalent (e.g. {@code "C:\dir\file.compact"}).
+   *
+   * @param path Linux WSL path string
+   * @return Windows host file path
    */
   public static @NotNull String toWindowsPath(@NotNull String path) {
     if (!path.startsWith("/mnt/")) {
@@ -61,31 +119,51 @@ public final class CompactToolchainPathUtil {
   }
 
   /**
-   * Deterministically calculates a unique output directory for a given Compact smart contract file.
+   * Deterministically calculates a unique output directory for a given Compact smart contract file,
+   * falling back to global settings or {@code "gen"}.
+   *
+   * @param project current project context (used to strip project base directory prefix)
+   * @param compactFilePath absolute or relative path to the {@code .compact} contract file
+   * @return relative output path (e.g. {@code "gen/counter"})
    */
   public static @NotNull String deriveOutputDirectory(@Nullable Project project, @NotNull String compactFilePath) {
     return deriveOutputDirectory(project, compactFilePath, null);
   }
 
   /**
-   * Deterministically calculates a unique output directory for a given Compact smart contract file.
+   * Deterministically calculates a unique output directory for a given Compact smart contract file
+   * relative to the specified {@code baseOutputDir}.
+   *
+   * @param project current project context
+   * @param compactFilePath absolute or relative path to the {@code .compact} contract file
+   * @param baseOutputDir explicit base output folder (e.g. {@code "build/gen"}), or {@code null} to use defaults
+   * @return relative output directory path
    */
   public static @NotNull String deriveOutputDirectory(
       @Nullable Project project,
       @NotNull String compactFilePath,
       @Nullable String baseOutputDir
   ) {
+    // 1. Resolve base directory from arguments, settings, or default "gen"
     String base = getBase(baseOutputDir);
     String path = compactFilePath.trim().replace('\\', '/');
     if (path.isEmpty()) {
       return base;
     }
 
+    // 2. Normalize and strip project path prefix if present
     path = stripProjectPrefix(project, path);
+
+    // 3. Strip leading drive letters (C:) and slashes
     path = stripLeadingDriveAndSlashes(path);
+
+    // 4. Strip contract file extension (.compact / .compactc)
     path = stripExtension(path);
+
+    // 5. Strip common root folders (e.g. src/, contracts/, circuits/)
     path = stripSourceRoots(path);
 
+    // 6. Clean residual boundary slashes
     while (path.startsWith("/")) {
       path = path.substring(1);
     }
