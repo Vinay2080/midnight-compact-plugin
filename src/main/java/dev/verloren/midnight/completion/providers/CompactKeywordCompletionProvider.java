@@ -13,29 +13,49 @@ import dev.verloren.midnight.ide.templates.CompactDeclarationType;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Completion provider for Compact language keywords, live declaration templates, and modifier tokens.
+ * High-performance completion provider for Compact language keywords, live declaration templates, and modifier tokens.
  *
- * <p>Generates prioritised lookup elements for top-level declaration constructs (e.g. {@code circuit},
+ * <p>Generates prioritized lookup elements for top-level declaration constructs (e.g. {@code circuit},
  * {@code ledger}, {@code struct}), post-export declarations, statement keywords, and value-position keywords.
- * Integrates directly with {@link dev.verloren.midnight.ide.templates.CompactDeclarationTriggerResolver}
- * and custom insert handlers to power interactive live template expansions.</p>
+ * Integrates directly with {@link CompactDeclarationTriggerResolver} to register prefix aliases and custom
+ * {@link InsertHandler} implementations (e.g. {@link CompactDeclarationInsertHandler}, {@link CompactLedgerInsertHandler})
+ * to drive interactive live template expansions with tab-stops.</p>
  *
  * <h3>IntelliJ Platform Lifecycle &amp; Threading Contract</h3>
  * <ul>
- *   <li><b>Subsystem Role:</b> Delegate completion provider invoked by {@link dev.verloren.midnight.completion.CompactCompletionContributor}.</li>
- *   <li><b>Calling Pipeline:</b> Executed during the completion resolution phase by
- *       {@code com.intellij.codeInsight.completion.CodeCompletionHandlerBase} across background worker threads.</li>
+ *   <li><b>Subsystem Role:</b> Pure completion provider and lookup factory invoked as a delegate
+ *       by {@link dev.verloren.midnight.completion.CompactCompletionContributor}.</li>
+ *   <li><b>Calling Pipeline:</b> Executed during basic code completion ({@link com.intellij.codeInsight.completion.CompletionType#BASIC})
+ *       by {@code com.intellij.codeInsight.completion.CodeCompletionHandlerBase} across background pooled worker threads.</li>
  *   <li><b>Threading Model:</b> Runs within an active <b>Read Action</b> ({@code @RequiresReadLock}).
- *       Lookup elements are registered into {@link CompletionResultSet}; document modification is strictly
- *       deferred to the attached {@link InsertHandler} when an item is selected on the EDT.</li>
- *   <li><b>Cancellation Support:</b> Lightweight static lookup element generation; respects daemon interrupts
- *       and cooperative cancellation without blocking.</li>
+ *       All methods are read-only and mutate only the passed {@link CompletionResultSet}. Document writes, AST alterations,
+ *       and interactive template launches are strictly deferred to {@link InsertHandler} invocations executed on the EDT
+ *       upon user item selection.</li>
+ *   <li><b>Cancellation Support:</b> Performs zero disk I/O, heavy parsing, or blocking operations.
+ *       Generates lightweight in-memory lookup builders, cooperatively yielding to IDE daemon cancellation
+ *       and typing interrupts without blocking the EDT.</li>
  * </ul>
+ *
+ * <h3>Subsystem Interaction &amp; Request Flow</h3>
+ * <pre>{@code
+ *   CompactCompletionContributor (Worker Thread, Read Action)
+ *              │
+ *              ├─► CompactCompletionContext.classify(caret)
+ *              │         │
+ *              │         ▼ (TOP_LEVEL / AFTER_EXPORT / STATEMENT / VALUE)
+ *              ▼
+ *   CompactKeywordCompletionProvider
+ *              │
+ *              ├── registerDeclarationTemplate() ──► CompactDeclarationTriggerResolver (aliases: "ci", "cir")
+ *              │                                 └── Attaches CompactDeclarationInsertHandler (Live Template)
+ *              │
+ *              └── addAll() / PrioritizedLookupElement.withPriority() ──► CompletionResultSet
+ * }</pre>
  *
  * <h3>Keyword Priority &amp; Weight Hierarchy</h3>
  * <pre>{@code
  *   Priority
- *     125.0  ──► export ledger / ledger templates
+ *     125.0  ──► export ledger / ledger templates (Primary state root)
  *     120.0  ──► export circuit / circuit templates, sealed ledger, pure circuit
  *     115.0  ──► struct, enum, type, witness declaration templates
  *     110.0  ──► module, contract declaration templates
@@ -48,11 +68,13 @@ import org.jetbrains.annotations.NotNull;
  * <h3>Design Decisions &amp; Architectural Rationale</h3>
  * <ul>
  *   <li><b>Stateless Utility Provider:</b> Declared {@code final} with a private constructor to prevent
- *       instantiation. All methods are pure static functions.</li>
+ *       instantiation. All methods are pure static functions, eliminating heap allocation overhead on keystrokes.</li>
  *   <li><b>Dual-Form Generation:</b> Generates both exported ({@code export circuit}) and bare ({@code circuit})
  *       forms simultaneously with tiered priorities so developers can declare and export in a single keystroke.</li>
- *   <li><b>Live Template Binding:</b> Attaches specialised insert handlers (e.g. {@link CompactLedgerInsertHandler},
+ *   <li><b>Live Template Binding:</b> Attaches specialized insert handlers (e.g. {@link CompactLedgerInsertHandler},
  *       {@link CompactDeclarationInsertHandler}) to template lookup elements rather than simple text snippets.</li>
+ *   <li><b>Memory Leak Guards:</b> Zero retention of {@link com.intellij.openapi.project.Project},
+ *       {@link com.intellij.psi.PsiElement}, or {@link com.intellij.openapi.editor.Editor} instances in static memory.</li>
  * </ul>
  *
  * @see dev.verloren.midnight.completion.CompactCompletionContributor
@@ -64,7 +86,9 @@ import org.jetbrains.annotations.NotNull;
 public final class CompactKeywordCompletionProvider {
 
   /**
-   * Top-level declaration keywords valid at file or module scope.
+   * Top-level declaration keywords valid at file, contract, or module scope.
+   *
+   * <p>Immutable token array registered as fallback items when declaration templates are matched.</p>
    */
   public static final String[] DECLARATION_KEYWORDS = {
       "pragma", "include", "import", "export", "module", "contract",
@@ -73,6 +97,8 @@ public final class CompactKeywordCompletionProvider {
 
   /**
    * Local statement keywords valid inside circuit or function block bodies.
+   *
+   * <p>Immutable token array registered inside imperative block contexts.</p>
    */
   public static final String[] STATEMENT_KEYWORDS = {
       "const", "if", "for", "return", "emit"
@@ -80,13 +106,15 @@ public final class CompactKeywordCompletionProvider {
 
   /**
    * Value/expression keywords valid as operands in expression contexts.
+   *
+   * <p>Immutable token array registered inside expression and parameter positions.</p>
    */
   public static final String[] VALUE_KEYWORDS = {
       "true", "false", "default", "disclose", "map", "fold", "pad", "slice", "emit"
   };
 
   /**
-   * Private constructor enforcing static utility usage.
+   * Private constructor enforcing static utility usage and preventing instantiation.
    */
   private CompactKeywordCompletionProvider() {}
 
@@ -219,7 +247,7 @@ public final class CompactKeywordCompletionProvider {
    * Creates a pre-configured {@link LookupElement} for the {@code assert} statement keyword
    * wired to {@link CompactAssertInsertHandler#INSTANCE}.
    *
-   * @return prioritised assert lookup element
+   * @return prioritized assert lookup element
    */
   public static @NotNull LookupElement createAssertLookupElement() {
     return PrioritizedLookupElement.withPriority(
