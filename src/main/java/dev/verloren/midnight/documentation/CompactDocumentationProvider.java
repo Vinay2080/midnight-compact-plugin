@@ -349,64 +349,15 @@ public class CompactDocumentationProvider extends AbstractDocumentationProvider 
       }
     }
 
-    PsiElement resolved = findResolvedTarget(contextElement, file);
+    PsiElement resolved = CompactDocumentationTargetResolver.findResolvedTarget(contextElement, file);
     if (resolved != null) {
       return resolved;
     }
     return super.getCustomDocumentationElement(editor, file, contextElement, targetOffset);
   }
 
-  private static @Nullable PsiElement findResolvedTarget(@NotNull PsiElement contextElement, @NotNull PsiFile file) {
-    for (PsiElement p = contextElement; p != null && p != file; p = p.getParent()) {
-      if (p.getReference() != null) {
-        PsiElement target = p.getReference().resolve();
-        if (target != null) return target;
-      }
-    }
-    for (PsiElement p = contextElement; p != null && p != file; p = p.getParent()) {
-      if (p instanceof PsiComment comment) {
-        PsiElement target = findTargetDeclarationForComment(comment);
-        return target != null ? target : comment;
-      }
-    }
-    for (PsiElement p = contextElement; p != null && p != file; p = p.getParent()) {
-      switch (p) {
-        case CompactStructFieldImpl _, CompactEnumMemberImpl _ -> { return p; }
-        case CompactParameterImpl param when param.getParent() instanceof CompactStructFieldImpl -> {
-          return param.getParent();
-        }
-        case CompactImportDeclarationImpl importDecl -> { return importDecl; }
-        case CompactPatternImpl _, CompactPragmaForm _, CompactNamedElement _ -> { return p; }
-        default -> {}
-      }
-    }
-    return null;
-  }
-
   public static @Nullable PsiElement findTargetDeclarationForComment(@NotNull PsiComment comment) {
-    if (comment instanceof CompactDocComment docComment) {
-      comment = docComment.getDelegate();
-    }
-    PsiElement next = comment.getNextSibling();
-    while (next instanceof PsiWhiteSpace || next instanceof PsiComment) {
-      next = next.getNextSibling();
-    }
-    return switch (next) {
-      case CompactNamedElement _,
-           CompactConstructorDeclaration _,
-           CompactContractImplementsDeclaration _,
-           CompactPragmaForm _ -> next;
-      case CompactExportDeclaration exportDecl -> {
-        for (PsiElement child : exportDecl.getChildren()) {
-          if (child instanceof CompactNamedElement) {
-            yield child;
-          }
-        }
-        yield exportDecl;
-      }
-      case null -> null;
-      default -> PsiTreeUtil.findChildOfType(next, CompactNamedElement.class);
-    };
+    return CompactDocumentationTargetResolver.findTargetDeclarationForComment(comment);
   }
 
   public static @Nullable String getDefinitionHeader(@NotNull PsiElement element) {
