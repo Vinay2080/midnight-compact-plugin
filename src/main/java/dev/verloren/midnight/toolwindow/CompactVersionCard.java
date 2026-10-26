@@ -1,10 +1,5 @@
 package dev.verloren.midnight.toolwindow;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.HelpTooltipKt;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBFont;
@@ -14,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -168,35 +162,7 @@ public class CompactVersionCard extends JPanel {
     setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     // Single Action Icon (either download, delete, or progress)
-    Dimension iconBoxSize = new Dimension(JBUI.scale(22), JBUI.scale(22));
-    if (isDownloading) {
-      JBLabel spinLabel = new JBLabel(AllIcons.Process.Step_1);
-      spinLabel.setPreferredSize(iconBoxSize);
-      HelpTooltipKt.setToolTipText(spinLabel, HtmlChunk.text("Downloading compiler..."));
-      actionIconComponent = spinLabel;
-    } else if (isInstalled) {
-      JButton deleteBtn = new JButton(AllIcons.Actions.GC);
-      deleteBtn.setPreferredSize(iconBoxSize);
-      deleteBtn.setMinimumSize(iconBoxSize);
-      deleteBtn.setMaximumSize(iconBoxSize);
-      deleteBtn.setBorder(BorderFactory.createEmptyBorder());
-      deleteBtn.setContentAreaFilled(false);
-      deleteBtn.setFocusPainted(false);
-      deleteBtn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      HelpTooltipKt.setToolTipText(deleteBtn, HtmlChunk.text("Remove Compact v" + version + " from local storage"));
-      deleteBtn.addActionListener(_ -> {
-        if (onRemove != null) {
-          onRemove.run();
-        }
-      });
-      actionIconComponent = deleteBtn;
-    } else {
-      JBLabel dlLabel = new JBLabel(AllIcons.Actions.Download);
-      dlLabel.setPreferredSize(iconBoxSize);
-      String assetName = dev.verloren.midnight.version.CompactVersionManager.getReleaseAssetName(version);
-      HelpTooltipKt.setToolTipText(dlLabel, HtmlChunk.text("Download Compact v" + version + " (" + assetName + ")"));
-      actionIconComponent = dlLabel;
-    }
+    actionIconComponent = CompactVersionCardUiBuilder.createActionIconComponent(version, isDownloading, isInstalled, onRemove);
 
     JPanel leftContainer = new JPanel(new BorderLayout(JBUI.scale(8), 0));
     leftContainer.setOpaque(false);
@@ -347,39 +313,7 @@ public class CompactVersionCard extends JPanel {
    * @param e mouse event triggering the popup (pressed or released)
    */
   private void showContextMenu(MouseEvent e) {
-    JBPopupMenu menu = new JBPopupMenu();
-    if (isInstalled) {
-      JMenuItem removeItem = new JMenuItem("Remove Version v" + version, AllIcons.Actions.GC);
-      removeItem.addActionListener(_ -> {
-        if (onRemove != null) {
-          onRemove.run();
-        }
-      });
-      menu.add(removeItem);
-
-      if (installedPath != null && !installedPath.isEmpty()) {
-        JMenuItem copyItem = new JMenuItem("Copy Executable Path", AllIcons.Actions.Copy);
-        copyItem.addActionListener(_ -> CopyPasteManager.getInstance().setContents(new StringSelection(installedPath)));
-        menu.add(copyItem);
-      }
-    } else {
-      JMenuItem downloadItem = new JMenuItem("Download & Switch to v" + version, AllIcons.Actions.Download);
-      downloadItem.addActionListener(_ -> {
-        if (onSelect != null) {
-          onSelect.run();
-        }
-      });
-      menu.add(downloadItem);
-    }
-
-    JMenuItem copyUrlItem = new JMenuItem("Copy Asset Download URL", AllIcons.Actions.Copy);
-    copyUrlItem.addActionListener(_ -> {
-      String url = dev.verloren.midnight.version.CompactVersionManager.getReleaseDownloadUrl(version);
-      CopyPasteManager.getInstance().setContents(new StringSelection(url));
-    });
-    menu.add(copyUrlItem);
-
-    menu.show(this, e.getX(), e.getY());
+    CompactVersionCardContextMenu.showContextMenu(this, e, version, isInstalled, installedPath, onSelect, onRemove);
   }
 
   /**
@@ -433,38 +367,6 @@ public class CompactVersionCard extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-
-    Graphics2D g2 = (Graphics2D) g.create();
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-    int arc = JBUI.scale(8);
-    int width = getWidth() - 1;
-    int height = getHeight() - 1;
-
-    // Background color: active > hovered > default
-    Color bgColor;
-    if (isActive) {
-      bgColor = JBColor.namedColor("VersionCard.activeBackground", new JBColor(new Color(230, 242, 255), new Color(38, 55, 75)));
-    } else if (isHovered) {
-      bgColor = JBColor.namedColor("VersionCard.hoverBackground", new JBColor(new Color(245, 247, 250), new Color(48, 50, 52)));
-    } else {
-      bgColor = JBColor.namedColor("VersionCard.background", new JBColor(com.intellij.ui.Gray._250, new Color(40, 42, 44)));
-    }
-
-    g2.setColor(bgColor);
-    g2.fillRoundRect(0, 0, width, height, arc, arc);
-
-    // Border color: active > default subtle
-    Color borderColor;
-    if (isActive) {
-      borderColor = JBUI.CurrentTheme.Link.Foreground.ENABLED;
-    } else {
-      borderColor = JBColor.namedColor("VersionCard.borderColor", new JBColor(new Color(220, 224, 230), new Color(55, 57, 60)));
-    }
-
-    g2.setColor(borderColor);
-    g2.drawRoundRect(0, 0, width, height, arc, arc);
-
-    g2.dispose();
+    CompactVersionCardPainter.paintCard(g, this, isActive, isHovered);
   }
 }
