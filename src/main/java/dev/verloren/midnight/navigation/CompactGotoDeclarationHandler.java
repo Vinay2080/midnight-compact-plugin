@@ -23,8 +23,8 @@ import java.util.List;
  * <ul>
  *   <li><b>Direct PSI References:</b> Resolves references attached directly to the hovered/selected PSI element.</li>
  *   <li><b>Parent Expression References:</b> Resolves references attached to parent nodes (e.g. leaf tokens
- *       inside {@link dev.verloren.midnight.psi.CompactReferenceExpr}, {@link dev.verloren.midnight.psi.CompactTypeReference},
- *       or {@link dev.verloren.midnight.psi.CompactCallExpr}).</li>
+ *       inside {@link dev.verloren.midnight.psi.CompactReferenceExpr}, {@link dev.verloren.midnight.psi.CompactTypeReferenceImpl},
+ *       or {@link dev.verloren.midnight.psi.CompactCallExprImpl}).</li>
  *   <li><b>Standard Library Navigation:</b> Maps the magic identifier {@code "CompactStandardLibrary"}
  *       to the bundled virtual file managed by {@link CompactStdlibService}.</li>
  *   <li><b>Fallback Semantic Resolution:</b> Queries {@link CompactResolveUtil#resolveValue} and
