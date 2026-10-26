@@ -126,48 +126,21 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
    */
   @Override
   public @NotNull String getType(@NotNull PsiElement element) {
-    // Step 1: Match against major top-level and member declaration types
-    switch (element) {
-      case CompactCircuitDefinition _ -> {
-        return "circuit";
-      }
-      case CompactWitnessDeclaration _ -> {
-        return "witness";
-      }
-      case CompactLedgerDeclaration _ -> {
-        return "ledger";
-      }
-      case CompactStructDefinition _ -> {
-        return "struct";
-      }
-      case CompactStructFieldImpl _ -> {
-        return "struct field";
-      }
-      case CompactEnumDefinition _ -> {
-        return "enum";
-      }
-      case CompactEnumMemberImpl _ -> {
-        return "enum member";
-      }
-      case CompactTypeDefinition _ -> {
-        return "type";
-      }
-      case CompactModuleDefinition _ -> {
-        return "module";
-      }
-      case CompactParameterImpl _ -> {
-        return "parameter";
-      }
-      default -> {
-      }
-    }
-
-    // Step 2: Classify local constants, pattern bindings, and import targets
-    if (element instanceof CompactConstBindingImpl || element instanceof CompactPatternImpl) return "local";
-    if (element instanceof CompactImportElementImpl) return "import";
-
-    // Step 3: Default fallback for any unspecified named declaration
-    return "declaration";
+    return switch (element) {
+      case CompactCircuitDefinition _ -> "circuit";
+      case CompactWitnessDeclaration _ -> "witness";
+      case CompactLedgerDeclaration _ -> "ledger";
+      case CompactStructDefinition _ -> "struct";
+      case CompactStructFieldImpl _ -> "struct field";
+      case CompactEnumDefinition _ -> "enum";
+      case CompactEnumMemberImpl _ -> "enum member";
+      case CompactTypeDefinition _ -> "type";
+      case CompactModuleDefinition _ -> "module";
+      case CompactParameterImpl _ -> "parameter";
+      case CompactConstBindingImpl _, CompactPatternImpl _ -> "local";
+      case CompactImportElementImpl _ -> "import";
+      default -> "declaration";
+    };
   }
 
   /**
