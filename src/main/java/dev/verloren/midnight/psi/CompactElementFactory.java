@@ -12,20 +12,68 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Factory for creating Compact PSI elements from AST nodes and generating synthetic PSI fragments.
+ * Factory for creating typed Compact PSI elements from AST nodes and generating synthetic PSI fragments.
  *
- * <p>Invoked by {@link dev.verloren.midnight.parser.CompactParserDefinition#createElement(ASTNode)}
- * to construct typed PSI nodes, and by refactoring/quick-fix routines to create fresh AST leaves.</p>
+ * <h3>IntelliJ Platform Lifecycle &amp; Subsystem Role</h3>
+ * <p>Serves as the central instantiation hub bridging low-level AST nodes (produced by Grammar-Kit
+ * and the JFlex lexer) to high-level, typed {@link CompactPsiElement} instances:
+ * <ul>
+ *   <li><b>PSI Construction:</b> Called directly by {@link dev.verloren.midnight.parser.CompactParserDefinition#createElement(ASTNode)}
+ *       to map each AST composite node to its dedicated domain model class (e.g., {@link CompactCircuitDefinitionImpl},
+ *       {@link CompactBinaryExprImpl}).</li>
+ *   <li><b>Synthetic Element Synthesis:</b> Generates synthetic PSI fragments (such as fresh identifier leaves
+ *       via {@link #createIdentifierLeaf(Project, String)} or pragma headers via {@link #createPragmaForm(Project, String)})
+ *       by parsing short ephemeral code snippets through {@link PsiFileFactory}.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Calling Pipeline</h3>
+ * <p>Invoked across core IDE pipelines:
+ * <ul>
+ *   <li>{@link dev.verloren.midnight.parser.CompactParserDefinition#createElement(ASTNode)} during AST-to-PSI conversion.</li>
+ *   <li>{@link CompactNamedElementImpl#setName(String)} during symbol rename refactorings.</li>
+ *   <li>IntelliJ quick-fixes and intention actions inserting synthetic pragmas or elements.</li>
+ * </ul>
+ * </p>
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li><b>Execution Thread:</b> {@link #createElement(ASTNode)} is called on background parser threads or daemon threads.
+ *       Synthetic creation methods ({@link #createIdentifierLeaf}) require a platform Read Action ({@code @RequiresReadLock}).</li>
+ *   <li><b>Write Action:</b> Creating synthetic files via {@link PsiFileFactory} requires a Read Action; attaching synthesized
+ *       elements to the active document AST must be executed inside a {@link com.intellij.openapi.command.WriteCommandAction} on the EDT.</li>
+ * </ul>
+ *
+ * <h3>Design Decisions &amp; Memory Safety</h3>
+ * <ul>
+ *   <li><b>Stateless Utility:</b> Uses a private constructor and static pure functions. No mutable state or caching is retained,
+ *       ensuring zero thread-synchronization bottlenecks and thread safety across concurrent background parses.</li>
+ *   <li><b>Memory Leak Prevention:</b> {@link Project} and {@link PsiElement} instances passed into factory methods
+ *       are strictly scoped to the call stack and never cached in static fields.</li>
+ *   <li><b>Safe AST Fallback:</b> Any unrecognized {@link IElementType} defaults to instantiating a generic
+ *       {@link CompactPsiElement}, guaranteeing that syntax extensions or unmapped grammar nodes never crash the parser.</li>
+ * </ul>
+ *
+ * @see dev.verloren.midnight.parser.CompactParserDefinition
+ * @see CompactPsiElement
+ * @see CompactNamedElementImpl#setName
  */
 public final class CompactElementFactory {
+
+  /**
+   * Private constructor preventing direct instantiation of this stateless utility factory.
+   */
   private CompactElementFactory() {
   }
 
   /**
    * Maps an {@link ASTNode} to its dedicated {@link CompactPsiElement} subclass based on its {@link IElementType}.
    *
+   * <p>If no specialized wrapper exists for the given node type, falls back gracefully to
+   * instantiating a baseline {@link CompactPsiElement}.</p>
+   *
    * @param node the AST node to wrap
-   * @return the corresponding typed PSI wrapper
+   * @return the corresponding typed PSI element wrapper; never {@code null}
    */
   public static @NotNull PsiElement createElement(@NotNull ASTNode node) {
     IElementType elementType = node.getElementType();
@@ -153,9 +201,23 @@ public final class CompactElementFactory {
     return new CompactPsiElement(node);
   }
 
+  /**
+   * Synthesizes a new AST identifier leaf element containing the specified identifier name.
+   *
+   * <p>Constructs an in-memory dummy Compact file containing {@code "type <name> = Field;"},
+   * navigates to the synthesized type definition's identifier node, and returns it for replacement.</p>
+   *
+   * @param project the current project context
+   * @param text the new identifier text
+   * @return the newly created identifier leaf {@link PsiElement}
+   * @throws IllegalArgumentException if the provided text cannot form a valid Compact identifier
+   */
   public static @NotNull PsiElement createIdentifierLeaf(@NotNull Project project, @NotNull String text) {
+    // Step 1: Parse a synthetic dummy type alias snippet containing the target identifier
     CompactFile file = (CompactFile) PsiFileFactory.getInstance(project)
             .createFileFromText("rename.compact", CompactFileType.INSTANCE, "type " + text + " = Field;");
+
+    // Step 2: Locate the type definition and extract its identifier leaf node
     CompactTypeDefinition typeDefinition = PsiTreeUtil.findChildOfType(file, CompactTypeDefinition.class);
     if (typeDefinition == null || typeDefinition.getNameIdentifier() == null) {
       throw new IllegalArgumentException("Invalid Compact identifier: " + text);
@@ -163,12 +225,28 @@ public final class CompactElementFactory {
     return typeDefinition.getNameIdentifier();
   }
 
+  /**
+   * Synthesizes a new {@link CompactPragmaForm} element from raw pragma text.
+   *
+   * <p>Parses an ephemeral snippet (e.g. {@code "pragma language_version >= 0.20;"}) and extracts
+   * the root pragma PSI element. Used by quick-fixes and file templates.</p>
+   *
+   * @param project the current project context
+   * @param text the complete pragma statement text
+   * @return the synthesized {@link CompactPragmaForm}, or {@code null} if parsing failed
+   */
   public static @Nullable CompactPragmaForm createPragmaForm(@NotNull Project project, @NotNull String text) {
     CompactFile file = (CompactFile) PsiFileFactory.getInstance(project)
         .createFileFromText("pragma.compact", CompactFileType.INSTANCE, text);
     return PsiTreeUtil.findChildOfType(file, CompactPragmaForm.class);
   }
 
+  /**
+   * Checks whether the given {@link IElementType} is mapped to a dedicated typed {@link CompactPsiElement} subclass.
+   *
+   * @param elementType the element type to check
+   * @return {@code true} if a specialized PSI implementation exists for this element type; {@code false} otherwise
+   */
   public static boolean hasDedicatedElement(@NotNull IElementType elementType) {
     return elementType == CompactElementTypes.PRAGMA_FORM
             || elementType == CompactElementTypes.INCLUDE_FORM
