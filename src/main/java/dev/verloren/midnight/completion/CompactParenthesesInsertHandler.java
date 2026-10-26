@@ -91,59 +91,49 @@ public final class CompactParenthesesInsertHandler implements InsertHandler<Look
   @SuppressWarnings("DuplicatedCode")
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     Editor editor = context.getEditor();
-    Document document = context.getDocument();
     int tailOffset = context.getTailOffset();
     Project project = context.getProject();
-    CharSequence chars = document.getCharsSequence();
 
-    // Step 1: Lookahead forward past any whitespace to check if '(' already follows
-    // the inserted identifier (e.g. when completing inside an existing call like `foo|()`).
-    // This prevents inserting duplicate parentheses like `foo()()`.
+    int caretTarget = ensureParenthesesAndGetCaret(context.getDocument(), tailOffset);
+
+    editor.getCaretModel().moveToOffset(caretTarget);
+    TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
+    AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
+    if (templateState != null) {
+      scheduleTemplateCaretSync(project, editor, caretTarget);
+    }
+  }
+
+  private static int ensureParenthesesAndGetCaret(@NotNull Document document, int tailOffset) {
+    CharSequence chars = document.getCharsSequence();
     int offset = tailOffset;
     while (offset < chars.length() && Character.isWhitespace(chars.charAt(offset))) {
       offset++;
     }
-    boolean hasParen = offset < chars.length() && chars.charAt(offset) == '(';
-
-    // Step 2: Insert parentheses if missing and determine the target caret offset
-    int caretTarget;
-    if (!hasParen) {
-      document.insertString(tailOffset, "()");
-      caretTarget = tailOffset + 1; // Position cursor inside: `(|)`
-    } else {
-      caretTarget = offset + 1;      // Reuse existing opening parenthesis and step inside
+    if (offset < chars.length() && chars.charAt(offset) == '(') {
+      return offset + 1;
     }
+    document.insertString(tailOffset, "()");
+    return tailOffset + 1;
+  }
 
-    // Step 3: Move the caret into position between the parentheses
-    editor.getCaretModel().moveToOffset(caretTarget);
-
-    // Step 4: Register a Tab-Out scope, so pressing Tab skips over the closing ')'
-    // rather than inserting a literal tab character
-    TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
-
-    // Step 5: Trigger auto-popup to immediately suggest valid argument expressions
-    // without requiring the user to press Ctrl+Space again
-    AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
-
-    // Step 6: Live Template Synchronisation
-    // If a live template is currently active in the editor (e.g. from declaration templates),
-    // TemplateState advances or finishes synchronously on lookup selection, which would otherwise
-    // jerk the caret past the end of the template (after the semicolon).
-    // We schedule caret repositioning onto the EDT via invokeLater to ensure the cursor remains
-    // inside the parentheses with argument suggestions visible.
-    TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
-    if (templateState != null) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!editor.isDisposed()) {
-          WriteCommandAction.runWriteCommandAction(project, () -> {
-            if (!editor.isDisposed()) {
-              editor.getCaretModel().moveToOffset(caretTarget);
-              TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
-              AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
-            }
-          });
-        }
-      });
-    }
+  private static void scheduleTemplateCaretSync(
+      @NotNull Project project,
+      @NotNull Editor editor,
+      int caretTarget
+  ) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!editor.isDisposed()) {
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+          if (!editor.isDisposed()) {
+            editor.getCaretModel().moveToOffset(caretTarget);
+            TabOutScopesTracker.getInstance().registerEmptyScopeAtCaret(editor);
+            AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
+          }
+        });
+      }
+    });
   }
 }

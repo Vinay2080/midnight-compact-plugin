@@ -149,7 +149,7 @@ public final class CompactCompletionContext {
     }
 
     // Step 4: Parameterized type size bounds (e.g. Bytes<32> or Uint<64>)
-    Kind sizeKind = checkParameterizedTypeSizeContext(previous);
+    Kind sizeKind = CompactCompletionTypeClassifier.checkParameterizedTypeSizeContext(previous);
     if (sizeKind != null) {
       return sizeKind;
     }
@@ -158,10 +158,10 @@ public final class CompactCompletionContext {
     if (PsiTreeUtil.getParentOfType(position, CompactTypeReferenceImpl.class, false) != null) {
       return Kind.TYPE;
     }
-    if (isAfterTypeIntro(previous)) {
+    if (CompactCompletionTypeClassifier.isAfterTypeIntro(previous)) {
       return Kind.TYPE;
     }
-    if (isTypePosition(position, previous)) {
+    if (CompactCompletionTypeClassifier.isTypePosition(position, previous)) {
       return Kind.TYPE;
     }
 
@@ -241,103 +241,18 @@ public final class CompactCompletionContext {
   }
 
   /**
-   * Inspects preceding tokens to detect whether the cursor is located within the generic size parameter
-   * of a {@code Bytes<...>} or {@code Uint<...>} type invocation.
-   *
-   * <p>Walks backward across numerals, identifiers, and IntelliJ completion placeholders ({@code IntellijIdeaRulezzz})
-   * until encountering the opening angle bracket {@code '<'}, then checks if the enclosing type identifier
-   * is {@code "Bytes"} or {@code "Uint"}.</p>
-   *
-   * @param previous the nearest preceding non-comment leaf
-   * @return {@link Kind#BYTES_SIZE}, {@link Kind#UINT_SIZE}, or {@code null} if not a size context
-   */
-  private static @Nullable Kind checkParameterizedTypeSizeContext(@Nullable PsiElement previous) {
-    if (previous == null || previous.getNode() == null) {
-      return null;
-    }
-
-    // Walk backward across numbers, identifiers (or dummy completion tokens) up to '<'
-    PsiElement curr = previous;
-    while (curr != null && curr.getNode() != null) {
-      IElementType type = curr.getNode().getElementType();
-      if (type == CompactTokenTypes.LT) {
-        PsiElement beforeLt = prevNonCommentLeaf(curr);
-        if (beforeLt != null) {
-          String name = beforeLt.getText();
-          if ("Bytes".equals(name)) {
-            return Kind.BYTES_SIZE;
-          }
-          if ("Uint".equals(name)) {
-            return Kind.UINT_SIZE;
-          }
-        }
-        return null;
-      }
-      if (type == CompactTokenTypes.COMMA || type == CompactTokenTypes.GT
-          || type == CompactTokenTypes.SEMICOLON || type == CompactTokenTypes.LBRACE || type == CompactTokenTypes.RBRACE
-          || type == CompactTokenTypes.HASH) {
-        return null;
-      }
-      curr = prevNonCommentLeaf(curr);
-    }
-    return null;
-  }
-
-  /**
    * Determines whether the cursor is preceded by an {@code export} modifier on the current line or statement.
-   *
-   * <p>Employs a two-phase check:
-   * <ol>
-   *   <li><b>AST Leaf Walk:</b> Walks backward through visible non-comment AST leaves until a statement/block boundary.</li>
-   *   <li><b>Document Line Fallback:</b> If the AST is unparsed or broken during active typing, checks the current
-   *       document line using {@link #hasPrecedingExportOnLine(CharSequence, int, int)}.</li>
-   * </ol>
    *
    * @param position the current caret element
    * @return {@code true} if {@code export} precedes the cursor, {@code false} otherwise
    */
   public static boolean isExportPreceding(@NotNull PsiElement position) {
-    if (isComment(position)) {
-      return false;
-    }
-    // 1. Walk backward through visible non-comment AST leaves until statement/block boundary or declaration keyword
-    for (PsiElement p = prevNonCommentLeaf(position); p != null; p = prevNonCommentLeaf(p)) {
-      if (p.getNode() == null) break;
-      IElementType tt = p.getNode().getElementType();
-      if (tt == CompactTokenTypes.EXPORT) {
-        return true;
-      }
-      if (tt == CompactTokenTypes.SEMICOLON || tt == CompactTokenTypes.LBRACE || tt == CompactTokenTypes.RBRACE
-          || tt == CompactTokenTypes.COLON || tt == CompactTokenTypes.ASSIGN
-          || tt == CompactTokenTypes.LPAREN || tt == CompactTokenTypes.RPAREN
-          || tt == CompactTokenTypes.COMMA
-          || tt == CompactTokenTypes.LEDGER || tt == CompactTokenTypes.CIRCUIT
-          || tt == CompactTokenTypes.WITNESS || tt == CompactTokenTypes.STRUCT
-          || tt == CompactTokenTypes.ENUM || tt == CompactTokenTypes.TYPE
-          || tt == CompactTokenTypes.MODULE || tt == CompactTokenTypes.CONTRACT) {
-        break;
-      }
-    }
-
-    // 2. Check document text on the current line before the caret / element
-    try {
-      com.intellij.openapi.editor.Document doc = position.getContainingFile().getViewProvider().getDocument();
-      if (doc != null) {
-        int offset = position.getTextRange().getStartOffset();
-        int lineStart = doc.getLineStartOffset(doc.getLineNumber(offset));
-        CharSequence chars = doc.getCharsSequence();
-        return hasPrecedingExportOnLine(chars, lineStart, offset);
-      }
-    } catch (Exception _) {
-    }
-
-    return false;
+    return CompactCompletionExportClassifier.isExportPreceding(position);
   }
 
   /**
    * Fallback line scanner testing whether the text preceding {@code offset} on the current line
-   * consists of an {@code export} statement prefix (optionally followed by modifiers like {@code sealed},
-   * {@code pure}, or {@code new}).
+   * consists of an {@code export} statement prefix.
    *
    * @param chars     document character sequence
    * @param lineStart start offset of the current line
@@ -345,134 +260,7 @@ public final class CompactCompletionContext {
    * @return {@code true} if the line prefix matches export patterns
    */
   public static boolean hasPrecedingExportOnLine(@NotNull CharSequence chars, int lineStart, int offset) {
-    int stmtStart = lineStart;
-    for (int i = offset - 1; i >= lineStart; i--) {
-      char c = chars.charAt(i);
-      if (c == ';' || c == '{' || c == '}') {
-        stmtStart = i + 1;
-        break;
-      }
-    }
-    String stmtBefore = chars.subSequence(stmtStart, offset).toString().trim();
-    return stmtBefore.matches("^export(\\s+(sealed|pure|new))?(\\s+\\w*)?$");
-  }
-
-  /**
-   * Checks whether the preceding leaf is a type introduction token such as {@code as}, {@code <},
-   * {@code #}, or a type-defining colon {@code :}.
-   *
-   * @param previous nearest preceding non-comment leaf
-   * @return {@code true} if following a type introducer
-   */
-  private static boolean isAfterTypeIntro(PsiElement previous) {
-    if (previous == null || previous.getNode() == null) {
-      return false;
-    }
-    IElementType type = previous.getNode().getElementType();
-    if (type == CompactTokenTypes.AS
-            || type == CompactTokenTypes.LT
-            || type == CompactTokenTypes.HASH) {
-      return true;
-    }
-    if (type == CompactTokenTypes.COLON) {
-      return isTypeColon(previous);
-    }
-    return false;
-  }
-
-  /**
-   * Disambiguates whether a colon token {@code ':'} introduces a type annotation vs a struct literal field value.
-   *
-   * <p>A colon introduces a type in:
-   * <ul>
-   *   <li>Callable return types: {@code circuit foo(): <caret>}</li>
-   *   <li>Variable/ledger bindings: {@code ledger x: <caret>}, {@code const x: <caret>}</li>
-   *   <li>Parameters: {@code (x: <caret>, y: <caret>)}</li>
-   *   <li>Struct field definitions: {@code struct S { field: <caret> }}</li>
-   * </ul>
-   *
-   * @param colonLeaf the colon token leaf element
-   * @return {@code true} if the colon represents a type annotation position
-   */
-  private static boolean isTypeColon(@NotNull PsiElement colonLeaf) {
-    PsiElement beforeColon = prevNonCommentLeaf(colonLeaf);
-    if (beforeColon == null || beforeColon.getNode() == null) {
-      return false;
-    }
-    IElementType beforeType = beforeColon.getNode().getElementType();
-    // 1. After callable parameter list: circuit foo(): <caret>
-    if (beforeType == CompactTokenTypes.RPAREN) {
-      return true;
-    }
-    // 2. After identifier: could be ledger, const, parameter, struct field, or struct literal
-    if (beforeType == CompactTokenTypes.IDENTIFIER) {
-      PsiElement beforeId = prevNonCommentLeaf(beforeColon);
-      if (beforeId != null && beforeId.getNode() != null) {
-        IElementType beforeIdType = beforeId.getNode().getElementType();
-        if (beforeIdType == CompactTokenTypes.LEDGER) {
-          return true; // ledger foo: <caret>
-        }
-        if (beforeIdType == CompactTokenTypes.LPAREN) {
-          return true; // (foo: <caret>)
-        }
-        if (beforeIdType == CompactTokenTypes.CONST) {
-          return true; // const foo: <caret>
-        }
-        if (beforeIdType == CompactTokenTypes.COMMA) {
-          // Walk back to find if we're inside '(' (parameter list) vs '{' (struct literal)
-          for (PsiElement p = beforeId; p != null; p = prevNonCommentLeaf(p)) {
-            if (p.getNode() == null) break;
-            IElementType t = p.getNode().getElementType();
-            if (t == CompactTokenTypes.LPAREN) {
-              return true; // in parameter list
-            }
-            if (t == CompactTokenTypes.LBRACE || t == CompactTokenTypes.SEMICOLON) {
-              break;
-            }
-          }
-        }
-      }
-      // Check if inside struct definition: struct Foo { field: <caret> }
-      if (PsiTreeUtil.getParentOfType(colonLeaf, CompactStructDefinition.class, false) != null) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Tests whether the current position sits within an explicit type definition rhs or a comma-separated
-   * type parameter list (e.g. {@code Vector<#32, <caret>>} or {@code Either<Field, <caret>>}).
-   *
-   * @param position current caret element
-   * @param previous nearest preceding non-comment leaf
-   * @return {@code true} if positioned inside a type slot
-   */
-  private static boolean isTypePosition(@NotNull PsiElement position, PsiElement previous) {
-    // 1. Inside type alias definition: type Foo = <caret>
-    CompactTypeDefinition typeDef = PsiTreeUtil.getParentOfType(position, CompactTypeDefinition.class, false);
-    if (typeDef != null) {
-      ASTNode eqNode = typeDef.getNode().findChildByType(CompactTokenTypes.ASSIGN);
-      if (eqNode != null && position.getTextRange().getStartOffset() >= eqNode.getTextRange().getEndOffset()) {
-        return true;
-      }
-    }
-
-    // 2. After comma inside type arguments, e.g. Vector<#32, <caret>> or Either<Field, <caret>>
-    if (previous != null && previous.getNode() != null && previous.getNode().getElementType() == CompactTokenTypes.COMMA) {
-      for (PsiElement p = previous; p != null; p = PsiTreeUtil.prevVisibleLeaf(p)) {
-        if (p.getNode() == null) break;
-        IElementType t = p.getNode().getElementType();
-        if (t == CompactTokenTypes.LT) {
-          return true;
-        }
-        if (t == CompactTokenTypes.GT || t == CompactTokenTypes.SEMICOLON || t == CompactTokenTypes.LBRACE) {
-          break;
-        }
-      }
-    }
-
-    return false;
+    return CompactCompletionExportClassifier.hasPrecedingExportOnLine(chars, lineStart, offset);
   }
 
   /**
