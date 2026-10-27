@@ -49,6 +49,10 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
 
   /**
    * Mapping from XML tag names in {@link #getDemoText()} to semantic {@link TextAttributesKey}s.
+   * <p>
+   * Read by IntelliJ's demo text parser in {@code NewColorAndFontPanel} to highlight custom spans
+   * that would normally require the background semantic annotator pass.
+   * </p>
    */
   private static final Map<String, TextAttributesKey> ADDITIONAL_TAGS = Map.ofEntries(
       Map.entry("modifier", CompactHighlighterColors.MODIFIER),
@@ -56,7 +60,7 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
       Map.entry("witness_decl", CompactHighlighterColors.WITNESS_DECLARATION),
       Map.entry("contract_decl", CompactHighlighterColors.CONTRACT_DECLARATION),
       Map.entry("module_decl", CompactHighlighterColors.MODULE_DECLARATION),
-          Map.entry("constructor_decl", CompactHighlighterColors.CONSTRUCTOR_DECLARATION),
+      Map.entry("constructor_decl", CompactHighlighterColors.CONSTRUCTOR_DECLARATION),
       Map.entry("struct_decl", CompactHighlighterColors.STRUCT_DECLARATION),
       Map.entry("enum_decl", CompactHighlighterColors.ENUM_DECLARATION),
       Map.entry("enum_member_decl", CompactHighlighterColors.ENUM_MEMBER_DECLARATION),
@@ -87,40 +91,75 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
       Map.entry("doc_tag", CompactHighlighterColors.DOC_COMMENT_TAG),
       Map.entry("doc_tag_value", CompactHighlighterColors.DOC_COMMENT_TAG_VALUE),
       Map.entry("pragma", CompactHighlighterColors.PRAGMA),
-          Map.entry("version", CompactHighlighterColors.VERSION),
-          Map.entry("bad_char", CompactHighlighterColors.BAD_CHARACTER)
+      Map.entry("version", CompactHighlighterColors.VERSION),
+      Map.entry("bad_char", CompactHighlighterColors.BAD_CHARACTER)
   );
 
+  /**
+   * Returns the user-visible language title displayed in the Color Scheme settings tree.
+   *
+   * @return localized display name for Compact settings
+   */
   @Override
   public @NotNull String getDisplayName() {
     return "Compact";
   }
 
+  /**
+   * Returns the language icon displayed adjacent to the settings tree entry.
+   *
+   * @return Midnight Compact file icon
+   */
   @Override
   public @Nullable Icon getIcon() {
     return MidnightIcons.FILE;
   }
 
+  /**
+   * Returns the array of attribute descriptors defining customizable color scheme options.
+   *
+   * @return descriptors array from {@link CompactHighlighterColors#DESCRIPTORS}
+   */
   @Override
   public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return CompactHighlighterColors.DESCRIPTORS;
   }
 
+  /**
+   * Returns empty array as Compact does not define whole-editor background or gutter color descriptors.
+   *
+   * @return empty {@link ColorDescriptor} array
+   */
   @Override
   public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
+  /**
+   * Instantiates a fresh {@link CompactSyntaxHighlighter} for the demo text preview editor.
+   *
+   * @return fresh lexical syntax highlighter
+   */
   @Override
   public @NotNull SyntaxHighlighter getHighlighter() {
     return new CompactSyntaxHighlighter();
   }
 
+  /**
+   * Returns the map binding XML tags in {@link #getDemoText()} to semantic {@link TextAttributesKey}s.
+   *
+   * @return tag mapping dictionary
+   */
   @Override
   public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_TAGS;
   }
 
+  /**
+   * Provides a comprehensive demo Compact smart contract demonstrating all language syntax and semantic constructs.
+   *
+   * @return XML-annotated Compact source text
+   */
   @Override
   public @NotNull String getDemoText() {
     return """

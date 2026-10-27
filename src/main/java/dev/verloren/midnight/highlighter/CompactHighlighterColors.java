@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 
-
 /**
  * Central dictionary of {@link TextAttributesKey}s and {@link AttributesDescriptor}s for Compact syntax
  * and semantic highlighting.
@@ -55,152 +54,264 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
  */
 public final class CompactHighlighterColors {
 
-  /**
-   * Private constructor preventing instantiation of this static dictionary class.
-   */
+  /** Private constructor preventing instantiation of this static dictionary class. */
   private CompactHighlighterColors() {}
 
   // =========================================================================
   // 1. Keywords
   // =========================================================================
+
+  /** Standard language keywords (e.g. {@code circuit}, {@code witness}, {@code ledger}, {@code return}). */
   public static final TextAttributesKey KEYWORD =
       TextAttributesKey.createTextAttributesKey("COMPACT_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
+
+  /** Declaration and visibility modifiers (e.g. {@code export}, {@code pure}, {@code sealed}, {@code new}). */
   public static final TextAttributesKey MODIFIER =
       TextAttributesKey.createTextAttributesKey("COMPACT_MODIFIER", DefaultLanguageHighlighterColors.KEYWORD);
+
+  /** Reserved future keywords flagged by the lexer. */
   public static final TextAttributesKey RESERVED_KEYWORD =
       TextAttributesKey.createTextAttributesKey("COMPACT_RESERVED_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
 
   // =========================================================================
   // 2. Types & Type Parameters
   // =========================================================================
+
+  /** Built-in primitive and container types (e.g. {@code Field}, {@code Uint}, {@code Bytes}, {@code Vector}). */
   public static final TextAttributesKey BUILTIN_TYPE =
       TextAttributesKey.createTextAttributesKey("COMPACT_BUILTIN_TYPE", DefaultLanguageHighlighterColors.KEYWORD);
+
+  /** Struct type declaration identifiers (e.g. {@code struct CoinInfo}). */
   public static final TextAttributesKey STRUCT_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_STRUCT_DECLARATION", DefaultLanguageHighlighterColors.CLASS_NAME);
+
+  /** Enum type declaration identifiers (e.g. {@code enum UpdateType}). */
   public static final TextAttributesKey ENUM_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_ENUM_DECLARATION", DefaultLanguageHighlighterColors.CLASS_NAME);
+
+  /** Type alias definition identifiers (e.g. {@code type RoleCommitment = Bytes<32>}). */
   public static final TextAttributesKey TYPE_ALIAS_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_TYPE_ALIAS_DECLARATION", DefaultLanguageHighlighterColors.INTERFACE_NAME);
+
+  /** Generic type parameters in type definitions and circuits (e.g. {@code <T>}). */
   public static final TextAttributesKey TYPE_PARAMETER =
       TextAttributesKey.createTextAttributesKey("COMPACT_TYPE_PARAMETER", DefaultLanguageHighlighterColors.PARAMETER);
+
+  /** Type references in signatures and expressions (e.g. {@code x: RoleCommitment}). */
   public static final TextAttributesKey TYPE_REFERENCE =
       TextAttributesKey.createTextAttributesKey("COMPACT_TYPE_REFERENCE", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
 
   // =========================================================================
   // 3. Declarations
   // =========================================================================
+
+  /** Top-level smart contract declaration identifiers (e.g. {@code contract ShieldedToken}). */
   public static final TextAttributesKey CONTRACT_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_CONTRACT_DECLARATION", DefaultLanguageHighlighterColors.CLASS_NAME);
+
+  /** Reusable module declaration identifiers (e.g. {@code module TokenVault}). */
   public static final TextAttributesKey MODULE_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_MODULE_DECLARATION", DefaultLanguageHighlighterColors.IDENTIFIER);
+
+  /** Circuit declaration identifiers representing zero-knowledge provable functions. */
   public static final TextAttributesKey CIRCUIT_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_CIRCUIT_DECLARATION", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
+  /** Witness declaration identifiers representing private off-chain query functions. */
   public static final TextAttributesKey WITNESS_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_WITNESS_DECLARATION", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
+  /** Contract constructor declaration identifier ({@code constructor}). */
   public static final TextAttributesKey CONSTRUCTOR_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_CONSTRUCTOR_DECLARATION", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+
+  /** Struct member field declaration identifiers. */
   public static final TextAttributesKey FIELD_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_FIELD_DECLARATION", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+
+  /** Enum member variant identifiers. */
   public static final TextAttributesKey ENUM_MEMBER_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_ENUM_MEMBER_DECLARATION", DefaultLanguageHighlighterColors.STATIC_FIELD);
+
+  /** Top-level module and contract constant declaration identifiers. */
   public static final TextAttributesKey CONSTANT_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_CONSTANT_DECLARATION", DefaultLanguageHighlighterColors.CONSTANT);
+
+  /** On-chain persistent ledger state variable declarations. */
   public static final TextAttributesKey LEDGER_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_LEDGER_DECLARATION", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+
+  /** Formal parameter identifiers in circuits, witnesses, and constructors. */
   public static final TextAttributesKey PARAMETER_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_PARAMETER_DECLARATION", DefaultLanguageHighlighterColors.PARAMETER);
+
+  /** Local variable declaration identifiers introduced via {@code const} or {@code let}. */
   public static final TextAttributesKey LOCAL_VARIABLE_DECLARATION =
       TextAttributesKey.createTextAttributesKey("COMPACT_LOCAL_VARIABLE_DECLARATION", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+
+  /** Imported symbol names inside import statements. */
   public static final TextAttributesKey IMPORTED_SYMBOL =
       TextAttributesKey.createTextAttributesKey("COMPACT_IMPORTED_SYMBOL", DefaultLanguageHighlighterColors.IDENTIFIER);
 
   // =========================================================================
   // 4. Calls & Usages
   // =========================================================================
+
+  /** Invocations of zero-knowledge circuits. */
   public static final TextAttributesKey CIRCUIT_CALL =
       TextAttributesKey.createTextAttributesKey("COMPACT_CIRCUIT_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
+
+  /** Invocations of private off-chain witness functions (conventionally {@code wit_...()}). */
   public static final TextAttributesKey WITNESS_CALL =
       TextAttributesKey.createTextAttributesKey("COMPACT_WITNESS_CALL", DefaultLanguageHighlighterColors.STATIC_METHOD);
+
+  /** Calls to built-in cryptographic functions (e.g. {@code disclose}, {@code persistentHash}). */
   public static final TextAttributesKey BUILTIN_FUNCTION =
       TextAttributesKey.createTextAttributesKey("COMPACT_BUILTIN_FUNCTION", DefaultLanguageHighlighterColors.PREDEFINED_SYMBOL);
+
+  /** Member access expressions targeting struct fields (e.g. {@code coin.value}). */
   public static final TextAttributesKey FIELD_ACCESS =
       TextAttributesKey.createTextAttributesKey("COMPACT_FIELD_ACCESS", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+
+  /** Member access expressions targeting enum variants (e.g. {@code UpdateType.Grant}). */
   public static final TextAttributesKey ENUM_MEMBER_ACCESS =
       TextAttributesKey.createTextAttributesKey("COMPACT_ENUM_MEMBER_ACCESS", DefaultLanguageHighlighterColors.STATIC_FIELD);
+
+  /** Usages of declared constants. */
   public static final TextAttributesKey CONSTANT_USAGE =
       TextAttributesKey.createTextAttributesKey("COMPACT_CONSTANT_USAGE", DefaultLanguageHighlighterColors.CONSTANT);
+
+  /** Usages of parameters within function bodies. */
   public static final TextAttributesKey PARAMETER_USAGE =
       TextAttributesKey.createTextAttributesKey("COMPACT_PARAMETER_USAGE", DefaultLanguageHighlighterColors.PARAMETER);
+
+  /** Read usages of local variables. */
   public static final TextAttributesKey LOCAL_VARIABLE_USAGE =
       TextAttributesKey.createTextAttributesKey("COMPACT_LOCAL_VARIABLE_USAGE", DefaultLanguageHighlighterColors.LOCAL_VARIABLE);
+
+  /** Mutating reassignment writes to local variables (e.g. {@code localCounter = localCounter + 1}). */
   public static final TextAttributesKey LOCAL_VARIABLE_WRITE =
       TextAttributesKey.createTextAttributesKey("COMPACT_LOCAL_VARIABLE_WRITE", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
+
+  /** Read usages of on-chain ledger state variables. */
   public static final TextAttributesKey LEDGER_USAGE =
       TextAttributesKey.createTextAttributesKey("COMPACT_LEDGER_USAGE", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
+
+  /** Mutating write operations to on-chain ledger state (e.g. {@code _totalSupply = ...}). */
   public static final TextAttributesKey LEDGER_WRITE =
       TextAttributesKey.createTextAttributesKey("COMPACT_LEDGER_WRITE", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE);
 
   // =========================================================================
   // 5. Literals
   // =========================================================================
+
+  /** Numeric literals (decimal integers, hex {@code 0x...}, binary {@code 0b...}). */
   public static final TextAttributesKey NUMBER =
       TextAttributesKey.createTextAttributesKey("COMPACT_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
+
+  /** String literal contents and enclosing quotation marks. */
   public static final TextAttributesKey STRING =
       TextAttributesKey.createTextAttributesKey("COMPACT_STRING", DefaultLanguageHighlighterColors.STRING);
+
+  /** Boolean literal constants ({@code true}, {@code false}). */
   public static final TextAttributesKey BOOLEAN =
       TextAttributesKey.createTextAttributesKey("COMPACT_BOOLEAN", DefaultLanguageHighlighterColors.KEYWORD);
+
+  /** Valid escape sequences within strings (e.g. {@code \n}, {@code \t}, {@code \x41}, {@code \u005Cu{1F600}}). */
   public static final TextAttributesKey VALID_STRING_ESCAPE =
       TextAttributesKey.createTextAttributesKey("COMPACT_VALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
+
+  /** Invalid escape sequences within strings flagged by the annotator. */
   public static final TextAttributesKey INVALID_STRING_ESCAPE =
       TextAttributesKey.createTextAttributesKey("COMPACT_INVALID_STRING_ESCAPE", DefaultLanguageHighlighterColors.INVALID_STRING_ESCAPE);
+
+  /** Version requirement strings in pragma headers (e.g. {@code >= 0.23.0}). */
   public static final TextAttributesKey VERSION =
       TextAttributesKey.createTextAttributesKey("COMPACT_VERSION", DefaultLanguageHighlighterColors.NUMBER);
 
   // =========================================================================
   // 6. Comments
   // =========================================================================
+
+  /** Single-line comments beginning with {@code //}. */
   public static final TextAttributesKey LINE_COMMENT =
       TextAttributesKey.createTextAttributesKey("COMPACT_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+
+  /** Multi-line block comments delimited by <code>&#47;* ... *&#47;</code>. */
   public static final TextAttributesKey BLOCK_COMMENT =
       TextAttributesKey.createTextAttributesKey("COMPACT_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+
+  /** Documentation comments starting with <code>&#47;**</code> or {@code ///}. */
   public static final TextAttributesKey DOC_COMMENT =
       TextAttributesKey.createTextAttributesKey("COMPACT_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
+
+  /** Documentation tags inside doc comments (e.g. {@code @param}, {@code @return}, {@code @notice}). */
   public static final TextAttributesKey DOC_COMMENT_TAG =
       TextAttributesKey.createTextAttributesKey("COMPACT_DOC_COMMENT_TAG", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG);
+
+  /** Identifier values associated with doc tags (e.g. parameter names following {@code @param}). */
   public static final TextAttributesKey DOC_COMMENT_TAG_VALUE =
       TextAttributesKey.createTextAttributesKey("COMPACT_DOC_COMMENT_TAG_VALUE", DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE);
 
   // =========================================================================
   // 7. Operators & Punctuation
   // =========================================================================
+
+  /** Mathematical, logical, relational, and arrow operators. */
   public static final TextAttributesKey OPERATOR =
       TextAttributesKey.createTextAttributesKey("COMPACT_OPERATOR", DefaultLanguageHighlighterColors.OPERATION_SIGN);
+
+  /** Parentheses delimiters {@code ()}. */
   public static final TextAttributesKey PARENTHESES =
       TextAttributesKey.createTextAttributesKey("COMPACT_PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES);
+
+  /** Curly braces delimiters {@code {}}. */
   public static final TextAttributesKey BRACES =
       TextAttributesKey.createTextAttributesKey("COMPACT_BRACES", DefaultLanguageHighlighterColors.BRACES);
+
+  /** Square brackets delimiters {@code []}. */
   public static final TextAttributesKey BRACKETS =
       TextAttributesKey.createTextAttributesKey("COMPACT_BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);
+
+  /** Comma separators {@code ,}. */
   public static final TextAttributesKey COMMA =
       TextAttributesKey.createTextAttributesKey("COMPACT_COMMA", DefaultLanguageHighlighterColors.COMMA);
+
+  /** Semicolon statement terminators {@code ;}. */
   public static final TextAttributesKey SEMICOLON =
       TextAttributesKey.createTextAttributesKey("COMPACT_SEMICOLON", DefaultLanguageHighlighterColors.SEMICOLON);
+
+  /** Member access dot operators {@code .}. */
   public static final TextAttributesKey DOT =
       TextAttributesKey.createTextAttributesKey("COMPACT_DOT", DefaultLanguageHighlighterColors.DOT);
+
+  /** Colon type and dictionary mapping separators {@code :}. */
   public static final TextAttributesKey COLON =
       TextAttributesKey.createTextAttributesKey("COMPACT_COLON", DefaultLanguageHighlighterColors.DOT);
 
   // =========================================================================
   // 8. Pragmas & Bad Character
   // =========================================================================
+
+  /** Pragma directives (e.g. {@code pragma language_version}). */
   public static final TextAttributesKey PRAGMA =
       TextAttributesKey.createTextAttributesKey("COMPACT_PRAGMA", DefaultLanguageHighlighterColors.METADATA);
+
+  /** Unrecognized or illegal lexical characters. */
   public static final TextAttributesKey BAD_CHARACTER =
       TextAttributesKey.createTextAttributesKey("COMPACT_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER);
 
   // =========================================================================
   // Descriptors for Color Settings Page
   // =========================================================================
+
+  /**
+   * Descriptors array registering all Compact highlighting attributes in the IDE settings panel.
+   * <p>
+   * Read by {@link CompactColorSettingsPage#getAttributeDescriptors()} to populate the tree in
+   * Settings &gt; Editor &gt; Color Scheme &gt; Compact.
+   * </p>
+   */
   public static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
       new AttributesDescriptor("Keywords//Keyword", KEYWORD),
       new AttributesDescriptor("Keywords//Modifier", MODIFIER),

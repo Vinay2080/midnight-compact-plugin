@@ -33,10 +33,14 @@ public class CompactSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
   /**
    * Constructs a new {@link CompactSyntaxHighlighter} for the specified project and virtual file.
+   * <p>
+   * Invoked by IntelliJ's editor infrastructure when creating an {@code EditorHighlighter}.
+   * Both parameters may be {@code null} in preview contexts, settings panels, or headless test runners.
+   * </p>
    *
-   * @param project     the current project context, or null
-   * @param virtualFile the virtual file being highlighted, or null
-   * @return a fresh {@link CompactSyntaxHighlighter} instance
+   * @param project     the current project context, or null when opened outside a project or in settings
+   * @param virtualFile the virtual file being highlighted, or null for in-memory documents or preview editors
+   * @return a fresh {@link CompactSyntaxHighlighter} instance wrapping an independent {@link dev.verloren.midnight.lexer.CompactLexer}
    */
   @Override
   public @NonNull SyntaxHighlighter getSyntaxHighlighter(Project project, VirtualFile virtualFile) {
