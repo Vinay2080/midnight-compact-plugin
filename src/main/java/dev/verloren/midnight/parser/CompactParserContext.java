@@ -12,7 +12,7 @@ final class CompactParserContext {
   final CompactDeclarationParser declaration;
 
   CompactParserContext() {
-    this.typePattern = new CompactTypePatternParser(this);
+    this.typePattern = new CompactTypePatternParser();
     this.expression = new CompactExpressionParser(this);
     this.statement = new CompactStatementParser(this);
     this.pragma = new CompactPragmaParser();

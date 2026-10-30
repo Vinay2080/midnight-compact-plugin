@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Utility helper methods and operator precedence constants for {@link CompactParser}.
  *
  * <p>Implements precedence levels for binary expression parsing and provides
- * guarded token matching, expectation assertions, and error recovery synchronisation.</p>
+ * guarded token matching, expectation assertions, and error recovery synchronization.</p>
  */
 public final class CompactParserUtil {
   public static final int PREC_LOGICAL_OR = 0;

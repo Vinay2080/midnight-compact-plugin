@@ -13,10 +13,8 @@ import static dev.verloren.midnight.parser.CompactParserUtil.expect;
  * Parser delegate responsible for types, type references, parameters, and patterns.
  */
 final class CompactTypePatternParser {
-  private final CompactParserContext context;
 
-  CompactTypePatternParser(@NotNull CompactParserContext context) {
-    this.context = context;
+  CompactTypePatternParser() {
   }
 
   void parseGenericParameterList(@NotNull PsiBuilder builder) {
