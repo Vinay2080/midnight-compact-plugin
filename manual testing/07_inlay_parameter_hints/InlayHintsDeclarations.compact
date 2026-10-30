@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Inlay Parameter Hints
+ * File: InlayHintsDeclarations.compact
+ * Role: Declares circuits and witnesses with descriptive parameter names to verify
+ *       inline parameter name badges at call sites.
+ */
+
+// 1. Two-parameter circuit for literal argument hints
+export circuit computeHash(round: Field, secretKey: Bytes<32>): Field {
+    return round;
+}
+
+// 2. Three-parameter circuit for cryptographic verification
+export circuit verifyProof(
+    treeIndex: Field,
+    leafHash: Bytes<32>,
+    rootHash: Bytes<32>
+): Boolean {
+    assert(leafHash != default<Bytes<32>>, "Invalid leaf");
+    return true;
+}
+
+// 3. Multi-parameter witness
+witness queryOracleRate(pairId: Field, timestamp: Uint<64>): Uint<64>;

@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version>=0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Code Formatting (Ctrl + Alt + L / Cmd + Option + L)
+ * File: UnformattedCodeShowcase.compact
+ * Role: Deliberately messy Compact smart contract code used to test and demonstrate
+ *       the automatic 2-space indentation, binary operator spacing, and block alignment.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA. Notice the inconsistent tabs/spaces, cramped
+ *    operators, misaligned braces, and squished expressions.
+ * 2. Select the whole file or place your caret anywhere and press:
+ *    - Windows / Linux: Ctrl + Alt + L
+ *    - macOS:           Cmd + Option + L
+ * 3. Observe the instant beautification:
+ *    - Standard 2-space indentation across all nested levels
+ *    - Clean spaces around binary operators (=, +, -, *, /, ==, !=, &&, ||)
+ *    - Spaces after colons in type declarations (round: Uint<64>)
+ *    - Clean spaces after keywords (if, for, return, export, circuit)
+ *    - Proper alignment of struct fields and enum variants
+ * ============================================================================
+ */
+
+// Messy enum with irregular spacing
+export enum OrderStatus{
+Pending,
+Filled,
+Cancelled,
+Expired
+}
+
+// Messy struct declaration with no indentation and cramped types
+export struct OrderRecord{
+orderId:Field,
+owner:Bytes<32>,
+amount:Uint<64>,
+status:OrderStatus
+}
+
+export sealed ledger totalOrdersCounter:Counter;
+
+// Messy circuit with collapsed binary expressions, nested if blocks, and bad indentation
+export circuit executeOrder(order:OrderRecord,marketPrice:Uint<64>):Boolean{
+const rawSpread=1+2*3-4/2%1;
+const isPriceValid=marketPrice>0&&marketPrice<=1000000;
+if(isPriceValid){
+if(order.status==OrderStatus.Pending){
+const totalCost=order.amount*marketPrice;
+assert(totalCost>0,"Total cost must be positive");
+totalOrdersCounter.increment(1 as Uint<16>);
+return true;
+}else if(order.status==OrderStatus.Filled){
+return false;
+}else{
+return false;
+}
+}
+return false;
+}
+
+// Messy for-loop with irregular range syntax
+export circuit calculateVolume(orders:Vector<4,OrderRecord>):Uint<64>{
+const sum = 0 as Uint<64>;
+for(const i of 0..4){
+if(orders[i].status==OrderStatus.Filled){
+const updated=sum+orders[i].amount;
+assert(updated>=sum,"Overflow prevented");
+}
+}
+return sum;
+}

@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Status Bar Compiler Monitor & Quick-Switch Popup
+ * File: CompilerVersionMonitor.compact
+ * Role: Demonstrates the IDE status bar widget displaying active compiler version
+ *       and the interactive quick-switch popup.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA.
+ * 2. Look at the bottom-right status bar of your IntelliJ IDE window.
+ * 3. Observe the Compact Compiler Widget:
+ *    - Displays: "Compact: v0.26.0" (or configured compiler version/toolchain)
+ * 4. Hover over the widget:
+ *    - Displays rich multi-line tooltip with compiler release, binary path,
+ *      and ZKIR target compatibility info.
+ * 5. Click the widget (or press Alt + Shift + C):
+ *    - Opens the quick-switch list popup:
+ *      ├── Installed Compilers (e.g., v0.26.0, v0.25.0, v0.24.0)
+ *      ├── Download Compact Compiler...
+ *      ├── Open Midnight Compiler Tool Window
+ *      └── Compact Settings...
+ * 6. Select a different compiler version from the popup:
+ *    - Notice the status bar label immediately updates to reflect the new selection!
+ * ============================================================================
+ */
+
+export circuit testCompilerVersionWorkflow(): Boolean {
+    // Simple circuit to ensure file is active and compiler status is engaged
+    const isCompiled = true;
+    assert(isCompiled, "Compiler toolchain operational");
+    return isCompiled;
+}

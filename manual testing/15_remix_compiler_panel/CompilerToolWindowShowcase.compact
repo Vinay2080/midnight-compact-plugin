@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Remix-Style Compiler Tool Window Dashboard
+ * File: CompilerToolWindowShowcase.compact
+ * Role: Demonstrates integration with the "Compact Compiler" right sidebar tool window,
+ *       compiler release management, auto-detection, and 1-click execution.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA.
+ * 2. Look at the right sidebar of the IDE window and click "Compact Compiler".
+ * 3. Observe the Remix IDE-style Swing Dashboard:
+ *    - Active Contract Card:
+ *      * Displays: "CompilerToolWindowShowcase.compact"
+ *      * Detected pragma: ">= 0.26.0"
+ *    - Compiler Version Switcher:
+ *      * Displays installed compiler releases sorted semantically.
+ *      * Displays remote releases available for GitHub download.
+ *    - 1-Click "Compile Contract" Button:
+ *      * Compiles the focused contract immediately without requiring manual terminal commands.
+ *    - Compilation Options Checkboxes:
+ *      * Toggle "--skip-zk" for fast syntax & type checking without heavy ZK-proving key generation.
+ * ============================================================================
+ */
+
+export struct StakingPool {
+    poolId: Field,
+    totalStaked: Uint<64>,
+    rewardRate: Uint<16>
+}
+
+export sealed ledger poolReserve: Uint<64>;
+
+constructor(initialCap: Uint<64>) {
+    poolReserve = disclose(initialCap);
+}
+
+export circuit stakeTokens(amount: Uint<64>): Boolean {
+    assert(amount > 0, "Stake must be positive");
+    poolReserve = poolReserve + amount;
+    return true;
+}

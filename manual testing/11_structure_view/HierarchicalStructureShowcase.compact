@@ -1,0 +1,92 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Structure View Tool Window (Alt + 7 / Cmd + 7 / Ctrl + F12)
+ * File: HierarchicalStructureShowcase.compact
+ * Role: Provides a rich, nested architectural hierarchy showcasing all Compact symbol
+ *       types in the Structure tool window.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA.
+ * 2. Open the Structure Tool Window:
+ *    - Windows / Linux: Press Alt + 7 (or Ctrl + F12 for File Structure popup)
+ *    - macOS:           Press Cmd + 7 (or Cmd + F12)
+ * 3. Observe the structured tree outline with distinct icons:
+ *    - 📄 File Root (HierarchicalStructureShowcase.compact)
+ *      ├── 📜 pragma language_version >= 0.26.0
+ *      ├── 📦 import CompactStandardLibrary
+ *      ├── 🏷️ type VaultDigest = Bytes<32>
+ *      ├── 🔒 const PROTOCOL_VERSION = 1
+ *      ├── 📊 enum VaultTier
+ *      │   ├── Bronze
+ *      │   ├── Silver
+ *      │   └── Gold
+ *      ├── 🧱 struct TokenNode
+ *      │   ├── nodeId
+ *      │   ├── nodeCapacity
+ *      │   └── isOnline
+ *      ├── 🗄️ sealed ledger masterReserve
+ *      ├── 🗄️ ledger transactionCounter
+ *      ├── 🄼 witness fetchNetworkEntropy
+ *      ├── 🏗️ constructor(initialSalt, defaultCap)
+ *      ├── ⚡ circuit updateReserve(node, delta)
+ *      ├── ⚡ pure circuit computeFee(amount)
+ *      └── 🏛️ contract IExternalRelayer
+ *          ├── ⚡ circuit relayPayload(target, payload)
+ *          └── ⚡ pure circuit getRelayerVersion()
+ * 4. Click any item in the tree to instantly jump your caret directly to that declaration!
+ * ============================================================================
+ */
+
+// ─── Directives & Top-Level Constants ────────────────────────────────────────
+export type VaultDigest = Bytes<32>;
+export const PROTOCOL_VERSION: Uint<16> = 1;
+
+// ─── Enums & Members in Structure View ───────────────────────────────────────
+export enum VaultTier {
+  Bronze,
+  Silver,
+  Gold
+}
+
+// ─── Struct & Fields in Structure View ───────────────────────────────────────
+export struct TokenNode {
+  nodeId: Bytes<32>,
+  nodeCapacity: Uint<64>,
+  isOnline: Boolean
+}
+
+// ─── Ledger Declarations in Structure View ──────────────────────────────────
+export sealed ledger masterReserve: Uint<64>;
+export ledger transactionCounter: Counter;
+
+// ─── Witness Declaration in Structure View ──────────────────────────────────
+witness fetchNetworkEntropy(): Bytes<32>;
+
+// ─── Constructor in Structure View ──────────────────────────────────────────
+constructor(initialSalt: Bytes<32>, defaultCap: Uint<64>) {
+  masterReserve = disclose(defaultCap);
+  transactionCounter.increment(1 as Uint<16>);
+}
+
+// ─── Circuits in Structure View ─────────────────────────────────────────────
+export circuit updateReserve(node: TokenNode, delta: Uint<64>): Boolean {
+  assert(node.isOnline, "Node must be online");
+  masterReserve = masterReserve + delta;
+  transactionCounter.increment(1 as Uint<16>);
+  return true;
+}
+
+export pure circuit computeFee(amount: Uint<64>): Uint<64> {
+  return (amount * 5) / 1000;
+}
+
+// ─── Contract Interface & Member Circuits in Structure View ─────────────────
+export contract IExternalRelayer {
+  circuit relayPayload(target: Bytes<32>, payload: Bytes<32>): Boolean;
+  pure circuit getRelayerVersion(): Uint<16>;
+}

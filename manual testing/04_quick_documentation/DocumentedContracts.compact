@@ -1,0 +1,115 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Quick Documentation (Ctrl + Q / Hover / Reader Mode)
+ * File: DocumentedContracts.compact
+ * Role: Provides comprehensive doc comments (// and ) with Markdown styling,
+ *       JSDoc tags, and doc inheritance across Compact language constructs.
+ *
+ * HOW TO TEST:
+ * 1. Hover your mouse over any symbol or comment below to see the rendered HTML popup.
+ * 2. Alternatively, place the caret on any symbol and press Ctrl + Q (Cmd + J on macOS).
+ * 3. Toggle In-Editor Reader Mode with Ctrl + Alt + Q (or the book icon in the editor margin).
+ */
+
+// -----------------------------------------------------------------------------
+// 1. STRUCT & FIELD DOCUMENTATION (With Field Doc Inheritance)
+// -----------------------------------------------------------------------------
+/**
+ * Configuration parameters for the decentralized security vault.
+ *
+ * Stores **immutable** operational thresholds and authorization rules.
+ *
+ * @param vaultOwner Cryptographic public key of the primary vault administrator
+ * @param maxTransferLimit Maximum allowed value per single withdrawal transaction
+ * @param emergencyThreshold Quorum threshold needed to trigger fail-safe lock
+ * @see SecurityTier
+ * @since 1.2.0
+ */
+export struct VaultConfig {
+    // Hover on 'vaultOwner' to see doc inherited from @param vaultOwner above!
+    vaultOwner: Bytes<32>,
+    // Hover on 'maxTransferLimit' to see doc inherited from @param maxTransferLimit above!
+    maxTransferLimit: Uint<64>,
+    // Hover on 'emergencyThreshold' to see doc inherited from @param emergencyThreshold above!
+    emergencyThreshold: Uint<32>
+}
+
+// -----------------------------------------------------------------------------
+// 2. ENUM & VARIANT DOCUMENTATION
+// -----------------------------------------------------------------------------
+/// Cryptographic authorization levels for vault transactions.
+///
+/// Determines the multi-signature requirements and rate limits.
+export enum SecurityTier {
+    /// Level 0: Standard user transactions with automatic processing.
+    Standard,
+    /// Level 1: Multi-factor authenticated operations.
+    Elevated,
+    /// Level 2: Requires threshold witness approval and time-lock delay.
+    Critical
+}
+
+// -----------------------------------------------------------------------------
+// 3. TYPE ALIAS & CONSTANT DOCUMENTATION
+// -----------------------------------------------------------------------------
+/// 32-byte cryptographic transaction digest for zero-knowledge proofs.
+export type TxDigest = Bytes<32>;
+
+/// Minimum fee required for ledger inclusion, denominated in micro-tokens.
+export const MINIMUM_FEE: Uint<64> = 100;
+
+// -----------------------------------------------------------------------------
+// 4. WITNESS DOCUMENTATION
+// -----------------------------------------------------------------------------
+/// Queries off-chain oracle service for current gas price and volatility index.
+///
+/// @notice Must be provided by a certified node operator witness.
+/// @return Current 64-bit gas index in base units.
+witness fetchGasIndex(): Uint<64>;
+
+// -----------------------------------------------------------------------------
+// 5. CIRCUIT DOCUMENTATION WITH COMPLETE JSDOC TAGS & MARKDOWN
+// -----------------------------------------------------------------------------
+/**
+ * Executes a token withdrawal from the vault to a **verified** `recipient`.
+ *
+ * Evaluates contract balance, checks *emergency pause* state, and deducts
+ * the required `MINIMUM_FEE` before updating ledger state.
+ *
+ * @param recipient The 32-byte destination address of the token receiver
+ * @param withdrawalAmount The token quantity requested for withdrawal
+ * @param tier The minimum required security tier for this transaction
+ * @return `true` if withdrawal passes all zero-knowledge constraints and succeeds
+ * @throws InsufficientVaultBalance When requested amount exceeds available reserves
+ * @throws UnauthorizedTier When the caller lacks required authorization level
+ * @see VaultConfig
+ * @see SecurityTier
+ * @since 2.0.0
+ * @deprecated Use `executeVaultWithdrawalWithProof` in production v3 contracts
+ * @notice Public on-chain circuit invoked by account holders
+ * @dev Emits a withdrawal commitment hash upon successful execution
+ */
+export circuit executeVaultWithdrawal(
+    recipient: Bytes<32>,
+    withdrawalAmount: Uint<64>,
+    tier: SecurityTier
+): Boolean {
+    assert(withdrawalAmount > MINIMUM_FEE, "Withdrawal must exceed minimum fee");
+    assert(tier != SecurityTier.Standard, "Standard tier not permitted for vault withdrawals");
+    return true;
+}
+
+// -----------------------------------------------------------------------------
+// 6. SINGLE-LINE (///) DOC COMMENT ON CIRCUIT
+// -----------------------------------------------------------------------------
+/// Verifies the cryptographic integrity of a transaction digest.
+/// @param digest The 32-byte hash payload to authenticate.
+/// @return True if valid, false otherwise.
+export circuit verifyDigest(digest: TxDigest): Boolean {
+    const isZero = digest == default<TxDigest>;
+    return !isZero;
+}

@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Gutter Line Markers (Bidirectional Interface Navigation)
+ * File: ITokenExchange.compact
+ * Role: Interface contract declaring external circuit signatures.
+ *
+ * LOOK AT THE LEFT GUTTER:
+ * 1. Line 18: 'ITokenExchange' will have a DOWN-ARROW gutter icon (ImplementedMethod).
+ *    -> Click it to navigate down to the implementing contract 'TokenExchangeService'.
+ *
+ * 2. Lines 24 and 29: Interface circuits 'swap' and 'getLiquidityReserve' will have
+ *    DOWN-ARROW gutter icons.
+ *    -> Click them to jump directly to the concrete circuit implementations in TokenExchangeService.compact!
+ */
+export contract ITokenExchange {
+
+    /**
+     * Abstract circuit for token swapping.
+     * Gutter: Down-arrow pointing to 'export circuit swap' in TokenExchangeService.compact.
+     */
+    circuit swap(recipient: Bytes<32>, amountIn: Uint<64>): Boolean;
+
+    /**
+     * Abstract circuit for querying current reserves.
+     * Gutter: Down-arrow pointing to 'export circuit getLiquidityReserve' in TokenExchangeService.compact.
+     */
+    circuit getLiquidityReserve(): Uint<64>;
+}

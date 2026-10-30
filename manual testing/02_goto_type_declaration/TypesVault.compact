@@ -1,0 +1,45 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Go to Type Declaration (Ctrl + Shift + B / Cmd + Shift + B)
+ * File: TypesVault.compact
+ * Role: Central repository of struct, enum, type alias, and interface declarations
+ *       that serve as navigation targets for Go to Type Declaration.
+ */
+
+// 1. Struct target: UserProfile
+export struct UserProfile {
+    username: Bytes<32>,
+    reputationScore: Uint<32>,
+    isVerified: Boolean
+}
+
+// 2. Struct target: WalletRecord (contains nested UserProfile)
+export struct WalletRecord {
+    walletAddress: Bytes<32>,
+    profile: UserProfile,
+    balance: Uint<64>
+}
+
+// 3. Enum target: AccountTier
+export enum AccountTier {
+    Standard,
+    Verified,
+    Premium,
+    Institutional
+}
+
+// 4. Type alias target: SaltNonce
+export type SaltNonce = Bytes<32>;
+
+// 5. Type alias pointing to struct target: MasterWallet
+export type MasterWallet = WalletRecord;
+
+// 6. Contract interface target: IAdminGovernance
+export contract IAdminGovernance {
+    circuit fetchGovernanceKey(): Bytes<32>;
+    circuit authorizeEmergencyAction(actionId: Field): Boolean;
+}

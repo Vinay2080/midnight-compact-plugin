@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./ITokenExchange.compact";
+
+/**
+ * Feature: Gutter Line Markers (Bidirectional Interface Navigation & ZK Indicators)
+ * File: TokenExchangeService.compact
+ * Role: Concrete contract implementing ITokenExchange, showing Upward navigation,
+ *       Witness markers, Ledger markers, Exported markers, and ZK Disclose markers.
+ */
+
+// -----------------------------------------------------------------------------
+// 1. CONTRACT IMPLEMENTS GUTTER MARKER
+// -----------------------------------------------------------------------------
+// Gutter Icon: UP-ARROW (ImplementingMethod) on the 'implements' keyword below.
+// Click it to jump UP to 'contract ITokenExchange' in ITokenExchange.compact!
+contract implements ITokenExchange;
+
+// -----------------------------------------------------------------------------
+// 2. WITNESS DECLARATION GUTTER MARKER
+// -----------------------------------------------------------------------------
+// Gutter Icon: ABSTRACT METHOD icon next to 'fetchSecretOraclePrice'.
+// Tooltip: "Witness: private off-chain query providing private inputs"
+witness fetchSecretOraclePrice(): Uint<64>;
+
+// -----------------------------------------------------------------------------
+// 3. LEDGER STATE GUTTER MARKER
+// -----------------------------------------------------------------------------
+// Gutter Icon: DATA TABLES icon next to 'liquidityReserve'.
+// Tooltip: "Ledger state: sealed persistent contract state"
+sealed ledger liquidityReserve: Uint<64>;
+
+// -----------------------------------------------------------------------------
+// 4. CONCRETE CIRCUIT IMPLEMENTATION & EXPORT GUTTER MARKERS
+// -----------------------------------------------------------------------------
+// Gutter Icon: UP-ARROW (ImplementingMethod) on 'swap' -> Jumps UP to ITokenExchange.compact!
+// Also has LIGHTNING BOLT icon indicating an exported on-chain circuit.
+export circuit swap(recipient: Bytes<32>, amountIn: Uint<64>): Boolean {
+    // -------------------------------------------------------------------------
+    // 5. ZK PRIVACY BOUNDARY (DISCLOSE) GUTTER MARKER
+    // -------------------------------------------------------------------------
+    // Gutter Icon: KEYMAP / KEY icon on line below next to 'disclose'.
+    // Hover Tooltip: "Zero-Knowledge boundary: disclosing private witness data into circuit"
+    const secretPrice = disclose(fetchSecretOraclePrice());
+    
+    assert(secretPrice > 0, "Oracle price must be non-zero");
+    assert(amountIn > 0, "Amount must be greater than zero");
+    
+    const outputAmount = amountIn * secretPrice;
+    assert(outputAmount <= liquidityReserve, "Insufficient exchange liquidity");
+    
+    return true;
+}
+
+// Gutter Icon: UP-ARROW on 'getLiquidityReserve' -> Jumps UP to ITokenExchange.compact!
+// Also has LIGHTNING BOLT icon.
+export circuit getLiquidityReserve(): Uint<64> {
+    return liquidityReserve;
+}

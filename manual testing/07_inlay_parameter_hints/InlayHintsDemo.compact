@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./InlayHintsDeclarations.compact";
+
+/**
+ * Feature: Inlay Parameter Hints
+ * File: InlayHintsDemo.compact
+ * Role: Demonstrates inline parameter labels for circuit and witness invocations.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * Look at the circuit and witness calls inside the circuit below.
+ * Notice the small, non-editable inline gray badges (e.g. 'round:', 'secretKey:')
+ * rendered right before the arguments!
+ *
+ * Settings toggle in IntelliJ IDEA:
+ * Settings -> Editor -> Inlay Hints -> Parameter Names -> Compact
+ * ============================================================================
+ */
+
+export circuit testInlayParameterHints(round: Field): Boolean {
+    const rawKey = default<Bytes<32>>;
+    
+    // -------------------------------------------------------------------------
+    // TEST 1: Full Inlay Hints for Literal Arguments
+    // Look at line below:
+    // IntelliJ renders inline badges:
+    // computeHash( round: 1 as Field, secretKey: rawKey );
+    // -------------------------------------------------------------------------
+    const hash1 = computeHash(1 as Field, rawKey);
+    
+    // -------------------------------------------------------------------------
+    // TEST 2: Redundant Hint Suppression
+    // When the argument variable name matches the parameter name exactly (e.g. 'round'),
+    // the hint is cleanly suppressed to reduce visual clutter!
+    // Notice below: ONLY 'secretKey:' is rendered, 'round:' is suppressed!
+    // computeHash( round, secretKey: rawKey );
+    // -------------------------------------------------------------------------
+    const hash2 = computeHash(round, rawKey);
+    
+    // -------------------------------------------------------------------------
+    // TEST 3: Multi-Parameter Circuit Hints
+    // Look at line below:
+    // IntelliJ renders inline badges:
+    // verifyProof( treeIndex: 42 as Field, leafHash: rawKey, rootHash: rawKey );
+    // -------------------------------------------------------------------------
+    const proofValid = verifyProof(42 as Field, rawKey, rawKey);
+    
+    // -------------------------------------------------------------------------
+    // TEST 4: Witness Call Parameter Hints
+    // Inlay hints also display for off-chain private witness calls!
+    // queryOracleRate( pairId: 100 as Field, timestamp: 1700000000 );
+    // -------------------------------------------------------------------------
+    const oraclePrice = queryOracleRate(100 as Field, 1700000000);
+    
+    return proofValid && (hash1 == hash2) && (oraclePrice > 0);
+}

@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Inplace Rename Refactoring (Shift + F6)
+ * File: RenameTargetDeclarations.compact
+ * Role: Declares structs, enums, circuits, witnesses, and type aliases that can be
+ *       safely renamed across files with automatic reference updating.
+ */
+
+// 1. Struct rename target: Place caret on 'VaultAccount' and press Shift + F6
+export struct VaultAccount {
+    accountId: Bytes<32>,
+    storedBalance: Uint<64>,
+    isWhitelisted: Boolean
+}
+
+// 2. Enum rename target: Place caret on 'NetworkState' and press Shift + F6
+export enum NetworkState {
+    Genesis,
+    Operational,
+    Maintenance
+}
+
+// 3. Type alias rename target: Place caret on 'UserDigest' and press Shift + F6
+export type UserDigest = Bytes<32>;
+
+// 4. Constant rename target: Place caret on 'BASE_TRANSFER_FEE' and press Shift + F6
+export const BASE_TRANSFER_FEE: Uint<64> = 50;
+
+// 5. Witness rename target: Place caret on 'fetchUserSecret' and press Shift + F6
+witness fetchUserSecret(user: Bytes<32>): Bytes<32>;
+
+/**
+ * 6. Circuit rename target: Place caret on 'depositVaultFunds' and press Shift + F6
+ *    - Rename to 'submitDeposit' and observe every call site across this file and
+ *      RenameReferenceUsages.compact automatically updated!
+ */
+export circuit depositVaultFunds(account: VaultAccount, depositAmount: Uint<64>): VaultAccount {
+    const minFee = BASE_TRANSFER_FEE;
+    assert(depositAmount > minFee, "Deposit must exceed base fee");
+
+    const newBalance = account.storedBalance + depositAmount - minFee;
+    const updatedAccount = VaultAccount {
+        accountId: account.accountId,
+        storedBalance: newBalance,
+        isWhitelisted: account.isWhitelisted
+    };
+
+    return updatedAccount;
+}

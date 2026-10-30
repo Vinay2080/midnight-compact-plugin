@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Parameter Info (Ctrl + P / Cmd + P)
+ * File: ParameterInfoDeclarations.compact
+ * Role: Declares multi-parameter circuits, witnesses, constructors, and structs
+ *       used to test active parameter index tracking and tooltips.
+ */
+
+// 1. Struct with multiple fields for struct literal parameter info
+export struct UserAccount {
+    id: Uint<32>,
+    balance: Uint<64>,
+    tierLevel: Uint<8>,
+    isFrozen: Boolean
+}
+
+// 2. Struct for nested literal testing
+export struct SecurityConfig {
+    requireProof: Boolean,
+    maxRetries: Uint<16>
+}
+
+// 3. Multi-parameter circuit
+export circuit transferFunds(
+    sender: Bytes<32>,
+    recipient: Bytes<32>,
+    amount: Uint<64>,
+    memo: Bytes<32>
+): Boolean {
+    assert(amount > 0, "Amount must be positive");
+    return true;
+}
+
+// 4. Zero-parameter circuit
+export circuit getProtocolVersion(): Uint<32> {
+    return 1;
+}
+
+// 5. Multi-parameter witness
+witness computeEntropy(salt: Bytes<32>, round: Uint<32>, seed: Field): Bytes<32>;
+
+// 6. Constructor with parameters
+constructor(adminKey: Bytes<32>, initialReserve: Uint<64>) {
+    assert(initialReserve > 0, "Reserve required");
+}

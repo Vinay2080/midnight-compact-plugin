@@ -1,0 +1,115 @@
+// SPDX-License-Identifier: MIT
+// Compact Contracts Syntax Highlighting Showcase
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Syntax Highlighting & Color Settings Page
+ * File: SyntaxShowcase.compact
+ * Role: Comprehensive showcase of all Compact lexer tokens, semantic attributes,
+ *       and color highlighting styles.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA and observe the rich colorization:
+ *    - Pragmas & versions: Distinct purple/cyan
+ *    - Keywords (export, circuit, witness, ledger, sealed, disclose): Bold keyword style
+ *    - Types (Field, Uint<64>, Bytes<32>, Counter, MerkleTree): Type name color
+ *    - Numbers (Dec: 12345, Hex: 0x1A2F, Bin: 0b1010): Number literal style
+ *    - Strings & Escapes ("... \n \t \" ..."): String & valid escape sequence colors
+ *    - Doc comments ( @param ... * /, ///): JSDoc tags highlighted distinctly
+ *    - Ledger state writes vs reads: Distinct styling for mutation awareness
+ *
+ * 2. Color Settings Page:
+ *    - Go to Settings (Preferences on macOS) -> Editor -> Color Scheme -> Compact
+ *    - Preview and customize colors in the live preview editor!
+ * ============================================================================
+ */
+
+// ─── Enums & Custom Type Aliases ─────────────────────────────────────────────
+export enum ContractPhase {
+  Initialization,
+  ActiveTrading,
+  Paused,
+  Terminated
+}
+
+export new type AccountDigest = Bytes<32>;
+export new type BalanceCounter = Uint<64>;
+
+// ─── Struct Definition ───────────────────────────────────────────────────────
+export struct LiquidityPool {
+  poolId: Field,
+  tokenA: Bytes<32>,
+  tokenB: Bytes<32>,
+  reserveA: BalanceCounter,
+  reserveB: BalanceCounter,
+  isActive: Boolean
+}
+
+export const MAXIMUM_CAP: Uint<64> = 1000000000;
+
+// ─── Public & Sealed Ledger State ───────────────────────────────────────────
+export sealed ledger poolSalt: Bytes<32>;
+export ledger totalTransactions: Counter;
+export ledger protocolFee: Uint<16>;
+
+// ─── Witness Declarations (Private Off-Chain Queries) ───────────────────────
+witness fetchPrivateKey(): Bytes<32>;
+witness fetchSecretSeed(nonce: Field): Bytes<32>;
+
+// ─── Constructor with Ledger Mutations ──────────────────────────────────────
+constructor(adminSalt: Bytes<32>, initialFeeRate: Uint<16>) {
+  poolSalt = disclose(adminSalt);
+  protocolFee = initialFeeRate;
+  totalTransactions.increment(1 as Uint<16>);
+}
+
+/**
+ * Executes an automated market swap between two token reserves.
+ *
+ * @param pool The targeted liquidity pool data structure
+ * @param amountIn Quantity of incoming tokens to deposit
+ * @return Updated pool reserves following constant-product invariant
+ */
+export circuit swap(pool: LiquidityPool, amountIn: Uint<64>): LiquidityPool {
+  // Assert constraint checking & string literal with escapes
+  assert(amountIn > 0, "Invalid swap amount:\n\tMust be strictly positive!\n");
+  assert(pool.isActive, "Target pool is paused");
+
+  // Witness call and Zero-Knowledge privacy disclosure boundary
+  const secretKey = disclose(fetchPrivateKey());
+  assert(secretKey != default<Bytes<32>>, "Zero key invalid");
+
+  // Numeric literals in decimal, hexadecimal, and binary formats
+  const hexMultiplier = 0x1A2F;
+  const binaryMask = 0b1010;
+  const decimalThreshold = 50000;
+
+  // Vector collection and iteration loop
+  const testVector: Vector<3, Field> = [1 as Field, 2 as Field, 3 as Field];
+  for (const item of testVector) {
+    assert(item > 0, "Vector item must be positive");
+  }
+
+  // Ledger state mutation
+  totalTransactions.increment(1 as Uint<16>);
+
+  // Struct construction & field initialization
+  const updatedPool = LiquidityPool { poolId: pool.poolId,
+  tokenA: pool.tokenA,
+  tokenB: pool.tokenB,
+  reserveA: pool.reserveA + amountIn,
+  reserveB: pool.reserveB - (amountIn / 2),
+  isActive: true };
+
+  return updatedPool;
+}
+
+// Pure deterministic circuit without state side-effects
+export pure circuit calculateFee(amount: Uint<64>): Uint<64> {
+  const feePercentage: Uint<64> = 30;
+  // 0.3%
+  return (amount * feePercentage) / 10000;
+}

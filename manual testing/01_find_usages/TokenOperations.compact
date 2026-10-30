@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./TokenDeclarations.compact";
+
+/**
+ * Feature: Find Usages (Alt + F7 / Option + F7)
+ * File: TokenOperations.compact
+ * Role: Primary operational contract demonstrating cross-file usages of circuits,
+ *       structs, struct fields, and enum variants.
+ */
+
+// Usage of TokenMetadata and DEFAULT_FEE
+circuit initializeMetadata(): TokenMetadata {
+    const meta = TokenMetadata {
+        symbol: default<Bytes<8>>,
+        decimals: 18,
+        totalSupply: 1000000
+    };
+    return meta;
+}
+
+// Usages of AccountBalance, TokenState.Active, and TokenState.Frozen
+circuit createAccount(user: Bytes<32>, initialDeposit: Uint<64>): AccountBalance {
+    const isFrozen = false;
+    const currentState = isFrozen ? TokenState.Frozen : TokenState.Active;
+    
+    // Usage of AccountBalance fields: owner, amount, state
+    const newAccount = AccountBalance {
+        owner: user,
+        amount: initialDeposit,
+        state: currentState
+    };
+    
+    return newAccount;
+}
+
+// Cross-file usage of mintToken circuit from TokenDeclarations.compact
+export circuit executeBatchMint(user1: Bytes<32>, user2: Bytes<32>, mintAmount: Uint<64>): Boolean {
+    // Usage 1 of mintToken
+    const res1 = mintToken(user1, mintAmount);
+    
+    // Usage 2 of mintToken
+    const res2 = mintToken(user2, mintAmount);
+    
+    return res1 && res2;
+}
+
+// Cross-file usage of transferTokens and struct field accesses
+export circuit executeSafeTransfer(sender: Bytes<32>, recipient: Bytes<32>, val: Uint<64>): Boolean {
+    const account = createAccount(sender, 5000);
+    
+    // Member access usages: account.state and account.amount
+    if (account.state == TokenState.Active) {
+        assert(account.amount >= val, "Insufficient sender balance");
+        // Usage 1 of transferTokens
+        return transferTokens(sender, recipient, val);
+    }
+    
+    return false;
+}

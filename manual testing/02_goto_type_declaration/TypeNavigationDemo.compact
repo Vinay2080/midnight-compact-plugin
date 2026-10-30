@@ -1,0 +1,109 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./TypesVault.compact";
+
+/**
+ * Feature: Go to Type Declaration (Ctrl + Shift + B / Cmd + Shift + B)
+ * File: TypeNavigationDemo.compact
+ * Role: Demonstrates instant type declaration jumps from variables, parameters,
+ *       struct field accesses, enum variants, type aliases, and ledger states.
+ *
+ * HOW TO TEST:
+ * Put your caret on each highlighted identifier below and press:
+ * - Windows / Linux: Ctrl + Shift + B
+ * - macOS:           Cmd + Shift + B
+ */
+
+// -----------------------------------------------------------------------------
+// TEST CASE 1: Variable binding -> Jumps to underlying Struct (UserProfile)
+// -----------------------------------------------------------------------------
+circuit testVariableToStruct(): UserProfile {
+    const user = UserProfile {
+        username: default<Bytes<32>>,
+        reputationScore: 100,
+        isVerified: true
+    };
+    
+    // [TEST 1]: Place caret on 'targetUser' or 'user' below and press Ctrl+Shift+B.
+    // -> Target: 'struct UserProfile' in TypesVault.compact
+    const targetUser = user;
+    return targetUser;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 2: Function Parameter -> Jumps to underlying Struct (WalletRecord)
+// -----------------------------------------------------------------------------
+// [TEST 2]: Place caret on parameter 'record' below and press Ctrl+Shift+B.
+// -> Target: 'struct WalletRecord' in TypesVault.compact
+export circuit testParameterToStruct(record: WalletRecord): Uint<64> {
+    // [TEST 2b]: Place caret on 'recordRef' and press Ctrl+Shift+B.
+    // -> Target: 'struct WalletRecord' in TypesVault.compact
+    const recordRef = record;
+    return recordRef.balance;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 3: Struct Field Access -> Jumps to Field's Struct Type (UserProfile)
+// -----------------------------------------------------------------------------
+export circuit testFieldAccessToNestedStruct(wallet: WalletRecord): Boolean {
+    // [TEST 3]: Place caret on 'profile' in 'wallet.profile' below and press Ctrl+Shift+B.
+    // -> Target: 'struct UserProfile' in TypesVault.compact (since profile has type UserProfile)
+    const prof = wallet.profile;
+    return prof.isVerified;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 4: Enum Variable & Member Access -> Jumps to Enum Definition (AccountTier)
+// -----------------------------------------------------------------------------
+export circuit testEnumToDeclaration(): AccountTier {
+    // [TEST 4a]: Place caret on 'tierVar' below and press Ctrl+Shift+B.
+    // -> Target: 'enum AccountTier' in TypesVault.compact
+    const tierVar = AccountTier.Premium;
+    
+    // [TEST 4b]: Place caret on 'Institutional' below and press Ctrl+Shift+B.
+    // -> Target: 'enum AccountTier' in TypesVault.compact
+    const selectedTier = AccountTier.Institutional;
+    
+    return selectedTier;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 5: Type Alias Binding -> Jumps to Type Alias (SaltNonce)
+// -----------------------------------------------------------------------------
+export circuit testTypeAliasNavigation(): SaltNonce {
+    // [TEST 5]: Place caret on 'currentNonce' below and press Ctrl+Shift+B.
+    // -> Target: 'type SaltNonce = Bytes<32>' in TypesVault.compact
+    const currentNonce: SaltNonce = default<Bytes<32>>;
+    return currentNonce;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 6: Type Alias to Struct -> Jumps to Target Struct (WalletRecord)
+// -----------------------------------------------------------------------------
+export circuit testTypeAliasToStruct(): MasterWallet {
+    // [TEST 6]: Place caret on 'master' below and press Ctrl+Shift+B.
+    // -> Target: 'struct WalletRecord' in TypesVault.compact
+    const master: MasterWallet = default<WalletRecord>;
+    return master;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 7: On-Chain Ledger State -> Jumps to Struct (WalletRecord)
+// -----------------------------------------------------------------------------
+sealed ledger primaryVault: WalletRecord;
+
+export circuit testLedgerToStruct(): Uint<64> {
+    // [TEST 7]: Place caret on 'vault' or 'primaryVault' below and press Ctrl+Shift+B.
+    // -> Target: 'struct WalletRecord' in TypesVault.compact
+    const vault = primaryVault;
+    return vault.balance;
+}
+
+// -----------------------------------------------------------------------------
+// TEST CASE 8: Contract Implements -> Jumps to Contract Interface (IAdminGovernance)
+// -----------------------------------------------------------------------------
+// [TEST 8]: Place caret on 'IAdminGovernance' below and press Ctrl+Shift+B.
+// -> Target: 'contract IAdminGovernance' in TypesVault.compact
+contract implements IAdminGovernance;

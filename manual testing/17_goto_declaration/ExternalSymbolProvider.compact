@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Go to Declaration (Ctrl + B / Cmd + B / Ctrl + Click)
+ * File: ExternalSymbolProvider.compact
+ * Role: Provides cross-file declaration targets for circuits, structs, and enums
+ *       to verify Go to Declaration resolution.
+ */
+
+// 1. Cross-file struct declaration target
+export struct ExternalConfig {
+    configId: Field,
+    maxRetries: Uint<16>,
+    isEnabled: Boolean
+}
+
+// 2. Cross-file enum declaration target
+export enum ExternalMode {
+    Safe,
+    Aggressive,
+    Fallback
+}
+
+// 3. Cross-file circuit declaration target
+export circuit computeExternalBonus(level: Uint<16>): Uint<64> {
+    return (level as Uint<64>) * 100;
+}

@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Smart Complete Statement (Ctrl + Shift + Enter / Cmd + Shift + Enter)
+ * File: SmartEnterScenarios.compact
+ * Role: Provides live typing templates to test auto-closing blocks, missing semicolons,
+ *       and intelligent caret positioning.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * Below each scenario, place your caret at the indicated <caret> position and
+ * press:
+ * - Windows / Linux: Ctrl + Shift + Enter
+ * - macOS:           Cmd + Shift + Enter
+ *
+ * Observe how IntelliJ auto-completes braces, colons, return types, semicolons,
+ * and repositions your caret right where you need to type next!
+ * ============================================================================
+ */
+// -----------------------------------------------------------------------------
+// SCENARIO 1: Circuit Header without Return Type
+// Type: circuit registerUser(accountId: Bytes<32>)
+// Press Ctrl+Shift+Enter at the end of the line:
+// -> Auto-appends ': Void {\n    \n}' and positions caret inside the braces!
+// -----------------------------------------------------------------------------
+circuit registerUser(accountId: Bytes<32>): Void {
+    assert(accountId != default<Bytes<32>>, "Invalid account");
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 2: Circuit Header with Return Type
+// Type: circuit calculateReward(): Uint<64>
+// Press Ctrl+Shift+Enter at the end:
+// -> Auto-appends '{\n    \n}' and positions caret inside!
+// -----------------------------------------------------------------------------
+circuit calculateReward(): Uint<64> {
+    return 1000;
+}
+// -----------------------------------------------------------------------------
+// SCENARIO 3: Contract Declaration
+// Type: export contract EscrowVault
+// Press Ctrl+Shift+Enter:
+// -> Auto-appends '{\n    \n}' and positions caret inside the contract body!
+// -----------------------------------------------------------------------------
+export contract EscrowVault {
+    circuit releaseFunds(to: Bytes<32>): Boolean;
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 4: Struct Declaration
+// Type: struct AssetRecord
+// Press Ctrl+Shift+Enter:
+// -> Auto-appends '{\n    \n}' and positions caret inside!
+// -----------------------------------------------------------------------------
+struct AssetRecord {
+    assetId: Bytes<32>,
+    amount: Uint<64>
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 5: Constructor Declaration
+// Type: constructor(admin: Bytes<32>, initialFee: Uint<16>)
+// Press Ctrl+Shift+Enter:
+// -> Auto-appends '{\n    \n}' and positions caret inside!
+// -----------------------------------------------------------------------------
+constructor(admin: Bytes<32>, initialFee: Uint<16>) {
+    assert(initialFee > 0, "Fee required");
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 6: If Statement with Unclosed Parenthesis
+// Type inside a circuit: if (balance >= 500
+// Press Ctrl+Shift+Enter:
+// -> Auto-inserts ') {\n        \n    }' and positions caret inside the if block!
+// -----------------------------------------------------------------------------
+export circuit testIfCompletion(balance: Uint<64>): Boolean {
+    if (balance >= 500) {
+        return true;
+    }
+    return false;
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 7: Const Statement without Initializer
+// Type: const rewardMultiplier
+// Press Ctrl+Shift+Enter:
+// -> Never inserts a bad semicolon; instead inserts ' = ' and places caret after!
+// -----------------------------------------------------------------------------
+circuit testConstAssignment(): Uint<64> {
+    const rewardMultiplier = 2;
+    return rewardMultiplier;
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 8: Const Statement Missing Semicolon
+// Type: const finalAmount = 100
+// Press Ctrl+Shift+Enter:
+// -> Automatically appends ';' at the end of the statement!
+// -----------------------------------------------------------------------------
+circuit testConstSemicolon(): Uint<64> {
+    const finalAmount = 100;
+    return finalAmount;
+}
+
+// -----------------------------------------------------------------------------
+// SCENARIO 9: Witness Declaration Missing Semicolon
+// Type: witness fetchEntropy(): Bytes<32>
+// Press Ctrl+Shift+Enter:
+// -> Automatically appends ';' to complete the witness declaration!
+// -----------------------------------------------------------------------------
+witness fetchEntropy(): Bytes<32>;

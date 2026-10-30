@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./TokenDeclarations.compact";
+
+/**
+ * Feature: Find Usages (Alt + F7 / Option + F7)
+ * File: TokenAudit.compact
+ * Role: Third contract verifying that Find Usages indexes symbols project-wide across
+ *       multiple consumer files.
+ */
+
+// Usages of TokenState variants: Paused, Migrating
+export circuit verifySystemHealth(state: TokenState): Boolean {
+    if (state == TokenState.Paused) {
+        return false;
+    } else if (state == TokenState.Migrating) {
+        return false;
+    }
+    return true;
+}
+
+// Usages of AccountBalance struct and mintToken circuit
+export circuit emergencyMintAndAudit(adminKey: Bytes<32>, targetUser: Bytes<32>, auditAmount: Uint<64>): Boolean {
+    // Usage 3 of mintToken across project
+    const minted = mintToken(targetUser, auditAmount);
+    
+    // Usage of AccountBalance
+    const auditRecord = AccountBalance {
+        owner: targetUser,
+        amount: auditAmount,
+        state: TokenState.Active
+    };
+    
+    // Usage of struct field 'owner' and 'amount'
+    assert(auditRecord.owner == targetUser, "Audit owner mismatch");
+    assert(auditRecord.amount > 0, "Audit amount must be positive");
+    
+    return minted;
+}
+
+// Usages of transferTokens circuit
+export circuit auditTransferReplay(sender: Bytes<32>, to: Bytes<32>, fee: Uint<64>): Boolean {
+    // Usage 2 of transferTokens across project
+    const success = transferTokens(sender, to, fee + DEFAULT_FEE);
+    return success;
+}

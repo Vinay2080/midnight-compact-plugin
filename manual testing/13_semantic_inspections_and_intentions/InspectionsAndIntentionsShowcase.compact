@@ -1,0 +1,78 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Semantic Inspections & Quick-Fixes / Intentions
+ * File: InspectionsAndIntentionsShowcase.compact
+ * Role: Demonstrates active warnings and automated quick-fixes/intentions for:
+ *       1. Unused local variables (Quick-Fix: Remove unused variable)
+ *       2. Undisclosed witness queries (Quick-Fix / Intention: Surround with disclose)
+ *       3. Pure circuit mutating ledger state (Inspection warning)
+ *       4. Invert If condition intention (Alt + Enter)
+ *       5. Toggle Pure circuit intention (Alt + Enter)
+ *       6. Toggle Export modifier intention (Alt + Enter)
+ *       7. Specify Type Explicitly intention (Alt + Enter)
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA.
+ * 2. Observe highlighted warnings:
+ *    - Unused variable 'unusedBuffer' below is flagged in gray/yellow.
+ *      Press Alt + Enter on it -> Select "Remove unused variable 'unusedBuffer'".
+ *    - Unenclosed witness call 'fetchSecretEntropy()' below is flagged.
+ *      Press Alt + Enter on it -> Select "Surround with disclose(...)".
+ * 3. Test Context Intentions (Alt + Enter):
+ *    - Put caret on 'circuit calculateTax' -> Alt + Enter -> "Make circuit pure".
+ *    - Put caret on 'if (rate > 10)' -> Alt + Enter -> "Invert 'if' condition".
+ *    - Put caret on 'contract EscrowStorage' -> Alt + Enter -> "Add 'export' modifier".
+ *    - Put caret on 'const factor = 5;' -> Alt + Enter -> "Specify type explicitly as Field".
+ * ============================================================================
+ */
+
+witness fetchSecretEntropy(): Bytes<32>;
+
+export sealed ledger contractStateSalt: Bytes<32>;
+
+// ─── TEST 1: Unused Variable & Intention Showcase ────────────────────────────
+export circuit processTransaction(amount: Uint<64>): Boolean {
+    // [INSPECTION]: 'unusedBuffer' is unused. Press Alt+Enter to remove it!
+    const unusedBuffer = default<Bytes<32>>;
+
+    // [INTENTION]: Put caret on 'factor' below and press Alt+Enter:
+    // -> Select "Specify type explicitly" -> turns into 'const factor: Uint<64> = 2;'
+    const factor = 2;
+
+    const netAmount = amount * factor;
+
+    // [INTENTION]: Put caret on 'if' below and press Alt+Enter:
+    // -> Select "Invert 'if' condition" -> inverts condition and swaps if/else blocks!
+    if (netAmount > 100) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// ─── TEST 2: Undisclosed Witness Query & Quick-Fix ───────────────────────────
+export circuit initializeEntropy(): Boolean {
+    // [INSPECTION & QUICK-FIX]: Calling witness directly without disclose().
+    // Place caret on line below and press Alt+Enter -> "Surround with disclose(...)"!
+    contractStateSalt = disclose(fetchSecretEntropy());
+    return true;
+}
+
+// ─── TEST 3: Toggle Pure Circuit & Export Modifier Intentions ────────────────
+// [INTENTION]: Place caret on 'calculateTax' below and press Alt+Enter:
+// -> Select "Make circuit pure" -> prepends 'pure'!
+// -> Place caret on 'pure' and press Alt+Enter -> "Make circuit non-pure"!
+export circuit calculateTax(subtotal: Uint<64>): Uint<64> {
+    return (subtotal * 7) / 100;
+}
+
+// [INTENTION]: Place caret on 'contract EscrowStorage' and press Alt+Enter:
+// -> Select "Add 'export' modifier" -> prepends 'export'!
+contract EscrowStorage {
+    circuit queryBalance(): Uint<64>;
+}

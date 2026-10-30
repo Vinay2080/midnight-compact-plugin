@@ -1,0 +1,57 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Compiler Run Action & Execution Subsystem
+ * File: CompileTargetContract.compact
+ * Role: A fully valid, executable Compact smart contract designed to test
+ *       Run Configuration synthesis, toolchain execution, and console hyperlinks.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA.
+ * 2. Look at the top toolbar Run configuration dropdown or right-click this file
+ *    in the Project Explorer or inside the editor:
+ *    -> Select "Run 'Compile CompileTargetContract.compact'"
+ *    -> Or press Ctrl + Shift + F10 (Cmd + Shift + R on macOS).
+ * 3. Observe the Run Execution:
+ *    - IntelliJ synthesizes a 'CompactRunConfiguration' on-the-fly.
+ *    - Executes the Compact compiler (`compactc`) process in the Run Console.
+ *    - Handles multi-tier executable discovery (PATH, npm local/global, WSL).
+ *    - Console outputs clean compilation results:
+ *      * Generates ZKIR circuits and TypeScript contract bindings
+ *      * Error messages (if any) provide clickable hyperlinks jumping straight
+ *        to the error line in the source file!
+ * ============================================================================
+ */
+
+export struct TokenWallet {
+    owner: Bytes<32>,
+    balance: Uint<64>,
+    isActive: Boolean
+}
+
+export sealed ledger totalContractSupply: Uint<64>;
+
+witness fetchSigningKey(): Bytes<32>;
+
+constructor(adminKey: Bytes<32>, initialSupply: Uint<64>) {
+    totalContractSupply = disclose(initialSupply);
+}
+
+export circuit transfer(recipient: Bytes<32>, amount: Uint<64>): Boolean {
+    assert(amount > 0, "Transfer amount must be non-zero");
+    const key = disclose(fetchSigningKey());
+    assert(key != default<Bytes<32>>, "Key required");
+
+    assert(totalContractSupply >= amount, "Insufficient contract supply");
+    totalContractSupply = totalContractSupply - amount;
+
+    return true;
+}
+
+export pure circuit getFee(amount: Uint<64>): Uint<64> {
+    return (amount * 3) / 1000;
+}

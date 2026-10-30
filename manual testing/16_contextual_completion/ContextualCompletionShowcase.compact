@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Contextual Code Completion (Ctrl + Space)
+ * File: ContextualCompletionShowcase.compact
+ * Role: Demonstrates intelligent scope-aware auto-completion:
+ *       1. Struct Member Completion (u.<caret> suggests only declared struct fields)
+ *       2. Type Position Completion (param: <caret> suggests types, not local variables)
+ *       3. Value / Expression Position Completion (const x = <caret> suggests values & constants)
+ *       4. Top-level keyword completion (export, circuit, witness, ledger, struct, enum)
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * 1. Open this file in IntelliJ IDEA.
+ *
+ * TEST 1: Struct Member Dot-Completion
+ * - Place caret right after 'user.' at line 46 below.
+ * - Press Ctrl + Space.
+ * - Observe: IntelliJ suggests ONLY 'accountId', 'reputation', 'isVerified'.
+ *
+ * TEST 2: Type Position Completion
+ * - Place caret after 'targetUser: ' at line 53 below.
+ * - Press Ctrl + Space.
+ * - Observe: IntelliJ suggests type symbols ('UserProfile', 'Field', 'Bytes<32>', 'Uint<64>'),
+ *   and cleanly excludes local variables or expressions!
+ *
+ * TEST 3: Expression / Value Position Completion
+ * - Place caret after 'const feeVal = ' at line 57 below.
+ * - Press Ctrl + Space.
+ * - Observe: IntelliJ suggests values in scope ('GLOBAL_BASE_FEE', 'targetUser', 'default<...>'),
+ *   not raw structural keywords.
+ * ============================================================================
+ */
+
+export struct UserProfile {
+    accountId: Bytes<32>,
+    reputation: Uint<32>,
+    isVerified: Boolean
+}
+
+export const GLOBAL_BASE_FEE: Uint<64> = 25;
+
+// ─── TEST 1: Struct Member Completion ────────────────────────────────────────
+export circuit testMemberCompletion(user: UserProfile): Boolean {
+    // Put caret after 'user.' below and press Ctrl + Space:
+    // Expected suggestions: accountId, reputation, isVerified
+    const verified = user.isVerified;
+    return verified;
+}
+
+// ─── TEST 2: Type Position vs Value Position Completion ──────────────────────
+export circuit testTypeAndValueCompletion(
+    // Put caret after 'target:' below and press Ctrl + Space -> suggests types:
+    target: UserProfile
+): Uint<64> {
+    // Put caret after 'const feeVal = ' below and press Ctrl + Space -> suggests values:
+    const feeVal = GLOBAL_BASE_FEE;
+    return feeVal;
+}

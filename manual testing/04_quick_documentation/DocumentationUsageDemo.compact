@@ -1,0 +1,49 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./DocumentedContracts.compact";
+
+/**
+ * Feature: Quick Documentation (Hover on Usages & References)
+ * File: DocumentationUsageDemo.compact
+ * Role: Demonstrates that hovering over reference symbols at call sites,
+ *       struct field accesses, and enum variants displays the full HTML documentation
+ *       resolved from their declarations.
+ *
+ * HOW TO TEST:
+ * Hover your mouse cursor over the indicated elements (or press Ctrl + Q / Cmd + J).
+ */
+
+export circuit testDocumentationAtCallSites(): Boolean {
+    const adminKey = default<Bytes<32>>;
+    
+    // [TEST 1]: Hover over 'VaultConfig' below -> Shows full struct docs with @param fields
+    const config = VaultConfig {
+        vaultOwner: adminKey,
+        maxTransferLimit: 50000,
+        emergencyThreshold: 3
+    };
+    
+    // [TEST 2]: Hover over 'maxTransferLimit' below -> Shows struct field docs with type & description
+    const currentLimit = config.maxTransferLimit;
+    
+    // [TEST 3]: Hover over 'SecurityTier' or 'Critical' below -> Shows enum docs and variant docs
+    const requiredLevel = SecurityTier.Critical;
+    
+    // [TEST 4]: Hover over 'executeVaultWithdrawal' below -> Shows full circuit documentation
+    //           with params, return, throws, deprecation warning, notice, and dev notes!
+    const withdrawalSuccess = executeVaultWithdrawal(
+        adminKey,
+        currentLimit,
+        requiredLevel
+    );
+    
+    // [TEST 5]: Hover over 'verifyDigest' below -> Shows single-line /// doc comments
+    const hashValid = verifyDigest(adminKey);
+    
+    // [TEST 6]: Hover over 'MINIMUM_FEE' below -> Shows constant documentation
+    const isFeeValid = currentLimit > MINIMUM_FEE;
+    
+    return withdrawalSuccess && hashValid && isFeeValid;
+}

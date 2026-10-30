@@ -1,0 +1,59 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./ExternalSymbolProvider.compact";
+
+/**
+ * Feature: Go to Declaration (Ctrl + B / Cmd + B / Ctrl + Click)
+ * File: GotoDeclarationDemo.compact
+ * Role: Demonstrates core PsiReference resolution, lexical scoping rules,
+ *       variable shadowing, and cross-file include symbol navigation.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * Put your caret on any of the indicated symbols below and press:
+ * - Windows / Linux: Ctrl + B (or Ctrl + Click with mouse)
+ * - macOS:           Cmd + B (or Cmd + Click)
+ *
+ * TEST 1: Cross-File Circuit Navigation
+ * - Place caret on 'computeExternalBonus' at line 46 -> jumps directly to
+ *   'export circuit computeExternalBonus' in ExternalSymbolProvider.compact!
+ *
+ * TEST 2: Cross-File Struct Navigation
+ * - Place caret on 'ExternalConfig' at line 47 -> jumps directly to
+ *   'struct ExternalConfig' in ExternalSymbolProvider.compact!
+ *
+ * TEST 3: Lexical Scoping & Variable Shadowing
+ * - Place caret on 'shadowedVar' at line 54 -> notice it resolves to the INNER
+ *   local variable declaration (line 53), respecting lexical shadowing!
+ *
+ * TEST 4: Function Parameter Navigation
+ * - Place caret on 'roundParam' at line 56 -> jumps to the parameter declaration
+ *   at line 43.
+ *
+ * TEST 5: Standard Library Navigation
+ * - Place caret on 'CompactStandardLibrary' at line 4 above -> Ctrl + B jumps
+ *   straight to the bundled standard library virtual definition!
+ * ============================================================================
+ */
+
+export circuit testGotoDeclarationScenarios(roundParam: Uint<16>): Boolean {
+    // [TEST 1 & 2]: Cross-file symbol resolution
+    const bonus = computeExternalBonus(roundParam);
+    const cfg = ExternalConfig {
+        configId: 1 as Field,
+        maxRetries: 3,
+        isEnabled: true
+    };
+
+    // [TEST 3]: Variable shadowing
+    const shadowedVar = 10;
+    if (cfg.isEnabled) {
+        const shadowedVar = 999;
+        assert(shadowedVar == 999, "Inner variable shadowed");
+    }
+
+    assert(bonus > 0, "Bonus positive");
+    return cfg.isEnabled;
+}

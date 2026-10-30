@@ -1,0 +1,69 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+
+/**
+ * Feature: Find Usages (Alt + F7 / Option + F7)
+ * File: TokenDeclarations.compact
+ * Role: Declares structs, enums, circuits, witnesses, and constants that are
+ *       cross-referenced across multiple files.
+ */
+
+// 1. Enum declaration - Place caret on 'TokenState' or variants ('Active', 'Frozen') and press Alt+F7
+export enum TokenState {
+    Active,
+    Paused,
+    Frozen,
+    Migrating
+}
+
+// 2. Struct declaration - Place caret on 'TokenMetadata' or fields ('symbol', 'decimals') and press Alt+F7
+export struct TokenMetadata {
+    symbol: Bytes<8>,
+    decimals: Uint<8>,
+    totalSupply: Uint<64>
+}
+
+// 3. Struct declaration - Place caret on 'AccountBalance' or 'owner' and press Alt+F7
+export struct AccountBalance {
+    owner: Bytes<32>,
+    amount: Uint<64>,
+    state: TokenState
+}
+
+// 4. Constant declaration - Place caret on 'DEFAULT_FEE' and press Alt+F7
+export const DEFAULT_FEE: Uint<64> = 10;
+
+// 5. Witness declaration - Place caret on 'fetchSignerKey' and press Alt+F7
+witness fetchSignerKey(): Bytes<32>;
+
+/**
+ * 6. Circuit declaration - Place caret on 'mintToken' or parameter 'amount' and press Alt+F7.
+ *    - Notice that 'mintToken' finds usages across this file, TokenOperations.compact, and TokenAudit.compact!
+ *    - Notice that parameter 'amount' only finds usages within this circuit body (LocalSearchScope).
+ */
+export circuit mintToken(recipient: Bytes<32>, amount: Uint<64>): Boolean {
+    const fee = DEFAULT_FEE;
+    const finalAmount = amount - fee;
+    assert(finalAmount > 0, "Mint amount must exceed default fee");
+    return true;
+}
+
+/**
+ * 7. Helper circuit declaration - Place caret on 'validateRecipient' and press Alt+F7.
+ */
+circuit validateRecipient(recipient: Bytes<32>): Boolean {
+    const isZero = recipient == default<Bytes<32>>;
+    return !isZero;
+}
+
+/**
+ * 8. Circuit declaration - Place caret on 'transferTokens' and press Alt+F7.
+ */
+export circuit transferTokens(sender: Bytes<32>, to: Bytes<32>, amount: Uint<64>): Boolean {
+    const valid = validateRecipient(to);
+    assert(valid, "Invalid recipient address");
+    assert(amount > 0, "Transfer amount must be positive");
+    return true;
+}

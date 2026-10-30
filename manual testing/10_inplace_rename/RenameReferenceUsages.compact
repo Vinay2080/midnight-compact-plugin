@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./RenameTargetDeclarations.compact";
+
+/**
+ * Feature: Inplace Rename Refactoring (Shift + F6)
+ * File: RenameReferenceUsages.compact
+ * Role: Demonstrates cross-file identifier refactoring, local scope renaming,
+ *       and keyword collision validation.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ *
+ * TEST 1: Cross-File Circuit Rename
+ * 1. Place caret on 'depositVaultFunds' at line 35 below (or in RenameTargetDeclarations.compact).
+ * 2. Press Shift + F6.
+ * 3. Type 'executeDeposit' and press Enter.
+ * 4. Notice that BOTH files are instantly and cleanly updated in unison!
+ *
+ * TEST 2: Local Variable Renaming
+ * 1. Place caret on 'localVal' at line 36 below.
+ * 2. Press Shift + F6 and type 'sanitizedAmount'.
+ * 3. Press Enter -> only local usages within this circuit are renamed.
+ *
+ * TEST 3: Keyword Collision Prevention & Validation
+ * 1. Place caret on 'localVal' and press Shift + F6.
+ * 2. Try entering a reserved Compact keyword: 'circuit', 'const', 'contract', 'if', or 'return'.
+ * 3. Notice IntelliJ rejects the rename or warns that the identifier is a keyword!
+ * 4. Try entering an invalid identifier like '123bad' or 'bad name' -> validation rejects it.
+ * ============================================================================
+ */
+
+export circuit testRenameUsages(user: Bytes<32>, initialAmt: Uint<64>): VaultAccount {
+    const freshAccount = VaultAccount {
+        accountId: user,
+        storedBalance: initialAmt,
+        isWhitelisted: true
+    };
+
+    // [TEST 1 & 2]: Renaming 'depositVaultFunds' or 'localVal'
+    const localVal = initialAmt + 100;
+    const finalAccount = depositVaultFunds(freshAccount, localVal);
+
+    return finalAccount;
+}

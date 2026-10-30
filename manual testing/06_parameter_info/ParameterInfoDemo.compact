@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma language_version >= 0.26.0;
+
+import CompactStandardLibrary;
+include "./ParameterInfoDeclarations.compact";
+
+/**
+ * Feature: Parameter Info (Ctrl + P / Cmd + P)
+ * File: ParameterInfoDemo.compact
+ * Role: Interactive demonstration of real-time parameter tooltips and active argument index tracking.
+ *
+ * ============================================================================
+ * INTERACTIVE TEST INSTRUCTIONS:
+ * In any of the calls below, place your caret inside the parentheses or braces
+ * and press:
+ * - Windows / Linux: Ctrl + P
+ * - macOS:           Cmd + P
+ *
+ * Notice how IntelliJ displays a floating tooltip with all parameters/fields,
+ * and highlights in BOLD the exact parameter corresponding to your caret position!
+ * ============================================================================
+ */
+
+export circuit testParameterInfoScenarios(): Boolean {
+    const dummyKey = default<Bytes<32>>;
+    
+    // -------------------------------------------------------------------------
+    // TEST 1: Circuit Call - 1st Parameter Active
+    // Place caret between ( and comma below and press Ctrl + P:
+    // Tooltip: "sender: Bytes<32>, recipient: Bytes<32>, amount: Uint<64>, memo: Bytes<32>"
+    // Active / Bold: "sender: Bytes<32>"
+    // -------------------------------------------------------------------------
+    const res1 = transferFunds(dummyKey, dummyKey, 100, dummyKey);
+    
+    // -------------------------------------------------------------------------
+    // TEST 2: Circuit Call - 3rd Parameter Active
+    // Place caret on '500' below and press Ctrl + P:
+    // Active / Bold: "amount: Uint<64>"
+    // -------------------------------------------------------------------------
+    const res2 = transferFunds(dummyKey, dummyKey, 1000, dummyKey);
+    
+    // -------------------------------------------------------------------------
+    // TEST 3: Zero-Parameter Call
+    // Place caret inside '()' below and press Ctrl + P:
+    // Tooltip: "<no parameters>"
+    // -------------------------------------------------------------------------
+    const version = getProtocolVersion();
+    
+    // -------------------------------------------------------------------------
+    // TEST 4: Witness Call - Active Parameter Tracking
+    // Place caret on '2' below and press Ctrl + P:
+    // Active / Bold: "round: Uint<32>"
+    // -------------------------------------------------------------------------
+    const entropy = computeEntropy(dummyKey, 2, 42 as Field);
+    
+    // -------------------------------------------------------------------------
+    // TEST 5: Struct Literal - Field Tracking
+    // Place caret after 'id: 1, ' below and press Ctrl + P:
+    // Active / Bold: "balance: Uint<64>"
+    // -------------------------------------------------------------------------
+    const account = UserAccount {
+        id: 1,
+        balance: 10000,
+        tierLevel: 2,
+        isFrozen: false
+    };
+    
+    // -------------------------------------------------------------------------
+    // TEST 6: Struct Literal - Out-of-Order Field Tracking
+    // Even when fields are written out of declaration order, placing caret
+    // on 'id: 42' highlights 'id: Uint<32>', and on 'balance: 500' highlights 'balance: Uint<64>'!
+    // -------------------------------------------------------------------------
+    const outOfOrderAccount = UserAccount {
+        balance: 500,
+        id: 42,
+        isFrozen: false,
+        tierLevel: 1
+    };
+    
+    // -------------------------------------------------------------------------
+    // TEST 7: Nested Call Parameter Integrity
+    // In 'outer(inner(1, 2), 3)', placing caret on '2' tracks the INNER call
+    // parameter index, while placing caret on '3' tracks the OUTER call!
+    // -------------------------------------------------------------------------
+    const nestedRes = transferFunds(
+        computeEntropy(dummyKey, 1, 0 as Field),
+        dummyKey,
+        version as Uint<64>,
+        dummyKey
+    );
+    
+    return res1 && res2 && nestedRes;
+}
