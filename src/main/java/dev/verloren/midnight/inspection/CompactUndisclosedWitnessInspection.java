@@ -140,7 +140,7 @@ public class CompactUndisclosedWitnessInspection extends LocalInspectionTool {
   }
 
   /**
-   * Tests whether an element is enclosed directly within a disclose(...) expression.
+   * Tests whether an element is enclosed directly within a disclosed(...) expression.
    */
   private static boolean isWrappedInDisclose(@NotNull PsiElement element) {
     if (element.getNode() != null && element.getNode().getElementType() == CompactElementTypes.DISCLOSE_EXPR) {

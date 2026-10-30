@@ -112,7 +112,7 @@ public class CompactDuplicateDeclarationInspection extends LocalInspectionTool {
       }
     }
 
-    // Step 4: Report duplicates (first declaration is considered primary; subsequent ones are flagged)
+    // Step 4: Report duplicates (first declaration is considered primary; further ones are flagged)
     reportDuplicates(valueDeclarations, holder);
     reportDuplicates(typeDeclarations, holder);
   }

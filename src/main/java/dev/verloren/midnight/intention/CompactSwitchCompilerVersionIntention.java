@@ -42,7 +42,7 @@ import java.util.SequencedMap;
  * <h3>Threading Contract</h3>
  * <ul>
  *   <li><b>No Automatic Write Action:</b> Overrides {@link #startInWriteAction()} to return {@code false}
- *       because switching or downloading a compiler requires background modal tasks and user dialogs.</li>
+ *       because switching or downloading a compiler requires background modal tasks and user dialogues.</li>
  *   <li><b>Read Action for Availability:</b> {@link #isAvailable} runs under {@code @RequiresReadLock} on the EDT.</li>
  * </ul>
  *
@@ -66,7 +66,7 @@ public class CompactSwitchCompilerVersionIntention extends PsiElementBaseIntenti
   }
 
   /**
-   * Overridden to false because toolchain download and setup runs asynchronously outside write actions.
+   * Overridden to false because toolchain download and setup run asynchronously outside write actions.
    */
   @Override
   public boolean startInWriteAction() {

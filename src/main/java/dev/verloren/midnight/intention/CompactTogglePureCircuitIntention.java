@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  *       is positioned anywhere on the circuit signature/header line before the body block.</li>
  *   <li><b>Pure Circuit Semantics:</b> Pure circuits in Compact cannot access ledger state, invoke witnesses,
  *       emit events, or call non-pure circuits. This intention allows fast toggling between pure and impure modes.</li>
- *   <li><b>Whitespace Cleanup:</b> Uses {@link CompactPsiUtil#deleteNodeWithTrailingWhitespace} when removing
+ *   <li><b>Whitespace Clean-up:</b> Uses {@link CompactPsiUtil#deleteNodeWithTrailingWhitespace} when removing
  *       the {@code pure} keyword to avoid orphaned double spaces.</li>
  * </ul>
  * </p>
@@ -96,7 +96,7 @@ public class CompactTogglePureCircuitIntention extends PsiElementBaseIntentionAc
       // Step 3: Remove 'pure' token and trailing whitespace
       CompactPsiUtil.deleteNodeWithTrailingWhitespace(document, pureNode);
     } else {
-      // Step 4: Insert 'pure ' before the 'circuit' keyword token
+      // Step 4: Insert 'pure' before the 'circuit' keyword token
       ASTNode circuitNode = circuit.getNode().findChildByType(CompactTokenTypes.CIRCUIT);
       if (circuitNode != null) {
         document.insertString(circuitNode.getTextRange().getStartOffset(), "pure ");

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
  * <p>
  * Offered by {@link dev.verloren.midnight.inspection.CompactUndisclosedWitnessInspection} when private
- * witness data is assigned to public on-chain ledger state without an explicit disclosure boundary:
+ * witness data is assigned to a public on-chain ledger state without an explicit disclosure boundary:
  * <ul>
  *   <li><b>Intention / Quick-Fix Action:</b> Displayed in the Alt+Enter menu.</li>
  *   <li><b>Synthetic AST Parsing:</b> Uses {@link PsiFileFactory} to parse a synthetic {@code disclose(...)}

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * <h3>Module Initialization Special Case</h3>
  * <p>
  * Compact syntax restricts {@code constructor} to top-level contract definitions. Modules cannot
- * declare constructors directly. Reusable library modules (e.g., token standards) often initialize
+ * declare constructors directly. Reusable library modules (e.g. token standards) often initialize
  * sealed fields inside an initialization circuit intended to be invoked by the deploying contract's
  * constructor. As such, assignments within a {@link CompactModuleDefinition} are exempt from this inspection.
  * </p>

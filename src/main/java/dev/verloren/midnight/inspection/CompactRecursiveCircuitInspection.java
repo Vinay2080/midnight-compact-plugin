@@ -27,7 +27,7 @@ import java.util.Set;
  *       bounded arithmetic constraint graphs (R1CS / Plonk constraints). Recursive execution paths
  *       cannot be unrolled at compile time and are fundamentally prohibited in ZK circuit semantics.</li>
  *   <li><b>Direct vs Mutual Recursion:</b> Detects both direct self-calls (e.g. {@code circuit A() { A(); }})
- *       and indirect multi-step call chains (e.g. {@code A -> B -> C -> A}) using depth-bounded cycle detection.</li>
+ *       and indirect multistep call chains (e.g. {@code A -> B -> C -> A}) using depth-bounded cycle detection.</li>
  * </ul>
  * </p>
  *

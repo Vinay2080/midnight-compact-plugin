@@ -67,7 +67,7 @@ public class CompactSpecifyTypeExplicitlyIntention extends PsiElementBaseIntenti
       return binding;
     }
 
-    // Check if element is part of the const statement (e.g. 'const' keyword, semicolon, or whitespace)
+    // Check if an element is part of the const statement (e.g. 'const' keyword, semicolon, or whitespace)
     PsiElement current = element;
     while (current != null) {
       if (current.getNode() != null && current.getNode().getElementType() == CompactElementTypes.CONST_STATEMENT) {

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *       {@code type}, {@code ledger}, and {@code witness}).</li>
  *   <li><b>Grammar Constraint:</b> Compact block-scoped constants ({@code const}) cannot be exported
  *       and are explicitly excluded.</li>
- *   <li><b>Smart Whitespace Cleanup:</b> When removing {@code export}, uses
+ *   <li><b>Smart Whitespace Clean-up:</b> When removing {@code export}, uses
  *       {@link CompactPsiUtil#deleteNodeWithTrailingWhitespace} to avoid leaving trailing double spaces.
  *       When adding, inserts {@code "export "} cleanly at the start offset of the declaration node.</li>
  * </ul>
@@ -116,7 +116,7 @@ public class CompactToggleExportIntention extends PsiElementBaseIntentionAction 
       // Step 3: Remove 'export' and trailing whitespace
       CompactPsiUtil.deleteNodeWithTrailingWhitespace(document, exportNode);
     } else {
-      // Step 4: Insert 'export ' at the start of the declaration
+      // Step 4: Insert 'export' at the start of the declaration
       int offset = decl.getTextRange().getStartOffset();
       document.insertString(offset, "export ");
     }
