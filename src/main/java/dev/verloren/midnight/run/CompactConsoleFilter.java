@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * Console filter that detects Compact compiler diagnostics and converts location references into clickable editor hyperlinks.
  *
  * <h3>Architectural Role &amp; Extension Point</h3>
- * <p>Implements {@link Filter} to intercept standard output and standard error lines printed to the execution
+ * <p>Implements {@link Filter} to intercept standard output and standard error lines printed in the execution
  * console during Compact contract compilation. When the compiler outputs an error, warning, or location tag
  * matching the canonical format {@code "file.compact:line:column"}, this filter creates an {@link OpenFileHyperlinkInfo}
  * enabling developers to jump directly to the precise source coordinate with a single click.</p>
@@ -93,13 +93,13 @@ public class CompactConsoleFilter implements Filter {
       int lineNumber = Math.max(0, Integer.parseInt(matcher.group(2)) - 1);
       int columnNumber = Math.max(0, Integer.parseInt(matcher.group(3)) - 1);
 
-      // 2. Resolve VirtualFile via absolute path or project-relative path
+      // 2. Resolve VirtualFile via an absolute path or project-relative path
       VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
       if (file == null && project.getBasePath() != null) {
         file = LocalFileSystem.getInstance().findFileByPath(project.getBasePath() + "/" + filePath);
       }
 
-      // 3. Create interactive OpenFileHyperlinkInfo if virtual file exists on disk
+      // 3. Create interactive OpenFileHyperlinkInfo if a virtual file exists on disk
       if (file != null) {
         int matchStart = entireLength - line.length() + matcher.start();
         int matchEnd = entireLength - line.length() + matcher.end(3);

@@ -91,18 +91,18 @@ public class CompactRunProfileState extends CommandLineState {
    */
   @Override
   protected @NotNull ProcessHandler startProcess() throws ExecutionException {
-    // 1. Resolve executable path and assemble full command line with flags and targets
+    // 1. Resolve the executable path and assemble the full command line with flags and targets
     GeneralCommandLine commandLine = CompactToolchainUtil.createCommandLine(
         getEnvironment().getProject(),
         configuration.buildCommandLineArgs(),
         getEnvironment().getProject().getBasePath()
     );
 
-    // 2. Wrap command line in an OS process handler
+    // 2. Wrap the command line in an OS process handler
     OSProcessHandler handler = new OSProcessHandler(commandLine);
     ProcessTerminatedListener.attach(handler);
 
-    // 3. Register process listener to refresh IDE problem markers upon build completion
+    // 3. Register a process listener to refresh IDE problem markers upon build completion
     handler.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {

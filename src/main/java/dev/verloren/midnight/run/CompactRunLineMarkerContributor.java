@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  *          [ExecutorAction.getActions(0)]
  *                  │
  *                  ▼
- *        Pops up Run / Debug menu
+ *        Pops up a Run / Debug menu
  * </pre>
  *
  * <h3>Threading Contract</h3>
@@ -54,7 +54,7 @@ public class CompactRunLineMarkerContributor extends RunLineMarkerContributor {
    * Computes run icon information and executor actions for contract and circuit identifier elements.
    *
    * @param element the candidate leaf PSI element in the editor
-   * @return {@link Info} containing the execute icon and run actions, or {@code null} if element is not runnable
+   * @return {@link Info} containing the executed icon and run actions, or {@code null} if the element is not runnable
    */
   @Override
   public @Nullable Info getInfo(@NotNull PsiElement element) {

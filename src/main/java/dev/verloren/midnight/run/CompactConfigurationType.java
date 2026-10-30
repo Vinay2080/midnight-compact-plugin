@@ -16,7 +16,7 @@ import javax.swing.*;
  * <h3>Architectural Role &amp; Extension Point</h3>
  * <p>Registered as a {@code configurationType} extension in {@code plugin.xml}. Implements
  * {@link ConfigurationType} to register "Compact Smart Contract" into IntelliJ's Run/Debug Configurations
- * dialog (Edit Configurations, Run gutter icons, context menu Run actions). Serves as the factory provider
+ * dialogue (Edit Configurations, Run gutter icons, context menu Run actions). Serves as the factory provider
  * for {@link CompactConfigurationFactory} and the root descriptor for all Compact compilation profiles.</p>
  *
  * <h3>Configuration Infrastructure Hierarchy</h3>
@@ -39,7 +39,7 @@ import javax.swing.*;
  *
  * <h3>Threading Contract</h3>
  * <ul>
- *   <li><b>Thread Safety:</b> Stateless and thread-safe. Methods are invoked on EDT when opening configuration dialogs
+ *   <li><b>Thread Safety:</b> Stateless and thread-safe. Methods are invoked on EDT when opening configuration dialogues
  *       or populating action groups.</li>
  * </ul>
  *
@@ -55,7 +55,7 @@ public class CompactConfigurationType implements ConfigurationType {
   public static final String ID = "COMPACT_RUN_CONFIGURATION";
 
   /**
-   * Returns the user-facing display name of this configuration type in run dialogs and menus.
+   * Returns the user-facing display name of this configuration type in run dialogues and menus.
    *
    * @return {@code "Compact Smart Contract"}
    */
@@ -75,7 +75,7 @@ public class CompactConfigurationType implements ConfigurationType {
   }
 
   /**
-   * Returns the icon associated with Compact run configurations in toolbars and dialogs.
+   * Returns the icon associated with Compact run configurations in toolbars and dialogues.
    *
    * @return {@link MidnightIcons#FILE}
    */

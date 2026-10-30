@@ -24,7 +24,7 @@ import java.util.List;
  * <h3>Architectural Role</h3>
  * <p>Extends {@link LocatableConfigurationBase} with execution state type {@link CompactRunProfileState}.
  * Encapsulates compiler invocation options including the target {@code .compact} source file path,
- * destination artifact directory, ZK proving key generation bypass ({@code --skip-zk}), and optional
+ * destination artefact directory, ZK proving key generation bypass ({@code --skip-zk}), and optional
  * custom flags. Manages XML persistence to {@code .idea/runConfigurations} and coordinates with
  * {@link CompactRunConfigurationEditor} for UI presentation and {@link CompactRunProfileState} for process execution.</p>
  *
@@ -64,7 +64,7 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
   private String compactFilePath = "";
 
   /**
-   * Target directory where generated TypeScript bindings, ZKIR, and proof keys are emitted.
+   * Target the directory where generated TypeScript bindings, ZKIR, and proof keys are emitted.
    */
   private String outputDirectory = "";
 
@@ -101,7 +101,7 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
 
   /**
    * Updates the target Compact contract file path, automatically re-deriving the default output directory
-   * if the current output directory is blank, default {@code "gen"}, or matched the prior derived path.
+   * if the current output directory is blank, default {@code "gen"}, or matched the prior-derived path.
    *
    * @param compactFilePath the new file path
    */
@@ -134,7 +134,7 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
   }
 
   /**
-   * Sets the target directory where compiler artifacts should be written.
+   * Sets the target directory where compiler artefacts should be written.
    *
    * @param outputDirectory target directory path
    */

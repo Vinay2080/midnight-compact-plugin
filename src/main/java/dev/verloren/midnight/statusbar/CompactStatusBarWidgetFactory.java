@@ -70,7 +70,6 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
    * @return true
    */
   @Override
-  @SuppressWarnings("RedundantMethodOverride")
   public boolean isAvailable(@NotNull Project project) {
     return true;
   }
@@ -82,7 +81,6 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
    * @return true
    */
   @Override
-  @SuppressWarnings("RedundantMethodOverride")
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
     return true;
   }
@@ -115,7 +113,6 @@ public class CompactStatusBarWidgetFactory implements StatusBarWidgetFactory {
    * @return true
    */
   @Override
-  @SuppressWarnings("RedundantMethodOverride")
   public boolean isConfigurable() {
     return true;
   }

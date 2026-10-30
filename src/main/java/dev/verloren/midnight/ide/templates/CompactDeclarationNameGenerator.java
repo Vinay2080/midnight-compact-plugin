@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Universal generator and scope analyzer for default declaration names in Compact.
+ * Universal generator and scope analyser for default declaration names in Compact.
  *
  * <p>Generates auto-numbered names adhering to the language naming rules:
  * <ul>
@@ -46,7 +46,7 @@ public final class CompactDeclarationNameGenerator {
   }
 
   /**
-   * Generates a declaration name for the specified declaration type, honoring any explicitly specified name.
+   * Generates a declaration name for the specified declaration type, honouring any explicitly specified name.
    */
   public static @NotNull String generateName(
       @NotNull CompactDeclarationType type,
@@ -64,7 +64,7 @@ public final class CompactDeclarationNameGenerator {
   }
 
   /**
-   * Generates a declaration name honoring explicit name, with fallback to lowest available integer.
+   * Generates a declaration name honouring an explicit name, with fallback to the lowest available integer.
    */
   public static @NotNull String generateName(
       @NotNull String baseName,
@@ -132,7 +132,7 @@ public final class CompactDeclarationNameGenerator {
       return names;
     }
 
-    // 1. Inspect parsed PSI named elements directly belonging to this scope container
+    // 1. Inspect parsed PSI-named elements directly belonging to this scope container
     switch (scopeRoot) {
       case CompactFile file -> {
         for (CompactNamedElement named : file.getTopLevelDeclarations()) {

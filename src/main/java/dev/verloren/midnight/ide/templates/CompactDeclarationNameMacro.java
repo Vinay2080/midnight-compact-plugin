@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Universal live template macro generating auto-numbered declaration names based on declaration type.
+ * Universal live template macro generating auto-numbered declaration names based on the declaration type.
  *
  * <p>Usage in live templates:
  * <ul>
  *   <li>{@code compactDeclarationName("circuit")} &rarr; {@code "circuit1"}, {@code "circuit2"}, etc.</li>
  *   <li>{@code compactDeclarationName("witness")} &rarr; {@code "witness1"}, {@code "witness2"}, etc.</li>
  *   <li>{@code compactDeclarationName("struct")} &rarr; {@code "struct1"}, etc.</li>
- *   <li>{@code compactDeclarationName()} &rarr; automatically deduced from preceding keyword in context.</li>
+ *   <li>{@code compactDeclarationName()} &rarr; automatically deduced from the preceding keyword in context.</li>
  * </ul>
  * </p>
  */

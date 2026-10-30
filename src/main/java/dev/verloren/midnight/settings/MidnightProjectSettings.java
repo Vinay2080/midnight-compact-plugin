@@ -20,7 +20,7 @@ import org.jspecify.annotations.NonNull;
 )
 public final class MidnightProjectSettings implements PersistentStateComponent<MidnightProjectSettings> {
   /**
-   * Specifically selected Compact compiler version for this project (e.g. "0.26.0", "0.23.0"),
+   * Specifically, selected Compact compiler version for this project (e.g. "0.26.0", "0.23.0"),
    * or empty string to inherit the global/auto-detected default compiler.
    */
   public String selectedCompilerVersion = "";

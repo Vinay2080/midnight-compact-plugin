@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Produces and recognizes {@link CompactRunConfiguration} instances dynamically from IDE context.
+ * Produces and recognizes {@link CompactRunConfiguration} instances dynamically from the IDE context.
  *
  * <h3>Architectural Role &amp; Extension Point</h3>
  * <p>Registered as a {@code runConfigurationProducer} extension in {@code plugin.xml}. Extends
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  *   [CompactRunConfigurationProducer.setupConfigurationFromContext]
  *                          │
  *                          ├─► findCompactFileInfo(context)
- *                          │     ├─► Check PSI element &amp; containing file
+ *                          │     ├─► Check PSI element &amp; containing a file
  *                          │     └─► Verify .compact extension / CompactFileType
  *                          │
  *                          ▼
@@ -80,7 +80,7 @@ public class CompactRunConfigurationProducer extends LazyRunConfigurationProduce
       @NotNull ConfigurationContext context,
       @NotNull Ref<PsiElement> sourceElement
   ) {
-    // 1. Locate Compact file info from current PSI context
+    // 1. Locate Compact file info from the current PSI context
     CompactFileInfo info = findCompactFileInfo(context);
     if (info == null) {
       return false;
@@ -89,7 +89,7 @@ public class CompactRunConfigurationProducer extends LazyRunConfigurationProduce
     // 2. Anchor the source element for IDE navigation tracking
     sourceElement.set(info.location());
 
-    // 3. Set display title and target contract file path
+    // 3. Set the display title and target contract file path
     configuration.setName("Compile " + info.vFile().getName());
     configuration.setCompactFilePath(info.vFile().getPath());
 
@@ -136,7 +136,7 @@ public class CompactRunConfigurationProducer extends LazyRunConfigurationProduce
    * Lightweight record capturing file and PSI context references for a target Compact file.
    *
    * @param location the specific PSI element triggering the run action
-   * @param psiFile the containing Compact PSI file
+   * @param psiFile they contain a Compact PSI file
    * @param vFile the virtual file on disk
    */
   private record CompactFileInfo(@NotNull PsiElement location, @NotNull PsiFile psiFile, @NotNull VirtualFile vFile) {}

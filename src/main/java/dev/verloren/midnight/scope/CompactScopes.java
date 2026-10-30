@@ -95,7 +95,7 @@ public final class CompactScopes {
   }
 
   /**
-   * Helper checking the AST element type of a PSI element.
+   * Helper checking the AST element type of PSI element.
    */
   private static boolean nodeType(@NotNull PsiElement element, @NotNull com.intellij.psi.tree.IElementType type) {
     return element.getNode() != null && element.getNode().getElementType() == type;

@@ -60,7 +60,7 @@ public final class CompactDefaultTemplatePropertiesProvider implements DefaultTe
   }
 
   /**
-   * Resolves the active compiler toolchain version for the given project, or falls back to 0.34.0.
+   * Resolves the active compiler toolchain version for the given project or falls back to 0.34.0.
    */
   public static @NotNull String resolveCompilerVersion(@Nullable Project project) {
     if (project != null) {

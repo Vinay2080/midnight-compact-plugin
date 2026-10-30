@@ -373,16 +373,8 @@ public final class CompactToolchainUtil {
     return CompactToolchainDiscovery.parseConfiguredPath(customPath);
   }
 
-  public static @Nullable String findWslDistroForPath(@NotNull String linuxPath) {
-    return CompactToolchainDiscovery.findWslDistroForPath(linuxPath);
-  }
-
   public static boolean isWindowsSystemExecutable(@NotNull File file) {
     return CompactToolchainDiscovery.isWindowsSystemExecutable(file);
-  }
-
-  public static @Nullable File findExecutableFile(@NotNull String path) {
-    return CompactToolchainDiscovery.findExecutableFile(path);
   }
 
   public static @Nullable File findExecutableInDir(@NotNull File dir, @NotNull String baseName) {

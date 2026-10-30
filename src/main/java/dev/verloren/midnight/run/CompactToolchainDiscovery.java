@@ -1,17 +1,13 @@
 package dev.verloren.midnight.run;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.openapi.util.SystemInfo;
-import dev.verloren.midnight.version.CompactSemVerUtil;
-import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -74,8 +70,8 @@ public final class CompactToolchainDiscovery {
    * Parses a user-configured path string from settings, resolving Windows paths, WSL UNC paths,
    * or direct Linux container paths into a structured {@link CompactToolchainUtil.ToolchainInfo}.
    *
-   * @param customPath raw path string entered by user
-   * @return resolved {@link CompactToolchainUtil.ToolchainInfo}, or {@code null} if file does not exist
+   * @param customPath raw path string entered by a user
+   * @return resolved {@link CompactToolchainUtil.ToolchainInfo}, or {@code null} if the file does not exist
    */
   public static @Nullable CompactToolchainUtil.ToolchainInfo parseConfiguredPath(@NotNull String customPath) {
     // 1. Non-Windows POSIX host: directly locate executable

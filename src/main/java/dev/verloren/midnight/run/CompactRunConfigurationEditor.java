@@ -15,7 +15,7 @@ import javax.swing.*;
  * Swing-based configuration editor providing the visual settings form for {@link CompactRunConfiguration}.
  *
  * <h3>Architectural Role</h3>
- * <p>Extends {@link SettingsEditor} to present IntelliJ's "Edit Configurations" dialog panel for Compact
+ * <p>Extends {@link SettingsEditor} to present IntelliJ's "Edit Configurations" dialogue panel for Compact
  * run configurations. Provides file browsing for {@code .compact} contracts, directory selection for compiler
  * output, a toggle for bypassing Zero-Knowledge proof generation ({@code --skip-zk}), and a freeform field
  * for additional compiler options.</p>
@@ -23,10 +23,10 @@ import javax.swing.*;
  * <h3>UI Layout &amp; Dynamic State Synchronization</h3>
  * <pre>
  *   ┌────────────────────────────────────────────────────────────────────────┐
- *   │ Compact file:               [ /path/to/contract.compact ] [Browse...] │
- *   │ Output directory:           [ /path/to/project/gen      ] [Browse...] │
- *   │ [X] Skip ZK proving key generation (--skip-zk)                        │
- *   │ Additional compiler flags:  [ --verbose                               ] │
+ *   │ Compact file:               [ /path/to/contract.compact ] [Browse...]  │
+ *   │ Output directory:           [ /path/to/project/gen      ] [Browse...]  │
+ *   │ [X] Skip ZK proving key generation (--skip-zk)                         │
+ *   │ Additional compiler flags:  [ --verbose                               ]│
  *   └────────────────────────────────────────────────────────────────────────┘
  * </pre>
  * <p>A document listener on {@code compactFilePathField} monitors text changes: whenever a new contract
@@ -51,7 +51,7 @@ public class CompactRunConfigurationEditor extends SettingsEditor<CompactRunConf
   private final TextFieldWithBrowseButton compactFilePathField = new TextFieldWithBrowseButton();
 
   /**
-   * Directory chooser text field for selecting where compiler artifacts are generated.
+   * Directory chooser text field for selecting where compiler artefacts are generated.
    */
   private final TextFieldWithBrowseButton outputDirectoryField = new TextFieldWithBrowseButton();
 
@@ -87,7 +87,7 @@ public class CompactRunConfigurationEditor extends SettingsEditor<CompactRunConf
         )
     );
 
-    // 3. Register document listener to dynamically derive output folder when file changes
+    // 3. Register a document listener to dynamically derive the output folder when the file changes
     compactFilePathField.getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
       private void updateOutput() {
         String currentOut = outputDirectoryField.getText().trim();

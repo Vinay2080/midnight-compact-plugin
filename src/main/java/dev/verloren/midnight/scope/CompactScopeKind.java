@@ -7,7 +7,7 @@ package dev.verloren.midnight.scope;
  * <p>
  * Used across the plugin's semantic analysis, resolution, and inspection systems:
  * <ul>
- *   <li><b>Scope Discovery:</b> Assigned by {@link CompactScopes#kindOf} when walking up the PSI tree
+ *   <li><b>Scope Discovery:</b> Assigned by {@link CompactScopes} when walking up the PSI tree
  *       from any reference or completion site to determine the enclosing scope boundary.</li>
  *   <li><b>Resolution & Shadowing:</b> Informs {@link CompactPsiScope} and {@link dev.verloren.midnight.resolve.CompactResolveUtil}
  *       how symbols are bound, whether forward references are permitted, and how lexical shadowing rules apply.</li>

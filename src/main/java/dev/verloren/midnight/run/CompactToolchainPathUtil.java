@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <h3>Architectural Role</h3>
  * <p>Handles translations between Windows host paths, WSL Linux paths, and UNC network shares.
- * Provides deterministic artifact directory naming logic that maps contract source paths (e.g.
+ * Provides deterministic artefact directory naming logic that maps contract source paths (e.g.
  * {@code "src/contracts/counter.compact"}) into clean output paths (e.g. {@code "gen/counter"})
  * while stripping boilerplate source folders (such as {@code "src"}, {@code "contracts"}, {@code "circuits"}).</p>
  *
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  *   [stripSourceRoots]           ──► "escrow/vault" (strips 'src/', 'contracts/')
  *                                       │
  *                                       ▼
- *   Resulting Artifact Directory: "gen/escrow/vault"
+ *   Resulting Artefact Directory: "gen/escrow/vault"
  * </pre>
  *
  * <h3>Threading Contract</h3>
@@ -144,7 +144,7 @@ public final class CompactToolchainPathUtil {
       @NotNull String compactFilePath,
       @Nullable String baseOutputDir
   ) {
-    // 1. Resolve base directory from arguments, settings, or default "gen"
+    // 1. Resolve the base directory from arguments, settings, or default "gen"
     String base = getBase(baseOutputDir);
     String path = compactFilePath.trim().replace('\\', '/');
     if (path.isEmpty()) {
