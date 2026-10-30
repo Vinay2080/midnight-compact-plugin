@@ -13,6 +13,7 @@
 - File(s) / Component(s): [e.g., dev.verloren.midnight.psi.impl.CompactLexer, CompactParser, CompactResolveUtil]
 - Recent AI Changes / Diff: [Paste diff, describe recent changes, or specify git commit/branch]
 - Primary Focus / Questions: [e.g., Verify performance, check for memory leaks, eliminate hardcoding, ensure downward dependency compliance, optimize token handling]
+- Reference Precedent / Comparable Subsystem: [Optional or "Auto-detect from .ai/context/reference-map.md": e.g., intellij-rust/lang/core/types/infer, intellij-solidity/lang/resolve, intellij-scala/compile-server, Rplugin/interpreter, intellij-elixir/parser]
 - Execution Mode: [Select one: "REVIEW ONLY" (produce report & diff proposals) OR "REVIEW & APPLY" (execute the modifications, refactor, and update tests)]
 ```
 
@@ -46,7 +47,22 @@ Before modifying or finalizing any code, investigate how the target interacts wi
 * Identify whether consumers rely on direct concrete references, interfaces, or dynamic lookups.
 * Inspect all related unit tests, test fixtures, and test utilities.
 
-### 3.2 Dependency Mapping
+### 3.2 Reference Precedent & Idiom Grounding (Local Repositories)
+Before proposing architectural modifications, optimizations, or refactoring strategies, cross-reference battle-tested JetBrains implementations in local reference repositories (`intellij-rust/`, `intellij-scala/`, `intellij-elixir/`, `intellij-solidity/`, `Rplugin/`):
+* **Consult `.ai/context/reference-map.md`**: Match the subsystem under review to its corresponding reference implementation:
+  * **Type Inference, Caches & Stubs**: `intellij-rust/src/main/kotlin/org/rust/lang/core/types/infer/`, `lang/core/resolve/`, `lang/core/stubs/` (caching, scopes, type unification).
+  * **Smart Contract / Struct Models & Member Completion**: `intellij-solidity/src/main/kotlin/me/serce/solidity/` (`lang/psi/`, `lang/resolve/`, `ide/completion/`).
+  * **External Compiler Daemons & Background Pipelines**: `intellij-scala/scala/compile-server/` & `scala-impl/.../compiler/` (background daemons, exit code monitors, process listeners).
+  * **CLI / Toolchain Discovery, WSL & Process Runners**: `Rplugin/psi/.../interpreter/` & `src/.../run/` (WSL path translation, environment discovery, script runners).
+  * **Handwritten AST/PSI Integration & Hover Docs**: `intellij-elixir/src/org/elixir_lang/` (`lexer/`, `parser/`, `reference/`, `templates/`).
+* **Strict Retrieval Budget (1–3 Files Only)**:
+  * Do **NOT** load entire repositories or large directories into context.
+  * Use JetBrains MCP symbol search (`execute_tool search_symbol --q "<ReferenceSymbol>"`) or view 1–3 specific reference files to inspect concrete idioms.
+* **Extract Architectural Patterns, NOT Foreign Language Semantics**:
+  * Extract **IntelliJ Platform patterns** (e.g., `CachedValuesManager`, `RecursionManager`, `PsiTreeUtil`, `ReadAction.nonBlocking()`, `WriteCommandAction`).
+  * Do **NOT** copy foreign language semantics, EVM opcodes, Rust macro expansion engines, or external syntax rules. Adapt patterns strictly to Compact grammar and modern Java 25 standards.
+
+### 3.3 Dependency Mapping
 Establish relationships with surrounding subsystem layers:
 * **Lexer / Tokens**: Token types (`CompactTokenTypes`), token sets, raw text boundaries, whitespace/comment filtering.
 * **Parser / PSI**: Parser definition, AST nodes, composite elements, element factories, error element recovery.
@@ -55,7 +71,7 @@ Establish relationships with surrounding subsystem layers:
 * **IDE Presentation**: Syntax highlighting, annotators, inspections, completion contributors, intentions, formatters.
 * **Platform SDK**: Threading guards (`ReadAction`, `WriteCommandAction`), `CachedValuesManager`, modification trackers.
 
-### 3.3 Data and Control Flow
+### 3.4 Data and Control Flow
 Trace the runtime lifecycle:
 * **Trigger**: What event or component invokes the target? (e.g., user typing, indexing, syntax pass, action execution).
 * **Inputs**: What inputs, thread contexts, and state invariants are passed in?
@@ -63,7 +79,7 @@ Trace the runtime lifecycle:
 * **Downstream Consumers**: Which components consume these outputs, and what implicit assumptions do they make about ordering, immutability, token boundaries, or nullability?
 * **Failure Modes**: What happens when the input is incomplete, malformed, or cancelled mid-execution?
 
-### 3.4 Change Impact Assessment
+### 3.5 Change Impact Assessment
 Before modifying code, determine:
 * Which files, interfaces, and extension points will be affected.
 * Whether existing public APIs or binary/source contracts would break.
@@ -71,7 +87,7 @@ Before modifying code, determine:
 * What downstream consumers require accompanying updates.
 * Which existing tests must be updated and which new tests must be created.
 
-### 3.5 Dependency Findings Matrix
+### 3.6 Dependency Findings Matrix
 Summarize the dependency landscape in a structured table:
 
 | Component / Consumer | Relationship to Target | Current Usage / Call Site | Potential Impact of Changes | Verification Status |
@@ -137,11 +153,13 @@ Evaluate the target and any newly authored AI code across the following 10 dimen
 * Does the code use modern IntelliJ Platform SDK idioms (2025.1+ / 2026.2+)?
 * **Threading Contract**: Are PSI reads performed under `ReadAction` and PSI writes performed under `WriteCommandAction` on the EDT?
 * Are extension points, disposable lifecycles, and icon/resource loaders configured correctly?
+* **Reference Grounding**: Does the implementation or proposed optimization mirror battle-tested patterns in reference plugins (`intellij-rust`, `intellij-solidity`, `intellij-scala`, `intellij-elixir`, `Rplugin`) rather than inventing non-standard JetBrains platform mechanics?
 
 ### I. Overengineering & Simplicity
 * Are there gratuitous layers, pointless interfaces, single-implementation abstractions, or over-abstracted patterns?
 * Does the introduced complexity pay for itself?
 * Can a simpler, more direct implementation achieve the exact same outcome with fewer lines and higher clarity?
+* **Reference Precedent Sanity Check**: If mature reference plugins (e.g., `intellij-rust` or `intellij-solidity`) solve this exact problem with a straightforward utility or visitor, reject any proposal introducing nested abstraction layers or redundant factory facades.
 
 ### J. Security, Concurrency & Reliability
 * Is the code safe against race conditions during background indexing, re-parsing, or dumb mode?
@@ -183,9 +201,10 @@ Every finding must be assigned one of four explicit action tiers:
 * High-level verdict: **[READY / REQUIRES MODIFICATION / CRITICAL BLOCKED]**.
   * *Note*: If all existing and new tests pass and there are no Tier-1 defects or invariant breaches, emit **READY**. Do not force modifications for Tier-3 or Tier-4 items.
 
-### Step 2: Dependency & Impact Summary
+### Step 2: Dependency & Reference Impact Summary
 * Summary of direct consumers and downstream risks.
-* Dependency Findings Matrix (from § 3.5).
+* **Reference Architecture Precedent**: Cites target reference file(s) inspected in `intellij-rust`, `intellij-scala`, `intellij-elixir`, `intellij-solidity`, or `Rplugin` (via `.ai/context/reference-map.md`) and summarizes the proven IntelliJ idiom adopted.
+* Dependency Findings Matrix (from § 3.6).
 
 ### Step 3: Detailed Review Findings Table
 
@@ -198,7 +217,7 @@ Every finding must be assigned one of four explicit action tiers:
 * List well-designed decisions, patterns, or safeguards in the current code that should **not** be modified.
 
 ### Step 5: Recommended Action Plan & Optimizations
-* Prioritized list of concrete modifications.
+* Prioritized list of concrete modifications with architectural rationale and reference precedent citation.
 * Code diffs or replacement snippets showing the before and after state for **`[APPLY]`**, **`[ADD TEST]`**, and accepted **`[PIGGYBACK]`** items only.
 * Strictly exclude **`[IGNORE]`** findings from code diffs and action items.
 * If file/method limits are exceeded, specify the exact decomposition strategy.
@@ -226,6 +245,7 @@ Every finding must be assigned one of four explicit action tiers:
 * [ ] Code formatting via JetBrains MCP (`reformat_file`) applied to all touched files.
 * [ ] Tests executed via JetBrains MCP (`execute_run_configuration`) pass 100%.
 * [ ] Multi-gate verification runner (`verify-patch.ps1`) passes with 0 failures.
+* [ ] Grounding confirmed against production reference precedent (no hallucinated platform idioms).
 * [ ] Incomplete code / error resilience validated.
 * [ ] Mirror test coverage confirmed for standard vs. custom types.
 * [ ] Threading invariants (`ReadAction` / `WriteCommandAction` / zero EDT blocking) verified.
