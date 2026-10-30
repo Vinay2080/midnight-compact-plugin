@@ -104,7 +104,7 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
   /**
    * Constructs a reference anchored to a specific PSI element within a given sub-range.
    *
-   * @param element        the PSI element hosting this reference (e.g., leaf identifier token or expression)
+   * @param element        the PSI element hosting this reference (e.g. leaf identifier token or expression)
    * @param rangeInElement the sub-range within the host element where the reference text is located
    */
   protected CompactReferenceBase(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
@@ -132,7 +132,7 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
    * any PSI change occurs in the project.</p>
    *
    * @param incompleteCode {@code true} if code completion or incomplete typing is in progress
-   * @return array of resolve results (may be empty or contain multiple candidates)
+   * @return array of resolve results (maybe empty or contain multiple candidates)
    */
   @Override
   public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
@@ -159,7 +159,7 @@ public abstract class CompactReferenceBase extends PsiPolyVariantReferenceBase<P
    * <p>Replaces the underlying leaf identifier token with a newly created identifier token.
    * Special case: preserves the {@code $} sigil on Compact ledger state variables if the user omitted it.</p>
    *
-   * @param newElementName the new name provided by the user in the Rename dialog
+   * @param newElementName the new name provided by the user in the Rename dialogue
    * @return the modified host PSI element
    * @throws IncorrectOperationException if the referenced identifier cannot be located or modified
    */

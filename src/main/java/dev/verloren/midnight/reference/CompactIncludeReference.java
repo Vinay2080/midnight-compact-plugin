@@ -65,7 +65,7 @@ public class CompactIncludeReference extends PsiReferenceBase<CompactIncludeDecl
    * <p>Delegates to {@link CompactIncludeDeclarationImpl#resolveIncludedFile()}, which locates
    * the virtual file relative to the containing directory and parses it via {@link com.intellij.psi.PsiManager}.</p>
    *
-   * @return the resolved {@link dev.verloren.midnight.psi.CompactFile}, or {@code null} if file not found
+   * @return the resolved {@link dev.verloren.midnight.psi.CompactFile}, or {@code null} if a file not found
    */
   @Override
   public @Nullable PsiElement resolve() {
@@ -73,7 +73,7 @@ public class CompactIncludeReference extends PsiReferenceBase<CompactIncludeDecl
   }
 
   /**
-   * Completion variants hook for include path references.
+   * Completion variants hooks for include path references.
    *
    * @return empty array (file path completion is handled by file path completion contributors)
    */

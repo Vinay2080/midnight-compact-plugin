@@ -55,7 +55,7 @@ import java.util.*;
  *       or IntelliJ daemon workers). Resolution must never trigger EDT write actions or block
  *       the UI thread.</li>
  *   <li><b>Cancellation Support:</b> Operates cooperatively within IntelliJ's non-blocking
- *       read actions. Subsystem callers (daemon code analyzer or completion threads) check
+ *       read actions. Subsystem callers (daemon code analyser or completion threads) check
  *       {@code ProgressManager.checkCanceled()} between operations.</li>
  * </ul>
  *
@@ -81,7 +81,7 @@ import java.util.*;
  *       to that module unless explicitly tagged with the {@code export} modifier or declared within an
  *       {@code export { ... }} block.</li>
  *   <li><b>Completion Lookahead Resilience:</b> Handles partially typed or incomplete syntax tree nodes
- *       preceding the caret at file scope (e.g., during active typing in completion).</li>
+ *       preceding the caret at file scope (e.g. during active typing in completion).</li>
  * </ol>
  * </p>
  *
@@ -97,7 +97,7 @@ import java.util.*;
  *   ├──────────────────────────────────────────────────────────────────┤
  *   │ 3. Enclosing Module Scope (Direct module members)                │
  *   ├──────────────────────────────────────────────────────────────────┤
- *   │ 4. File-Level Top Declarations (Order-independent)              │
+ *   │ 4. File-Level Top Declarations (Order-independent)               │
  *   ├──────────────────────────────────────────────────────────────────┤
  *   │ 5. Selective Explicit Imports (import { X } from ...)            │
  *   ├──────────────────────────────────────────────────────────────────┤
@@ -105,7 +105,7 @@ import java.util.*;
  *   ├──────────────────────────────────────────────────────────────────┤
  *   │ 7. Standard Library Declarations (CompactStdlibService)          │
  *   ├──────────────────────────────────────────────────────────────────┤
- *   │ 8. Prefixed / Module-Qualified Imports (prefix + name matching)  │
+ *   │ 8. Prefixed / Module-Qualified Imports (prefix and name matching)│
  *   └──────────────────────────────────────────────────────────────────┘
  * </pre>
  *
@@ -274,7 +274,7 @@ public final class CompactResolveUtil {
     if (file == null) {
       return null;
     }
-    // 1. Search current file for module definition
+    // 1. Search the current file for module definition
     for (CompactModuleDefinition module : PsiTreeUtil.findChildrenOfType(file, CompactModuleDefinition.class)) {
       if (name.equals(module.getName())) {
         return module;
@@ -395,7 +395,7 @@ public final class CompactResolveUtil {
       return null;
     }
 
-    // 1. Check imported file (e.g., import { GameState } from './GameState')
+    // 1. Check imported file (e.g. import { GameState } from './GameState')
     CompactFile importedFile = importDeclaration.resolveImportedFile();
     if (importedFile != null) {
       for (CompactNamedElement declaration : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
@@ -412,7 +412,7 @@ public final class CompactResolveUtil {
       }
     }
 
-    // 2. Check module (e.g., import { square } from Math)
+    // 2. Check module (e.g. import { square } from Math)
     CompactModuleDefinition module = findModule(importDeclaration, importDeclaration.getModuleName());
     if (module != null) {
       for (CompactNamedElement exported : moduleExports(module)) {
@@ -452,7 +452,7 @@ public final class CompactResolveUtil {
       }
     }
 
-    // Step 3: Fall back to prefixed / aliased imports if no un-prefixed declaration matched
+    // Step 3: Fall back to prefixed / aliased imports if no unprefixed declaration matched
     List<CompactNamedElement> prefixed = resolvePrefixedImport(name, place, namespace);
     return prefixed.isEmpty() ? List.of() : prefixed;
   }
@@ -514,7 +514,7 @@ public final class CompactResolveUtil {
         layers.add(collectModuleDeclarations((CompactModuleDefinition) scope, namespace));
       }
       if (scope instanceof CompactFile) {
-        // Handle incomplete declarations directly preceding place at file level (e.g., during completion)
+        // Handle incomplete declarations directly preceding place at file level (e.g. during completion)
         PsiElement prev = PsiTreeUtil.getPrevSiblingOfType(place, CompactTypeDefinition.class);
         if (prev == null) {
           prev = PsiTreeUtil.getPrevSiblingOfType(place, CompactStructDefinition.class);
@@ -564,7 +564,7 @@ public final class CompactResolveUtil {
    * Recursively traverses all files included via {@code include "..."} directives, accumulating
    * them into {@code out} while using {@code visited} to guard against circular include recursion.
    *
-   * @param file    the file to inspect for include directives
+   * @param file    the file to inspect for includes directives
    * @param visited set of already traversed files (cycle barrier)
    * @param out     list accumulating transitively included files in discovery order
    */
@@ -862,7 +862,7 @@ public final class CompactResolveUtil {
       }
       String exportedName = name.substring(prefix.length());
 
-      // 1. Check exports of imported file
+      // 1. Check exports of an imported file
       CompactFile importedFile = importDeclaration.resolveImportedFile();
       if (importedFile != null) {
         for (CompactNamedElement decl : PsiTreeUtil.findChildrenOfType(importedFile, CompactNamedElement.class)) {
@@ -981,7 +981,7 @@ public final class CompactResolveUtil {
   }
 
   /**
-   * Converts a collection of PSI named elements into high-level {@link CompactSymbol} instances.
+   * Converts a collection of PSI-named elements into high-level {@link CompactSymbol} instances.
    *
    * @param declarations collection of declaration elements
    * @return list of non-null symbols converted via {@link CompactSymbols#from(CompactNamedElement)}

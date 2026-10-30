@@ -89,7 +89,7 @@ public class CompactEnumMemberReference extends CompactReferenceBase {
    */
   @Override
   protected ResolveResult @NotNull [] resolveInner() {
-    // Step 1: Extract base expression of the member access (e.g., 'State' in 'State.Active')
+    // Step 1: Extract base expression of the member access (e.g. 'State' in 'State.Active')
     CompactExpression base = ((CompactMemberExprImpl) getElement()).getBaseExpression();
     if (base == null) {
       return ResolveResult.EMPTY_ARRAY;

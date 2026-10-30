@@ -75,7 +75,7 @@ public class CompactImportReference extends CompactReferenceBase {
   /**
    * Constructs an import reference.
    *
-   * @param element        the PSI element hosting the reference (e.g., import element or module identifier)
+   * @param element        the PSI element hosting the reference (e.g. import element or module identifier)
    * @param rangeInElement relative text range of the reference within the element
    * @param kind           the category of import target to resolve
    */
@@ -87,7 +87,7 @@ public class CompactImportReference extends CompactReferenceBase {
   /**
    * Resolves the import reference based on its configured {@link Kind}.
    *
-   * @return array of resolve results (containing target file, module, or declaration)
+   * @return array of resolve results (containing a target file, module, or declaration)
    */
   @Override
   protected ResolveResult @NotNull [] resolveInner() {

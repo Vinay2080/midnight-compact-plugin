@@ -50,7 +50,7 @@ import java.util.List;
  *   [Extract Raw Type Name]
  *             │
  *             ▼
- *    [Resolve Struct Def (handling aliases & imports)]
+ *    [Resolve Struct Def (handling aliases and imports)]
  *             │
  *             ▼
  *   [Scan Struct Fields for Match: 'x']
@@ -98,7 +98,7 @@ public class CompactStructFieldReference extends CompactReferenceBase {
     // Step 1: Guard against incomplete syntax where base expression is missing
     if (element.getBaseExpression() == null) return ResolveResult.EMPTY_ARRAY;
 
-    // Step 2: Infer static type of base expression and obtain raw type name
+    // Step 2: Infer static type of base expression and get raw type name
     CompactType baseType = element.getBaseExpression().getType();
     String typeName = baseType.name();
     String rawTypeName = CompactTypeInferenceUtil.getRawTypeName(typeName);

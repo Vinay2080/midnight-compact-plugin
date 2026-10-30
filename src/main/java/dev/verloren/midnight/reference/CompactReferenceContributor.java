@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li><b>Read Action Mandatory:</b> {@code getReferencesByElement} requires an active Read Action
  *       ({@code @RequiresReadLock}).</li>
  *   <li><b>Background Execution:</b> Reference resolution queries originate from background worker
- *       threads (daemon code analyzer) or on the EDT during explicit navigation actions.</li>
+ *       threads (daemon code analyser) or on the EDT during explicit navigation actions.</li>
  * </ul>
  *
  * <h3>Reference Dispatch Architecture</h3>
