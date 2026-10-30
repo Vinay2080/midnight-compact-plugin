@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveValue} when resolving pattern-bound variable references.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when populating local variables.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when populating local variables.</li>
  * </ul>
  * </p>
  *

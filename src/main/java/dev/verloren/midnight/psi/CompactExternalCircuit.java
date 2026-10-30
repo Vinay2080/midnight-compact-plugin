@@ -7,7 +7,7 @@ package dev.verloren.midnight.psi;
  * <p>Represents an abstract circuit prototype declared inside an external contract specification:
  * <pre>
  * export contract Token {
- *   circuit transfer(to: Address, amount: Uint&lt;64&gt;): [];
+ *   circuit transfer (to: Address, amount: Uint&lt;64&gt;): [];
  * }
  * </pre>
  * Fulfills the role of an abstract method declaration:

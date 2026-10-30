@@ -12,13 +12,13 @@ import org.jetbrains.annotations.Nullable;
  *   <li>The 'then' branch expression between {@code ?} and {@code :}.</li>
  *   <li>The 'else' branch expression following the {@code :} operator.</li>
  * </ul>
- * Enables type inference and flow-sensitive inspections to analyze both evaluation branches.</p>
+ * Enables type inference and flow-sensitive inspections to analyse both evaluation branches.</p>
  *
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across IDE analysis components:
  * <ul>
  *   <li>{@link dev.verloren.midnight.type.CompactTypeInferenceUtil} during expression typing and branch unification.</li>
- *   <li>{@link dev.verloren.midnight.inspection.CompactTypeMismatchInspection} to verify that condition is boolean and branch types unify.</li>
+ *   <li>{@link dev.verloren.midnight.inspection.CompactTypeMismatchInspection} to verify that the condition is boolean and branch types unify.</li>
  * </ul>
  * </p>
  *

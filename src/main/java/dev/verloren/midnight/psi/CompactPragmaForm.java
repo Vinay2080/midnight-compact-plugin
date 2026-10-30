@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.version.CompactSemVerUtil} during compiler version compatibility verification.</li>
- *   <li>{@link dev.verloren.midnight.inspection.CompactMissingPragmaInspection} and version compatibility inspections.</li>
+ *   <li>{@link dev.verloren.midnight.inspection.CompactPragmaVersionInspection} and version compatibility inspections.</li>
  *   <li>{@link CompactVisitor#visitPragmaForm(CompactPragmaForm)} during file-level inspections.</li>
  * </ul>
  * </p>

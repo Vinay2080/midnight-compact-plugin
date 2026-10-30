@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveValue} when resolving references to variables/constants.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when suggesting constants in scope.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when suggesting constants in scope.</li>
  * </ul>
  * </p>
  *

@@ -40,9 +40,9 @@ import org.jetbrains.annotations.Nullable;
 public interface CompactReferenceExpr extends CompactExpression {
 
   /**
-   * Resolves this reference expression to its target named declaration.
+   * Resolves this reference expression to its target-named declaration.
    *
    * @return the resolved {@link PsiElement} target, or {@code null} if unresolved
    */
   @Nullable PsiElement resolve();
-}
+}

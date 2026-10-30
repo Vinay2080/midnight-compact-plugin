@@ -69,10 +69,10 @@ public class CompactMemberExprImpl extends CompactPsiElement implements CompactE
     if (ref != null) {
       PsiElement resolved = ref.resolve();
       CompactType rawType = null;
-      if (resolved instanceof CompactTypeElement typeElement) {
-        rawType = typeElement.getType();
-      } else if (resolved instanceof CompactNamedElement named) {
+      if (resolved instanceof CompactNamedElement named) {
         rawType = named.getType();
+      } else if (resolved instanceof CompactTypeElement typeElement) {
+        rawType = typeElement.getType();
       }
       if (rawType != null) {
         CompactExpression base = getBaseExpression();

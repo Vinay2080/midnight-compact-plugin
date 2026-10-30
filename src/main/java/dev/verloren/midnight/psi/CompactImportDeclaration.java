@@ -20,8 +20,8 @@ import com.intellij.psi.PsiElement;
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across core IDE features:
  * <ul>
- *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#collectImportedDeclarations} when building file-level symbol tables.</li>
- *   <li>{@link dev.verloren.midnight.inspection.CompactUnusedImportInspection} when detecting unreferenced imports.</li>
+ *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} when building file-level symbol tables.</li>
+ *   <li>{@link dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection} when validating imported symbols.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitImportDeclaration(CompactImportDeclaration)}.</li>
  * </ul>
  * </p>

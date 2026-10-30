@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>Type Reference:</b> Holds the {@link CompactTypeReferenceImpl} referencing the implemented contract interface.</li>
  *   <li><b>Interface Resolution:</b> Provides {@link #resolveInterface()} to resolve the referenced type directly
  *       to its corresponding {@link CompactExternalContractDeclaration}.</li>
- *   <li><b>Contract Conformance Inspection:</b> Used by code inspections to verify that all circuits
- *       declared in the interface are properly implemented by the contract.</li>
+ *   <li><b>Contract Conformance Inspection:</b> Used by code inspections to verify that the contract * properly implements all circuits
+declared in the interface.</li>
  * </ul>
  * </p>
  *
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} when checking contract inheritance and interface conformance.</li>
- *   <li>{@link dev.verloren.midnight.navigation.CompactGotoDeclarationHandler} when navigating from the implements clause.</li>
+ *   <li>{@link dev.verloren.midnight.navigation.CompactGotoDeclarationHandler} when navigating from the implements' clause.</li>
  *   <li>{@link CompactVisitor#visitContractImplementsDeclaration(CompactContractImplementsDeclaration)}.</li>
  * </ul>
  * </p>

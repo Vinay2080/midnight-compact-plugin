@@ -35,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
 public class CompactContractImplementsDeclarationImpl extends CompactPsiElement implements CompactContractImplementsDeclaration {
 
   /**
-   * Constructs an implements declaration PSI node wrapping the AST composite node.
+   * Constructs an implement declaration PSI node wrapping the AST composite node.
    *
-   * @param node the AST node representing the implements clause
+   * @param node the AST node representing the implement clause
    */
   public CompactContractImplementsDeclarationImpl(@NotNull ASTNode node) {
     super(node);

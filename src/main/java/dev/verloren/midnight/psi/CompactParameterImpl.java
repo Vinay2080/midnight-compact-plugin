@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} during parameter scope resolution.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when suggesting in-scope parameters.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when suggesting in-scope parameters.</li>
  * </ul>
  * </p>
  *

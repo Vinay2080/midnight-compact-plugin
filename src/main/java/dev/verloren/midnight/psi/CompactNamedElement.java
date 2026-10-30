@@ -26,7 +26,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
  * <ul>
  *   <li>{@link com.intellij.refactoring.rename.RenameHandler} during refactoring operations.</li>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} during reference resolution and scope traversal.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when populating completion lookups.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when populating completion lookups.</li>
  *   <li>{@link dev.verloren.midnight.navigation.CompactGotoDeclarationHandler} when resolving jump targets.</li>
  * </ul>
  * </p>

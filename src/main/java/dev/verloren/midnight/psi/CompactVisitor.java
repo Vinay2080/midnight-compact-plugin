@@ -5,11 +5,11 @@ import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Double-dispatch visitor pattern base class for traversing and analyzing Compact PSI elements.
+ * Double-dispatch visitor pattern base class for traversing and analysing Compact PSI elements.
  *
  * <h3>IntelliJ Platform Lifecycle &amp; Subsystem Role</h3>
  * <p>Extends IntelliJ's {@link PsiElementVisitor} to provide specialized visit callbacks for all major
- * Compact syntax constructs. Subclassed by code inspections, annotators, and refactoring analyzers:
+ * Compact syntax constructs. Subclassed by code inspections, annotators, and refactoring analysers:
  * <ul>
  *   <li><b>Code Inspections:</b> {@link com.intellij.codeInspection.LocalInspectionTool#buildVisitor}
  *       instantiates anonymous or specialized subclasses of {@link CompactVisitor} to collect warnings and errors.</li>
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across code analysis pipelines:
  * <ul>
- *   <li>{@link com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl} driving background inspections.</li>
+ *   <li>{@link com.intellij.codeInsight.daemon.DaemonCodeAnalyzer} driving background inspections.</li>
  *   <li>{@link com.intellij.psi.PsiRecursiveElementVisitor} and related tree walkers when traversing PSI trees.</li>
  * </ul>
  * </p>
@@ -62,7 +62,7 @@ public class CompactVisitor extends PsiElementVisitor {
   }
 
   /**
-   * Visits an include directive declaration (e.g., {@code include "other.compact";}).
+   * Visits include directive declaration (e.g., {@code include "other.compact";}).
    *
    * @param includeDeclaration the include declaration element
    */
@@ -127,7 +127,7 @@ public class CompactVisitor extends PsiElementVisitor {
   /**
    * Visits a contract implements declaration (e.g., {@code contract Token implements Interface { ... }}).
    *
-   * @param implementsDeclaration the implements declaration element
+   * @param implementsDeclaration the implement declaration element
    */
   public void visitContractImplementsDeclaration(@NotNull CompactContractImplementsDeclaration implementsDeclaration) {
     visitElement(implementsDeclaration);

@@ -38,7 +38,7 @@ import java.util.List;
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across core IDE features:
  * <ul>
- *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#collectImportedDeclarations} when building available scope.</li>
+ *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} when building available scope.</li>
  *   <li>{@link dev.verloren.midnight.navigation.CompactGotoDeclarationHandler} during navigation to imported files/modules.</li>
  *   <li>{@link CompactVisitor#visitImportDeclaration(CompactImportDeclaration)} during inspection passes.</li>
  * </ul>

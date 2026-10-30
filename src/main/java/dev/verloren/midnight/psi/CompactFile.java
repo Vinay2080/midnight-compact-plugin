@@ -25,7 +25,7 @@ import java.util.List;
  *       modules, structs, enums, circuits, contracts, and const bindings.</li>
  *   <li><b>Symbol Resolution Scope:</b> Serves as the top-level boundary for symbol searches,
  *       providing quick access to top-level declarations via {@link #getTopLevelDeclarations()}.</li>
- *   <li><b>File Indexing &amp; Highlighting:</b> Acts as the entry point for {@link com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl}
+ *   <li><b>File Indexing &amp; Highlighting:</b> Acts as the entry point for {@link com.intellij.codeInsight.daemon.DaemonCodeAnalyzer}
  *       and indexing services.</li>
  * </ul>
  * </p>
@@ -35,7 +35,7 @@ import java.util.List;
  * <ul>
  *   <li>{@link dev.verloren.midnight.parser.CompactParserDefinition#createFile} during file parsing.</li>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} during multi-file import resolution and symbol lookups.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when enumerating file declarations.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when listing file declarations.</li>
  *   <li>{@link dev.verloren.midnight.navigation.CompactGotoDeclarationHandler} when resolving top-level symbols.</li>
  * </ul>
  * </p>

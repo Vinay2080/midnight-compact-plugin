@@ -74,8 +74,6 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
         PsiElement resolved = ref.resolve();
         if (resolved instanceof CompactTypeElement typeElement) {
           return typeElement.getType();
-        } else if (resolved instanceof CompactNamedElement named) {
-          return named.getType();
         } else if (resolved instanceof CompactExpression expr) {
           return expr.getType();
         }
@@ -88,7 +86,7 @@ public class CompactReferenceExprImpl extends CompactPsiElement implements Compa
   /**
    * Creates a value reference bound to the child identifier token of this reference expression.
    *
-   * @return the {@link CompactValueReference}, or {@code null} if missing identifier
+   * @return the {@link dev.verloren.midnight.reference.CompactValueReference}, or {@code null} if missing identifier
    */
   @Override
   public @Nullable PsiReference getReference() {

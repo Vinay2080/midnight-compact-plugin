@@ -46,7 +46,7 @@ import java.util.List;
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} for parameter scoping, file importing, and include resolution.</li>
  *   <li>{@link dev.verloren.midnight.reference.CompactValueReference} and {@link dev.verloren.midnight.reference.CompactIncludeReference}.</li>
- *   <li>{@link dev.verloren.midnight.inspection.CompactUnusedImportInspection} when removing obsolete imports.</li>
+ *   <li>{@link dev.verloren.midnight.intention.CompactToggleExportIntention} when toggling keyword modifiers.</li>
  * </ul>
  * </p>
  *

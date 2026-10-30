@@ -22,7 +22,7 @@ import java.util.List;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.reference.CompactEnumMemberReference} when resolving enum members.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactMemberCompletionProvider} when suggesting enum variants.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactMemberAccessCompletionProvider} when suggesting enum variants.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitEnumDefinition(CompactEnumDefinition)}.</li>
  * </ul>
  * </p>

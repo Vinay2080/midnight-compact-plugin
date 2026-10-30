@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across core platform pipelines:
  * <ul>
- *   <li><b>Tree Construction:</b> {@link com.intellij.psi.impl.source.tree.CompositeElement} during incremental re-parsing.</li>
- *   <li><b>Highlighting &amp; Analysis:</b> {@link com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl} driving annotators,
+ *   <li><b>Tree Construction:</b> {@link com.intellij.psi.impl.source.tree.CompositeElement} during incremental reparsing.</li>
+ *   <li><b>Highlighting &amp; Analysis:</b> {@link com.intellij.codeInsight.daemon.DaemonCodeAnalyzer} driving annotators,
  *       inspections, and syntax highlighters.</li>
  *   <li><b>Visitor Dispatch:</b> {@link com.intellij.psi.PsiElementVisitor} and {@link CompactVisitor} during AST inspections.</li>
  *   <li><b>Reference Resolution:</b> {@link com.intellij.psi.PsiReferenceService} and reference search pipelines.</li>
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
  *       indexing, daemon analysis) or the Event Dispatch Thread (EDT) during quick-fixes, navigation, and refactoring actions.</li>
  *   <li><b>Read Action:</b> All query methods (including {@link #getReferences()} and {@link #accept(PsiElementVisitor)})
  *       strictly require an active platform Read Action ({@code @RequiresReadLock}).</li>
- *   <li><b>Write Action:</b> Structural modifications (e.g., node replacement, deletion) require a Write Action or
+ *   <li><b>Write Action:</b> Structural modifications (e.g. node replacement, deletion) require a Write Action or
  *       {@link com.intellij.openapi.command.WriteCommandAction} on the EDT.</li>
  * </ul>
  *

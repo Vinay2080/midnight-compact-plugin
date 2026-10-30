@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * <ul>
  *   <li>{@link dev.verloren.midnight.type.CompactTypeInferenceUtil} during expression and statement type evaluation.</li>
  *   <li>{@link dev.verloren.midnight.inspection.CompactTypeMismatchInspection} during code analysis.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} during code completion.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} during code completion.</li>
  * </ul>
  * </p>
  *

@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across core IDE features:
  * <ul>
- *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#collectIncludedFiles} when aggregating included file scopes.</li>
+ *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} when aggregating included file scopes.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitIncludeDeclaration(CompactIncludeDeclaration)} during inspection.</li>
  * </ul>
  * </p>

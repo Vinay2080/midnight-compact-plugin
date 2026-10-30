@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.reference.CompactStructFieldReference} when resolving dot-access expressions (e.g. {@code user.name}).</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactMemberCompletionProvider} when populating available struct fields.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactMemberAccessCompletionProvider} when populating available struct fields.</li>
  *   <li>{@link dev.verloren.midnight.documentation.CompactDocumentationProvider} when generating field quick documentation.</li>
  * </ul>
  * </p>

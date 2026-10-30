@@ -26,7 +26,7 @@ import java.util.List;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveValue} when resolving circuit invocation calls.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when suggesting callable circuits.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when suggesting callable circuits.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitCircuitDefinition(CompactCircuitDefinition)}.</li>
  * </ul>
  * </p>

@@ -47,7 +47,7 @@ public class CompactConstructorDeclarationImpl extends CompactPsiElement impleme
   /**
    * Collects all parameters and destructuring pattern variables declared for this constructor.
    *
-   * @return list of parameter named elements; never {@code null}
+   * @return list of parameter-named elements; never {@code null}
    */
   @Override
   public @NotNull List<CompactNamedElement> getParameters() {

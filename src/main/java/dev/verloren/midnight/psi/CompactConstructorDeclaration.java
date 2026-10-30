@@ -22,7 +22,7 @@ import java.util.List;
  * <h3>Calling Pipeline</h3>
  * <p>Invoked across core IDE features:
  * <ul>
- *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} when analyzing contract initialization and parameter scopes.</li>
+ *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} when analysing contract initialization and parameter scopes.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitConstructorDeclaration(CompactConstructorDeclaration)}.</li>
  * </ul>
  * </p>
@@ -52,4 +52,4 @@ public interface CompactConstructorDeclaration extends PsiElement {
    */
   @Nullable CompactBlock getBody();
 }
-
+

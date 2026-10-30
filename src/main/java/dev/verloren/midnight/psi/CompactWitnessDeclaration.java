@@ -23,7 +23,7 @@ import java.util.List;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveValue} when resolving witness invocations.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when suggesting witness functions.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when suggesting witness functions.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitWitnessDeclaration(CompactWitnessDeclaration)}.</li>
  * </ul>
  * </p>

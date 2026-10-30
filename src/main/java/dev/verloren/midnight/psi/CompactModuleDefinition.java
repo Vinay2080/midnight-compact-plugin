@@ -24,7 +24,7 @@ import java.util.Collection;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil} during qualified symbol lookup and module resolution.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when suggesting module names or member accesses.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when suggesting module names or member accesses.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitModuleDefinition(CompactModuleDefinition)} during inspection passes.</li>
  * </ul>
  * </p>

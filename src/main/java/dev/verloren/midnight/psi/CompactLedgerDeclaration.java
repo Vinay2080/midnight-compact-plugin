@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Invoked across core IDE features:
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveValue} when resolving state variable reads/writes.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} when suggesting ledger state fields.</li>
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} when suggesting ledger state fields.</li>
  *   <li>{@link dev.verloren.midnight.psi.CompactVisitor#visitLedgerDeclaration(CompactLedgerDeclaration)}.</li>
  * </ul>
  * </p>

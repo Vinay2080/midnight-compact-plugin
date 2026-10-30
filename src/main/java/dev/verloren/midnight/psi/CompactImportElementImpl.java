@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveImportElementSource} when traversing through imports to origin symbols.</li>
  *   <li>{@link dev.verloren.midnight.navigation.CompactGotoDeclarationHandler} during navigation to original declarations.</li>
- *   <li>{@link dev.verloren.midnight.inspection.CompactUnusedImportInspection} when verifying if this specific imported symbol is referenced.</li>
+ *   <li>{@link dev.verloren.midnight.inspection.CompactUnresolvedReferenceInspection} when verifying if this specific imported symbol is resolved.</li>
  * </ul>
  * </p>
  *

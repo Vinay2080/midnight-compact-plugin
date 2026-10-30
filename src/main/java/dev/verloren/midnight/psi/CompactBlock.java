@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li><b>Search Scope Determination:</b> Used by {@link CompactNamedElementImpl#getUseScope()}
  *       to distinguish block-scoped constants from file-level global constants.</li>
  *   <li><b>Code Formatting &amp; Folding:</b> Anchors brace matching, indentation blocks, and code folding regions
- *       in {@link dev.verloren.midnight.formatting.CompactBlock}.</li>
+ *       in {@link dev.verloren.midnight.formatter.CompactBlock}.</li>
  * </ul>
  * </p>
  *
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * <ul>
  *   <li>{@link dev.verloren.midnight.resolve.CompactResolveUtil#resolveValue} when walking up the PSI tree
  *       to collect local declarations in scope before a reference point.</li>
- *   <li>{@link dev.verloren.midnight.completion.providers.CompactIdentifierCompletionProvider} to find
+ *   <li>{@link dev.verloren.midnight.completion.providers.CompactValueCompletionProvider} to find
  *       in-scope variables during auto-completion.</li>
  * </ul>
  * </p>

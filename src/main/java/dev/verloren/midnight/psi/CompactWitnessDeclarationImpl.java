@@ -16,7 +16,7 @@ import java.util.List;
  * {@link dev.verloren.midnight.parser.CompactElementTypes#WITNESS_DECLARATION}.
  * Fulfills {@link CompactWitnessDeclaration}:
  * <ul>
- *   <li><b>Parameter Extraction:</b> Delegates parameter discovery to {@link CompactPsiUtil#getParameters(PsiElement)}.</li>
+ *   <li><b>Parameter Extraction:</b> Delegates parameter discovery to {@link CompactPsiUtil#getParameters(com.intellij.psi.PsiElement)}.</li>
  *   <li><b>Return Type Resolution:</b> Resolves the return type syntax element by locating the trailing {@link CompactTypeElement} child.</li>
  *   <li><b>Semantic Type Provider:</b> Overrides {@link #getType()} to return the semantic return type of the witness.</li>
  *   <li><b>Export Visibility:</b> Queries child tokens for {@link dev.verloren.midnight.lexer.CompactTokenTypes#EXPORT}.</li>
