@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * Insert handler for Compact {@code left} and {@code right} Either constructor helper circuits.
  *
  * <p>Expands typed generic arguments (e.g. {@code <ZswapCoinPublicKey, ContractAddress>})
- * or provides interactive generic type placeholders, and places the caret inside the call
+ * or provides interactive generic type placeholders and places the caret inside the call
  * parentheses {@code ()} with tab-out scope registration and auto-popup completion.</p>
  *
  * <h3>IntelliJ Platform Lifecycle &amp; Threading Contract</h3>

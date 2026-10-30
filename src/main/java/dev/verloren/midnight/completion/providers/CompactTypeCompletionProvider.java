@@ -25,7 +25,7 @@ import java.util.List;
  *   <li><b>Calling Pipeline:</b> Executed during asynchronous basic completion by {@code CodeCompletionHandlerBase}
  *       when the context is classified as {@code TYPE}, {@code BYTES_SIZE}, {@code UINT_SIZE}, or {@code AFTER_PRAGMA}.</li>
  *   <li><b>Threading Model:</b> Operates under a <b>Read Action</b> ({@code @RequiresReadLock}) on background pooled
- *       analysis threads. Item insertion behaviors are encapsulated within registered {@link InsertHandler} instances.</li>
+ *       analysis threads. Item insertion behaviours are encapsulated within registered {@link InsertHandler} instances.</li>
  *   <li><b>Cancellation Support:</b> Operates over static data tables and fast array iterators; responsive to cooperative
  *       cancellation without locking.</li>
  * </ul>
@@ -60,7 +60,7 @@ import java.util.List;
 public final class CompactTypeCompletionProvider {
 
   /**
-   * Complete catalog of Compact built-in primitive, container, cryptographic, and sum types.
+   * Complete catalogue of Compact built-in primitive, container, cryptographic, and sum types.
    */
   public static final String[] BUILTIN_TYPES = {
       "Boolean", "Bytes", "Field", "Opaque", "Uint", "Vector", "State", "Counter", "Void",
@@ -101,7 +101,7 @@ public final class CompactTypeCompletionProvider {
   }
 
   /**
-   * Adds generic {@code Bytes} and common canonical sized types (such as {@code Bytes<32>}).
+   * Adds generic {@code Bytes} and common canonical-sized types (such as {@code Bytes<32>}).
    *
    * @param elements target accumulator list
    */
@@ -134,7 +134,7 @@ public final class CompactTypeCompletionProvider {
   }
 
   /**
-   * Adds generic {@code Uint} and standard power-of-two bit width variants (8, 16, 32, 64, 128, 256).
+   * Adds generic {@code Uint} and standard power-of-two-bit width variants (8, 16, 32, 64, 128, 256).
    *
    * @param elements target accumulator list
    */

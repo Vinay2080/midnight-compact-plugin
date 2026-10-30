@@ -65,7 +65,7 @@ import java.util.List;
  * <h3>Design Decisions &amp; Architectural Rationale</h3>
  * <ul>
  *   <li><b>Pattern-Based Early Rejection:</b> Uses {@link PlatformPatterns} to filter out comments and
- *       non-Compact elements before initiating context classification, minimising CPU footprint on typing.</li>
+ *       non-Compact elements before initiating context classification, minimizing CPU footprint on typing.</li>
  *   <li><b>Public API Facades:</b> Re-exports common keywords, type lookup elements, and type-compatibility
  *       helpers as static facade methods, preserving backwards compatibility and facilitating automated testing.</li>
  * </ul>
@@ -177,7 +177,7 @@ public class CompactCompletionContributor extends CompletionContributor {
   /**
    * Facade creating pre-configured {@link LookupElement} instances for all built-in types.
    *
-   * @return list of lookup elements with appropriate type insert handlers
+   * @return list of lookup elements with the appropriate type insert handlers
    */
   public static List<LookupElement> createBuiltinTypeLookupElements() {
     return CompactTypeCompletionProvider.createBuiltinTypeLookupElements();
@@ -206,7 +206,7 @@ public class CompactCompletionContributor extends CompletionContributor {
   }
 
   /**
-   * Resolves the resolved type of a candidate declaration element.
+   * Resolves the resolved type of the candidate declaration element.
    *
    * @param element the candidate named declaration
    * @return the inferred {@link CompactType}
@@ -229,7 +229,7 @@ public class CompactCompletionContributor extends CompletionContributor {
   /**
    * Constructs the pre-configured lookup element for the {@code assert} keyword with its insert handler.
    *
-   * @return the assert lookup element
+   * @return the assertion lookup element
    */
   public static @NotNull LookupElement createAssertLookupElement() {
     return CompactKeywordCompletionProvider.createAssertLookupElement();

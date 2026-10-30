@@ -1,6 +1,5 @@
 package dev.verloren.midnight.completion;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -22,8 +21,8 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  *   <li><b>Subsystem Role:</b> Context classifier and AST query utility called by
  *       {@link CompactCompletionContributor} during the completion resolution phase.</li>
- *   <li><b>Calling Pipeline:</b> Invoked directly within
- *       {@link com.intellij.codeInsight.completion.CompletionProvider#addCompletions(com.intellij.codeInsight.completion.CompletionParameters, com.intellij.util.ProcessingContext, com.intellij.codeInsight.completion.CompletionResultSet)}.</li>
+ *   <li><b>Calling Pipeline:</b> Invoked directly within {@link CompactCompletionContributor}
+ *       during basic completion passes by {@code com.intellij.codeInsight.completion.CodeCompletionHandlerBase}.</li>
  *   <li><b>Threading Model:</b> Runs under an active <b>Read Action</b> ({@code @RequiresReadLock})
  *       on background pooled completion threads (IntelliJ Platform 2024+ asynchronous completion
  *       architecture) or on the EDT if completion is triggered synchronously.</li>
@@ -148,7 +147,7 @@ public final class CompactCompletionContext {
       return Kind.AFTER_PRAGMA;
     }
 
-    // Step 4: Parameterized type size bounds (e.g. Bytes<32> or Uint<64>)
+    // Step 4: Parameterized type size bounds (e.g. Bytes <32> or Uint <64>)
     Kind sizeKind = CompactCompletionTypeClassifier.checkParameterizedTypeSizeContext(previous);
     if (sizeKind != null) {
       return sizeKind;

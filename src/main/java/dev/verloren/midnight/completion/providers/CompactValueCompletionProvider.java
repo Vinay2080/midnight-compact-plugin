@@ -4,25 +4,10 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import dev.verloren.midnight.completion.CompactParameterizedTypeInsertHandler;
-import dev.verloren.midnight.intention.CompactSpecifyTypeExplicitlyIntention;
-import dev.verloren.midnight.lexer.CompactTokenTypes;
-import dev.verloren.midnight.parser.CompactElementTypes;
-import dev.verloren.midnight.psi.CompactCircuitDefinition;
 import dev.verloren.midnight.psi.CompactConstBindingImpl;
-import dev.verloren.midnight.psi.CompactConstructorDeclaration;
-import dev.verloren.midnight.psi.CompactEnumDefinition;
-import dev.verloren.midnight.psi.CompactEnumMemberImpl;
-import dev.verloren.midnight.psi.CompactImportElementImpl;
 import dev.verloren.midnight.psi.CompactNamedElement;
 import dev.verloren.midnight.psi.CompactParameterImpl;
-import dev.verloren.midnight.psi.CompactPatternImpl;
-import dev.verloren.midnight.psi.CompactPsiUtil;
-import dev.verloren.midnight.psi.CompactStructFieldImpl;
-import dev.verloren.midnight.psi.CompactTypeElement;
-import dev.verloren.midnight.psi.CompactWitnessDeclaration;
 import dev.verloren.midnight.resolve.CompactResolveUtil;
 import dev.verloren.midnight.type.CompactPrimitiveType;
 import dev.verloren.midnight.type.CompactType;
@@ -71,7 +56,7 @@ import java.util.Set;
  * <h3>Design Decisions &amp; Architectural Rationale</h3>
  * <ul>
  *   <li><b>Type-Directed Priority Scoring:</b> Assigns high priority (110.0) to candidates matching the expected type
- *       while demoting incompatible candidates (20.0), reducing cognitive load during typing without hiding out-of-type variants.</li>
+ *       while demoting incompatible candidates (20.0), reducing a cognitive load during typing without hiding out-of-type variants.</li>
  *   <li><b>Syntactic Context Inference:</b> Recognizes expected boolean conditions in {@code if (...)} and {@code assert(...)},
  *       return types in circuits and constructors, and declared types on {@code const} variable bindings.</li>
  *   <li><b>Memory Leak Guards:</b> Does not retain references to {@link PsiElement}, {@link com.intellij.openapi.project.Project},

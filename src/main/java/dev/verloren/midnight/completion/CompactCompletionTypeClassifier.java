@@ -77,7 +77,7 @@ public final class CompactCompletionTypeClassifier {
   }
 
   /**
-   * Disambiguates whether a colon token introduces a type annotation vs a struct literal field value.
+   * Disambiguate whether a colon token introduces a type annotation vs a struct literal field value.
    *
    * @param colonLeaf the colon token leaf element
    * @return true if the colon represents a type annotation position
@@ -111,9 +111,7 @@ public final class CompactCompletionTypeClassifier {
           }
         }
       }
-      if (PsiTreeUtil.getParentOfType(colonLeaf, CompactStructDefinition.class, false) != null) {
-        return true;
-      }
+      return PsiTreeUtil.getParentOfType(colonLeaf, CompactStructDefinition.class, false) != null;
     }
     return false;
   }

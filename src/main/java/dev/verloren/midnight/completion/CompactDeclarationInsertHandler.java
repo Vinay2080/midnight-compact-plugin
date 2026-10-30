@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * <h3>Design Decisions &amp; Architectural Rationale</h3>
  * <ul>
- *   <li><b>Java Record Immutability:</b> Implemented as a concise, immutable record parameterised by
+ *   <li><b>Java Record Immutability:</b> Implemented as a concise, immutable record parameterized by
  *       {@link CompactDeclarationType}, making handler instances reusable across completion items.</li>
  *   <li><b>Dynamic Collision-Resistant Naming:</b> Collaborates with {@link CompactDeclarationNameGenerator}
  *       to inspect the surrounding PSI scope and propose unique, non-colliding default names
@@ -89,7 +89,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
     CharSequence chars = document.getCharsSequence();
 
     // Step 1: Deduplicate export prefix if 'export' was already preceding on the line
-    // and the chosen lookup item itself starts with 'export' (e.g. user typed 'export ' then picked 'export circuit').
+    // and the chosen lookup item itself starts with 'export' (e.g. user typed 'export' then picked 'export circuit').
     int lineStart = document.getLineStartOffset(document.getLineNumber(startOffset));
     boolean hasPrecedingExport = CompactCompletionContext.hasPrecedingExportOnLine(chars, lineStart, startOffset);
     boolean itemHasExport = item.getLookupString().startsWith("export");
@@ -104,7 +104,7 @@ public record CompactDeclarationInsertHandler(@NotNull CompactDeclarationType de
 
     // Step 2: Guard against overwriting or mangling existing declarations.
     // If an identifier, parameter list, brace, or colon already follows the caret on the current line
-    // (e.g. developer typed 'circuit' in front of existing 'myFunc(): Void { ... }'),
+    // (e.g. developer typed 'circuit' in front of the existing 'myFunc (): Void { ... }'),
     // do NOT launch a template over it; simply ensure a single space separator is present.
     int lineEnd = document.getLineEndOffset(document.getLineNumber(tailOffset));
     String lineSuffix = chars.subSequence(tailOffset, lineEnd).toString().trim();

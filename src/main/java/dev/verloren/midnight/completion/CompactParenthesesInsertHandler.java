@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>Performs lookahead past whitespace to avoid inserting duplicate {@code ()} when editing existing calls.</li>
  *   <li>Registers a tab-out scope via {@link TabOutScopesTracker} so pressing {@code Tab} steps over the closing parenthesis.</li>
  *   <li>Schedules an auto-popup via {@link AutoPopupController} to immediately suggest argument expressions.</li>
- *   <li>Synchronises with active live templates ({@link TemplateState}) to prevent premature cursor displacement.</li>
+ *   <li>Synchronizes with active live templates ({@link TemplateState}) to prevent premature cursor displacement.</li>
  * </ul>
  *
  * <h3>IntelliJ Platform Lifecycle &amp; Threading Contract</h3>
@@ -45,7 +45,7 @@ import org.jetbrains.annotations.NotNull;
  *       with a private constructor to eliminate garbage collection overhead during high-frequency typing
  *       and completion queries.</li>
  *   <li><b>Memory Leak Prevention:</b> Strictly retains zero references to {@link Project},
- *       {@link Editor}, {@link Document}, or {@link LookupElement} instances within field state;
+ *       {@link Editor}, {@link Document}, or {@link LookupElement} instances within the field state;
  *       all context is transiently consumed through {@link InsertionContext}.</li>
  * </ul>
  *

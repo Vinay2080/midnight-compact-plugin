@@ -62,7 +62,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CompactEitherInsertHandler implements InsertHandler<LookupElement> {
 
-  /** Singleton insert handler for inferred context where angle brackets are omitted or already exist. */
+  /** Singleton insert handler for the inferred context where angle brackets are omitted or already exist. */
   public static final CompactEitherInsertHandler INFERRED = new CompactEitherInsertHandler(null, null, false);
 
   /** Default alias for {@link #INFERRED}. */

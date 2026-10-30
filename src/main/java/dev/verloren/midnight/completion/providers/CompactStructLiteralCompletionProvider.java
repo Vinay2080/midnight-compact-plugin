@@ -46,9 +46,9 @@ import org.jetbrains.annotations.Nullable;
  *       nested generic parameters, {@link #parseGenericTypeArgs(String, String)} performs stateful bracket
  *       depth tracking over {@code '<'}, {@code '('}, and {@code '['}.</li>
  *   <li><b>Context-Aware Typing:</b> When the contextual expected type is known (e.g. {@code Either<A, B>}),
- *       directly synthesizes fully-typed struct literals and helper constructors with corresponding types.
+ *       directly synthesizes fully typed struct literals and helper constructors with corresponding types.
  *       When unconstrained, supplies generic templates with tab-stop placeholders.</li>
- *   <li><b>Memory Leak Guards:</b> Zero PSI or Project references stored as static state.</li>
+ *   <li><b>Memory Leak Guards:</b> Zero PSI or Project references stored as a static state.</li>
  * </ul>
  *
  * @see CompactEitherInsertHandler
@@ -218,7 +218,7 @@ public final class CompactStructLiteralCompletionProvider {
    * @param lookupString    lookup trigger string
    * @param tailText        preview tail text
    * @param presentableText main item presentation text
-   * @param handler         insert handler attached to item
+   * @param handler         insert a handler attached to an item
    * @param priority        priority score
    */
   private static void addHelperLookup(

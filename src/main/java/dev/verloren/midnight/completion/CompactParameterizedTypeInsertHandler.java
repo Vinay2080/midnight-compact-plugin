@@ -15,14 +15,14 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Insert handler for parameterised Compact types (such as {@code Bytes}, {@code Uint},
+ * Insert handler for parameterized Compact types (such as {@code Bytes}, {@code Uint},
  * {@code Vector}, and {@code Opaque}) that automatically constructs generic angle brackets
  * {@code <>} (or quoted domain brackets {@code <"">}), positions the caret inside,
  * registers tab-out scope navigation, and triggers auto-popup completion for sizes or arguments.
  *
  * <h3>IntelliJ Platform Lifecycle &amp; Threading Contract</h3>
  * <ul>
- *   <li><b>Subsystem Role:</b> {@link InsertHandler} implementation attached to parameterised type
+ *   <li><b>Subsystem Role:</b> {@link InsertHandler} implementation attached to parameterized type
  *       lookup elements by {@link dev.verloren.midnight.completion.providers.CompactTypeCompletionProvider}.</li>
  *   <li><b>Calling Pipeline:</b> Invoked directly on the Event Dispatch Thread (EDT) by IntelliJ's
  *       {@code com.intellij.codeInsight.completion.CodeCompletionHandlerBase} immediately after the type
@@ -76,7 +76,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CompactParameterizedTypeInsertHandler implements InsertHandler<LookupElement> {
 
-  /** Shared singleton insert handler for standard parameterised types inserting {@code <>}. */
+  /** Shared singleton insert handler for standard parameterized types inserting {@code <>}. */
   public static final CompactParameterizedTypeInsertHandler BRACKETS =
       new CompactParameterizedTypeInsertHandler(false);
 
@@ -140,7 +140,7 @@ public class CompactParameterizedTypeInsertHandler implements InsertHandler<Look
     // Step 5: Schedule auto-popup to immediately suggest valid type sizes or type parameters
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
 
-    // Step 6: Live Template Synchronisation.
+    // Step 6: Live Template Synchronization.
     // If a live template is currently active in the editor (e.g. from declaration templates),
     // TemplateState advances or finishes synchronously on lookup selection, which would otherwise
     // move the caret past the end of the template (after the semicolon or brace).

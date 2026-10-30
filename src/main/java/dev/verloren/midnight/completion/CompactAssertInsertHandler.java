@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  *       ({@link #INSTANCE}) with a private constructor to eliminate garbage collection
  *       overhead during high-frequency typing and completion lookup cycles.</li>
  *   <li><b>Memory Leak Prevention:</b> Strictly retains zero references to {@link Project},
- *       {@link Editor}, {@link Document}, or {@link LookupElement} instances within field state;
+ *       {@link Editor}, {@link Document}, or {@link LookupElement} instances within the field state;
  *       all context is transiently consumed through {@link InsertionContext}.</li>
  * </ul>
  *
@@ -107,7 +107,7 @@ public final class CompactAssertInsertHandler implements InsertHandler<LookupEle
    * Handles post-completion document mutation for the {@code assert} keyword.
    *
    * @param context the insertion context containing document, editor, and offset metadata
-   * @param item    the selected assert lookup element
+   * @param item    the selected assertion lookup element
    */
   @Override
   @SuppressWarnings("DuplicatedCode")
@@ -119,7 +119,7 @@ public final class CompactAssertInsertHandler implements InsertHandler<LookupEle
     CharSequence chars = document.getCharsSequence();
 
     // Step 1: Lookahead forward past any whitespace to check if '(' already follows
-    // the inserted assert keyword (e.g., when completing right before existing argument expressions).
+    // the inserted assertion keyword (e.g. when completing right before existing argument expressions).
     // This prevents inserting duplicate parentheses like assert()(cond, "msg").
     int offset = tailOffset;
     while (offset < chars.length() && Character.isWhitespace(chars.charAt(offset))) {
@@ -145,7 +145,7 @@ public final class CompactAssertInsertHandler implements InsertHandler<LookupEle
     // Step 5: Schedule auto-popup to immediately suggest argument expressions and identifiers
     AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
 
-    // Step 6: Mitigate Live Template synchronisation races.
+    // Step 6: Mitigate Live Template synchronization races.
     // If a live template is currently active in the editor (e.g. from declaration templates),
     // TemplateState advances or finishes synchronously on lookup selection, which would otherwise
     // displace the caret past the end of the template (after the semicolon or closing brace).

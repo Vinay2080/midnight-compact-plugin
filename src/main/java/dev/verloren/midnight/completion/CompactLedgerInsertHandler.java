@@ -92,7 +92,7 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
     CharSequence chars = document.getCharsSequence();
 
     // Step 1: Deduplicate export prefix if 'export' was already preceding on the line
-    // and the chosen lookup item starts with 'export' (e.g. user typed 'export ' then selected 'export ledger').
+    // and the chosen lookup item starts with 'export' (e.g. user typed 'export' then selected 'export ledger').
     int lineStart = document.getLineStartOffset(document.getLineNumber(startOffset));
     boolean hasPrecedingExport = CompactCompletionContext.hasPrecedingExportOnLine(chars, lineStart, startOffset);
     boolean itemHasExport = item.getLookupString().startsWith("export");
@@ -107,7 +107,7 @@ public class CompactLedgerInsertHandler implements InsertHandler<LookupElement> 
 
     // Step 2: Guard against overwriting existing declarations.
     // If an identifier or colon already follows the caret on the current line
-    // (e.g. developer typed 'ledger' in front of existing 'myState: State;'),
+    // (e.g. developer typed 'ledger' in front of the existing 'myState: State; '),
     // do NOT launch a template over it; simply ensure a single space separator is present.
     int lineEnd = document.getLineEndOffset(document.getLineNumber(tailOffset));
     String lineSuffix = chars.subSequence(tailOffset, lineEnd).toString().trim();

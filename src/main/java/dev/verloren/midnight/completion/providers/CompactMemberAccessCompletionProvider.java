@@ -260,7 +260,7 @@ public final class CompactMemberAccessCompletionProvider {
    * Registers elements from standard IntelliJ reference resolution results.
    *
    * @param result         the active completion result set
-   * @param resolveResults array of resolve results from reference multi-resolution
+   * @param resolveResults array of resolve results from reference-multi-resolution
    */
   public static void addResolvedNamed(@NotNull CompletionResultSet result, ResolveResult @NotNull [] resolveResults) {
     for (ResolveResult resolveResult : resolveResults) {
@@ -274,7 +274,7 @@ public final class CompactMemberAccessCompletionProvider {
    * Populates a collection of named elements into the completion result set, suppressing duplicates.
    *
    * @param result   the active completion result set
-   * @param elements collection of candidate named elements
+   * @param elements collection of candidate-named elements
    */
   public static void addNamed(
       @NotNull CompletionResultSet result,
@@ -293,7 +293,7 @@ public final class CompactMemberAccessCompletionProvider {
    * Constructs and registers a styled, prioritized {@link LookupElementBuilder} for a named Compact element.
    *
    * @param result   the active completion result set
-   * @param element  the target named element
+   * @param element  the target-named element
    * @param priority sorting priority score
    */
   public static void addNamed(
