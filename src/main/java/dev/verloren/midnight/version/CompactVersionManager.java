@@ -306,26 +306,32 @@ public final class CompactVersionManager {
     return CompactVersionDetector.detectVersionFromExecutable(executablePath);
   }
 
+  @SuppressWarnings("unused")
   public static void triggerAsyncVersionDetection(@NotNull String executablePath) {
     CompactVersionDetector.triggerAsyncVersionDetection(executablePath);
   }
 
+  @SuppressWarnings("unused")
   public static @Nullable String getWslDistribution() {
     return CompactWslStorageHelper.getWslDistribution();
   }
 
+  @SuppressWarnings("unused")
   public static @Nullable String getWslUser(@Nullable String distro) {
     return CompactWslStorageHelper.getWslUser(distro);
   }
 
+  @SuppressWarnings("unused")
   public static @Nullable File getWslVersionsDirectory() {
     return CompactWslStorageHelper.getWslVersionsDirectory();
   }
 
+  @SuppressWarnings("unused")
   public static void migrateWindowsVersionsToWslIfNeeded(@NotNull File wslVersionsDir) {
     CompactWslStorageHelper.migrateWindowsVersionsToWslIfNeeded(wslVersionsDir);
   }
 
+  @SuppressWarnings("unused")
   public static void chmodWslDirectory() {
     CompactWslStorageHelper.chmodWslDirectory();
   }

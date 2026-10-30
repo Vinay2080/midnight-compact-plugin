@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  *       preventing memory leaks.</li>
  * </ul>
  *
- * @param filePath  path of the source file where the diagnostic occurred (may be relative, Windows, or WSL format)
+ * @param filePath  path of the source file where the diagnostic occurred (maybe relative Windows, or WSL format)
  * @param line      1-based start line index
  * @param column    1-based start column index
  * @param endLine   1-based end line index

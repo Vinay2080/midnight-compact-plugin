@@ -94,7 +94,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   ├────────────────────────────────────────────────────────────────────────┤
  *   │ COMPACT COMPILER VERSIONS                                              │
  *   │ ┌────────────────────────────────────────────────────────────────────┐ │
- *   │ │ [🗑] Compact v0.24.0 (Language v0.2.0)            ✔ pragma match   │ │
+ *   │ │ [🗑] Compact v0.24.0 (Language v0.2.0)            ✔ pragma match    │ │
  *   │ └────────────────────────────────────────────────────────────────────┘ │
  *   │ ┌────────────────────────────────────────────────────────────────────┐ │
  *   │ │ [⬇] Compact v0.23.0                                                │ │
@@ -148,7 +148,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   /** Status label displaying whether the active compiler satisfies the file's pragma requirement. */
   private final JBLabel compilerStatusLabel = new JBLabel();
 
-  /** Debounce alarm used to throttle pragma re-parsing during rapid document editing. */
+  /** Debounce alarm used to throttle pragma reparsing during rapid document editing. */
   private final Alarm pragmaUpdateAlarm;
 
   /**
@@ -201,7 +201,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
    * Initializes the compiler panel, constructs layout sections, attaches editor event listeners,
    * and triggers the initial file and compiler version discovery.
    *
-   * @param project the active IntelliJ project
+   * @param project an active IntelliJ project
    */
   @SuppressWarnings("this-escape")
   public CompactCompilerPanel(@NotNull Project project) {
@@ -215,7 +215,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     JPanel topPanel = createTopPanel();
     add(topPanel, BorderLayout.NORTH);
 
-    // Center: Compact Compiler Versions Manager
+    // Centre: Compact Compiler Versions Manager
     JPanel versionsContainer = new JPanel(new BorderLayout());
     versionsContainer.setBorder(JBUI.Borders.emptyTop(10));
 
@@ -297,7 +297,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   }
 
   /**
-   * Disposes background resources, canceling any pending pragma debouncing alarm requests.
+   * Disposes background resources, cancelling any pending pragma debouncing alarm requests.
    */
   @Override
   public void dispose() {
@@ -384,7 +384,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (project.isDisposed()) return;
 
-      // 1. Collect all known and locally installed compiler versions off EDT
+      // 1. Collect all known and locally installed compiler versions of EDT
       Set<String> allVersionKeys = new LinkedHashSet<>(CompactVersionManager.KNOWN_VERSIONS);
       Map<String, String> installedMap = CompactVersionManager.getInstalledVersions();
       allVersionKeys.addAll(installedMap.keySet());
@@ -393,8 +393,8 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
       List<String> sortedVersions = new ArrayList<>(allVersionKeys);
       sortedVersions.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
 
-      /**
-       * Immutable value carrier holding pre-calculated card layout attributes off EDT.
+      /*
+        Immutable value carrier holding pre-calculated card layout attributes off EDT.
        */
       record CardData(
           String version,
@@ -483,7 +483,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
 
   /**
    * Instantly updates UI selection on EDT with zero perceived latency,
-   * then updates settings and triggers background reparsing.
+   * then updates settings, triggers background reparsing.
    *
    * @param version the semantic version to activate
    */
@@ -507,7 +507,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   }
 
   /**
-   * Prompts the user with a confirmation dialog before downloading and activating a compiler version.
+   * Prompts the user with a confirmation dialogue before downloading and activating a compiler version.
    *
    * @param version semantic version to download
    */
@@ -516,7 +516,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
       return;
     }
 
-    // Confirmation dialog: do not start downloading on a single accidental click
+    // Confirmation dialogue: do not start downloading on a single accidental click
     int confirm = Messages.showYesNoDialog(
         this,
         "Do you want to download and install Compact compiler v" + version + "?",
@@ -550,7 +550,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   }
 
   /**
-   * Prompts the user with a confirmation dialog before uninstalling and deleting a compiler binary.
+   * Prompts the user with a confirmation dialogue before uninstalling and deleting a compiler binary.
    *
    * @param version semantic version to delete
    * @param path    local filesystem path of the binary
@@ -590,7 +590,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
    * @return the resolved {@link VirtualFile}, or {@code null} if no Compact contract is currently open
    */
   public @Nullable VirtualFile findTargetCompactFile() {
-    // 1. Check currently focused editor file
+    // 1. Check the currently focused editor file
     VirtualFile[] selected = FileEditorManager.getInstance(project).getSelectedFiles();
     for (VirtualFile f : selected) {
       if (f != null && f.isValid() && "compact".equalsIgnoreCase(f.getExtension())) {
@@ -812,7 +812,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   }
 
   /**
-   * Clears inspection problems and restarts the daemon code analyzer for the target contract.
+   * Clears inspection problems and restarts the daemon code analyser for the target contract.
    */
   private void restartDaemon() {
     CompactProblemUtil.clearProblemsAndRestart(project, findTargetCompactFile());

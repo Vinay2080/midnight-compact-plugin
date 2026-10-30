@@ -1,5 +1,7 @@
 package dev.verloren.midnight.toolwindow;
 
+import com.intellij.ide.HelpTooltipKt;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBFont;
@@ -28,8 +30,8 @@ import java.awt.event.MouseEvent;
  * </pre>
  * <ul>
  *   <li><b>Action Icon:</b> Left-aligned action trigger showing either a download icon (for uninstalled releases),
- *       a trash/GC button (for locally cached releases), or an animated progress spinner (during download).</li>
- *   <li><b>Title &amp; Match Badge:</b> Bold version title (rendered in hyperlink color when active), accompanied
+ *       a rubbish/GC button (for locally cached releases), or an animated progress spinner (during download).</li>
+ *   <li><b>Title &amp; Match Badge:</b> Bold version title (rendered in hyperlink colour when active), accompanied
  *       by a green checkmark badge when the toolchain satisfies the active file's {@code pragma} constraint.</li>
  *   <li><b>Description:</b> Optional secondary subtitle displaying language version compatibility details.</li>
  * </ul>
@@ -37,7 +39,7 @@ import java.awt.event.MouseEvent;
  * <p><h3>User Interactions &amp; Context Menu</h3>
  * Supports both mouse clicks and contextual popups:
  * <ul>
- *   <li><b>Left Click:</b> If installed, immediately switches the active compiler. If uninstalled, triggers confirmation and background download.</li>
+ *   <li><b>Left Click:</b> If installed, immediately switches the active compiler. If uninstalled, it triggers confirmation and background download.</li>
  *   <li><b>Context Menu (Right Click):</b> Offers shortcut actions including "Remove Version", "Copy Executable Path", "Download &amp; Switch",
  *       and "Copy Asset Download URL".</li>
  * </ul>
@@ -74,9 +76,6 @@ public class CompactVersionCard extends JPanel {
 
   /** Label displaying the primary card title (e.g., {@code "Compact v0.24.0"}). */
   private final JBLabel titleLabel;
-
-  /** Secondary label displaying the compiler description, or {@code null} if no description was supplied. */
-  private final JBLabel descriptionLabel;
 
   /** Left-hand action component (download label, delete button, or progress spinner). */
   private final JComponent actionIconComponent;
@@ -197,20 +196,18 @@ public class CompactVersionCard extends JPanel {
     if (description != null && !description.isEmpty()) {
       JPanel descRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       descRow.setOpaque(false);
-      descriptionLabel = new JBLabel(description);
+      JBLabel descriptionLabel = new JBLabel(description);
       descriptionLabel.setFont(JBFont.small());
       descriptionLabel.setForeground(JBColor.namedColor("VersionCard.descriptionForeground", new JBColor(new Color(110, 115, 122), new Color(150, 155, 162))));
       descRow.add(descriptionLabel);
       textPanel.add(descRow);
-    } else {
-      descriptionLabel = null;
     }
 
     leftContainer.add(textPanel, BorderLayout.CENTER);
     add(leftContainer, BorderLayout.CENTER);
 
     String tooltip = title + (description != null && !description.isEmpty() ? " - " + description : "");
-    setToolTipText(tooltip);
+    HelpTooltipKt.setToolTipText(this, HtmlChunk.text(tooltip));
 
     // Mouse interactions
     MouseAdapter adapter = new MouseAdapter() {
@@ -269,7 +266,7 @@ public class CompactVersionCard extends JPanel {
   /**
    * Sets whether this version card represents the currently selected project compiler.
    *
-   * <p>Updates title label foreground color to the active hyperlink accent and triggers a repaint.
+   * <p>Updates title label foreground colour to the active hyperlink accent and triggers a repaint.
    * Must be called on the Event Dispatch Thread (EDT).
    *
    * @param active true if this version is the project's active compiler
@@ -307,7 +304,7 @@ public class CompactVersionCard extends JPanel {
    * Constructs and displays the contextual popup menu at the mouse trigger coordinates.
    *
    * <p>If installed, provides options to remove the version or copy the local binary path.
-   * If uninstalled, provides an option to download and switch to this version.
+   * If uninstalled, it provides an option to download and switch to this version.
    * In both cases, provides an action to copy the release asset download URL to the clipboard.
    *
    * @param e mouse event triggering the popup (pressed or released)

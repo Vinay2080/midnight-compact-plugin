@@ -71,8 +71,8 @@ import java.util.List;
  *       against {@code result.modificationStamp()}. If the document was edited while the compiler was executing,
  *       the stale compiler results are discarded silently.</li>
  *   <li><b>WSL & Windows Path Translation:</b> Intelligently translates Windows drive paths to WSL paths
- *       ({@code /mnt/c/...}) when running under WSL toolchains, and normalizes diagnostic paths back for editor display.</li>
- *   <li><b>ZK Optimization:</b> Passes {@code --skip-zk} by default to accelerate compilation speeds during
+ *       ({@code /mnt/c/...}) when running under WSL toolchains and normalizes diagnostic paths back for editor display.</li>
+ *   <li><b>ZK Optimization:</b> Passes {@code --skip-zk} by default to speed up compilation speeds during
  *       on-the-fly typing, controlled via {@link MidnightSettingsState#skipZkDefault}.</li>
  * </ul>
  *
@@ -199,7 +199,7 @@ public class CompactExternalAnnotator extends ExternalAnnotator<CompactExternalA
       LOG.warn("Failed to run compactc external annotator", e);
       return new AnnotationResult(info.modificationStamp(), List.of());
     } finally {
-      // Cleanup temporary working directories
+      // Clean up temporary working directories
       if (outDir != null) {
         FileUtil.delete(outDir);
       }

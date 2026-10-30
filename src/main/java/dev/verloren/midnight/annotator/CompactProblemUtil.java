@@ -20,12 +20,12 @@ import org.jetbrains.annotations.Nullable;
  *
  * <h3>IntelliJ Platform Subsystem Role & Calling Pipeline</h3>
  * <p>
- * Invoked by quick-fixes and settings listeners whenever compiler configuration changes:
+ * Invoked by quick-fixes and settings listeners whenever the compiler configuration changes:
  * <ul>
  *   <li><b>Message Bus Notification:</b> Publishes events across {@link CompactCompilerEventListener#TOPIC}
  *       to update status bars and compiler toolwindows.</li>
- *   <li><b>Daemon Analyzer Restart:</b> Dispatches {@link DaemonCodeAnalyzer#restart(PsiFile)} or
- *       {@link DaemonCodeAnalyzer#restart()} to wipe stale inspection/external annotator errors
+ *   <li><b>Daemon Analyser Restart:</b> Dispatches {@link DaemonCodeAnalyzer#restart(PsiFile, Object)} or
+ *       {@link DaemonCodeAnalyzer#restart(Object)} to wipe stale inspection/external annotator errors
  *       and immediately trigger fresh analysis.</li>
  *   <li><b>Intention Preview Guard:</b> Checks {@link IntentionPreviewUtils#isIntentionPreviewActive()}
  *       to prevent triggering full background daemon restarts when IntelliJ is merely generating
@@ -48,12 +48,12 @@ import org.jetbrains.annotations.Nullable;
 public final class CompactProblemUtil {
 
   /**
-   * Diagnostic reason logged when restarting daemon due to a pragma update.
+   * Diagnostic reason logged when restarting the daemon due to a pragma update.
    */
   private static final String REASON_FILE_UPDATE = "Compact pragma or file updated";
 
   /**
-   * Diagnostic reason logged when restarting daemon due to a global compiler switch.
+   * Diagnostic reason logged when restarting the daemon due to a global compiler switch.
    */
   private static final String REASON_COMPILER_CHANGED = "Compact compiler version changed";
 
@@ -86,7 +86,7 @@ public final class CompactProblemUtil {
 
       DaemonCodeAnalyzer daemon = DaemonCodeAnalyzer.getInstance(project);
 
-      // Step 3: If a specific target file is modified (e.g., pragma updated), restart that file
+      // Step 3: If a specific target file is modified (e.g. pragma updated), restart that file
       if (targetFile != null && targetFile.isValid()) {
         PsiFile psi = ReadAction.computeBlocking(() -> targetFile.isValid() ? PsiManager.getInstance(project).findFile(targetFile) : null);
         if (psi != null && psi.isValid()) {

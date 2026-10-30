@@ -1,5 +1,6 @@
 package dev.verloren.midnight.toolwindow;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -40,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
  * <p><h3>Threading Contract</h3>
  * Invoked by the IntelliJ Platform on the Event Dispatch Thread (EDT) when the tool window is first displayed.
  * Disposer hierarchy guarantees that UI resources and timers (such as {@link com.intellij.util.Alarm} debouncers)
- * inside {@link CompactCompilerPanel} are cleanly disposed when the tool window content is closed.
+ * inside {@link CompactCompilerPanel} are cleanly disposed of when the tool window content is closed.
  *
  * @see CompactCompilerPanel
  * @see CompactCompilerEventListener
@@ -55,7 +56,7 @@ public class CompactCompilerToolWindowFactory implements ToolWindowFactory, Dumb
    * ties the panel's lifecycle to the content via {@link Disposer#register(Disposable, Disposable)},
    * and registers the content with the tool window's {@link com.intellij.ui.content.ContentManager}.
    *
-   * @param project    the active IntelliJ project
+   * @param project an active IntelliJ project
    * @param toolWindow the tool window instance managed by the IDE platform
    */
   @Override
