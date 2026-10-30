@@ -31,12 +31,12 @@ import org.jetbrains.annotations.NotNull;
  *                 ├─► Platform already prefixed current line with '*'? ────────► YES ─► Continue
  *                 │
  *                 ├─► Previous line opened '/*' (unclosed)?
- *                 │     ├─► Current line already has '*&#47;'? ─► Insert ' * ' and move caret
- *                 │     ├─► Has '*&#47;' below in file? ────────► Insert ' * ' and move caret
- *                 │     └─► No '*&#47;' below in file? ─────────► Insert " * \n" + indent + " *&#47;"
+ *                 │     ├─► Current line already has '*&#47;'? ─► Insert '*' and move caret
+ *                 │     ├─► Has '*&#47;' below in the file? ────────► Insert '*' and move caret
+ *                 │     └─► No '*&#47;' below in the file? ─────────► Insert "* \n" + indent + " *&#47;"
  *                 │
  *                 └─► Previous line had '*' prefix &amp; current line doesn't?
- *                       └─► Prepend '* ' and move caret
+ *                       └─► Prepend '*' and move caret
  * </pre>
  *
  * <h3>Threading Contract</h3>
@@ -60,7 +60,7 @@ public class CompactDocCommentEnterHandler extends EnterHandlerDelegateAdapter {
    * @param file the PSI file being edited
    * @param editor the active editor instance
    * @param dataContext editor data context
-   * @return {@link Result#Stop} if comment syntax was injected and caret repositioned; {@link Result#Continue} otherwise
+   * @return {@link Result#Stop} if comment syntax was injected and the caret repositioned; {@link Result#Continue} otherwise
    */
   @Override
   public Result postProcessEnter(@NotNull PsiFile file, @NotNull Editor editor, @NotNull DataContext dataContext) {
@@ -76,7 +76,7 @@ public class CompactDocCommentEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
-    // 2. Extract content of previous line and current line
+    // 2. Extract content of the previous line and current line
     int lineStart = document.getLineStartOffset(lineNumber);
     int prevLineStart = document.getLineStartOffset(lineNumber - 1);
     int prevLineEnd = document.getLineEndOffset(lineNumber - 1);
@@ -87,7 +87,7 @@ public class CompactDocCommentEnterHandler extends EnterHandlerDelegateAdapter {
     String currentLine = document.getCharsSequence().subSequence(lineStart, lineEnd).toString();
     String trimmedCurrent = currentLine.trim();
 
-    // 3. If previous line closed a comment and did not open a new one after '*/', do nothing
+    // 3. If the previous line closed a comment and did not open a new one after '*/', do nothing
     int lastOpen = trimmedPrev.lastIndexOf("/*");
     int lastClose = trimmedPrev.lastIndexOf("*/");
     if (lastClose != -1 && (lastOpen == -1 || lastClose > lastOpen)) {
@@ -159,7 +159,7 @@ public class CompactDocCommentEnterHandler extends EnterHandlerDelegateAdapter {
       if (line.contains("*/")) {
         return true;
       }
-      // If we encounter another comment start before finding a closing '*/', stop scanning
+      // If we encounter another comment, start before finding a closing '*/', stop scanning
       if (line.startsWith("/*") || line.startsWith("//")) {
         return false;
       }

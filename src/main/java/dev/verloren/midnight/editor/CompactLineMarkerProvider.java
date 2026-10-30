@@ -39,7 +39,7 @@ import java.util.Objects;
  *   <caption>Compact Gutter Marker Taxonomy</caption>
  *   <tr><th>Syntax Target</th><th>Visual Icon</th><th>Navigation / Semantic Behavior</th></tr>
  *   <tr><td>{@code disclose} keyword</td><td>{@link AllIcons.Nodes#KeymapEditor}</td><td>ZK Disclosure boundary indicator (private witness to circuit).</td></tr>
- *   <tr><td>{@code implements} in contract</td><td>{@link AllIcons.Gutter#ImplementingMethod}</td><td>Navigate UP to implemented interface contract declaration.</td></tr>
+ *   <tr><td>{@code implements} in contract</td><td>{@link AllIcons.Gutter#ImplementingMethod}</td><td>Navigate UP to the implemented interface contract declaration.</td></tr>
  *   <tr><td>Interface Contract name</td><td>{@link AllIcons.Gutter#ImplementedMethod}</td><td>Navigate DOWN to all project contracts implementing this interface.</td></tr>
  *   <tr><td>Interface Circuit name</td><td>{@link AllIcons.Gutter#ImplementedMethod}</td><td>Navigate DOWN to concrete circuit definitions implementing this signature.</td></tr>
  *   <tr><td>{@code witness} declaration name</td><td>{@link AllIcons.Nodes#AbstractMethod}</td><td>Visual indicator: Private off-chain witness query.</td></tr>
@@ -87,7 +87,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
       return null;
     }
 
-    // 1. Check for a disclose keyword token (Zero-Knowledge privacy boundary)
+    // 1. Check for a disclosed keyword token (Zero-Knowledge privacy boundary)
     if (element.getNode().getElementType() == CompactTokenTypes.DISCLOSE) {
       return new LineMarkerInfo<>(
           element,
@@ -134,7 +134,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
         }
       }
 
-      // 3b. Interface circuit name: navigate DOWN to concrete circuit implementations across project
+      // 3b. Interface circuit name: navigate DOWN to concrete circuit implementations across the project
       if (parent instanceof CompactExternalCircuit externalCircuit && element.equals(externalCircuit.getNameIdentifier())) {
         CompactExternalContractDeclaration contractDecl = PsiTreeUtil.getParentOfType(externalCircuit, CompactExternalContractDeclaration.class);
         if (contractDecl != null) {
@@ -282,7 +282,7 @@ public class CompactLineMarkerProvider implements LineMarkerProvider {
   }
 
   /**
-   * Resolves the corresponding interface circuit declaration in the implemented contract interface,
+   * Resolves the corresponding interface circuit declaration in the implemented contract interface
    * if this circuit definition overrides one.
    *
    * @param circuit the concrete circuit definition

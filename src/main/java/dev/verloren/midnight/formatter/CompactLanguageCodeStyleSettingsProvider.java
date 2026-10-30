@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * <h3>Calling Pipeline &amp; Lifecycle</h3>
  * <p>Invoked by IntelliJ's code style settings infrastructure during project initialization to configure
- * default code style settings, and when rendering the language-specific Code Style configuration panels.</p>
+ * default code style settings and when rendering the language-specific Code Style configuration panels.</p>
  *
  * <h3>Threading Contract</h3>
  * <ul>

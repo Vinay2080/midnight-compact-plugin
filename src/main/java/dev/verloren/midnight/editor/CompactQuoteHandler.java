@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * <h3>Subsystem Role &amp; Extension Point</h3>
  * <p>Registered in {@code plugin.xml} via the {@code com.intellij.lang.quoteHandler} extension point
  * for {@link dev.verloren.midnight.CompactLanguage}. Extends {@link SimpleTokenSetQuoteHandler} to govern
- * quote pairing, auto-insertion, and navigation for single and double quoted strings:
+ * quote pairing, auto-insertion, and navigation for single and double-quoted strings:
  * <ul>
  *   <li><b>Auto-Pairing:</b> Automatically inserts a closing quote when typing an opening quote ({@code "} or {@code '}),
  *       placing the caret between them.</li>

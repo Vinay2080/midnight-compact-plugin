@@ -275,7 +275,7 @@ public class CompactAngleBraceTypedHandler extends TypedHandlerDelegate {
       return true;
     }
 
-    // For multi-character identifiers starting with uppercase (e.g., Vector, Map, Set, MyType),
+    // For multi-character identifiers starting with uppercase (e.g. Vector, Map, Set, MyType),
     // require at least one lowercase character to avoid ALL_CAPS constants like MAX_VALUE.
     for (int i = start + 1; i < end; i++) {
       if (Character.isLowerCase(chars.charAt(i))) {

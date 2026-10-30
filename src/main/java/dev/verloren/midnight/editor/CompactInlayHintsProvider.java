@@ -50,13 +50,13 @@ import java.util.List;
  *   [sink.addPresentation: InlineInlayPosition(offset, true, 0)]
  *                 │
  *                 ▼
- *          Renders "paramName:"
+ *          Renders "paramName":
  * </pre>
  *
  * <h3>Threading Contract</h3>
  * <ul>
  *   <li><b>Read Action:</b> Collector and hint computation execute within a background read action
- *       managed by IntelliJ's declarative hints engine.</li>
+ *       managed by IntelliJ's declarative hints' engine.</li>
  * </ul>
  *
  * @see InlayHintsProvider

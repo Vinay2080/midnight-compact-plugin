@@ -5,8 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
-import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +22,9 @@ import java.util.List;
  * <ul>
  *   <li><b>Contextual Spacing ({@link #getSpacing}):</b> Implements precise spacing logic beyond static builder rules:
  *       <ul>
- *         <li>Disambiguates angle brackets ({@code <}, {@code >}) between generic type parameters/arguments
+ *         <li>Disambiguate angle brackets ({@code <}, {@code >}) between generic type parameters/arguments
  *             (tight spacing: {@code Bytes<32>}) and binary comparison operators (spaced: {@code a < b}).</li>
- *         <li>Disambiguates colons ({@code :}) between ternary operators (spaced: {@code a ? b : c}) and
+ *         <li>Disambiguate colons ({@code :}) between ternary operators (spaced: {@code a ? b : c}) and
  *             type annotations (tight prefix, spaced suffix: {@code x: Field}).</li>
  *         <li>Maintains single-space padding inside struct literal braces ({@code Point { x: 1 }}) and export forms.</li>
  *         <li>Suppresses whitespace before commas, semicolons, brackets, and callable opening parentheses.</li>

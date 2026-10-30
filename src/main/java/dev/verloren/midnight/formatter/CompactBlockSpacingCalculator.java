@@ -7,7 +7,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import dev.verloren.midnight.lexer.CompactTokenSets;
 import dev.verloren.midnight.lexer.CompactTokenTypes;
 import dev.verloren.midnight.parser.CompactElementTypes;
 import org.jetbrains.annotations.NotNull;

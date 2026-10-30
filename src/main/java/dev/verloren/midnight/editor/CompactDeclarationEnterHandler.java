@@ -48,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
  *            │
  *            ├─► Lookup popup active? ───────► YES ─► Result.Continue (let completion finish)
  *            ├─► Live template active? ──────► YES ─► Result.Continue (let template tab/advance)
- *            ├─► Suffix on line after caret? ► YES ─► Result.Continue (caret not at end of trigger)
+ *            ├─► Suffix online after caret? ► YES ─► Result.Continue (caret not at end of trigger)
  *            │
  *            ▼
  *   [CompactDeclarationTriggerResolver.resolve(prefix)]
@@ -86,7 +86,7 @@ import org.jetbrains.annotations.NotNull;
 public class CompactDeclarationEnterHandler extends EnterHandlerDelegateAdapter {
 
   /**
-   * Pre-processes an Enter keypress before the editor executes default line-splitting behavior.
+   * Pre-processes an Enter keypress before the editor executes the default line-splitting behaviour.
    *
    * <p>If a recognized trigger abbreviation is present on the current line and the caret is positioned
    * directly at its tail, the trigger is erased, replaced with canonical declaration syntax, and expanded
@@ -132,7 +132,7 @@ public class CompactDeclarationEnterHandler extends EnterHandlerDelegateAdapter 
     int lineStart = document.getLineStartOffset(lineNumber);
     int lineEnd = document.getLineEndOffset(lineNumber);
 
-    // 4. Ensure line suffix is empty (caret is strictly at the end of the trigger text)
+    // 4. Ensure the line suffix is empty (caret is strictly at the end of the trigger text)
     String lineSuffix = document.getText(new TextRange(caretOffset, lineEnd)).trim();
     if (!lineSuffix.isEmpty()) {
       return Result.Continue;
@@ -151,7 +151,7 @@ public class CompactDeclarationEnterHandler extends EnterHandlerDelegateAdapter 
       return Result.Continue;
     }
 
-    // 7. Check PSI context at caret: must not be in a comment or string literal or inside circuit/constructor body
+    // 7. Check PSI context at caret: must not be in a comment or string literal or inside the circuit / constructor body
     PsiDocumentManager.getInstance(project).commitDocument(document);
     PsiElement element = file.findElementAt(Math.max(0, caretOffset - 1));
     if (element != null) {
@@ -175,7 +175,7 @@ public class CompactDeclarationEnterHandler extends EnterHandlerDelegateAdapter 
       // Delete the typed trigger prefix from the document
       document.deleteString(triggerStart, caretOffset);
 
-      // Insert canonical keyword (prefixed with 'export ' if resolved as exported)
+      // Insert canonical keyword (prefixed with 'export' if resolved as exported)
       String keyword = triggerResult.isExported()
           ? "export " + triggerResult.declarationType().getBaseName()
           : triggerResult.declarationType().getBaseName();

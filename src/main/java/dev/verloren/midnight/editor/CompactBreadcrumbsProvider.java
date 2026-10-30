@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>Registered as a {@code breadcrumbsInfoProvider} extension in {@code plugin.xml}. Implements
  * {@link BreadcrumbsProvider} to compute the lexical breadcrumb chain corresponding to the current caret
  * position. As the developer navigates through nested contracts, modules, circuits, statements, and type
- * declarations, the breadcrumbs bar displays the nesting path and allows instant navigation to ancestor constructs.</p>
+ * declarations, the breadcrumb bar displays the nesting path and allows instant navigation to ancestor constructs.</p>
  *
  * <h3>Breadcrumbs Hierarchy Structure</h3>
  * <pre>
@@ -39,12 +39,12 @@ import org.jetbrains.annotations.Nullable;
  *       All PSI queries are read-only and non-blocking.</li>
  * </ul>
  *
- * @see CompactStructureViewModel
+ * @see dev.verloren.midnight.structure.CompactStructureViewModel
  */
 public class CompactBreadcrumbsProvider implements BreadcrumbsProvider {
 
   /**
-   * Returns the array of programming languages supported by this breadcrumbs provider.
+   * Returns the array of programming languages supported by this breadcrumb's provider.
    *
    * @return array containing {@link CompactLanguage#INSTANCE}
    */

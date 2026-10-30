@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
  *       {@code Comment with Block Comment} (Ctrl+Shift+/ or Cmd+Shift+/).</li>
  *   <li><b>Automatic Doc Comment Stubs:</b> Generation of doc comment templates when typing
  *       {@code /**} + Enter above declarations.</li>
- *   <li><b>Asterisk Continuation:</b> Automatic prefixing of {@code "*"} on subsequent lines within doc comments.</li>
+ *   <li><b>Asterisk Continuation:</b> Automatic prefixing of {@code "*"} on later lines within doc comments.</li>
  *   <li><b>PsiComment Classification:</b> Identification of documentation comments vs regular inline/block comments
  *       for folding, formatting, and documentation presentation.</li>
  * </ul>

@@ -119,7 +119,7 @@ public class CompactFoldingBuilder extends CustomFoldingBuilder implements DumbA
   }
 
   /**
-   * Flushes a contiguous group of import/include declarations into a folding descriptor if it contains &ge; 2 entries.
+   * Flushes a contiguous group of import/include declarations in a folding descriptor if it contains &ge; 2 entries.
    *
    * @param descriptors output list of descriptors
    * @param groupStart first declaration in the contiguous group

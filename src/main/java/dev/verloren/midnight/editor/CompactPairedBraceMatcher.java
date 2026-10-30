@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>Code Block Highlighting:</b> Determining structural blocks (indicated by {@code structural = true}
  *       on curly braces {@code { ... }}).</li>
  *   <li><b>Structural Navigation:</b> Moving the caret between opening and closing delimiters via standard
- *       IDE shortcuts (e.g., Navigate to Block Start/End, Ctrl+[ and Ctrl+]).</li>
+ *       IDE shortcuts (e.g. Navigate to Block Start/End, Ctrl+[ and Ctrl+]).</li>
  * </ul>
  *
  * <h3>Registered Delimiter Pairs</h3>

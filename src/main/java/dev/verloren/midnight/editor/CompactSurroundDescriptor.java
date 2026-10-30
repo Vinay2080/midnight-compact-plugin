@@ -89,7 +89,7 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
    */
   @Override
   public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-    // 1. Validate file type and non-empty content
+    // 1. Validate a file type and non-empty content
     if (!(file instanceof CompactFile) || file.getTextLength() == 0) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -148,7 +148,7 @@ public class CompactSurroundDescriptor implements SurroundDescriptor {
       return new PsiElement[]{cand1};
     }
 
-    // 6. Harmonize parents: find common parent if candidates reside at different depths
+    // 6. Harmonize parents: find a common parent if candidates reside at different depths
     PsiElement parent = cand1.getParent();
     if (parent == null || parent != cand2.getParent()) {
       PsiElement commonParent = PsiTreeUtil.findCommonParent(cand1, cand2);

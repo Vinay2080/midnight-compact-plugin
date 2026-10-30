@@ -24,7 +24,7 @@ import java.util.Map;
  * Implements smooth "over-typing" ergonomics for Compact smart contract code:
  * <ul>
  *   <li><b>Closing Delimiters:</b> Intercepts {@code )}, {@code ]}, {@code }}, and {@code >}. If the user
- *       types a closing bracket that was already auto-inserted by pair-matching, moves the caret past
+ *       types a closing bracket already auto-inserted by pair-matching, moves the caret past
  *       the bracket instead of inserting a redundant character.</li>
  *   <li><b>Structural Punctuation:</b> Intercepts colons ({@code :}), semicolons ({@code ;}), and commas ({@code ,}).
  *       Prevents duplicate punctuation when typing at the boundary of generated templates or completion insertions.</li>

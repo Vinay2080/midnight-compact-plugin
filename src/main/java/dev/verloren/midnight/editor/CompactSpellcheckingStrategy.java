@@ -45,7 +45,7 @@ public class CompactSpellcheckingStrategy extends SpellcheckingStrategy {
    * Selects and returns the appropriate {@link Tokenizer} for spellchecking the specified PSI element.
    *
    * @param element the candidate PSI element
-   * @return {@link #TEXT_TOKENIZER} for spellcheckable text/identifiers, or {@link #EMPTY_TOKENIZER} to ignore
+   * @return {@link #TEXT_TOKENIZER} for spellcheck able text/identifiers, or {@link #EMPTY_TOKENIZER} to ignore
    */
   @Override
   public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {

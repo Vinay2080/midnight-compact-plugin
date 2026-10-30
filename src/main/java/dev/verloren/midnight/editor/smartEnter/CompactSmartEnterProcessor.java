@@ -98,7 +98,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
       }
 
       // 6. Bare declaration keyword (e.g. "contract", "enum", "struct" without an identifier yet)
-      // Never append a semicolon! Instead, ensure trailing space exists and wait for identifier.
+      // Never append a semicolon! Instead, ensure the trailing space exists and wait for identifier.
       if (BARE_DECL_PATTERN.matcher(trimmed).matches()) {
         if (!lineText.endsWith(" ")) {
           document.insertString(finalLineEnd, " ");
@@ -133,7 +133,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
         return;
       }
 
-      // 11. General fallback: if line doesn't end with semicolon or brace, append semicolon
+      // 11. General fallback: if a line doesn't end with semicolon or brace, append semicolon
       if (!trimmed.endsWith(";") && !trimmed.endsWith("{") && !trimmed.endsWith("}")) {
         document.insertString(finalLineEnd, ";\n" + indent);
         editor.getCaretModel().moveToOffset(finalLineEnd + 2 + indent.length());
@@ -198,8 +198,8 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
       return;
     }
 
-    // Case C: User finished parameter list but did NOT type a colon: e.g. "circuit transfer(to: Address)"
-    // In Compact, an omitted return type defaults to : Void.
+    // Case C: User finished the parameter list but did NOT type a colon: e.g. "circuit transfer(to: Address)"
+    // In Compact, an omitted return type defaults to: Void.
     if (trimmed.endsWith(")")) {
       String addition = ": Void {\n" + innerIndent + "\n" + indent + "}";
       doc.insertString(lineEnd, addition);
@@ -210,7 +210,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
 
     // Case D: User typed a colon ':' or ': ' with no type specified yet.
     // NEVER hardcode 'Void'! The user explicitly typed ':' to specify a custom return type.
-    // Ensure clean spacing and leave caret positioned after ': ' for typing / auto-popup.
+    // Ensure clean spacing and leave the caret positioned after ': ' for typing / auto-popup.
     int colonIndex = trimmed.lastIndexOf(':');
     String afterColon = colonIndex != -1 ? trimmed.substring(colonIndex + 1).trim() : "";
 
@@ -229,7 +229,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
     }
 
     // Case E: User typed an incomplete type after colon
-    // In Compact, Bytes and Uint are ALWAYS parameterized with angle brackets <...>, e.g. Bytes<32>, Uint<64>!
+    // In Compact, Bytes and Uint are ALWAYS parameterized with angle brackets <...>, e.g. Bytes<32>, Uint <64>!
     if (afterColon.equals("Byte") || afterColon.equals("Bytes")) {
       String replacement = "Bytes<>";
       int startTypeOffset = lineEnd - afterColon.length();
@@ -254,7 +254,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
       return;
     }
 
-    // e.g. Unclosed angle bracket: "circuit transfer(): Bytes<32" or "circuit transfer(): Uint<64"
+    // e.g. Unclosed angle bracket: "circuit transfer(): Bytes <32" or "circuit transfer(): Uint <64"
     if (afterColon.contains("<") && !afterColon.contains(">")) {
       String addition = "> {\n" + innerIndent + "\n" + indent + "}";
       doc.insertString(lineEnd, addition);
@@ -272,7 +272,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
       return;
     }
 
-    // Case F: Complete return type present (e.g. "circuit query(): Uint<64>", "circuit query(): Bytes<32>", "circuit query(): Field", etc.)
+    // Case F: Complete return types present (e.g. "circuit query(): Uint<64>", "circuit query(): Bytes<32>", "circuit query(): Field", etc.)
     String addition = " {\n" + innerIndent + "\n" + indent + "}";
     doc.insertString(lineEnd, addition);
     int caretTarget = lineEnd + addition.indexOf('\n') + 1 + innerIndent.length();
@@ -333,7 +333,7 @@ public class CompactSmartEnterProcessor extends SmartEnterProcessor {
   /**
    * Handles const statements:
    * In Compact, const declarations MUST have an initializer expression '='.
-   * If '=' is missing, append ' = ' and move caret there rather than appending ';'.
+   * If '=' is missing, append '=' and move the caret there rather than appending ';'.
    */
   private void handleConstStatement(Project project, Document doc, Editor editor, int lineEnd,
                                     String trimmed, String indent) {

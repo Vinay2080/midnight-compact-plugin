@@ -90,25 +90,25 @@ public abstract class CompactSurrounderBase implements Surrounder {
   public @Nullable TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
                                               PsiElement @NotNull [] elements) throws IncorrectOperationException {
-    // 1. Guard against empty element array
+    // 1. Guard against an empty element array
     if (elements.length == 0) {
       return null;
     }
 
-    // 2. Compute full span covered by the elements
+    // 2. Compute the full span covered by the elements
     PsiFile file = elements[0].getContainingFile();
     int startOffset = elements[0].getTextRange().getStartOffset();
     int endOffset = elements[elements.length - 1].getTextRange().getEndOffset();
 
-    // 3. Extract original selected text
+    // 3. Extract the original selected text
     Document document = editor.getDocument();
     String selectedText = document.getText(new TextRange(startOffset, endOffset)).trim();
 
-    // 4. Generate replacement string via concrete subclass implementation
+    // 4. Generate a replacement string via concrete subclass implementation
     String replacement = generateReplacement(selectedText);
     document.replaceString(startOffset, endOffset, replacement);
 
-    // 5. Commit document changes to synchronize PSI tree with document buffer
+    // 5. Commit document changes to synchronize the PSI tree with the document buffer
     PsiDocumentManager.getInstance(project).commitDocument(document);
 
     // 6. Automatically reformat the newly inserted code block using Compact code style rules
@@ -137,7 +137,7 @@ public abstract class CompactSurrounderBase implements Surrounder {
 
   /**
    * Post-processes the editor after replacement and reformatting, positioning the caret or setting
-   * an active selection range (e.g., highlighting condition placeholders).
+   * an active selection range (e.g. highlighting condition placeholders).
    *
    * @param editor the active editor instance
    * @param document the modified editor document
