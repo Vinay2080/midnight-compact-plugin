@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  *       the underlying type through AST inspection or type inference and navigates to its type declaration.</li>
  *   <li><b>Ledger State:</b> Resolves the declared type of ledger declarations (e.g. {@code ledger state: State}).</li>
  *   <li><b>Enum Members:</b> Jumps from an enum case (e.g. {@code Color.Red}) directly to the parent {@code enum Color}.</li>
- *   <li><b>Circuits &amp; Witnesses:</b> Inspects the return type of a circuit/witness and navigates to its type definition.</li>
+ *   <li><b>Circuits &amp; Witnesses:</b> Inspects the return type of circuit/witness and navigates to its type definition.</li>
  *   <li><b>Built-in Primitives:</b> Safely filters out built-in types (e.g. {@code Field}, {@code Boolean}, {@code Uint})
  *       since they have no source declaration target.</li>
  * </ul>

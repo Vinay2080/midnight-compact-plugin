@@ -31,7 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parser and markdown renderer for Compact documentation comments ({@code /** ... *&#47;} and {@code ///}).
+ * Parser and Markdown renderer for Compact documentation comments ({@code /** ... *&#47;} and {@code ///}).
  */
 public final class CompactDocParser {
 

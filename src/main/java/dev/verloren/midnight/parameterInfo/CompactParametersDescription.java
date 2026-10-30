@@ -100,7 +100,7 @@ public record CompactParametersDescription(
   /**
    * Compatibility accessor returning the formatted presentation text.
    *
-   * @return presentation string displayed in tooltip
+   * @return presentation string displayed in the tooltip
    */
   public String getPresentableText() {
     return presentableText;
@@ -112,7 +112,7 @@ public record CompactParametersDescription(
    * <p>Accounts for the length of preceding parameter strings and the separating two-character delimiters ({@code ", "}).</p>
    *
    * @param index zero-based parameter index
-   * @return {@link TextRange} of the parameter substring, or {@link TextRange#EMPTY_RANGE} if index is out of bounds
+   * @return {@link TextRange} of the parameter substring, or {@link TextRange#EMPTY_RANGE} if the index is out of bounds
    */
   public @NotNull TextRange getRange(int index) {
     // Step 1: Guard against out-of-bounds indices
@@ -122,7 +122,7 @@ public record CompactParametersDescription(
     // Step 2: Sum lengths of all preceding parameters plus comma-space delimiters (2 chars)
     int start = 0;
     for (int i = 0; i < index; i++) {
-      start += parameters.get(i).length() + 2; // account for comma and space: ", "
+      start += parameters.get(i).length() + 2; // account for comma and space: ","
     }
     // Step 3: Return range encompassing the active parameter substring
     return new TextRange(start, start + parameters.get(index).length());
@@ -142,7 +142,7 @@ public record CompactParametersDescription(
     boolean isTooManyArguments = currentIndex >= parameters.size() && !parameters.isEmpty();
     boolean isDisabled = !context.isUIComponentEnabled() || isTooManyArguments;
 
-    // Step 3: Configure platform UI presentation with range bounds and color
+    // Step 3: Configure platform UI presentation with range bounds and colour
     context.setupUIComponentPresentation(
         presentableText,
         range.getStartOffset(),

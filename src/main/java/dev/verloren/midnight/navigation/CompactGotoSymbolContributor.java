@@ -37,7 +37,7 @@ import java.util.Collection;
  * </p>
  *
  * <h3>Calling Pipeline &amp; Lifecycle</h3>
- * <p>Invoked by IntelliJ's Search Everywhere / GotoSymbol dialog ({@code GotoSymbolModel2}).
+ * <p>Invoked by IntelliJ's Search Everywhere / GotoSymbol dialogue ({@code GotoSymbolModel2}).
  * <ol>
  *   <li>{@link #processNames} generates candidate symbol name suggestions.</li>
  *   <li>{@link #processElementsWithName} resolves selected names to actual {@link NavigationItem} target nodes.</li>
@@ -60,11 +60,11 @@ import java.util.Collection;
  *         [CompactGotoSymbolContributor]
  *                           │
  *                           ├─► [FileTypeIndex.getFiles(CompactFileType, scope)]
- *                           │         │
- *                           │         ▼
- *                           │   Iterate CompactFiles
- *                           │         │
- *                           │         ▼
+ *                           │ │
+ *                           │ ▼
+ *                           │ Iterate CompactFiles
+ *                           │ │
+ *                           │ ▼
  *                           └─► Filter: isSymbol(element)
  *                                     ├── EXCLUDE: Parameters &amp; Generic Type Parameters
  *                                     ├── EXCLUDE: Local Block-Scoped Constants

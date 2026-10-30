@@ -7,13 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Refactoring support provider enabling in-place rename operations for Compact named declarations.
+ * Refactoring support provider enabling in-place rename operations for Compact-named declarations.
  *
  * <h3>Subsystem Role &amp; Extension Point</h3>
  * <p>Registered in {@code plugin.xml} via the {@code com.intellij.lang.refactoringSupport} extension point
  * for {@link dev.verloren.midnight.CompactLanguage}. Instructs IntelliJ's refactoring engine whether a
  * declaration can be renamed directly within the editor buffer using an in-place template box
- * (rather than opening an intrusive modal dialog):
+ * (rather than opening an intrusive modal dialogue):
  * <ul>
  *   <li><b>In-Place Renaming:</b> Enabled for all declarations implementing {@link CompactNamedElement}
  *       (including circuits, witnesses, contracts, modules, structs, struct fields, enums, enum members,

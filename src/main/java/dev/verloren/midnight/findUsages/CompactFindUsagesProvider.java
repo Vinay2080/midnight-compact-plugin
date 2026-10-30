@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  *   <li><b>Target Qualification:</b> Filters eligible search targets ({@link #canFindUsagesFor}) ensuring
  *       only named Compact elements ({@link CompactNamedElement}) can initiate Find Usages queries.</li>
  *   <li><b>Descriptive Classification:</b> Maps AST nodes to user-friendly semantic type descriptions
- *       (e.g., "circuit", "witness", "ledger", "struct field", "enum member") in the Find Usages results window.</li>
+ *       (e.g. "circuit", "witness", "ledger", "struct field", "enum member") in the Find Usages results window.</li>
  *   <li><b>Presentation Text:</b> Formats descriptive node labels and navigation presentation strings.</li>
  * </ul>
  * </p>
@@ -77,7 +77,7 @@ import org.jetbrains.annotations.Nullable;
 public class CompactFindUsagesProvider implements FindUsagesProvider {
 
   /**
-   * Supplies the word scanner utilized by IntelliJ's indexer to build fast word-lookup tables.
+   * Supplies the word scanner used by IntelliJ's indexer to build fast word-lookup tables.
    *
    * <p>Tokenizes Compact source code using {@link CompactLexer}, indexing identifier tokens while
    * treating comments and string/numeric literals as secondary search domains.</p>
@@ -108,7 +108,7 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
   }
 
   /**
-   * Provides an optional help topic ID for the Find Usages dialog.
+   * Provides an optional help topic ID for the Find Usages dialogue.
    *
    * @param psiElement the PSI element being searched
    * @return null as no custom help topic is registered
@@ -164,7 +164,7 @@ public class CompactFindUsagesProvider implements FindUsagesProvider {
    * Formats the presentation text for the element node in the Find Usages results tree.
    *
    * @param element     the PSI element to represent
-   * @param useFullName whether to include full qualified path (delegates to descriptive name)
+   * @param useFullName whether to include a full qualified path (delegates to descriptive name)
    * @return display string for the element node
    */
   @Override

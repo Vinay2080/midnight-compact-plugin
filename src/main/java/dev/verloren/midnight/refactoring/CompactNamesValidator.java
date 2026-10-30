@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  *   <li><b>In-Place Rename:</b> Invoked on every keystroke in {@code MemberInplaceRenamer} and
  *       {@code VariableInplaceRenamer} to validate the in-editor input box.</li>
- *   <li><b>Modal Rename Dialog:</b> Invoked by {@code RenameDialog} to enable or disable the "Refactor" button
+ *   <li><b>Modal Rename Dialogue:</b> Invoked by {@code RenameDialog} to enable or disable the "Refactor" button
  *       and display error tooltips if an invalid name or keyword is entered.</li>
  * </ul>
  * </p>
@@ -45,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  *       or on pooled background threads during automated refactoring checks.</li>
  *   <li><b>Read Action:</b> Does not require a Read Action because validation operates strictly on pure text
  *       using a standalone {@link CompactLexer} without accessing the PSI tree or document model.</li>
- *   <li><b>Statelessness:</b> The validator maintains zero mutable state, making it thread-safe and allocation-light.</li>
+ *   <li><b>Statelessness:</b> The validator maintains a zero-mutable state, making it thread-safe and allocation-light.</li>
  * </ul>
  *
  * <h3>Lexical Verification Flow</h3>
@@ -124,7 +124,7 @@ public class CompactNamesValidator implements NamesValidator {
       return null;
     }
 
-    // Step 3: Advance past the first token and ensure no trailing tokens or garbage characters remain
+    // Step 3: Advance past the first token and ensure no trailing tokens or rubbish characters remain
     lexer.advance();
     return lexer.getTokenType() == null ? tokenType : null;
   }

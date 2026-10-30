@@ -52,7 +52,7 @@ import java.util.Collection;
  *   <li><b>Read Action:</b> Requires a platform Read Action ({@code @RequiresReadLock}) while querying {@link FileTypeIndex}
  *       and traversing PSI trees.</li>
  *   <li><b>Cancellation Support:</b> Respects early termination when {@code processor.process(...)} returns {@code false},
- *       instantly halting traversal if the search dialog closes or query changes.</li>
+ *       instantly halting traversal if the search dialogue closes or the query changes.</li>
  * </ul>
  *
  * <h3>Search Hierarchy</h3>
@@ -63,11 +63,11 @@ import java.util.Collection;
  *      [CompactGotoClassContributor]
  *                     │
  *                     ├─► [FileTypeIndex.getFiles(CompactFileType, scope)]
- *                     │         │
- *                     │         ▼
- *                     │   Iterate CompactFiles
- *                     │         │
- *                     │         ▼
+ *                     │ │
+ *                     │ ▼
+ *                     │ Iterate CompactFiles
+ *                     │ │
+ *                     │ ▼
  *                     └─► Filter: isClassLike(element)
  *                               ├── Contracts (External &amp; Implementation)
  *                               ├── Modules
@@ -151,7 +151,7 @@ public class CompactGotoClassContributor implements ChooseByNameContributorEx {
   }
 
   /**
-   * Determines whether the specified Compact named element qualifies as a "class-like" construct
+   * Determines whether the specified Compact-named element qualifies as a "class-like" construct
    * eligible for indexing in the "Navigate | Class" index.
    *
    * @param element the Compact named element to test
