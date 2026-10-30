@@ -13,7 +13,7 @@ public class CompactTokenType extends IElementType {
   /**
    * Constructs a Compact token type with a debug name for AST and logging representation.
    *
-   * @param debugName the human-readable name of the token (e.g., "CIRCUIT", "PLUS")
+   * @param debugName the human-readable name of the token (e.g. "CIRCUIT", "PLUS")
    */
   public CompactTokenType(String debugName) {
     super(debugName, CompactLanguage.INSTANCE);

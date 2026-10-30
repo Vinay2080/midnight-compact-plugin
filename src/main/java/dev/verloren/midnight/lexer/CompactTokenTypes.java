@@ -5,7 +5,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 
 /**
- * Static registry of all lexical token types recognised in Compact source code.
+ * Static registry of all lexical token types recognized in Compact source code.
  *
  * <p>Contains definitions for:
  * <ul>

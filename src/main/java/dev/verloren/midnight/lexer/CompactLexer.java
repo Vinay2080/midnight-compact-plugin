@@ -203,7 +203,6 @@ public final class CompactLexer extends LexerBase {
         return;
       default:
         finishHelper(CompactTokenTypes.BAD_CHARACTER);
-        return;
     }
   }
 
