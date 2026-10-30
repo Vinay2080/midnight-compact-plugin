@@ -112,7 +112,7 @@ public final class CompactTypeSubstitutor {
 
   /**
    * Recursively substitutes type variables across any {@link CompactType} instance
-   * using modern Java pattern matching switch expressions.
+   * using a modern Java pattern matching switch expressions.
    *
    * @param type source type containing potential type variables
    * @return transformed type with variables replaced

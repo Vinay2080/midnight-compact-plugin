@@ -46,10 +46,10 @@ import java.util.Map;
  * <pre>
  *   Operator Category      Operators              Inferred Result Type
  *   ────────────────────────────────────────────────────────────────────────
- *   Logical                &amp;&amp;, ||                 CompactPrimitiveType.BOOLEAN
- *   Comparison             ==, !=, &lt;, &lt;=, &gt;, &gt;=   CompactPrimitiveType.BOOLEAN
- *   Arithmetic             +, -, *, /, %          Left operand type (or Right
- *                                                 if Left is literal integer)
+ *   Logical                &amp;&amp;, ||                 CompactPrimitiveType. BOOLEAN
+ *   Comparison             ==, =, &lt;, &lt;=, &gt;, &gt;=   CompactPrimitiveType. BOOLEAN
+ *   Arithmetic             +, -, *, /, % Left operand type (or Right
+ *                                                 if Left is a literal integer)
  * </pre>
  *
  * @see dev.verloren.midnight.type.CompactType
@@ -102,7 +102,7 @@ public class CompactTypeInferenceUtil {
   }
 
   /**
-   * Infers the resulting type of a prefix unary expression (e.g. {@code !expr} or {@code -expr}).
+   * Infers the resulting type of prefix unary expression (e.g. {@code !expr} or {@code -expr}).
    *
    * @param operator prefix unary operator token
    * @param operand  target operand expression
@@ -146,7 +146,7 @@ public class CompactTypeInferenceUtil {
     if (uintType != null) {
       return uintType;
     }
-    // Step 4: Generic/parameterized types (e.g., Vector<32, Field>)
+    // Step 4: Generic/parameterized types (e.g. Vector <32, Field>)
     int angleIndex = trimmed.indexOf('<');
     if (angleIndex != -1 && trimmed.endsWith(">")) {
       String rawName = trimmed.substring(0, angleIndex).trim();
@@ -156,7 +156,7 @@ public class CompactTypeInferenceUtil {
               .toList();
       return new CompactParameterizedType(rawName, argTypes);
     }
-    // Step 5: Type variable detection (e.g., #T, TVal, A)
+    // Step 5: Type variable detection (e.g. #T, TVal, A)
     if (isTypeVariable(trimmed)) {
       return new CompactTypeVariable(trimmed);
     }
@@ -222,7 +222,7 @@ public class CompactTypeInferenceUtil {
   /**
    * Constructs a {@link CompactTypeSubstitutor} mapping declared generic parameters to concrete argument types.
    *
-   * @param declaration   the PSI element declaring generic parameters (e.g., struct, circuit)
+   * @param declaration   the PSI element declaring generic parameters (e.g. struct, circuit)
    * @param typeArguments list of concrete type arguments to bind
    * @return configured {@link CompactTypeSubstitutor}
    */
@@ -346,7 +346,7 @@ public class CompactTypeInferenceUtil {
    * <p>Recognizes:
    * <ul>
    *   <li>Identifiers prefixed with {@code #} (e.g. {@code #T}, {@code #A})</li>
-   *   <li>Single uppercase letters or single letter with digit (e.g. {@code T}, {@code K}, {@code V}, {@code T1})</li>
+   *   <li>Single uppercase letters or single letter with a digit (e.g. {@code T}, {@code K}, {@code V}, {@code T1})</li>
    *   <li>Type variable patterns (e.g. {@code TVal}, {@code TErr})</li>
    * </ul>
    * Built-in primitive types are excluded.</p>

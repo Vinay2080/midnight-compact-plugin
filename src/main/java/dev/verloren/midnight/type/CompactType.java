@@ -41,8 +41,8 @@ import org.jetbrains.annotations.NotNull;
  *   ┌───────────────┬─────────────────┼────────────────┬───────────────┐
  *   ▼               ▼                 ▼                ▼               ▼
  * [Primitive]     [Uint]        [NumericLiteral] [Parameterized]    [Struct]
- * Boolean,Field  Uint&lt;N&gt;           0x1F, 42         Vector&lt;32,T&gt;     User struct
- * Bytes,Opaque   Uint&lt;min..max&gt;
+ * Boolean, Field  Uint&lt;N&gt;           0x1F, 42         Vector&lt;32,T&gt;     User struct
+ * Bytes, Opaque   Uint&lt;min..max&gt;
  *                   │
  *   ┌───────────────┴─────────────────┐
  *   ▼                                 ▼

@@ -84,7 +84,7 @@ public record CompactNumericLiteralType(
   }
 
   /**
-   * Default canonical name for numeric literals is {@code "Field"}.
+   * The default canonical name for numeric literals is {@code "Field"}.
    */
   @Override
   public @NotNull String name() {

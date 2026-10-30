@@ -54,19 +54,13 @@ public record CompactStructType(
     if (this.equals(other)) {
       return true;
     }
-    if (other instanceof CompactTypeVariable) {
-      return true;
-    }
-    if (other instanceof CompactStructType otherStruct) {
-      return name.equals(otherStruct.name());
-    }
-    if (other instanceof CompactParameterizedType param) {
-      return name.equals(param.rawName());
-    }
-    if (other instanceof CompactPrimitiveType(String otherName)) {
-      return name.equals(otherName);
-    }
-    return false;
+    return switch (other) {
+      case CompactTypeVariable _ -> true;
+      case CompactStructType otherStruct -> name.equals(otherStruct.name());
+      case CompactParameterizedType param -> name.equals(param.rawName());
+      case CompactPrimitiveType(String otherName) -> name.equals(otherName);
+      default -> false;
+    };
   }
 
   @Override

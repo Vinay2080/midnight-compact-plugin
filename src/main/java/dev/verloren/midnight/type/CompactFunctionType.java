@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
  *
  * <h3>Subtyping Variance Visual Diagram</h3>
  * <pre>
- *   (TargetParam)  ---&gt; [isAssignableTo] ---&gt; (SourceParam)   [Contravariant]
- *   (SourceReturn) ---&gt; [isAssignableTo] ---&gt; (TargetReturn)  [Covariant]
+ *   (TargetParam)  ---&gt; [isAssignableTo] ---&gt; (SourceParam) [Contravariant]
+ *   (SourceReturn) ---&gt; [isAssignableTo] ---&gt; (TargetReturn) [Covariant]
  * </pre>
  *
  * @see dev.verloren.midnight.type.CompactType
@@ -52,7 +52,7 @@ public record CompactFunctionType(
    * Evaluates assignability adhering to function subtyping principles.
    *
    * @param other target function type
-   * @return {@code true} if parameters are contravariant and return type is covariant
+   * @return {@code true} if parameters are contravariant and the return type is covariant
    */
   @Override
   public boolean isAssignableTo(@NotNull CompactType other) {

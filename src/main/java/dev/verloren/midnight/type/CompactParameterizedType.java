@@ -66,31 +66,35 @@ public record CompactParameterizedType(
     if (this.equals(other)) {
       return true;
     }
-    if (other instanceof CompactTypeVariable) {
-      return true;
-    }
-    if (other instanceof CompactParameterizedType otherParam) {
-      if (!rawName.equals(otherParam.rawName()) || typeArguments.size() != otherParam.typeArguments().size()) {
-        return false;
+    switch (other) {
+      case CompactTypeVariable _ -> {
+        return true;
       }
-      for (int i = 0; i < typeArguments.size(); i++) {
-        CompactType a = typeArguments.get(i);
-        CompactType b = otherParam.typeArguments().get(i);
-        // Type variables unify with anything
-        if (a instanceof CompactTypeVariable || b instanceof CompactTypeVariable) {
-          continue;
-        }
-        if (!a.isAssignableTo(b)) {
+      case CompactParameterizedType otherParam -> {
+        if (!rawName.equals(otherParam.rawName()) || typeArguments.size() != otherParam.typeArguments().size()) {
           return false;
         }
+        for (int i = 0; i < typeArguments.size(); i++) {
+          CompactType a = typeArguments.get(i);
+          CompactType b = otherParam.typeArguments().get(i);
+          // Type variables unify with anything
+          if (a instanceof CompactTypeVariable || b instanceof CompactTypeVariable) {
+            continue;
+          }
+          if (!a.isAssignableTo(b)) {
+            return false;
+          }
+        }
+        return true;
       }
-      return true;
-    }
-    if (other instanceof CompactStructType otherStruct) {
-      return rawName.equals(otherStruct.name());
-    }
-    if (other instanceof CompactPrimitiveType(String otherName)) {
-      return CompactTypeInferenceUtil.isGenericAssignable(name(), otherName);
+      case CompactStructType otherStruct -> {
+        return rawName.equals(otherStruct.name());
+      }
+      case CompactPrimitiveType(String otherName) -> {
+        return CompactTypeInferenceUtil.isGenericAssignable(name(), otherName);
+      }
+      default -> {
+      }
     }
     return false;
   }

@@ -26,7 +26,7 @@ import java.util.Objects;
  * <ul>
  *   <li><b>Uint Delegation:</b> If this primitive type represents a {@code Uint} variant (e.g., {@code "Uint<32>"}),
  *       it parses and delegates assignability to {@link CompactUintType#isAssignableTo(CompactType)}.</li>
- *   <li><b>Bytes Prefix Compatibility:</b> {@code "Bytes"} is compatible with sized byte arrays like {@code "Bytes<32>"}.</li>
+ *   <li><b>Byte Prefix Compatibility:</b> {@code "Bytes"} is compatible with sized byte arrays like {@code "Bytes<32>"}.</li>
  *   <li><b>Type Variable Unification:</b> Assignable to any {@link CompactTypeVariable}.</li>
  *   <li><b>Generic Name Matching:</b> Delegates to {@link CompactTypeInferenceUtil#isGenericAssignable}
  *       when dealing with parameterized primitive aliases.</li>
