@@ -20,15 +20,15 @@ import org.jspecify.annotations.NonNull;
  *       and raw typing by tokenizing document character streams with {@link CompactLexer}. Does not require
  *       an abstract syntax tree (AST) or symbol resolution, ensuring zero typing latency.</li>
  *   <li><b>Tier 2 (Semantic Highlighting - {@link CompactHighlightingAnnotator}):</b> Runs asynchronously
- *       in the background once the PSI tree is built, enriching the basic colors with declaration roles,
+ *       in the background once the PSI tree is built, enriching the basic colours with declaration roles,
  *       call targets, variable mutability, doc tags, and string escapes.</li>
  * </ul>
  * </p>
  *
  * <h3>Calling Pipeline &amp; Lifecycle</h3>
  * <p>Instantiated by {@link CompactSyntaxHighlighterFactory} whenever an editor, preview pane,
- * or color settings page opens a Compact source file. IntelliJ invokes {@link #getHighlightingLexer()}
- * to obtain a fresh lexer instance, followed by repeated calls to {@link #getTokenHighlights(IElementType)}
+ * or colour settings page opens a Compact source file. IntelliJ invokes {@link #getHighlightingLexer()}
+ * to get a fresh lexer instance, followed by repeated calls to {@link #getTokenHighlights(IElementType)}
  * for each token in the viewport.</p>
  *
  * <h3>Threading Contract</h3>
@@ -46,10 +46,10 @@ import org.jspecify.annotations.NonNull;
  *   [Raw Document Keystroke]
  *              │
  *              ▼
- *   [CompactSyntaxHighlighter (Tier 1: Lexical)] ──► Instant basic colors (Keywords, Literals, Punctuation)
+ *   [CompactSyntaxHighlighter (Tier 1: Lexical)] ──► Instant basic colours (Keywords, Literals, Punctuation)
  *              │
  *              ▼ (Background Parser Daemon)
- *   [CompactHighlightingAnnotator (Tier 2: Semantic)] ──► Deep contextual colors (Circuits, Witnesses, Ledgers)
+ *   [CompactHighlightingAnnotator (Tier 2: Semantic)] ──► Deep contextual colours (Circuits, Witnesses, Ledgers)
  * </pre>
  *
  * @see dev.verloren.midnight.highlighter.CompactHighlighterColors
@@ -116,8 +116,8 @@ public class CompactSyntaxHighlighter extends SyntaxHighlighterBase {
   /**
    * Instantiates a fresh {@link CompactLexer} for lexical tokenization.
    * <p>
-   * Invoked by IntelliJ's editor highlighting pipeline to obtain an isolated lexer instance.
-   * Because JFlex lexers maintain internal stream state, each highlighter requires an independent instance.
+   * Invoked by IntelliJ's editor highlighting a pipeline to get an isolated lexer instance.
+   * Because JFlex lexers maintain an internal stream state, each highlighter requires an independent instance.
    * </p>
    *
    * @return a new, uninitialized {@link CompactLexer} instance

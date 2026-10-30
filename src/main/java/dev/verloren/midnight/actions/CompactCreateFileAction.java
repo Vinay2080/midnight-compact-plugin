@@ -36,18 +36,18 @@ import java.util.Map;
  * <p>
  * Registered in {@code plugin.xml} under {@code <actions>} (extending {@link CreateFileFromTemplateAction}):
  * <ul>
- *   <li><b>Subsystem Integration:</b> Hooks into IntelliJ's "New..." popup menu ({@code NewGroup}) in Project View,
+ *   <li><b>Subsystem Integration:</b> Hooks into IntelliJ's "New..." popup menu ({@code NewGroup}) in the Project View,
  *       Navigation Bar, and File menu.</li>
  *   <li><b>Lifecycle Flow:</b> Triggered on EDT via {@code actionPerformed}. Prompts user via
  *       {@link #buildDialog(Project, PsiDirectory, CreateFileFromTemplateDialog.Builder)}, executes
  *       {@link #createFile(String, String, PsiDirectory)}, and finalizes via {@link #postProcess}.</li>
- *   <li><b>Indexing State:</b> Marked with {@link DumbAware} so files can be created even while indices are updating.</li>
+ *   <li><b>Indexing State:</b> Marked with {@link DumbAware} so files can be created, even while indices are updating.</li>
  * </ul>
  * </p>
  *
  * <h3>Threading Contract</h3>
  * <ul>
- *   <li><b>EDT Execution:</b> Dialog presentation, input validation, and file creation dispatch on the EDT.</li>
+ *   <li><b>EDT Execution:</b> Dialogue presentation, input validation, and file creation dispatch on the EDT.</li>
  *   <li><b>Write Action:</b> Code formatting in {@link #postProcess} is wrapped in {@link WriteCommandAction}.</li>
  * </ul>
  *
@@ -93,11 +93,11 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
   }
 
   /**
-   * Populates the template selection dialog with Compact file kinds and input validators.
+   * Populates the template selection dialogue with Compact file kinds and input validators.
    *
    * @param project current IntelliJ project context
    * @param directory directory selected in Project View
-   * @param builder dialog builder provided by the platform action system
+   * @param builder dialogue builder provided by the platform action system
    */
   @Override
   protected void buildDialog(
@@ -142,7 +142,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     };
   }
 
-  /** Generates localized action description for the platform command/undo buffer. */
+  /** Generates a localized action description for the platform command/undo buffer. */
   @Override
   public String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return CompactBundle.message("action.dev.verloren.midnight.actions.CompactCreateFileAction.action.name", newName);
@@ -168,11 +168,11 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
   /**
    * Instantiates a new Compact PSI file from the requested internal template.
    *
-   * @param name raw file name or relative path entered by user
+   * @param name raw file name or relative path entered by a user
    * @param templateName internal template ID from {@link CompactFileTemplateGroupFactory}
-   * @param dir target directory where file should be created
+   * @param dir target directory where a file should be created
    * @return newly created {@link PsiFile}, or {@code null} on failure
-   * @throws ProcessCanceledException if operation is canceled by platform
+   * @throws ProcessCanceledException if the platform cancels operation
    */
   @Override
   public @Nullable PsiFile createFile(String name, String templateName, PsiDirectory dir) {
@@ -213,7 +213,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     }
   }
 
-  /** Builds custom property map passed to Velocity template engine during expansion. */
+  /** Builds a custom property map passed to the Velocity template engine during expansion. */
   private static @NotNull Map<String, String> buildTemplateProperties(@NotNull Project project, @NotNull String simpleName) {
     String langVer = CompactDefaultTemplatePropertiesProvider.resolveLanguageVersion(project);
     String compilerVer = CompactDefaultTemplatePropertiesProvider.resolveCompilerVersion(project);
@@ -228,7 +228,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
 
   /**
    * Post-processes newly created file: reformats code and positions editor caret.
-   * Invoked on EDT after file is created and opened in editor.
+   * Invoked on EDT after a file is created and opened in the editor.
    */
   @Override
   protected void postProcess(@NotNull PsiFile createdElement, String templateName, Map<String, String> customProperties) {
@@ -251,7 +251,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     }
   }
 
-  /** Computes initial caret offset inside first brace block of created file. */
+  /** Computes initial caret offset inside the first brace block of the created file. */
   public static int determineInitialCaretOffset(@NotNull PsiFile file) {
     // Step 1: Locate enclosing brace block boundaries
     String text = file.getText();
@@ -287,7 +287,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     return lastSlash >= 0 ? clean.substring(lastSlash + 1) : clean;
   }
 
-  /** Validates that target file or directory does not already exist in target location. */
+  /** Validates that target a file or directory does not already exist in the target location. */
   public static @Nullable String validateFileCollision(@Nullable String inputString, @NotNull PsiDirectory directory) {
     // Step 1: Normalize input path and isolate simple file name
     if (inputString == null || inputString.trim().isEmpty()) return null;
@@ -307,7 +307,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     return null;
   }
 
-  /** Traverses or finds target directory given relative directory path segments. */
+  /** Traverses or finds the target directory given relative directory path segments. */
   private static @Nullable PsiDirectory findTargetDirectory(@NotNull PsiDirectory baseDir, @NotNull String path) {
     int lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
     if (lastSlash < 0) return baseDir;
@@ -322,7 +322,7 @@ public class CompactCreateFileAction extends CreateFileFromTemplateAction implem
     return current;
   }
 
-  /** Validates file path against illegal filesystem characters and path traversal. */
+  /** Validates a file path against illegal filesystem characters and path traversal. */
   public static @Nullable String validateFileName(@Nullable String inputString) {
     // Step 1: Check for empty input string
     if (inputString == null || inputString.trim().isEmpty()) {

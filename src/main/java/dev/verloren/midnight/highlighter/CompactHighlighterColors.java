@@ -12,15 +12,15 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
  * <h3>Subsystem Role &amp; Architecture</h3>
  * <p>Serves as the single source of truth for all syntax highlighting attributes used across both
  * lexical highlighting ({@link CompactSyntaxHighlighter}) and AST-based semantic analysis ({@link CompactHighlightingAnnotator}).
- * It establishes a two-tiered color fallback taxonomy:
+ * It establishes a two-tiered colour fallback taxonomy:
  * <ul>
  *   <li><b>Platform Defaults Fallback:</b> Every Compact {@link TextAttributesKey} inherits from a standard
  *       IntelliJ platform key (e.g., {@link DefaultLanguageHighlighterColors#FUNCTION_DECLARATION},
  *       {@link DefaultLanguageHighlighterColors#GLOBAL_VARIABLE}, {@link DefaultLanguageHighlighterColors#CLASS_NAME}).
- *       This guarantees that third-party color schemes (Darcula, One Dark, Dracula, GitHub Light) automatically
+ *       This guarantees that third-party colour schemes (Darcula, One Dark, Dracula, GitHub Light) automatically
  *       render Compact code harmoniously without requiring custom scheme definitions.</li>
  *   <li><b>Custom Scheme Overrides:</b> Exposes every key through {@link #DESCRIPTORS} in the IDE settings
- *       (Settings &gt; Editor &gt; Color Scheme &gt; Compact) allowing developers to customize colors for
+ *       (Settings &gt; Editor &gt; Color Scheme &gt; Compact) allowing developers to customize colours for
  *       specialized ZK primitives like {@code witness}, {@code circuit}, {@code ledger}, and {@code disclose}.</li>
  * </ul>
  * </p>
@@ -29,10 +29,10 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
  * <ul>
  *   <li><b>Stateless Dictionary:</b> Pure static immutable constants instantiated once during class loading.</li>
  *   <li><b>Thread Safety:</b> Fully thread-safe across all background annotator threads and EDT render loops.</li>
- *   <li><b>Private Constructor:</b> Enforces non-instantiability.</li>
+ *   <li><b>Private Constructor:</b> Enforces non-insatiability.</li>
  * </ul>
  *
- * <h3>Color Taxonomy Overview</h3>
+ * <h3>Colour Taxonomy Overview</h3>
  * <pre>
  *   Compact Token / AST Node
  *             │

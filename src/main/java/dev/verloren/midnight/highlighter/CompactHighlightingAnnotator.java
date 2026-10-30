@@ -27,10 +27,10 @@ import java.util.regex.Pattern;
  * <h3>Subsystem Role &amp; Extension Point</h3>
  * <p>Registered in {@code plugin.xml} via the {@code com.intellij.annotator} extension point
  * for {@link dev.verloren.midnight.CompactLanguage}. Serves as Tier 2 of the highlighting engine,
- * augmenting the basic lexical token colors from {@link CompactSyntaxHighlighter} with deep,
- * context-sensitive semantic colors derived from PSI tree inspection and reference resolution:
+ * augmenting the basic lexical token colours from {@link CompactSyntaxHighlighter} with deep,
+ * context-sensitive semantic colours derived from PSI tree inspection and reference resolution:
  * <ul>
- *   <li><b>Declarations:</b> Specific colors for circuits, witnesses, contracts, modules, structs,
+ *   <li><b>Declarations:</b> Specific colours for circuits, witnesses, contracts, modules, structs,
  *       enums, enum members, struct fields, type aliases, generic type parameters, and ledger variables.</li>
  *   <li><b>Calls vs Usages:</b> Differentiates circuit calls from witness calls ({@code wit_...()}),
  *       builtin cryptographic functions ({@code disclose}, {@code persistentHash}), and struct field accesses.</li>
@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * </p>
  *
  * <h3>Calling Pipeline &amp; Lifecycle</h3>
- * <p>Invoked by IntelliJ's daemon code analyzer ({@code GeneralHighlightingPass}) on background threads
+ * <p>Invoked by IntelliJ's daemon code analyser ({@code GeneralHighlightingPass}) on background threads
  * while the developer edits code. It traverses PSI elements in the active editor viewport, creating silent
  * informational annotations via {@link AnnotationHolder#newSilentAnnotation(HighlightSeverity)}.</p>
  *
@@ -111,7 +111,7 @@ public class CompactHighlightingAnnotator implements Annotator {
    * Inspects AST structure, resolves references, and creates silent annotations with {@link TextAttributesKey}s.
    * </p>
    *
-   * @param element the PSI element to analyze
+   * @param element the PSI element to analyse
    * @param holder  annotation holder receiving newly constructed text attribute highlights
    */
   @Override
@@ -137,7 +137,7 @@ public class CompactHighlightingAnnotator implements Annotator {
     IElementType tokenType = element.getNode() != null ? element.getNode().getElementType() : null;
 
     // 1. Comments: Differentiate documentation comments (/// or /**) from standard comments
-    // Standard comments are styled by Tier 1 lexer; doc comments are parsed here for JSDoc tags
+    //  are styled by Tier 1 lexer; doc comments are parsed here for JSDoc tags
     if (tokenType == CompactTokenTypes.LINE_COMMENT) {
       if (element.getText().startsWith("///")) {
         highlightDocComment(holder, element);
@@ -555,11 +555,11 @@ public class CompactHighlightingAnnotator implements Annotator {
    * Determines if a reference expression appears on the LHS of an assignment expression.
    * <p>
    * Inspects the enclosing parent node: if it is an {@code ASSIGN_EXPR} and this reference
-   * is or belongs to the first child (LHS), it represents a mutating reassignment write.
+   * is or belongs to the first child (LHS), it represents a mutating reassignment writing.
    * </p>
    *
    * @param refExpr the reference expression to evaluate
-   * @return true if the expression represents a mutating write access
+   * @return true if the expression represents mutating write access
    */
   private static boolean isWriteAccess(@NotNull CompactReferenceExprImpl refExpr) {
     PsiElement parent = refExpr.getParent();
@@ -610,8 +610,8 @@ public class CompactHighlightingAnnotator implements Annotator {
    * Inspects string literal content, highlighting valid escapes and flagging malformed sequences.
    * <p>
    * Scans string characters starting after the opening quote up to the closing quote.
-   * Employs micro-range annotations via {@link #highlightRange(AnnotationHolder, TextRange, TextAttributesKey)}
-   * to color valid escapes or highlight syntax errors for invalid escapes.
+   * Uses micro-range annotations via {@link #highlightRange(AnnotationHolder, TextRange, TextAttributesKey)}
+   * to colour valid escapes or highlight syntax errors for invalid escapes.
    * </p>
    *
    * @param holder  annotation holder receiving highlights

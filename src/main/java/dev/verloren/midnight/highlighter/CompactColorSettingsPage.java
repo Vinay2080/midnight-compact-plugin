@@ -13,12 +13,12 @@ import javax.swing.*;
 import java.util.Map;
 
 /**
- * Color Settings Page for Midnight Compact in IDE Settings (Settings &gt; Editor &gt; Color Scheme &gt; Compact).
+ * Colour Settings Page for Midnight Compact in IDE Settings (Settings &gt; Editor &gt; Color Scheme &gt; Compact).
  *
  * <h3>Subsystem Role &amp; Extension Point</h3>
  * <p>Registered in {@code plugin.xml} via the {@code com.intellij.colorSettingsPage} extension point.
- * Provides the interactive UI page in IntelliJ's Color Scheme preferences where users can preview and customize
- * font colors, styles (bold/italic), backgrounds, and effects for all Compact language tokens and semantic constructs:
+ * Provides the interactive UI page in IntelliJ's Colour Scheme preferences where users can preview and customize
+ * font colours, styles (bold/italic), backgrounds, and effects for all Compact language tokens and semantic constructs:
  * <ul>
  *   <li><b>Attribute Descriptors:</b> Exposes hierarchical categories defined in {@link CompactHighlighterColors#DESCRIPTORS}
  *       (Keywords, Types, Declarations, Calls &amp; Usages, Literals, Comments, Operators, Pragmas).</li>
@@ -31,13 +31,13 @@ import java.util.Map;
  *
  * <h3>Calling Pipeline &amp; Lifecycle</h3>
  * <p>Invoked by {@code com.intellij.application.options.colors.NewColorAndFontPanel} when the user navigates
- * to the Compact color settings page. IntelliJ combines the lexical highlighter from {@link #getHighlighter()}
+ * to the Compact colour settings page. IntelliJ combines the lexical highlighter from {@link #getHighlighter()}
  * with the annotated tags from {@link #getAdditionalHighlightingTagToDescriptorMap()} to render the demo editor.</p>
  *
  * <h3>Threading Contract</h3>
  * <ul>
  *   <li><b>Execution Thread:</b> Instantiated and invoked exclusively on the Event Dispatch Thread (EDT)
- *       during IDE settings dialog interactions.</li>
+ *       during IDE settings dialogue interactions.</li>
  *   <li><b>Thread Safety:</b> All descriptor maps and string constants are immutable and thread-safe.</li>
  * </ul>
  *
@@ -96,7 +96,7 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
   );
 
   /**
-   * Returns the user-visible language title displayed in the Color Scheme settings tree.
+   * Returns the user-visible language title displayed in the Colour Scheme settings tree.
    *
    * @return localized display name for Compact settings
    */
@@ -116,7 +116,7 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
   }
 
   /**
-   * Returns the array of attribute descriptors defining customizable color scheme options.
+   * Returns the array of attribute descriptors defining customizable colour scheme options.
    *
    * @return descriptors array from {@link CompactHighlighterColors#DESCRIPTORS}
    */
@@ -126,7 +126,7 @@ public class CompactColorSettingsPage implements ColorSettingsPage {
   }
 
   /**
-   * Returns empty array as Compact does not define whole-editor background or gutter color descriptors.
+   * Returns an empty array as Compact does not define whole-editor background or gutter colour descriptors.
    *
    * @return empty {@link ColorDescriptor} array
    */
