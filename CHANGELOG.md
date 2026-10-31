@@ -16,6 +16,7 @@
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
 ### Fixed
+- Fixed clickable error and warning hyperlinks in the compilation execution console so locations with Windows drive paths (such as `C:\...`), missing column numbers, and internal compiler exceptions navigate directly to the correct source file and coordinate in the editor, even while background project indexing is active.
 - Fixed toolchain output directory matching on Windows and case-insensitive platforms so output folders aligned with project source roots are recognised correctly regardless of path casing.
 - Fixed false-negative type checking where mismatched types in return statements and expressions were not flagged as errors due to overly broad generic type parameter detection.
 - Fixed code completion ranking in return statements so variables matching the expected return type correctly appear ahead of unrelated types.
