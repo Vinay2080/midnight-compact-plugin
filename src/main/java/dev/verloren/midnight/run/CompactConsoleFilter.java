@@ -128,6 +128,11 @@ public class CompactConsoleFilter implements Filter, DumbAware {
 
   /**
    * Creates an interactive hyperlink result for the matched coordinate pattern.
+   *
+   * @param line         full line text from console output
+   * @param entireLength cumulative character count in console buffer ending at this line
+   * @param matcher      regex matcher containing captured path and coordinate groups
+   * @return {@link Result} hyperlink spanning the match, or {@code null} if file cannot be found
    */
   private @Nullable Result createFilterResult(
           @NotNull String line,
@@ -141,13 +146,16 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       return null;
     }
 
+    // Convert 1-based compiler line and column coordinates into 0-based IntelliJ editor offsets
     int lineNumber = Math.max(0, Integer.parseInt(matcher.group(LINE_GROUP)) - 1);
     int columnNumber = matcher.group(COL_GROUP) != null
             ? Math.max(0, Integer.parseInt(matcher.group(COL_GROUP)) - 1)
             : 0;
 
+    // Calculate absolute buffer offsets: lineStart is the beginning of 'line' in the full console buffer
     int lineStart = entireLength - line.length();
     int matchStart = lineStart + matcher.start(FILE_GROUP);
+    // Determine the end boundary based on whether an explicit column group was matched or just a line number
     int endGroup = matcher.group(COL_GROUP) != null ? COL_GROUP : LINE_GROUP;
     int matchEnd = lineStart + matcher.end(endGroup);
 
@@ -157,6 +165,9 @@ public class CompactConsoleFilter implements Filter, DumbAware {
 
   /**
    * Resolves a target {@link VirtualFile} from a normalized file path using multi-tier fallback strategies.
+   *
+   * @param normalizedPath system-independent file path extracted from compiler output
+   * @return resolved {@link VirtualFile}, or {@code null} if unresolvable
    */
   private @Nullable VirtualFile resolveFile(@NotNull String normalizedPath) {
     // 1. Resolve relative to project directory (supports both production LocalFileSystem and test TempFileSystem)
@@ -168,13 +179,13 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       }
     }
 
-    // 2. Direct path lookup on local file system (absolute paths)
+    // 2. Direct path lookup on local file system (for absolute native paths)
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(normalizedPath);
     if (file != null) {
       return file;
     }
 
-    // 3. WSL path translation fallback (/mnt/c/... -> C:/...)
+    // 3. WSL path translation fallback (/mnt/c/... -> C:/...) when compiler executed inside WSL
     if (normalizedPath.startsWith("/mnt/")) {
       String winPath = FileUtil.toSystemIndependentName(CompactToolchainUtil.toWindowsPath(normalizedPath));
       file = LocalFileSystem.getInstance().findFileByPath(winPath);
@@ -183,7 +194,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       }
     }
 
-    // 4. Fallback to project.getBasePath() string resolution on LocalFileSystem
+    // 4. Fallback to project.getBasePath() string concatenation on LocalFileSystem for project-relative paths
     String basePath = project.getBasePath();
     if (basePath != null) {
       String baseNormalized = FileUtil.toSystemIndependentName(basePath);
@@ -195,13 +206,19 @@ public class CompactConsoleFilter implements Filter, DumbAware {
 
   /**
    * Resolves a relative path or synthetic drive path against the project base directory.
+   *
+   * @param baseDir        project base virtual file directory
+   * @param normalizedPath system-independent path to locate relative to baseDir
+   * @return matching {@link VirtualFile}, or {@code null} if not found
    */
   private @Nullable VirtualFile resolveFromBaseDir(@NotNull VirtualFile baseDir, @NotNull String normalizedPath) {
+    // 1. Attempt direct relative path lookup
     VirtualFile file = baseDir.findFileByRelativePath(normalizedPath);
     if (file != null) {
       return file;
     }
 
+    // 2. Strip leading slash if present (e.g. "/src/counter.compact" -> "src/counter.compact")
     if (normalizedPath.startsWith("/")) {
       file = baseDir.findFileByRelativePath(normalizedPath.substring(1));
       if (file != null) {
@@ -209,7 +226,8 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       }
     }
 
-    // Drive-letter relative fallback for synthetic paths (e.g. C:/mock/contracts/... -> mock/contracts/...)
+    // 3. Drive-letter relative fallback for synthetic paths (e.g. C:/mock/contracts/... -> mock/contracts/...)
+    // Crucial for test environments using TempFileSystem where mock drive letters are prepended
     if (normalizedPath.length() >= 3 && Character.isLetter(normalizedPath.charAt(0)) && normalizedPath.charAt(1) == ':') {
       String relativeFromDrive = normalizedPath.substring(2);
       while (relativeFromDrive.startsWith("/")) {
@@ -221,6 +239,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       }
     }
 
+    // 4. Attempt resolution on the specific FileSystem backing baseDir
     return baseDir.getFileSystem().findFileByPath(normalizedPath);
   }
 }
