@@ -1,10 +1,15 @@
 # Current Handoff
 
 ## Current Feature
-Compact 0.35.0 Compiler & 0.27.0 Language Support (`ai/feature-compact-0-35-0` -> `master`).
+Auto-Navigation to First Compiler Error on Run Failure (`ai/run-auto-navigate-first-error` -> `master`).
 
 ## Status
 - **Accomplished**:
+  - **Run Configuration Auto-Navigation on Compiler Failure**:
+    - `CompactConsoleFilter`: Added thread-safe tracking of the first resolved error hyperlink via `AtomicReference<OpenFileHyperlinkInfo>`.
+    - `CompactRunProfileState`: Integrated automated editor navigation into `processTerminated` when the compiler process finishes with a non-zero exit code (`event.getExitCode() != 0`). Safely dispatches `firstError.navigate(project)` onto the EDT via `ApplicationManager.getApplication().invokeLater(..., ModalityState.any())`.
+    - `CompactConsoleFilterTest`: Added unit tests asserting that the primary error coordinate is captured accurately and preserved against subsequent error output lines.
+    - All verification gates passed (Checkstyle, compilation, plugin structure, ArchUnit, unit tests).
   - **CompactToolchainUtil SRP Decomposition & Bug Fixes**:
     - Decomposed oversized `CompactToolchainUtil` (713 lines) into focused delegates: `CompactToolchainDiscovery` (374 lines) and `CompactToolchainPathUtil` (184 lines), keeping `CompactToolchainUtil` at 297 lines.
     - Fixed WSL vs host path resolution on Linux/macOS and case-insensitivity on Windows.

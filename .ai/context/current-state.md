@@ -7,6 +7,10 @@ Last Updated: October 2026 (v1.4.2 / First-Class Type Hierarchy & Substitutor, C
 ## 1. Implementation Snapshot
 
 ### Implemented Subsystems
+- **First Error Auto-Navigation on Compiler Run Failure (v1.4.2)**:
+  - `CompactConsoleFilter`: Thread-safe primary diagnostic tracking via `AtomicReference<OpenFileHyperlinkInfo>`, capturing the first compiler error while preserving it against subsequent error output.
+  - `CompactRunProfileState`: Integrated automated editor navigation into `processTerminated` when compilation finishes with a non-zero exit code (`event.getExitCode() != 0`). Dispatches EDT navigation via `ApplicationManager.getApplication().invokeLater` with `ModalityState.any()`, ensuring the editor opens the failing file and places the caret directly at the line and column of the primary compiler error.
+  - Test Coverage: Unit tests added to `CompactConsoleFilterTest` asserting first error coordinate capture and preservation across multiple diagnostic lines.
 - **First-Class Type Hierarchy & Type Substitutor (Phase 31 / v1.4.2)**:
   - `CompactType`: Sealed interface representing first-class types (`CompactPrimitiveType`, `CompactParameterizedType`, `CompactStructType`, `CompactTypeVariable`, `CompactFunctionType`).
   - `CompactTypeVariable`: Dedicated first-class representation of type variables supporting letters (`T`, `#T`), multi-letter parameters (`TVal`, `TErr`), and numbered parameters (`T1`, `T2`).
@@ -252,7 +256,8 @@ Last Updated: October 2026 (v1.4.2 / First-Class Type Hierarchy & Substitutor, C
 | `dev.verloren.midnight.parser.TypePatternParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.ExpressionParserTest` | 1 | Passed |
 | `dev.verloren.midnight.parser.DeclarationParserTest` | 1 | Passed |
-| **Total Across 68 Suites** | **765** | **100% Passed** |
+| `dev.verloren.midnight.run.CompactConsoleFilterTest` | 6 | Passed |
+| **Total Across 69 Suites** | **772** | **100% Passed** |
 
 ---
 

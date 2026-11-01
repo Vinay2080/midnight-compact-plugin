@@ -9,6 +9,7 @@
 - Added first-class type hierarchy and generic type substitution support, providing accurate type variable representation, generic parameter instantiation, and robust type checking for generic structs and circuits.
 - Added autocompletion and semantic highlighting for new Compact language 0.27.0 builtin types (`PublicAddress`, `Secp256r1`, `Curve25519`) and cryptographic builtin functions (`secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`).
 - Added `PublicAddress` struct declaration to the Compact Standard Library reference (`standard-library.compact`).
+- Added automated error navigation when running a contract compilation; if the build fails, the editor now automatically opens the failing file and places the cursor directly at the first compiler error, matching standard IDE behavior without interrupting active typing during normal code editing.
 - Updated New Compact File template default fallback pragma directives from `0.26.0` to `0.27.0`.
 
 ### Changed
