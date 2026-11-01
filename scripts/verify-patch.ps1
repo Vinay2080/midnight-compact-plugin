@@ -93,10 +93,16 @@ if ($LASTEXITCODE -eq 0) {
 if ($report.gates.compilation.passed) {
     Write-Host "`n[Gate 1b] Verifying Static Analysis & Code Style..." -ForegroundColor Yellow
     $checkstyleOutput = & $gradleCmd checkstyleMain checkstyleTest --console=plain 2>&1
-    if ($LASTEXITCODE -eq 0) {
+    $bannedRunImports = Get-ChildItem -Path "src/main/java/dev/verloren/midnight/run" -Filter "*.java" -Recurse | Select-String -Pattern "import com\.intellij\.openapi\.util\.io\.FileUtil;"
+    if ($bannedRunImports) {
+        Write-Host "  Static Analysis: FAILED (Banned legacy FileUtil import in run package)" -ForegroundColor Red
+        $report.gates.static_analysis.passed = $false
+        $report.gates.static_analysis.detail = "Banned legacy FileUtil import detected in run package. Use java.nio.file.Path or standard String replacement."
+        Write-Host ($bannedRunImports | Out-String)
+    } elseif ($LASTEXITCODE -eq 0) {
         Write-Host "  Static Analysis: SUCCESS" -ForegroundColor Green
         $report.gates.static_analysis.passed = $true
-        $report.gates.static_analysis.detail = "Checkstyle rules verified"
+        $report.gates.static_analysis.detail = "Checkstyle rules verified and zero banned legacy imports"
     } else {
         Write-Host "  Static Analysis: FAILED" -ForegroundColor Red
         $report.gates.static_analysis.detail = ($checkstyleOutput | Out-String)
