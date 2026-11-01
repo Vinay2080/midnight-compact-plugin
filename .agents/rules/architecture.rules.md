@@ -41,3 +41,8 @@
 7. **Strict Tooling Precedence (JetBrains MCP Priority)**:
    - For all development, inspection, navigation, and verification loops, AI agents **MUST strictly prioritize JetBrains MCP tools first** (`get_file_problems`, `lint_files`, `reformat_file`, `rename_refactoring`, `search_symbol`, `get_symbol_info`, `execute_run_configuration`).
    - Terminal CLI commands (`verify-patch.ps1`, `./gradlew test`) are secondary verification or fallback mechanisms. CLI commands must NEVER supersede JetBrains MCP tools.
+
+8. **The Reference Age Invariant & Banned Legacy APIs (Temporal Drag)**:
+   - Reference repositories (`intellij-rust`, `intellij-elixir`, `intellij-scala`) were authored between 2015 and 2018. Extract architectural concepts and AST structures; **never** copy platform imports or legacy utilities blindly.
+   - **Peer Grep Precedence**: Before introducing a new platform or third-party utility, search how `dev.verloren.midnight` already performs the operation.
+   - **STRICTLY PROHIBITED**: Importing or calling `com.intellij.openapi.util.io.FileUtil` in `run..` and newly authored classes. Mandated replacements are `java.nio.file.Path`, `java.nio.file.Files`, or standard String normalization (`path.replace('\\', '/')`). Enforced via bytecode analysis in `CompactArchitectureTest`.

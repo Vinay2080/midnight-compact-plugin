@@ -90,4 +90,15 @@ Level 3: Chronic Anti-Pattern (>= 3 Occurrences)
 - **Enforcement:**
   - Rule codified in `.agents/rules/architecture.rules.md`. Type inference engines must strictly separate builtin primitives, nominal struct/enum types, and generic type parameters with explicit whitelist/exclusion guards.
 
+### Pattern PAT-007: Reference Repository Temporal Drag & Legacy SDK API Bleed
+- **Category:** Architecture & Platform SDK Compliance
+- **Occurrences:** 1 incident
+  1. `2026-10-31-run-console-filter-windows-paths-and-scheme-exceptions.md` (Copying 2017-era `FileUtil` from `intellij-rust`)
+- **Root Cause:** Adopting legacy IntelliJ SDK imports from historical reference plugins (authored 2015–2018) without filtering against modern SDK 2025.1+ guidelines or checking internal repository precedent.
+- **Escalation Level:** **Level 1 (Single Incident - Resolved & Guarded)**
+- **Enforcement:**
+  - ArchUnit test `CompactArchitectureTest.testBannedLegacyApiInvariants` enforces zero `FileUtil` dependencies in `run..` at the bytecode level.
+  - Pre-flight import check in `scripts/verify-patch.ps1` Gate 1b.
+  - "The Reference Age Invariant" and "Peer Grep Precedence" codified in `.agents/rules/architecture.rules.md`.
+
 

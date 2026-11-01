@@ -65,25 +65,29 @@ During contract development and compilation, the compiler CLI (`compactc`) strea
    - `SCHEME_EXCEPTION_PATTERN`: `([a-zA-Z]:[\\\\/][^:\\r\\n]+?\\.compact|[^:\\r\\n\\s][^:\\r\\n]*?\\.compact)\\s+line\\s+(\\d+),?\\s+char\\s+(\\d+)`
 3. **Multi-Tier File Resolution**:
    - Project directory relative lookup via `ProjectUtil.guessProjectDir(project)` (supporting both `LocalFileSystem` and test `TempFileSystem`).
-   - Direct `LocalFileSystem.findFileByPath` with `FileUtil.toSystemIndependentName`.
+   - Direct `LocalFileSystem.findFileByPath` with standard String `.replace('\\', '/')` path normalization (zero `FileUtil` dependency).
    - WSL path translation fallback via `CompactToolchainUtil.toWindowsPath`.
    - Drive-letter stripping fallback for synthetic project paths.
 4. **Clean Code & Modern Java 25**:
    - Extracted `resolveFromBaseDir` to keep methods $\le$ 40 lines.
    - Preserved file length at $\le$ 200 lines (well under the 400-line ceiling).
    - Zero compilation warnings, zero linter warnings.
+   - Banned legacy `FileUtil` usage enforced by ArchUnit.
 
 ---
 
 ## 6. Verification & Tests Added
 
-Added test suite `src/test/java/dev/verloren/midnight/run/CompactConsoleFilterTest.java`:
-- `testDumbAwareContract`: Asserts `CompactConsoleFilter` implements `DumbAware`.
-- `testRelativeDiagnostic`: Verifies standard relative paths convert to 0-based editor line/column offsets.
-- `testWindowsAbsolutePathDiagnostic`: Verifies Windows drive letters (`C:/...` and `C:\...`) resolve and hyperlink accurately.
-- `testChezSchemeExceptionFormat`: Verifies Chez Scheme internal compiler exceptions are parsed into clickable links.
-- `testLineOnlyWithoutColumnDiagnostic`: Verifies diagnostics with line numbers only default column to 0.
-- `testUnrelatedOutputIgnored`: Negative assertion ensuring unrelated output returns `null`.
+1. Added test suite `src/test/java/dev/verloren/midnight/run/CompactConsoleFilterTest.java`:
+   - `testDumbAwareContract`: Asserts `CompactConsoleFilter` implements `DumbAware`.
+   - `testRelativeDiagnostic`: Verifies standard relative paths convert to 0-based editor line/column offsets.
+   - `testWindowsAbsolutePathDiagnostic`: Verifies Windows drive letters (`C:/...` and `C:\...`) resolve and hyperlink accurately.
+   - `testChezSchemeExceptionFormat`: Verifies Chez Scheme internal compiler exceptions are parsed into clickable links.
+   - `testLineOnlyWithoutColumnDiagnostic`: Verifies diagnostics with line numbers only default column to 0.
+   - `testUnrelatedOutputIgnored`: Negative assertion ensuring unrelated output returns `null`.
+
+2. Added ArchUnit verification in `src/test/java/dev/verloren/midnight/architecture/CompactArchitectureTest.java`:
+   - `testBannedLegacyApiInvariants`: Enforces that execution and run subsystem production classes do not depend on `com.intellij.openapi.util.io.FileUtil`.
 
 **Verification Harness Result**:
 All gates passed with status `"PASSED"` via `scripts/verify-patch.ps1`.
@@ -95,3 +99,4 @@ All gates passed with status `"PASSED"` via `scripts/verify-patch.ps1`.
 1. **Path Regular Expressions Must Account for Windows**: Any regex matching file paths on Windows must support drive letters (`[a-zA-Z]:[\\/]`).
 2. **Console Filters Should Always Implement `DumbAware`**: Console filters that only perform file resolution and text offset calculations have no dependency on PSI indexes and should remain functional during indexing.
 3. **Use ProjectUtil for Virtual File Resolution**: Relying exclusively on `LocalFileSystem.getInstance().findFileByPath()` breaks test fixtures using virtual file systems (`TempFileSystem`). Use `ProjectUtil.guessProjectDir()` as the primary entry point.
+4. **Reference Age Invariant (Temporal Drag)**: Reference repositories (`intellij-rust`, `intellij-elixir`, `intellij-scala`) were written in 2015–2018. Extract AST design concepts, never copy platform utility imports. Enforce via ArchUnit bytecode analysis.
