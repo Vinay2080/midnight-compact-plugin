@@ -108,4 +108,32 @@ public class CompactConsoleFilterTest extends BasePlatformTestCase {
     Filter.Result result = filter.applyFilter(line, line.length());
     assertNull("Unrelated compiler output should not produce hyperlinks", result);
   }
+
+  /**
+   * Verifies that getFirstErrorHyperlink tracks the primary error coordinate and does not overwrite it on subsequent errors.
+   */
+  public void testFirstErrorHyperlinkCapturedAndPreserved() {
+    assertNull("Initially first error hyperlink must be null", filter.getFirstErrorHyperlink());
+
+    String error1 = "contracts/counter.compact:5:2: error: syntax error";
+    filter.applyFilter(error1, error1.length());
+
+    OpenFileHyperlinkInfo firstError = filter.getFirstErrorHyperlink();
+    assertNotNull("First error hyperlink must be recorded", firstError);
+    assertNotNull(firstError.getDescriptor());
+    assertEquals("First error line should match line 5 (0-indexed 4)", 4, firstError.getDescriptor().getLine());
+    assertEquals("First error col should match col 2 (0-indexed 1)", 1, firstError.getDescriptor().getColumn());
+
+    // Emit a second error on a different line
+    String error2 = "contracts/counter.compact:18:10: error: type mismatch";
+    filter.applyFilter(error2, error1.length() + error2.length());
+
+    OpenFileHyperlinkInfo preservedError = filter.getFirstErrorHyperlink();
+    assertNotNull("Preserved error must not be null", preservedError);
+    assertNotNull(preservedError.getDescriptor());
+    assertEquals("First error coordinate must be preserved and not overwritten by subsequent errors",
+            4, preservedError.getDescriptor().getLine());
+    assertEquals("First error column must be preserved",
+            1, preservedError.getDescriptor().getColumn());
+  }
 }

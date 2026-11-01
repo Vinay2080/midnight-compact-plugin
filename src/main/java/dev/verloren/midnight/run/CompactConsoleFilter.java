@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -90,6 +91,12 @@ public class CompactConsoleFilter implements Filter, DumbAware {
           Pattern.compile("([a-zA-Z]:[\\\\/][^:\\r\\n]+?\\.compact|[^:\\r\\n\\s][^:\\r\\n]*?\\.compact)\\s+line\\s+(\\d+),?\\s+char\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
 
   /**
+   * Cached reference to the first diagnostic hyperlink encountered during the console stream.
+   * Enables automated caret navigation to the primary compiler error upon build failure.
+   */
+  private final AtomicReference<OpenFileHyperlinkInfo> firstErrorHyperlink = new AtomicReference<>();
+
+  /**
    * The active project context used for file resolution and navigation.
    */
   private final Project project;
@@ -101,6 +108,15 @@ public class CompactConsoleFilter implements Filter, DumbAware {
    */
   public CompactConsoleFilter(@NotNull Project project) {
     this.project = project;
+  }
+
+  /**
+   * Returns the first error hyperlink resolved during this compilation run, if any.
+   *
+   * @return first {@link OpenFileHyperlinkInfo} resolved, or {@code null} if no error links were generated
+   */
+  public @Nullable OpenFileHyperlinkInfo getFirstErrorHyperlink() {
+    return firstErrorHyperlink.get();
   }
 
   /**
@@ -159,6 +175,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
     int matchEnd = lineStart + matcher.end(endGroup);
 
     OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(project, file, lineNumber, columnNumber);
+    firstErrorHyperlink.compareAndSet(null, hyperlink);
     return new Result(matchStart, matchEnd, hyperlink);
   }
 
