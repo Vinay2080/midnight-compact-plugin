@@ -72,6 +72,22 @@ public class CompactArchitectureTest {
   }
 
   /**
+   * Enforces that run and execution subsystem classes do not depend on legacy com.intellij.openapi.util.io.FileUtil.
+   * JetBrains SDK guidelines mandate java.nio.file.Path and PathUtil instead.
+   */
+  @Test
+  public void testBannedLegacyApiInvariants() {
+    ArchRule noLegacyFileUtilInRun = noClasses()
+        .that().resideInAPackage("dev.verloren.midnight.run..")
+        .and().haveSimpleNameNotEndingWith("Test")
+        .should().dependOnClassesThat()
+        .haveFullyQualifiedName("com.intellij.openapi.util.io.FileUtil")
+        .because("Execution and run subsystem production classes must not depend on legacy FileUtil; use java.nio.file.Path or standard String replacement");
+
+    noLegacyFileUtilInRun.check(CLASSES);
+  }
+
+  /**
    * Verifies that the rule definitions exist and are properly registered in the codebase.
    */
   @Test

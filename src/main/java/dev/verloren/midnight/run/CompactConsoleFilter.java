@@ -5,7 +5,6 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +139,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
           @NotNull Matcher matcher
   ) {
     String rawPath = matcher.group(FILE_GROUP);
-    String normalizedPath = FileUtil.toSystemIndependentName(rawPath);
+    String normalizedPath = rawPath.replace('\\', '/');
     VirtualFile file = resolveFile(normalizedPath);
     if (file == null) {
       return null;
@@ -187,7 +186,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
 
     // 3. WSL path translation fallback (/mnt/c/... -> C:/...) when compiler executed inside WSL
     if (normalizedPath.startsWith("/mnt/")) {
-      String winPath = FileUtil.toSystemIndependentName(CompactToolchainUtil.toWindowsPath(normalizedPath));
+      String winPath = CompactToolchainUtil.toWindowsPath(normalizedPath).replace('\\', '/');
       file = LocalFileSystem.getInstance().findFileByPath(winPath);
       if (file != null) {
         return file;
@@ -197,7 +196,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
     // 4. Fallback to project.getBasePath() string concatenation on LocalFileSystem for project-relative paths
     String basePath = project.getBasePath();
     if (basePath != null) {
-      String baseNormalized = FileUtil.toSystemIndependentName(basePath);
+      String baseNormalized = basePath.replace('\\', '/');
       return LocalFileSystem.getInstance().findFileByPath(baseNormalized + "/" + normalizedPath);
     }
 
