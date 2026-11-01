@@ -128,6 +128,12 @@ public final class CompactToolchainUtil {
     return resolveFromHostOrPath();
   }
 
+  /**
+   * Resolves the compiler toolchain configured explicitly in project-level settings.
+   *
+   * @param project current project context
+   * @return {@link ToolchainInfo} from custom path or active managed version, or {@code null}
+   */
   private static @Nullable ToolchainInfo resolveFromProjectSettings(@Nullable Project project) {
     if (project == null) {
       return null;
@@ -136,12 +142,16 @@ public final class CompactToolchainUtil {
     if (settings == null) {
       return null;
     }
+
+    // 1. Check user-specified custom binary path in project settings
     if (settings.customCompilerPath != null && !settings.customCompilerPath.trim().isEmpty()) {
       ToolchainInfo customInfo = parseConfiguredPath(settings.customCompilerPath.trim());
       if (customInfo != null) {
         return customInfo;
       }
     }
+
+    // 2. Check explicitly selected compiler version downloaded via CompactVersionManager
     if (settings.selectedCompilerVersion != null && !settings.selectedCompilerVersion.trim().isEmpty()) {
       String versionExe = CompactVersionManager.getInstalledExecutable(settings.selectedCompilerVersion.trim());
       if (versionExe != null) {
@@ -157,6 +167,11 @@ public final class CompactToolchainUtil {
     return null;
   }
 
+  /**
+   * Resolves the compiler toolchain configured globally across the IDE in application-level settings.
+   *
+   * @return global {@link ToolchainInfo}, or {@code null} if unconfigured
+   */
   private static @Nullable ToolchainInfo resolveFromGlobalSettings() {
     MidnightSettingsState state = MidnightSettingsState.getInstance();
     if (state != null && state.compilerPath != null && !state.compilerPath.trim().isEmpty()) {
@@ -165,6 +180,12 @@ public final class CompactToolchainUtil {
     return null;
   }
 
+  /**
+   * Resolves the compiler binary from the project's local {@code node_modules/.bin} directory.
+   *
+   * @param project current project context
+   * @return project-local {@link ToolchainInfo}, or {@code null} if not found in npm packages
+   */
   private static @Nullable ToolchainInfo resolveFromNodeModules(@Nullable Project project) {
     if (project == null || project.getBasePath() == null) {
       return null;
@@ -173,10 +194,14 @@ public final class CompactToolchainUtil {
     if (!nodeModulesBin.isDirectory()) {
       return null;
     }
+
+    // Prefer low-level standalone compiler 'compactc' first
     File localCompactc = findExecutableInDir(nodeModulesBin, "compactc");
     if (localCompactc != null) {
       return new ToolchainInfo(localCompactc.getAbsolutePath(), false, null, false);
     }
+
+    // Fall back to high-level CLI wrapper 'compact'
     File localCompact = findExecutableInDir(nodeModulesBin, "compact");
     if (localCompact != null) {
       return new ToolchainInfo(localCompact.getAbsolutePath(), false, null, true);
@@ -184,11 +209,18 @@ public final class CompactToolchainUtil {
     return null;
   }
 
+  /**
+   * Resolves the latest installed compiler version from plugin-managed storage (~/.compact/versions/).
+   *
+   * @return {@link ToolchainInfo} for the latest installed release, or {@code null} if none installed
+   */
   private static @Nullable ToolchainInfo resolveFromManagedVersions() {
     SequencedMap<String, String> installedVersions = CompactVersionManager.getInstalledVersions();
     if (installedVersions.isEmpty()) {
       return null;
     }
+
+    // Releases are ordered descending; first entry is the highest/latest SemVer installed
     String latestExe = installedVersions.firstEntry().getValue();
     ToolchainInfo managedInfo = parseConfiguredPath(latestExe);
     if (managedInfo != null) {
@@ -198,21 +230,34 @@ public final class CompactToolchainUtil {
     return new ToolchainInfo(latestExe, false, null, isCli);
   }
 
+  /**
+   * Resolves the compiler toolchain from host environment probes, including WSL (on Windows),
+   * system PATH environment variables, and conventional package manager directories.
+   *
+   * @return resolved {@link ToolchainInfo}, or {@code null} if unresolvable anywhere on host
+   */
   private static @Nullable ToolchainInfo resolveFromHostOrPath() {
+    // 1. On Windows, probe WSL distributions first for native Linux binaries
     if (SystemInfo.isWindows) {
       ToolchainInfo wslInfo = CompactToolchainDiscovery.findInWsl();
       if (wslInfo != null) {
         return wslInfo;
       }
     }
+
+    // 2. Probe system PATH for 'compactc'
     File pathCompactc = findExecutableInPath("compactc");
     if (pathCompactc != null) {
       return new ToolchainInfo(pathCompactc.getAbsolutePath(), false, null, false);
     }
+
+    // 3. Probe system PATH for 'compact'
     File pathCompact = findExecutableInPath("compact");
     if (pathCompact != null) {
       return new ToolchainInfo(pathCompact.getAbsolutePath(), false, null, true);
     }
+
+    // 4. Probe conventional package manager directories (npm, cargo, brew, etc.)
     File commonCompactc = CompactToolchainDiscovery.findInCommonLocations("compactc");
     if (commonCompactc != null) {
       return new ToolchainInfo(commonCompactc.getAbsolutePath(), false, null, false);
@@ -349,18 +394,45 @@ public final class CompactToolchainUtil {
     cmd.addParameters(compilerArgs);
   }
 
+  /**
+   * Converts a Windows or system-independent host file path to its WSL equivalent (e.g. {@code C:\repo} to {@code /mnt/c/repo}).
+   *
+   * @param path native Windows or host file path
+   * @return converted WSL path string
+   */
   public static @NotNull String toWslPath(@NotNull String path) {
     return CompactToolchainPathUtil.toWslPath(path);
   }
 
+  /**
+   * Converts a WSL path (e.g. {@code /mnt/c/project/contracts}) to its native Windows equivalent (e.g. {@code C:\project\contracts}).
+   *
+   * @param path WSL mount path string
+   * @return converted Windows path string
+   */
   public static @NotNull String toWindowsPath(@NotNull String path) {
     return CompactToolchainPathUtil.toWindowsPath(path);
   }
 
+  /**
+   * Derives a default output directory relative to the project or contract parent directory.
+   *
+   * @param project         current project context, or {@code null}
+   * @param compactFilePath path to the target Compact contract source file
+   * @return derived output directory path string (defaults to {@code "gen"})
+   */
   public static @NotNull String deriveOutputDirectory(@Nullable Project project, @NotNull String compactFilePath) {
     return CompactToolchainPathUtil.deriveOutputDirectory(project, compactFilePath);
   }
 
+  /**
+   * Derives a customized output directory based on contract file path and a user-specified base output directory.
+   *
+   * @param project         current project context, or {@code null}
+   * @param compactFilePath path to the target Compact contract source file
+   * @param baseOutputDir   custom base output directory override, or {@code null}
+   * @return derived output directory path string
+   */
   public static @NotNull String deriveOutputDirectory(
       @Nullable Project project,
       @NotNull String compactFilePath,
@@ -369,18 +441,43 @@ public final class CompactToolchainUtil {
     return CompactToolchainPathUtil.deriveOutputDirectory(project, compactFilePath, baseOutputDir);
   }
 
+  /**
+   * Parses a user-configured binary path string, determining if it refers to a WSL distribution binary or native host executable.
+   *
+   * @param customPath configured path string (may include WSL prefixes or native paths)
+   * @return parsed {@link ToolchainInfo}, or {@code null} if unresolvable
+   */
   public static @Nullable ToolchainInfo parseConfiguredPath(@NotNull String customPath) {
     return CompactToolchainDiscovery.parseConfiguredPath(customPath);
   }
 
+  /**
+   * Checks whether a file exists and matches executable file extensions under Windows ({@code .exe}, {@code .cmd}, {@code .bat}).
+   *
+   * @param file target file to test
+   * @return {@code true} if valid executable; {@code false} otherwise
+   */
   public static boolean isWindowsSystemExecutable(@NotNull File file) {
     return CompactToolchainDiscovery.isWindowsSystemExecutable(file);
   }
 
+  /**
+   * Probes a specific directory for an executable matching the specified base name (checking platform-specific extensions).
+   *
+   * @param dir      directory to search in
+   * @param baseName base executable name (e.g. {@code "compactc"} or {@code "compact"})
+   * @return matching executable {@link File}, or {@code null} if absent
+   */
   public static @Nullable File findExecutableInDir(@NotNull File dir, @NotNull String baseName) {
     return CompactToolchainDiscovery.findExecutableInDir(dir, baseName);
   }
 
+  /**
+   * Searches the system PATH environment variable for an executable matching the base binary name.
+   *
+   * @param baseName base executable name to search for
+   * @return matching executable {@link File}, or {@code null} if not found in PATH
+   */
   public static @Nullable File findExecutableInPath(@NotNull String baseName) {
     return CompactToolchainDiscovery.findExecutableInPath(baseName);
   }

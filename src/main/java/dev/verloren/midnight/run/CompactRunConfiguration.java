@@ -106,10 +106,14 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
    * @param compactFilePath the new file path
    */
   public void setCompactFilePath(String compactFilePath) {
+    // Check if the previous outputDirectory was auto-derived; if so, we should update it when file changes
     String oldDerived = (this.compactFilePath != null && !this.compactFilePath.trim().isEmpty())
         ? CompactToolchainUtil.deriveOutputDirectory(getProject(), this.compactFilePath)
         : "";
     this.compactFilePath = compactFilePath != null ? compactFilePath : "";
+
+    // Automatically re-derive the output directory if it is blank, set to default "gen",
+    // or was previously auto-derived and therefore should follow the newly selected file path
     if (outputDirectory == null || outputDirectory.trim().isEmpty() || "gen".equals(outputDirectory.trim()) || outputDirectory.equals(oldDerived)) {
       if (!this.compactFilePath.trim().isEmpty()) {
         this.outputDirectory = CompactToolchainUtil.deriveOutputDirectory(getProject(), this.compactFilePath);
@@ -211,6 +215,9 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
     super.readExternal(element);
     compactFilePath = element.getAttributeValue("compactFilePath", "");
     String savedOutDir = element.getAttributeValue("outputDirectory", "");
+
+    // If no output directory was saved or it used the legacy "gen" default, dynamically derive
+    // a project-relative output directory based on the contract file path
     if (savedOutDir == null || savedOutDir.trim().isEmpty() || "gen".equals(savedOutDir.trim())) {
       if (compactFilePath != null && !compactFilePath.trim().isEmpty()) {
         outputDirectory = CompactToolchainUtil.deriveOutputDirectory(getProject(), compactFilePath);
@@ -246,15 +253,17 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
    */
   public @NotNull List<String> buildCommandLineArgs() {
     List<String> args = new ArrayList<>();
-    // 1. Force VS Code / IDE JSON diagnostic output format
+    // 1. Force VS Code / IDE JSON diagnostic output format:
+    // When passed to 'compactc', the compiler streams line-delimited JSON objects for errors and warnings
+    // rather than human-oriented terminal text, enabling precise coordinate parsing in the IDE.
     args.add("--vscode");
 
-    // 2. Append fast dev flag if enabled
+    // 2. Append fast dev flag if enabled (--skip-zk bypasses expensive zero-knowledge proving key generation)
     if (skipZk) {
       args.add("--skip-zk");
     }
 
-    // 3. Append custom user-specified flags
+    // 3. Append custom user-specified flags (e.g. additional compiler switches split by whitespace)
     if (customCompilerFlags != null && !customCompilerFlags.trim().isEmpty()) {
       for (String flag : customCompilerFlags.trim().split("\\s+")) {
         if (!flag.isEmpty()) {
@@ -263,12 +272,12 @@ public class CompactRunConfiguration extends LocatableConfigurationBase<CompactR
       }
     }
 
-    // 4. Source file path
+    // 4. Append target contract source file path
     if (compactFilePath != null && !compactFilePath.isEmpty()) {
       args.add(compactFilePath);
     }
 
-    // 5. Output directory
+    // 5. Append target output directory for generated TypeScript and ZKIR artifacts
     String outDir = getOutputDirectory();
     if (outDir != null && !outDir.isEmpty()) {
       args.add(outDir);
