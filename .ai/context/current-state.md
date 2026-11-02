@@ -273,7 +273,9 @@ Last Updated: October 2026 (v1.4.2 / First-Class Type Hierarchy & Substitutor, C
   - First-class sealed `CompactType` hierarchy, `CompactTypeVariable`, and `CompactTypeSubstitutor` (Completed in v1.4.2).
   - Project-wide stub index (`CompactStubIndex`) for cross-file declarations without parsing full AST.
   - Fast global Go to Symbol (`Ctrl+Alt+Shift+N`) across large Compact repositories.
-- **Phase 32: Modular Completion Providers & Advanced Refactorings**
+- **Phase 32: Modular Completion Providers, Project View Errors & Refactorings**
+  - Project View File System Error Underlining: Integrate with `WolfTheProblemSolver` and `ProblemHighlightFilter` so `.compact` files with errors show red wavy underlines on file and folder tree nodes in the Project Tool Window (left side).
+  - Decompose monolithic `CompactCompletionContributor` into distinct `CompletionProvider` subclasses.
   - Safe Delete refactoring for unused circuits, witnesses, and types.
   - Extract Variable (`Ctrl+Alt+V`) and Extract Circuit/Function (`Ctrl+Alt+M`).
   - Introduce Parameter refactoring.

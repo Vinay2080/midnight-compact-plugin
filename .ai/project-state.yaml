@@ -59,6 +59,7 @@ phases:
   toolchain_0_35_0_and_language_0_27_0: complete (v1.4.1)
   first_class_type_hierarchy_and_substitutor: complete (Phase 31 / v1.4.2)
   run_auto_navigate_first_error: planned (v1.4.3 refinement)
+  project_view_error_highlighting: planned (Phase 32)
   modular_completion_providers: planned (Phase 32)
   stub_indexing: planned (Phase 33)
   advanced_refactorings: planned (Phase 34)

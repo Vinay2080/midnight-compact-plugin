@@ -26,5 +26,8 @@ Run Action Document Synchronization and Subdirectory Hyperlink Resolution (`ai/f
    - Refine automatic editor navigation when `compactc` compilation terminates with a non-zero exit code (`event.getExitCode() != 0`).
    - Solve focus race conditions between the IntelliJ Run ToolWindow console and the editor: ensure that after `OpenFileHyperlinkInfo.navigate(project)` or `FileEditorManager.openTextEditor(...)`, the editor window takes focus and places the caret precisely on the first error line/column without console focus stealing it back.
    - Investigate alignment with the IntelliJ Build/Problems view (`CompilerResultsView` / `ProblemsView`) pattern used by Java `javac` for seamless error browsing.
-2. **Phase 32 Modular Completion Providers**: Decompose monolithic `CompactCompletionContributor` into distinct `CompletionProvider` subclasses.
-3. **Phase 33 Stub Indexing**: Implement project-wide stub indexing (`CompactStubIndex`) for cross-file declarations without parsing full AST.
+2. **Project View File System Error Underlining (WolfTheProblemSolver / ProblemHighlightFilter)**:
+   - Display red wavy error underlines on `.compact` file names and parent folder nodes in the Project ToolWindow tree (left-side file explorer) when files contain syntax or compiler errors, matching standard Java IDE behavior.
+   - Investigate `com.intellij.problemHighlightFilter` registration in `plugin.xml` and integrate with `WolfTheProblemSolver.getInstance(project)` so error-level annotations from the annotator/inspections propagate to the Project View tree decorator and Problems ToolWindow.
+3. **Phase 32 Modular Completion Providers**: Decompose monolithic `CompactCompletionContributor` into distinct `CompletionProvider` subclasses.
+4. **Phase 33 Stub Indexing**: Implement project-wide stub indexing (`CompactStubIndex`) for cross-file declarations without parsing full AST.
