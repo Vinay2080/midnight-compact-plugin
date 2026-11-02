@@ -12,6 +12,7 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -87,7 +88,7 @@ public class CompactRunProfileState extends CommandLineState {
   public CompactRunProfileState(@NotNull ExecutionEnvironment environment, @NotNull CompactRunConfiguration configuration) {
     super(environment);
     this.configuration = configuration;
-    this.consoleFilter = new CompactConsoleFilter(environment.getProject());
+    this.consoleFilter = new CompactConsoleFilter(environment.getProject(), configuration.getCompactFilePath());
     // Attach console filter to convert error messages into navigable hyperlinks
     addConsoleFilters(consoleFilter);
   }
@@ -100,6 +101,9 @@ public class CompactRunProfileState extends CommandLineState {
    */
   @Override
   protected @NotNull ProcessHandler startProcess() throws ExecutionException {
+    // 0. Synchronize open in-memory editor documents to disk so compactc compiles the exact editor buffer
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+
     // 1. Resolve the executable path and assemble the full command line with flags and targets
     GeneralCommandLine commandLine = CompactToolchainUtil.createCommandLine(
             getEnvironment().getProject(),
@@ -112,7 +116,17 @@ public class CompactRunProfileState extends CommandLineState {
     ProcessTerminatedListener.attach(handler);
 
     // 3. Register a process listener to refresh IDE problem markers and auto-navigate to first error on failure
-    handler.addProcessListener(new ProcessListener() {
+    handler.addProcessListener(createProcessListener());
+    return handler;
+  }
+
+  /**
+   * Constructs the process listener handling IDE problem cache refreshing and auto-navigation on build exit.
+   *
+   * @return active {@link ProcessListener} instance
+   */
+  private @NotNull ProcessListener createProcessListener() {
+    return new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         Project project = getEnvironment().getProject();
@@ -120,10 +134,8 @@ public class CompactRunProfileState extends CommandLineState {
         VirtualFile targetFile = (path != null && !path.isEmpty())
                 ? LocalFileSystem.getInstance().findFileByPath(path)
                 : null;
-        // Clear cached problems and restart code analysis to reflect new build state
         CompactProblemUtil.clearProblemsAndRestart(project, targetFile);
 
-        // When compilation fails with a non-zero exit code, automatically navigate caret to the primary error
         if (event.getExitCode() != 0) {
           OpenFileHyperlinkInfo firstError = consoleFilter.getFirstErrorHyperlink();
           if (firstError != null) {
@@ -135,7 +147,6 @@ public class CompactRunProfileState extends CommandLineState {
           }
         }
       }
-    });
-    return handler;
+    };
   }
 }

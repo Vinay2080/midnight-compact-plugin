@@ -136,4 +136,66 @@ public class CompactConsoleFilterTest extends BasePlatformTestCase {
     assertEquals("First error column must be preserved",
             1, preservedError.getDescriptor().getColumn());
   }
+
+  /**
+   * Reproduction test: Verifies that a bare filename emitted by the compiler (e.g. CompileTargetContract.compact)
+   * is resolved when the file resides in a subdirectory and targetFilePath is provided.
+   */
+  public void testBareFilenameInSubdirectoryResolvedViaTargetFile() {
+    VirtualFile file = myFixture.addFileToProject("manual testing/14_compiler_run_action/CompileTargetContract.compact", "contract Target {}").getVirtualFile();
+    assertNotNull(file);
+
+    CompactConsoleFilter targetFilter = new CompactConsoleFilter(getProject(), file.getPath());
+    String line = "CompileTargetContract.compact:14:5: error: missing semicolon";
+    Filter.Result result = targetFilter.applyFilter(line, line.length());
+
+    assertNotNull("Filter result must resolve bare filename when file is in a subdirectory", result);
+    assertNotNull(result.getFirstHyperlinkInfo());
+    assertTrue(result.getFirstHyperlinkInfo() instanceof OpenFileHyperlinkInfo);
+
+    OpenFileHyperlinkInfo hyperlinkInfo = (OpenFileHyperlinkInfo) result.getFirstHyperlinkInfo();
+    assertNotNull(hyperlinkInfo.getDescriptor());
+    assertEquals(file, hyperlinkInfo.getDescriptor().getFile());
+    assertEquals(13, hyperlinkInfo.getDescriptor().getLine());
+    assertEquals(4, hyperlinkInfo.getDescriptor().getColumn());
+  }
+
+  /**
+   * User-Defined Mirror Test: Verifies that a bare filename in a nested directory is resolved
+   * even when targetFilePath is not provided by searching the project tree.
+   */
+  public void testBareFilenameInSubdirectoryResolvedViaProjectTreeSearch() {
+    VirtualFile file = myFixture.addFileToProject("contracts/nested/MyCustomResultContract.compact", "struct Result<TVal, TErr> {}").getVirtualFile();
+    assertNotNull(file);
+
+    String line = "MyCustomResultContract.compact:22:8: error: type mismatch";
+    Filter.Result result = filter.applyFilter(line, line.length());
+
+    assertNotNull("Filter result must resolve bare filename by searching project tree", result);
+    assertNotNull(result.getFirstHyperlinkInfo());
+    assertTrue(result.getFirstHyperlinkInfo() instanceof OpenFileHyperlinkInfo);
+
+    OpenFileHyperlinkInfo hyperlinkInfo = (OpenFileHyperlinkInfo) result.getFirstHyperlinkInfo();
+    assertNotNull(hyperlinkInfo.getDescriptor());
+    assertEquals(file, hyperlinkInfo.getDescriptor().getFile());
+    assertEquals(21, hyperlinkInfo.getDescriptor().getLine());
+    assertEquals(7, hyperlinkInfo.getDescriptor().getColumn());
+  }
+
+  /**
+   * Verifies that range diagnostics (e.g. file.compact:12:5-10) are supported and parsed correctly.
+   */
+  public void testDiagnosticRangeFormat() {
+    String line = "contracts/counter.compact:12:5-10: error: undefined symbol 'count'";
+    Filter.Result result = filter.applyFilter(line, line.length());
+
+    assertNotNull("Filter result should support range diagnostics with end column", result);
+    assertNotNull(result.getFirstHyperlinkInfo());
+    assertTrue(result.getFirstHyperlinkInfo() instanceof OpenFileHyperlinkInfo);
+
+    OpenFileHyperlinkInfo hyperlinkInfo = (OpenFileHyperlinkInfo) result.getFirstHyperlinkInfo();
+    assertNotNull(hyperlinkInfo.getDescriptor());
+    assertEquals(11, hyperlinkInfo.getDescriptor().getLine());
+    assertEquals(4, hyperlinkInfo.getDescriptor().getColumn());
+  }
 }

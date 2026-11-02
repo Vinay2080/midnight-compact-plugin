@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,11 +78,11 @@ public class CompactConsoleFilter implements Filter, DumbAware {
 
   /**
    * Pattern matching standard compiler diagnostics:
-   * {@code [prefix] path.compact:line[:col]}.
-   * Supports Windows drive letters ({@code C:\...}) and Unix relative/absolute paths.
+   * {@code [prefix] path.compact:line[:col[-endCol]]}.
+   * Supports Windows drive letters ({@code C:\...}), Unix paths, and optional column ranges.
    */
   private static final Pattern DIAGNOSTIC_PATTERN =
-          Pattern.compile("(?:^|(?<=[\\s\\[]))([a-zA-Z]:[\\\\/][^:\\r\\n]+?\\.compact|[^:\\r\\n\\s][^:\\r\\n]*?\\.compact):(\\d+)(?::(\\d+))?", Pattern.CASE_INSENSITIVE);
+          Pattern.compile("(?:^|(?<=[\\s\\[]))([a-zA-Z]:[\\\\/][^:\\r\\n]+?\\.compact|[^:\\r\\n\\s][^:\\r\\n]*?\\.compact):(\\d+)(?::(\\d+)(?:-\\d+|:\\d+:\\d+)?)?", Pattern.CASE_INSENSITIVE);
 
   /**
    * Pattern matching Chez Scheme exceptions emitted by the compiler backend:
@@ -102,12 +103,28 @@ public class CompactConsoleFilter implements Filter, DumbAware {
   private final Project project;
 
   /**
+   * Optional path to the primary contract being compiled, used for disambiguating bare filenames.
+   */
+  private final @Nullable String targetFilePath;
+
+  /**
    * Constructs a new console filter for the given project.
    *
    * @param project current project
    */
   public CompactConsoleFilter(@NotNull Project project) {
+    this(project, null);
+  }
+
+  /**
+   * Constructs a new console filter aware of the target contract file path.
+   *
+   * @param project        current project
+   * @param targetFilePath optional absolute or project-relative path to the compiled contract
+   */
+  public CompactConsoleFilter(@NotNull Project project, @Nullable String targetFilePath) {
     this.project = project;
+    this.targetFilePath = targetFilePath;
   }
 
   /**
@@ -170,9 +187,7 @@ public class CompactConsoleFilter implements Filter, DumbAware {
     // Calculate absolute buffer offsets: lineStart is the beginning of 'line' in the full console buffer
     int lineStart = entireLength - line.length();
     int matchStart = lineStart + matcher.start(FILE_GROUP);
-    // Determine the end boundary based on whether an explicit column group was matched or just a line number
-    int endGroup = matcher.group(COL_GROUP) != null ? COL_GROUP : LINE_GROUP;
-    int matchEnd = lineStart + matcher.end(endGroup);
+    int matchEnd = lineStart + matcher.end();
 
     OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(project, file, lineNumber, columnNumber);
     firstErrorHyperlink.compareAndSet(null, hyperlink);
@@ -186,7 +201,15 @@ public class CompactConsoleFilter implements Filter, DumbAware {
    * @return resolved {@link VirtualFile}, or {@code null} if unresolvable
    */
   private @Nullable VirtualFile resolveFile(@NotNull String normalizedPath) {
-    // 1. Resolve relative to project directory (supports both production LocalFileSystem and test TempFileSystem)
+    // 1. Resolve against targetFilePath if provided (e.g. for bare filenames or target-relative paths)
+    if (targetFilePath != null && !targetFilePath.isEmpty()) {
+      VirtualFile targetFile = resolveTargetFile(targetFilePath, normalizedPath);
+      if (targetFile != null) {
+        return targetFile;
+      }
+    }
+
+    // 2. Resolve relative to project directory (supports both production LocalFileSystem and test TempFileSystem)
     VirtualFile baseDir = ProjectUtil.guessProjectDir(project);
     if (baseDir != null) {
       VirtualFile file = resolveFromBaseDir(baseDir, normalizedPath);
@@ -195,13 +218,35 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       }
     }
 
-    // 2. Direct path lookup on local file system (for absolute native paths)
+    // 3. Fallback across system paths (absolute, WSL, and basePath concatenation)
+    VirtualFile systemFile = resolveFromSystemPaths(normalizedPath);
+    if (systemFile != null) {
+      return systemFile;
+    }
+
+    // 4. Deep tree search fallback in project baseDir for bare filenames in subdirectories
+    if (baseDir != null) {
+      String simpleName = normalizedPath.contains("/")
+              ? normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1)
+              : normalizedPath;
+      return findFileInTree(baseDir, simpleName);
+    }
+
+    return null;
+  }
+
+  /**
+   * Resolves paths against absolute filesystem locations, WSL mounts, or basePath concatenation.
+   *
+   * @param normalizedPath system-independent file path
+   * @return matching {@link VirtualFile}, or {@code null} if not found
+   */
+  private @Nullable VirtualFile resolveFromSystemPaths(@NotNull String normalizedPath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(normalizedPath);
     if (file != null) {
       return file;
     }
 
-    // 3. WSL path translation fallback (/mnt/c/... -> C:/...) when compiler executed inside WSL
     if (normalizedPath.startsWith("/mnt/")) {
       String winPath = CompactToolchainUtil.toWindowsPath(normalizedPath).replace('\\', '/');
       file = LocalFileSystem.getInstance().findFileByPath(winPath);
@@ -210,13 +255,74 @@ public class CompactConsoleFilter implements Filter, DumbAware {
       }
     }
 
-    // 4. Fallback to project.getBasePath() string concatenation on LocalFileSystem for project-relative paths
     String basePath = project.getBasePath();
     if (basePath != null) {
       String baseNormalized = basePath.replace('\\', '/');
       return LocalFileSystem.getInstance().findFileByPath(baseNormalized + "/" + normalizedPath);
     }
 
+    return null;
+  }
+
+  /**
+   * Resolves a diagnostic path against a known target contract file.
+   *
+   * @param targetPath     configured primary contract path
+   * @param normalizedPath diagnostic path to resolve
+   * @return matching {@link VirtualFile}, or {@code null} if unresolvable
+   */
+  private @Nullable VirtualFile resolveTargetFile(@NotNull String targetPath, @NotNull String normalizedPath) {
+    String normalizedTarget = targetPath.replace('\\', '/');
+    VirtualFile targetVirtualFile = LocalFileSystem.getInstance().findFileByPath(normalizedTarget);
+    if (targetVirtualFile == null) {
+      VirtualFile baseDir = ProjectUtil.guessProjectDir(project);
+      if (baseDir != null) {
+        targetVirtualFile = resolveFromBaseDir(baseDir, normalizedTarget);
+      }
+    }
+
+    if (targetVirtualFile == null) {
+      return null;
+    }
+
+    // Check if normalizedPath matches target file name directly (e.g. "CompileTargetContract.compact")
+    String simpleName = normalizedPath.contains("/")
+            ? normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1)
+            : normalizedPath;
+    if (targetVirtualFile.getName().equalsIgnoreCase(simpleName)) {
+      return targetVirtualFile;
+    }
+
+    // Check if normalizedPath is relative to the target file's containing folder
+    VirtualFile parentDir = targetVirtualFile.getParent();
+    return parentDir != null ? parentDir.findFileByRelativePath(normalizedPath) : null;
+  }
+
+  /**
+   * Iteratively searches directory children for a file matching {@code fileName} using breadth-first search.
+   *
+   * @param rootDir  root directory to search
+   * @param fileName target file name to locate
+   * @return matching {@link VirtualFile}, or {@code null} if not found
+   */
+  private @Nullable VirtualFile findFileInTree(@NotNull VirtualFile rootDir, @NotNull String fileName) {
+    ArrayDeque<VirtualFile> queue = new ArrayDeque<>();
+    queue.add(rootDir);
+    int visited = 0;
+    while (!queue.isEmpty() && visited < 500) {
+      VirtualFile current = queue.poll();
+      visited++;
+      for (VirtualFile child : current.getChildren()) {
+        if (child.isDirectory()) {
+          String name = child.getName();
+          if (!name.startsWith(".") && !"build".equals(name) && !"node_modules".equals(name) && !"out".equals(name)) {
+            queue.add(child);
+          }
+        } else if (child.getName().equalsIgnoreCase(fileName)) {
+          return child;
+        }
+      }
+    }
     return null;
   }
 
