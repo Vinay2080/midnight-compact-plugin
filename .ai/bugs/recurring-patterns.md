@@ -101,4 +101,16 @@ Level 3: Chronic Anti-Pattern (>= 3 Occurrences)
   - Pre-flight import check in `scripts/verify-patch.ps1` Gate 1b.
   - "The Reference Age Invariant" and "Peer Grep Precedence" codified in `.agents/rules/architecture.rules.md`.
 
+### Pattern PAT-008: External CLI Process Buffer Desynchronization & Context-Free Path Resolution
+- **Category:** External Process & Console Integration
+- **Occurrences:** 2 incidents
+  1. `2026-09-16-external-annotator-lag-and-stale-underlines.md` (External annotator CLI execution and VFS file mapping)
+  2. `2026-11-02-run-hyperlink-resolution-and-document-sync.md` (Run profile state missing `saveAllDocuments()` and console filter failing on bare/subdirectory paths)
+- **Root Cause:** External CLI compilers execute against files on disk and emit relative/bare paths according to compiler working directories. Omitting synchronous `saveAllDocuments()` causes coordinate drift between in-memory `Document` buffers and compiler diagnostics, while context-free console filters fail to resolve files located in nested project subdirectories.
+- **Escalation Level:** **Level 2 (Emerging Anti-Pattern)**
+- **Enforcement:**
+  - All run states and actions invoking external tools must flush dirty buffers (`FileDocumentManager.getInstance().saveAllDocuments()`) prior to launching process.
+  - Console filters must accept target execution context and implement multi-tier resolution (target-relative, project-relative, and iterative tree fallback).
+
+
 

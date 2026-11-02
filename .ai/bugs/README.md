@@ -192,6 +192,7 @@ After creating or updating a bug record:
 ## 8. Chronological Bug Index
 
 | Date | Feature / Subsystem | Bug Title & Summary | Document Link | Severity | Status |
+| 2026-11-02 | run / console-filter / synchronization / hyperlinks | Compact run action document desynchronization and subdirectory hyperlink resolution | [2026-11-02-run-hyperlink-resolution-and-document-sync.md](2026-11-02-run-hyperlink-resolution-and-document-sync.md) | High | Resolved |
 | 2026-10-31 | run / console-filter / windows / exceptions | CompactConsoleFilter Windows drive failure, Chez Scheme exception format, and DumbAware compliance | [2026-10-31-run-console-filter-windows-paths-and-scheme-exceptions.md](2026-10-31-run-console-filter-windows-paths-and-scheme-exceptions.md) | High | Resolved |
 | 2026-10-23 | type system / inference / inspection / completion | Type variable over-generalization and assignability collapse in type inference | [2026-10-23-type-hierarchy-variable-assignability.md](2026-10-23-type-hierarchy-variable-assignability.md) | High | Resolved |
 | 2026-10-14 | version / toolchain / security | CompactVersionManager decomposition, Windows stream lock on cancel, and Zip Slip guard | [2026-10-14-version-manager-decomposition-and-zip-slip-guard.md](2026-10-14-version-manager-decomposition-and-zip-slip-guard.md) | High | Resolved |

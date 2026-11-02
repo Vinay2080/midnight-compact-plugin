@@ -17,6 +17,8 @@
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
 ### Fixed
+- Fixed compiler run action coordinate desynchronization by synchronously flushing in-memory editor documents to disk before launching `compactc`, ensuring diagnostic line numbers and columns match current editor content.
+- Fixed execution console hyperlink navigation for contracts residing in project subdirectories by resolving compiler diagnostics relative to target files and project trees, and added support for range coordinate formats (`:line:col-endcol`).
 - Fixed clickable error and warning hyperlinks in the compilation execution console so locations with Windows drive paths (such as `C:\...`), missing column numbers, and internal compiler exceptions navigate directly to the correct source file and coordinate in the editor, even while background project indexing is active.
 - Fixed toolchain output directory matching on Windows and case-insensitive platforms so output folders aligned with project source roots are recognised correctly regardless of path casing.
 - Fixed false-negative type checking where mismatched types in return statements and expressions were not flagged as errors due to overly broad generic type parameter detection.
