@@ -22,5 +22,9 @@ Run Action Document Synchronization and Subdirectory Hyperlink Resolution (`ai/f
     - Built-in types `PublicAddress`, `Secp256r1`, `Curve25519` and cryptographic functions `secp256r1EcdsaVerify`, `ed25519Verify`, `sha512`.
 
 ## Immediate Next Priorities
-1. **Phase 32 Modular Completion Providers**: Decompose monolithic `CompactCompletionContributor` into distinct `CompletionProvider` subclasses.
-2. **Phase 33 Stub Indexing**: Implement project-wide stub indexing (`CompactStubIndex`) for cross-file declarations without parsing full AST.
+1. **Run Feature — Auto-Move Caret to First Error on Compilation Failure**:
+   - Refine automatic editor navigation when `compactc` compilation terminates with a non-zero exit code (`event.getExitCode() != 0`).
+   - Solve focus race conditions between the IntelliJ Run ToolWindow console and the editor: ensure that after `OpenFileHyperlinkInfo.navigate(project)` or `FileEditorManager.openTextEditor(...)`, the editor window takes focus and places the caret precisely on the first error line/column without console focus stealing it back.
+   - Investigate alignment with the IntelliJ Build/Problems view (`CompilerResultsView` / `ProblemsView`) pattern used by Java `javac` for seamless error browsing.
+2. **Phase 32 Modular Completion Providers**: Decompose monolithic `CompactCompletionContributor` into distinct `CompletionProvider` subclasses.
+3. **Phase 33 Stub Indexing**: Implement project-wide stub indexing (`CompactStubIndex`) for cross-file declarations without parsing full AST.

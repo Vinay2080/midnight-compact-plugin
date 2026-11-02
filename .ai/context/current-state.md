@@ -266,6 +266,7 @@ Last Updated: October 2026 (v1.4.2 / First-Class Type Hierarchy & Substitutor, C
 ### Known Limitations
 1. **Multi-Module Project-Wide Indexing**: Currently, symbol resolution across multiple modules relies on explicit `include` and `import` AST navigation. Full workspace-wide stub indexing (`CompactStubIndex`) across unreferenced files is planned for Phase 31.
 2. **Deep Flow Type Inference**: Type inference is structural and AST-driven (`CompactTypeInferenceUtil`). Full bidirectional flow analysis across complex higher-order expressions will be augmented alongside the language server PSI bridge (Phase 35).
+3. **Compiler Run Auto-Caret Jump on Compilation Failure**: While hyperlinks in the execution console are fully functional and allow one-click jump to coordinates, automatic cursor movement on compilation failure (akin to Java `javac` Make/Build failures) requires deeper integration with IntelliJ's editor focus management, ensuring the Run console does not take focus away from the navigated editor caret.
 
 ### Roadmap & Evolution (Phases 31–36)
 - **Phase 31: First-Class Type Hierarchy & Substitutor (Complete) / Stub Indexing (Planned)**
