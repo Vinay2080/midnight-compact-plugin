@@ -50,6 +50,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
   private final Project project;
   private final ComboBox<ToolchainItem> versionComboBox = new ComboBox<>();
   private final CompactAdvancedOptionsPanel advancedOptionsPanel = new CompactAdvancedOptionsPanel();
+  @SuppressWarnings("DialogTitleCapitalization")
   private final JBLabel advancedToggleLabel = new JBLabel("▶ Advanced Options");
   private final JButton compileButton = createCompileButton();
   private boolean isAdvancedExpanded = false;
@@ -59,7 +60,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
    */
   public record ToolchainItem(@NotNull String version, @NotNull String display) {
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       return display;
     }
   }
@@ -95,6 +96,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     add(new JPanel() {{ setOpaque(false); }}, gbc);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   private void addVersionHeaderSection(@NotNull GridBagConstraints gbc) {
     JBLabel versionHeader = new JBLabel("Compiler Toolchain:");
     versionHeader.setFont(JBFont.label().asBold());
@@ -160,6 +162,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable {
     compileButton.addActionListener(_ -> onCompileContract());
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   private void toggleAdvancedOptions() {
     isAdvancedExpanded = !isAdvancedExpanded;
     advancedToggleLabel.setText(isAdvancedExpanded ? "▼ Advanced Options" : "▶ Advanced Options");

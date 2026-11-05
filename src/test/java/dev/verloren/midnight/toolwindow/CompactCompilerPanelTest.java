@@ -76,9 +76,21 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     assertTrue("Advanced options should expand", panel.isAdvancedExpanded());
     assertTrue("Skip ZK should be enabled by default", panel.isSkipZkSelected());
     assertEquals("gen", panel.getOutputDirectory());
+    assertEquals("", panel.getCustomFlags());
 
     panel.setAdvancedExpanded(false);
     assertFalse("Advanced options should collapse", panel.isAdvancedExpanded());
+  }
+
+  public void testDropdownPopulatesMultipleVersions() {
+    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
+    Disposer.register(getTestRootDisposable(), panel);
+
+    panel.refreshVersions();
+    waitForVersions(panel, "0.34.0");
+
+    ComboBox<CompactCompilerPanel.ToolchainItem> combo = panel.getVersionComboBox();
+    assertTrue("ComboBox should contain 0.34.0", combo.getItemCount() > 1);
   }
 
   private void waitForVersions(CompactCompilerPanel panel, String expectedVersion) {
