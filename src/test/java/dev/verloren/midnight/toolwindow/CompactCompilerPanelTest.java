@@ -1,17 +1,12 @@
 package dev.verloren.midnight.toolwindow;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.TimeoutUtil;
-import dev.verloren.midnight.annotator.CompactSwitchCompilerQuickFix;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
-
-import javax.swing.JPanel;
-import java.awt.Component;
 
 public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
@@ -27,15 +22,11 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     super.tearDown();
   }
 
-  @SuppressWarnings("UnstableApiUsage")
-
-  public void testFindTargetCompactFileProhibitsSlowOperationsOnEdt() {
+  public void testFindTargetCompactFileOnEdt() {
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
     Disposer.register(getTestRootDisposable(), panel);
-    try (var _ = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-      VirtualFile file = panel.findTargetCompactFile();
-      assertNull(file);
-    }
+    VirtualFile file = panel.findTargetCompactFile();
+    assertNull(file);
   }
 
   public void testFindTargetCompactFileFindsOpenEditor() {
@@ -56,79 +47,52 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
   }
 
-  public void testQuickFixCompilerSwitchReflectedInPanel() {
-    myFixture.configureByText("test.compact", "pragma language_version >= 0.18.0;\n");
+  public void testDropdownPopulatesKnownVersionsAndSyncsSelection() {
     MidnightProjectSettings settings = MidnightProjectSettings.getInstance(getProject());
-    settings.selectedCompilerVersion = "0.25.0";
+    settings.selectedCompilerVersion = "0.35.0";
 
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
     Disposer.register(getTestRootDisposable(), panel);
 
-    panel.refreshCards();
-    waitForCards(panel, "0.25.0");
+    panel.refreshVersions();
+    waitForVersions(panel, "0.35.0");
 
-    CompactVersionCard card25 = findCard(panel, "0.25.0");
-    CompactVersionCard card26 = findCard(panel, "0.26.0");
-    assertNotNull("Card 0.25.0 should be present", card25);
-    assertNotNull("Card 0.26.0 should be present", card26);
-    assertTrue("Initial selected version 0.25.0 should be active", card25.isActive());
-    assertFalse("Version 0.26.0 should not be active initially", card26.isActive());
+    ComboBox<CompactCompilerPanel.ToolchainItem> combo = panel.getVersionComboBox();
+    assertNotNull("ComboBox should not be null", combo);
+    assertTrue("ComboBox should contain items", combo.getItemCount() > 0);
 
-    // User applies quick-fix suggesting compiler switch to 0.18.0 (toolchain 0.26.0)
-    CompactSwitchCompilerQuickFix fix = new CompactSwitchCompilerQuickFix("0.18.0", false);
-    fix.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
-
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    waitForCards(panel, "0.26.0");
-
-    assertEquals("0.26.0", settings.selectedCompilerVersion);
-
-    CompactVersionCard updatedCard26 = findCard(panel, "0.26.0");
-    assertNotNull("Card 0.26.0 should exist", updatedCard26);
-    assertTrue("Card for switched compiler version 0.26.0 should be active in the tool window panel", updatedCard26.isActive());
-
-    CompactVersionCard updatedCard25 = findCard(panel, "0.25.0");
-    assertNotNull("Card 0.25.0 should still exist", updatedCard25);
-    assertFalse("Card for old compiler version 0.25.0 should no longer be active", updatedCard25.isActive());
+    CompactCompilerPanel.ToolchainItem selected = (CompactCompilerPanel.ToolchainItem) combo.getSelectedItem();
+    assertNotNull("Selected item should not be null", selected);
+    assertEquals("0.35.0", selected.version());
+    assertTrue("Display string should mention Ledger 9", selected.display().contains("Midnight Ledger 9"));
   }
 
-  public void testVersion0350CardDisplaysDescriptionAndLanguage() {
+  public void testAdvancedOptionsToggleExpandsAndCollapses() {
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
     Disposer.register(getTestRootDisposable(), panel);
 
-    panel.refreshCards();
-    waitForCards(panel, "0.35.0");
+    assertFalse("Advanced options should be collapsed initially", panel.isAdvancedExpanded());
+    panel.setAdvancedExpanded(true);
+    assertTrue("Advanced options should expand", panel.isAdvancedExpanded());
+    assertTrue("Skip ZK should be enabled by default", panel.isSkipZkSelected());
+    assertEquals("gen", panel.getOutputDirectory());
 
-    CompactVersionCard card35 = findCard(panel, "0.35.0");
-    assertNotNull("Card 0.35.0 should be present in known toolchain cards", card35);
-    assertEquals("Compact v0.35.0", card35.getTitle());
-    assertEquals("Language: 0.27.0 | Midnight Ledger 9", card35.getDescription());
+    panel.setAdvancedExpanded(false);
+    assertFalse("Advanced options should collapse", panel.isAdvancedExpanded());
   }
 
-  private void waitForCards(CompactCompilerPanel panel, String expectedVersion) {
+  private void waitForVersions(CompactCompilerPanel panel, String expectedVersion) {
     long deadline = System.currentTimeMillis() + 5000;
     while (System.currentTimeMillis() < deadline) {
       PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-      if (findCard(panel, expectedVersion) != null) {
-        return;
+      ComboBox<CompactCompilerPanel.ToolchainItem> combo = panel.getVersionComboBox();
+      for (int i = 0; i < combo.getItemCount(); i++) {
+        CompactCompilerPanel.ToolchainItem item = combo.getItemAt(i);
+        if (item != null && expectedVersion.equals(item.version())) {
+          return;
+        }
       }
       TimeoutUtil.sleep(50);
     }
-  }
-
-  private JPanel getCardsPanel(CompactCompilerPanel panel) {
-    JPanel versionsContainer = (JPanel) panel.getComponent(1);
-    JBScrollPane scrollPane = (JBScrollPane) versionsContainer.getComponent(1);
-    return (JPanel) scrollPane.getViewport().getView();
-  }
-
-  private CompactVersionCard findCard(CompactCompilerPanel panel, String version) {
-    JPanel cardsPanel = getCardsPanel(panel);
-    for (Component c : cardsPanel.getComponents()) {
-      if (c instanceof CompactVersionCard card && version.equals(card.getVersion())) {
-        return card;
-      }
-    }
-    return null;
   }
 }

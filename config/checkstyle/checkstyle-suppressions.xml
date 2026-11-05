@@ -5,7 +5,6 @@
 
 <suppressions>
 
-    <suppress checks="FileLength" files="CompactCompilerPanel\.java"/>
     <suppress checks="FileLength" files="CompactResolveUtil\.java"/>
     <suppress checks="FileLength" files="CompactHighlightingAnnotator\.java"/>
     <suppress checks="FileLength" files="CompactLexer\.java"/>
@@ -18,7 +17,6 @@
     <!-- Phase 1 Method Length Legacy Baseline: Pre-existing legacy methods pending SRP extraction in Phase 3 & 4 -->
     <suppress checks="MethodLength" files="CompactHighlightingAnnotator\.java"/>
     <suppress checks="MethodLength" files="CompactResolveUtil\.java"/>
-    <suppress checks="MethodLength" files="CompactCompilerPanel\.java"/>
     <suppress checks="MethodLength" files="CompactLexer\.java"/>
     <suppress checks="MethodLength" files="CompactParameterInfoHandler\.java"/>
     <suppress checks="MethodLength" files="CompactCompilerOutputParser\.java"/>
@@ -62,7 +60,5 @@
     <suppress checks="MethodLength" files="CompactRunConfigurationEditor\.java"/>
     <suppress checks="MethodLength" files="CompactRunConfiguration\.java"/>
     <suppress checks="MethodLength" files="CompactCommandLineState\.java"/>
-    <suppress checks="MethodLength" files="CompactStatusBarPopup\.java"/>
-    <suppress checks="MethodLength" files="CompactVersionCard\.java"/>
     <suppress checks="MethodLength" files="CompactSemVerUtil\.java"/>
 </suppressions>

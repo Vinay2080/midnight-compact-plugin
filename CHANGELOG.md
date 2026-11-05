@@ -13,7 +13,8 @@
 - Updated New Compact File template default fallback pragma directives from `0.26.0` to `0.27.0`.
 
 ### Changed
-- Refined Compact compiler version cards in the sidebar tool window to present clear version descriptions, target language specification, and Midnight Ledger levels.
+- Rebuilt the Compact Compiler sidebar tool window with an ultra-responsive, streamlined layout featuring a clean toolchain dropdown, collapsible advanced compiler options, and a full-width compilation button that never clips or overlaps at narrow sidebar widths.
+- Streamlined toolchain management by consolidating version selection and build controls inside the Compact Compiler sidebar tool window, removing the redundant bottom status bar widget.
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.
 
 ### Fixed
