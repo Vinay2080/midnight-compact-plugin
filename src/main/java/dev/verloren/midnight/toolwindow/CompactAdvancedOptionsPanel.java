@@ -49,6 +49,7 @@ public class CompactAdvancedOptionsPanel extends JPanel {
     addCustomFlagsSection(gbc);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   private void addOutputDirSection(@NotNull GridBagConstraints gbc) {
     gbc.gridy++;
     gbc.insets = JBUI.insetsTop(8);
@@ -69,6 +70,7 @@ public class CompactAdvancedOptionsPanel extends JPanel {
     add(outputDirField, gbc);
   }
 
+  @SuppressWarnings("DialogTitleCapitalization")
   private void addCustomFlagsSection(@NotNull GridBagConstraints gbc) {
     gbc.gridy++;
     gbc.insets = JBUI.insetsTop(8);
