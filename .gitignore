@@ -56,3 +56,5 @@ dist/
 *.lot
 *.out
 *.toc
+report/
+srs/
