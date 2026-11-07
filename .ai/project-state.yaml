@@ -58,7 +58,7 @@ phases:
   architecture_guardrails_and_modularity: complete (v1.3.5)
   toolchain_0_35_0_and_language_0_27_0: complete (v1.4.1)
   first_class_type_hierarchy_and_substitutor: complete (Phase 31 / v1.4.2)
-  streamlined_responsive_toolwindow_and_curated_statusbar: complete (Phase 32 / v1.4.2 / ADR-035)
+  consolidated_toolwindow_and_installed_cards: complete (Phase 32 / v1.4.2 / ADR-035)
   run_auto_navigate_first_error: planned (v1.4.3 refinement)
   project_view_error_highlighting: planned (Phase 32)
   modular_completion_providers: planned (Phase 32)

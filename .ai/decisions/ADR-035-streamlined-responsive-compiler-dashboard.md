@@ -40,28 +40,19 @@ Keep version cards, downloads, uninstalls, and compile controls all crammed insi
 Strip toolchains entirely from the tool window and only manage versions in the status bar.
 - *Downsides*: The status bar tray is too small to display multi-dimensional metadata (Compiler + Language + Ledger) without heavy truncation.
 
-### Option 3: Two-Tier Split Architecture (Selected)
-- **Tool Window**: Serves as the **Dedicated Toolchain Dashboard**. Features a clean toolchain dropdown with status icons wrapped in a borderless `JBScrollPane`. Compilation and flags are delegated to standard IntelliJ Run Configurations.
-- **Status Bar**: Serves as the **Ambient Toolchain Monitor & Quick Switcher**. Shows active toolchain text. Clicking opens a curated speed-search popup with the **Top 5 Installed** (with delete buttons) + **Top 5 Available Releases** (with download buttons) + a direct link to Settings.
+### Option 3: Consolidated Tool Window with Installed Cards (Selected)
+- **Tool Window Hub**: Serves as the complete toolchain management hub. Features a clean toolchain dropdown with status icons and a dedicated list of minimalist cards representing downloaded/installed compilers with deletion actions, wrapped in a borderless `JBScrollPane`.
+- **Status Bar Removal**: Removed the bottom status bar widget to eliminate split control points and consolidate version management exclusively in the Compact tool window.
 
 ---
 
 ## 4. Decision Outcome & System Design
 
-### 4.1 Tool Window Architecture (`CompactCompilerPanel`)
+### 4.1 Tool Window Architecture (`CompactCompilerPanel` & `CompactInstalledVersionCard`)
 - **Layout Manager**: Root content wrapped in a borderless `JBScrollPane` (`VERTICAL_SCROLLBAR_AS_NEEDED`, `HORIZONTAL_SCROLLBAR_NEVER`). `CompactCompilerPanel` implements `javax.swing.Scrollable` with `getScrollableTracksViewportWidth() == true` to guarantee 100% horizontal stretch and fluid vertical scrolling.
-- **Dropdown Renderer**: `ComboBox<ToolchainItem>` with left-aligned 16x16 icons:
-  - Installed: `AllIcons.Actions.Checked` (or `MidnightIcons.FILE`)
-  - Not Installed / Cloud: `AllIcons.Actions.Download`
-- **Separation of Concerns**: Removed redundant inline run buttons and advanced compiler options from the sidebar; contract builds are managed cleanly through standard IntelliJ Run Configurations (`CompactRunConfiguration`).
-
-### 4.2 Status Bar Architecture (`CompactStatusBarWidget` & `CompactStatusBarPopup`)
-- **Tray Label**: `Compact: v<ver> (<ledger>)`
-- **Popup Structure**:
-  1. Active version display.
-  2. **Top 5 Installed Compilers** sorted descending by SemVer. Each unselected item features a trash action button (`AllIcons.Actions.GC`) invoking `CompactVersionManager.uninstallVersion()`. Active compiler is protected against deletion.
-  3. **Top 5 Available Cloud Releases** with a download button (`AllIcons.Actions.Download`) invoking background installer.
-  4. Shortcut: `⚙ Configure All Toolchains in Settings...`.
+- **Dropdown Renderer**: `ComboBox<ToolchainItem>` with left-aligned 16x16 icons (checked for installed, download for cloud releases).
+- **Installed Compiler Cards**: Minimalist cards rendered for locally installed compilers only. Each card displays version and language metadata, an "Active" badge on the current project compiler (protected against deletion), and a trash icon button (`AllIcons.Actions.GC`) with confirmation dialog on inactive versions.
+- **Separation of Concerns**: Contract compilation and flags are strictly delegated to standard IntelliJ Run Configurations (`CompactRunConfiguration`).
 
 ### 4.3 Download & Fallback State Machine
 
