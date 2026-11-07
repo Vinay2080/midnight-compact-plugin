@@ -24,7 +24,7 @@ import dev.verloren.midnight.run.CompactToolchainUtil;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
 import dev.verloren.midnight.settings.MidnightSettingsConfigurable;
 import dev.verloren.midnight.settings.MidnightSettingsState;
-import dev.verloren.midnight.toolwindow.CompactCompilerRunner;
+import dev.verloren.midnight.ui.CompactNotificationUtil;
 import dev.verloren.midnight.version.CompactSemVerUtil;
 import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
@@ -164,7 +164,7 @@ public final class CompactStatusBarPopup {
 
       CompactProblemUtil.clearProblemsAndRestart(project, null);
       CompactStatusBarWidgetFactory.updateWidget(project);
-      CompactCompilerRunner.notifyUser(project, "Switched project compiler to Compact v" + version + ".", NotificationType.INFORMATION);
+      CompactNotificationUtil.notifyUser(project, "Switched project compiler to Compact v" + version + ".", NotificationType.INFORMATION);
     }
   }
 
@@ -202,7 +202,7 @@ public final class CompactStatusBarPopup {
 
       CompactVersionManager.uninstallVersion(version);
       CompactStatusBarWidgetFactory.updateWidget(project);
-      CompactCompilerRunner.notifyUser(project, "Compact Compiler v" + version + " has been uninstalled.", NotificationType.INFORMATION);
+      CompactNotificationUtil.notifyUser(project, "Compact Compiler v" + version + " has been uninstalled.", NotificationType.INFORMATION);
     }
   }
 
@@ -251,9 +251,9 @@ public final class CompactStatusBarPopup {
               }
               CompactStatusBarWidgetFactory.updateWidget(project);
               CompactProblemUtil.clearProblemsAndRestart(project, null);
-              CompactCompilerRunner.notifyUser(project, "Compact Compiler v" + version + " installed & activated.", NotificationType.INFORMATION);
+              CompactNotificationUtil.notifyUser(project, "Compact Compiler v" + version + " installed & activated.", NotificationType.INFORMATION);
             } else {
-              CompactCompilerRunner.notifyUser(project, "Failed to download Compact Compiler v" + version + ".", NotificationType.ERROR);
+              CompactNotificationUtil.notifyUser(project, "Failed to download Compact Compiler v" + version + ".", NotificationType.ERROR);
             }
           });
         }

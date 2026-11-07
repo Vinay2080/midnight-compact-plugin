@@ -1,15 +1,10 @@
 package dev.verloren.midnight.toolwindow;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.HelpTooltipKt;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBFont;
@@ -21,17 +16,13 @@ import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Rectangle;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,26 +30,31 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Modern, responsive Compact Compiler management and execution tool window panel.
+ * Modern, responsive Compact Compiler management tool window panel.
+ *
+ * <p>Serves as the dedicated toolchain selection panel in the IDE sidebar, providing
+ * version discovery, installation status visualization, and fallback handling. Contract
+ * compilation is delegated to standard IntelliJ Run Configurations.
+ *
+ * <h3>Threading Contract</h3>
+ * <ul>
+ *   <li>UI components, listeners, and model updates execute strictly on the Event Dispatch Thread (EDT).</li>
+ *   <li>Toolchain version queries and file system lookups run on pooled background threads.</li>
+ * </ul>
  */
-@SuppressWarnings("DialogTitleCapitalization")
 public class CompactCompilerPanel extends JPanel implements Disposable, Scrollable {
   private final Project project;
   private final ComboBox<ToolchainItem> versionComboBox = new ComboBox<>();
-  private final CompactAdvancedOptionsPanel advancedOptionsPanel = new CompactAdvancedOptionsPanel();
-  private final JBLabel advancedToggleLabel = new JBLabel("Advanced Options", AllIcons.General.ChevronRight, JBLabel.LEFT);
-  private final JButton compileButton = createCompileButton();
   private final CompactToolchainSelectionHandler selectionHandler;
-  private boolean isAdvancedExpanded = false;
   private boolean isUpdatingComboBox = false;
 
   /**
    * Represents an item in the toolchain version dropdown.
    */
   public record ToolchainItem(
-      @NotNull String version,
-      @NotNull String display,
-      boolean isInstalled
+          @NotNull String version,
+          @NotNull String display,
+          boolean isInstalled
   ) {
     @Override
     public @NotNull String toString() {
@@ -89,13 +85,13 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     gbc.fill = GridBagConstraints.HORIZONTAL;
 
     addVersionHeaderSection(gbc);
-    addAdvancedOptionsSection(gbc);
-    addRunButtonSection(gbc);
 
     gbc.gridy++;
     gbc.weighty = 1.0;
     gbc.fill = GridBagConstraints.BOTH;
-    add(new JPanel() {{ setOpaque(false); }}, gbc);
+    add(new JPanel() {{
+      setOpaque(false);
+    }}, gbc);
   }
 
   @SuppressWarnings("DialogTitleCapitalization")
@@ -109,11 +105,11 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     versionComboBox.setRenderer(new SimpleListCellRenderer<>() {
       @Override
       public void customize(
-          @NotNull JList<? extends ToolchainItem> list,
-          @Nullable ToolchainItem value,
-          int index,
-          boolean selected,
-          boolean hasFocus
+              @NotNull JList<? extends ToolchainItem> list,
+              @Nullable ToolchainItem value,
+              int index,
+              boolean selected,
+              boolean hasFocus
       ) {
         if (value != null) {
           setText(value.display());
@@ -124,34 +120,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     add(versionComboBox, gbc);
   }
 
-  private void addAdvancedOptionsSection(@NotNull GridBagConstraints gbc) {
-    gbc.gridy++;
-    gbc.insets = JBUI.insetsTop(12);
-    advancedToggleLabel.setFont(JBFont.small().asBold());
-    advancedToggleLabel.setForeground(JBColor.namedColor("Link.activeForeground", new JBColor(0x2470B8, 0x589DF6)));
-    advancedToggleLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    add(advancedToggleLabel, gbc);
-
-    gbc.gridy++;
-    gbc.insets = JBUI.insetsTop(6);
-    advancedOptionsPanel.setVisible(false);
-    add(advancedOptionsPanel, gbc);
-  }
-
-  private void addRunButtonSection(@NotNull GridBagConstraints gbc) {
-    gbc.gridy++;
-    gbc.insets = JBUI.insetsTop(16);
-    add(compileButton, gbc);
-  }
-
   private void initListeners() {
-    advancedToggleLabel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        toggleAdvancedOptions();
-      }
-    });
-
     versionComboBox.addActionListener(_ -> {
       if (isUpdatingComboBox) {
         return;
@@ -161,16 +130,6 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
         selectionHandler.handleSelection(selected, this::runWithoutComboEvents);
       }
     });
-
-    compileButton.addActionListener(_ -> onCompileContract());
-  }
-
-  private void toggleAdvancedOptions() {
-    isAdvancedExpanded = !isAdvancedExpanded;
-    advancedToggleLabel.setIcon(isAdvancedExpanded ? AllIcons.General.ChevronDown : AllIcons.General.ChevronRight);
-    advancedOptionsPanel.setVisible(isAdvancedExpanded);
-    revalidate();
-    repaint();
   }
 
   /**
@@ -208,11 +167,12 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     return items;
   }
 
+  @SuppressWarnings("DuplicatedCode")
   private @NotNull String resolveEffectiveVersion() {
     MidnightProjectSettings settings = MidnightProjectSettings.getInstance(project);
     String selectedVer = settings != null && settings.selectedCompilerVersion != null
-        ? settings.selectedCompilerVersion.trim()
-        : "";
+            ? settings.selectedCompilerVersion.trim()
+            : "";
     String activeVer = CompactToolchainUtil.getActiveCompilerVersion(project);
     return !selectedVer.isEmpty() ? selectedVer : (activeVer != null ? activeVer : "");
   }
@@ -238,43 +198,6 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     }
   }
 
-  /**
-   * Resolves the active .compact contract file from currently open editor tabs.
-   */
-  public @Nullable VirtualFile findTargetCompactFile() {
-    return CompactCompilerRunner.findTargetCompactFile(project);
-  }
-
-  private void onCompileContract() {
-    VirtualFile file = findTargetCompactFile();
-    if (file == null) {
-      CompactCompilerRunner.notifyUser(
-          project,
-          "No active Compact (.compact) contract found. Please open or create a .compact file to compile.",
-          NotificationType.WARNING
-      );
-      return;
-    }
-
-    CompactCompilerRunner.compileContract(
-        project,
-        file,
-        advancedOptionsPanel.isSkipZkSelected(),
-        advancedOptionsPanel.getOutputDirectory(),
-        advancedOptionsPanel.getCustomFlags()
-    );
-  }
-
-  private JButton createCompileButton() {
-    JButton btn = new JButton("Run Contract", AllIcons.Actions.Execute);
-    btn.putClientProperty("gotItButton", true);
-    btn.setFont(JBFont.label().asBold());
-    btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    btn.setPreferredSize(new Dimension(0, JBUI.scale(36)));
-    HelpTooltipKt.setToolTipText(btn, HtmlChunk.text("Compile active Compact contract"));
-    return btn;
-  }
-
   private void runWithoutComboEvents(@NotNull Runnable action) {
     isUpdatingComboBox = true;
     try {
@@ -286,28 +209,6 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
 
   public @NotNull ComboBox<ToolchainItem> getVersionComboBox() {
     return versionComboBox;
-  }
-
-  public boolean isAdvancedExpanded() {
-    return isAdvancedExpanded;
-  }
-
-  public void setAdvancedExpanded(boolean expanded) {
-    if (this.isAdvancedExpanded != expanded) {
-      toggleAdvancedOptions();
-    }
-  }
-
-  public boolean isSkipZkSelected() {
-    return advancedOptionsPanel.isSkipZkSelected();
-  }
-
-  public @NotNull String getOutputDirectory() {
-    return advancedOptionsPanel.getOutputDirectory();
-  }
-
-  public @NotNull String getCustomFlags() {
-    return advancedOptionsPanel.getCustomFlags();
   }
 
   @Override

@@ -2,11 +2,15 @@ package dev.verloren.midnight.toolwindow;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.TimeoutUtil;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import java.awt.Component;
+import java.awt.Container;
 
 public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
@@ -20,22 +24,6 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
   protected void tearDown() throws Exception {
     dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(null);
     super.tearDown();
-  }
-
-  public void testFindTargetCompactFileOnEdt() {
-    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
-    Disposer.register(getTestRootDisposable(), panel);
-    VirtualFile file = panel.findTargetCompactFile();
-    assertNull(file);
-  }
-
-  public void testFindTargetCompactFileFindsOpenEditor() {
-    VirtualFile file = myFixture.configureByText("test.compact", "pragma language_version >= 0.23;\n").getVirtualFile();
-    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
-    Disposer.register(getTestRootDisposable(), panel);
-    VirtualFile target = panel.findTargetCompactFile();
-    assertNotNull(target);
-    assertEquals(file, target);
   }
 
   public void testTypingSpaceAfterExportDoesNotFreezeOrThrow() {
@@ -67,21 +55,6 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     assertTrue("Display string should mention Ledger 9", selected.display().contains("Midnight Ledger 9"));
   }
 
-  public void testAdvancedOptionsToggleExpandsAndCollapses() {
-    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
-    Disposer.register(getTestRootDisposable(), panel);
-
-    assertFalse("Advanced options should be collapsed initially", panel.isAdvancedExpanded());
-    panel.setAdvancedExpanded(true);
-    assertTrue("Advanced options should expand", panel.isAdvancedExpanded());
-    assertTrue("Skip ZK should be enabled by default", panel.isSkipZkSelected());
-    assertEquals("gen", panel.getOutputDirectory());
-    assertEquals("", panel.getCustomFlags());
-
-    panel.setAdvancedExpanded(false);
-    assertFalse("Advanced options should collapse", panel.isAdvancedExpanded());
-  }
-
   public void testDropdownPopulatesMultipleVersions() {
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
     Disposer.register(getTestRootDisposable(), panel);
@@ -95,7 +68,7 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
   public void testDropdownItemTracksInstallationStatus() {
     dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
-        new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
+            new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
     );
 
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
@@ -126,7 +99,7 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
   public void testRevertToInstalledVersionFallback() {
     dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
-        new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
+            new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
     );
 
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
@@ -136,18 +109,49 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     waitForVersions(panel, "0.35.0");
 
     CompactToolchainSelectionHandler handler = new CompactToolchainSelectionHandler(
-        getProject(),
-        panel.getVersionComboBox(),
-        panel::refreshVersions
+            getProject(),
+            panel.getVersionComboBox(),
+            panel::refreshVersions
     );
 
     handler.revertToInstalledVersion("0.34.0", Runnable::run);
 
     CompactCompilerPanel.ToolchainItem selected =
-        (CompactCompilerPanel.ToolchainItem) panel.getVersionComboBox().getSelectedItem();
+            (CompactCompilerPanel.ToolchainItem) panel.getVersionComboBox().getSelectedItem();
     assertNotNull(selected);
     assertEquals("0.35.0", selected.version());
     assertEquals("0.35.0", MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion);
+  }
+
+  public void testPanelContainsNoRunButtonOrAdvancedOptions() {
+    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
+    Disposer.register(getTestRootDisposable(), panel);
+
+    assertNoButtonOrAdvancedControls(panel);
+  }
+
+  private void assertNoButtonOrAdvancedControls(Container container) {
+    for (Component comp : container.getComponents()) {
+      // JComboBox contains an internal arrow button (BasicArrowButton extends JButton)
+      if (comp instanceof JButton btn && !(container instanceof ComboBox<?>)) {
+        String text = btn.getText();
+        assertFalse("Tool window must not contain Run Contract button: " + text,
+                text != null && text.contains("Run"));
+        assertNull("Tool window must not contain an action button outside JComboBox", btn.getAction());
+      }
+      if (comp instanceof JLabel label) {
+        String text = label.getText();
+        if (text != null) {
+          assertFalse("Tool window must not contain Advanced Options label",
+                  text.contains("Advanced Options"));
+          assertFalse("Tool window must not contain Run Contract label",
+                  text.contains("Run Contract"));
+        }
+      }
+      if (comp instanceof Container childContainer && !(childContainer instanceof ComboBox<?>)) {
+        assertNoButtonOrAdvancedControls(childContainer);
+      }
+    }
   }
 
   private void waitForVersions(CompactCompilerPanel panel, String expectedVersion) {

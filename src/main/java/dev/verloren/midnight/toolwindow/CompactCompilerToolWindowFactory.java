@@ -22,9 +22,7 @@ import javax.swing.ScrollPaneConstants;
  * {@code anchor="right"}. This tool window serves as the primary visual hub for Midnight Compact developers,
  * inspired by the Ethereum Remix IDE Solidity compiler panel. It integrates:
  * <ul>
- *   <li><b>Live Contract Context:</b> Displays the currently focused or active {@code .compact} file and its pragma version declaration.</li>
- *   <li><b>Compilation Execution:</b> Provides single-click contract compilation with customizable flags (e.g., {@code --skip-zk}).</li>
- *   <li><b>Compiler Toolchain Manager:</b> Displays installed and available Compact compiler releases, allowing seamless download, activation, and removal.</li>
+ *   <li><b>Compiler Toolchain Manager:</b> Displays installed and available Compact compiler releases, allowing seamless download, activation, and status visualization.</li>
  * </ul>
  *
  * <p><h3>Lifecycle &amp; Resource Management</h3>
