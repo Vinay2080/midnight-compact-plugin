@@ -17,9 +17,10 @@ Last Updated: October 2026 (v1.4.2 / First-Class Type Hierarchy & Substitutor, C
   - `CompactTypeSubstitutor`: Generic type argument substitution engine mapping variables to concrete instantiated types while preserving unmapped variables.
   - `CompactTypeInferenceUtil`: Integrated first-class substitutor into type inference and assignment checks with strict primitive priority (`CompactPrimitiveType.fromName`) and nominal base type matching.
   - Test Coverage: 11 multi-tier unit and user-defined mirror tests in `CompactTypeHierarchyTest` verifying equivalence, substitution, user-defined generics (`Result<TVal, TErr>`), and primitive type precedence.
-- **Refined Compiler Version Panel Cards & Concurrency Stability (v1.4.2)**:
-  - `CompactCompilerPanel`: Synchronized card presentation displaying toolchain title, language specification, and ledger version (`Compact v0.35.0`, `Language: 0.27.0 | Midnight Ledger 9`).
-  - Test Concurrency Stabilization: Isolated version manager state between test executions (`CompactVersionManager.setInstalledVersionsForTesting(null)`) and sequential test execution budget.
+- **Streamlined Tool Window & Ambient Status Bar Toolchain Manager (Phase 32 / v1.4.2 / ADR-035)**:
+  - `CompactCompilerPanel`: Streamlined sidebar dashboard wrapped in a borderless `JBScrollPane` for two-axis fluidity, featuring a clean version dropdown with status icons (installed vs available). Inline run button and advanced options removed to consolidate compilation in standard IntelliJ Run Configurations.
+  - `CompactStatusBarWidget` & `CompactStatusBarPopup`: Lightweight ambient status bar widget displaying active compiler and ledger version, opening a curated speed-search popup with the top 5 installed releases (with deletion support) and top 5 available releases (with download support).
+  - Test Coverage: Unit tests in `CompactCompilerPanelTest`, `CompactCompilerToolWindowFactoryTest`, and `CompactStatusBarWidgetTest`.
 - **Cross-Platform Toolchain Output Directory Matching (v1.4.2)**:
   - `CompactToolchainPathUtil`: Case-insensitive output directory matching across platforms, ensuring build artifacts and project source roots align correctly on Windows and Unix file systems.
 - **Compact Compiler 0.35.0 & Language 0.27.0 Support (v1.4.1)**:

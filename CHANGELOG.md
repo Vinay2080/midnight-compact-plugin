@@ -12,7 +12,8 @@
 - Added automated error navigation when running a contract compilation; if the build fails, the editor now automatically opens the failing file and places the cursor directly at the first compiler error, matching standard IDE behavior without interrupting active typing during normal code editing.
 - Updated New Compact File template default fallback pragma directives from `0.26.0` to `0.27.0`.
 
-- Rebuilt the Compact Compiler tool window with two-axis viewport fluidity (`JBScrollPane`), platform-native theme-aware primary action buttons (`putClientProperty("gotItButton", true)`), high-DPI scaling, and responsive layout behavior.
+### Changed
+- Rebuilt the Compact Compiler sidebar tool window as a dedicated, lightweight toolchain selection dashboard wrapped in a borderless, two-axis fluid viewport (`JBScrollPane`), removing redundant inline run buttons and advanced options in favor of standard IntelliJ Run Configurations.
 - Re-introduced a lightweight, curated Status Bar toolchain widget (`CompactStatusBarWidget`) featuring instant version switching, quick-download actions, protected version deletion actions, and direct navigation to Compiler Settings and the Compiler Tool Window.
 - Enriched compiler version dropdowns with 16x16 status icons differentiating installed toolchains from downloadable releases, backed by a safe download confirmation state machine.
 - Streamlined New Compact File templates (Contract, Module, Interface, and File) to eliminate boilerplate dummy code, ensuring clean starting skeletons and placing the editor cursor directly inside the declaration block ready for typing.

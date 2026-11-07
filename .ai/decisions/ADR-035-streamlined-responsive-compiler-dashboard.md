@@ -41,7 +41,7 @@ Strip toolchains entirely from the tool window and only manage versions in the s
 - *Downsides*: The status bar tray is too small to display multi-dimensional metadata (Compiler + Language + Ledger) without heavy truncation.
 
 ### Option 3: Two-Tier Split Architecture (Selected)
-- **Tool Window**: Serves as the **Active Contract Execution Dashboard**. Features a clean toolchain dropdown with status icons, collapsible advanced options (`--skip-zk`, output dir, custom flags), and a native platform Run button wrapped in a borderless `JBScrollPane`.
+- **Tool Window**: Serves as the **Dedicated Toolchain Dashboard**. Features a clean toolchain dropdown with status icons wrapped in a borderless `JBScrollPane`. Compilation and flags are delegated to standard IntelliJ Run Configurations.
 - **Status Bar**: Serves as the **Ambient Toolchain Monitor & Quick Switcher**. Shows active toolchain text. Clicking opens a curated speed-search popup with the **Top 5 Installed** (with delete buttons) + **Top 5 Available Releases** (with download buttons) + a direct link to Settings.
 
 ---
@@ -53,8 +53,7 @@ Strip toolchains entirely from the tool window and only manage versions in the s
 - **Dropdown Renderer**: `ComboBox<ToolchainItem>` with left-aligned 16x16 icons:
   - Installed: `AllIcons.Actions.Checked` (or `MidnightIcons.FILE`)
   - Not Installed / Cloud: `AllIcons.Actions.Download`
-- **Native Primary Run Button**: Standard IntelliJ action button using `putClientProperty("gotItButton", true)` or `JBUI.CurrentTheme.Button.focusBorderColor(true)`, eliminating theme contrast bugs.
-- **Collapsible Advanced Options**: Dedicated `CompactAdvancedOptionsPanel` toggled via `▶ Advanced Options` link.
+- **Separation of Concerns**: Removed redundant inline run buttons and advanced compiler options from the sidebar; contract builds are managed cleanly through standard IntelliJ Run Configurations (`CompactRunConfiguration`).
 
 ### 4.2 Status Bar Architecture (`CompactStatusBarWidget` & `CompactStatusBarPopup`)
 - **Tray Label**: `Compact: v<ver> (<ledger>)`

@@ -1,10 +1,15 @@
 # Current Handoff
 
 ## Current Feature / Bug Fix
-Run Action Document Synchronization and Subdirectory Hyperlink Resolution (`ai/fix-run-hyperlink-and-doc-sync` -> `master`).
+Streamlined Responsive Tool Window & Curated Status Bar Toolchain Manager (ADR-035 / Phase 32 / `ai/remove-toolwindow-run-and-advanced-options` -> `master`).
 
 ## Status
 - **Accomplished**:
+  - **Tool Window & Status Bar Toolchain Architecture (ADR-035 / Phase 32 / v1.4.2)**:
+    - `CompactCompilerPanel`: Rebuilt as a streamlined, dedicated toolchain selection dashboard. Encapsulated in a borderless `JBScrollPane` for fluid two-axis responsiveness down to 150px widths and short heights. Displays an enriched `ComboBox<ToolchainItem>` with 16x16 status icons (installed checkmark vs cloud download). Removed inline run buttons and redundant advanced options panels, strictly delegating compilation and flags to standard IntelliJ Run Configurations.
+    - `CompactStatusBarWidget` & `CompactStatusBarPopup`: Re-introduced ambient status bar widget displaying active toolchain and ledger version (`Compact: v0.35.0 (Midnight Ledger 9)`). Speed-search popup provides curated top 5 installed toolchains with deletion actions (`CompactVersionManager.uninstallVersion()`), top 5 available cloud releases with download actions, active toolchain protection against deletion, and direct shortcuts to Settings and Tool Window.
+    - `CompactNotificationUtil`: Dedicated notification utility delegating to the IDE `Midnight Notifications` balloon group.
+    - Test Coverage: Unit tests added across `CompactCompilerPanelTest`, `CompactCompilerToolWindowFactoryTest`, and `CompactStatusBarWidgetTest` asserting scrollable tracks, lack of inline execution buttons/labels, dropdown synchronization, and fallback state transitions. All verification gates passed.
   - **Run Configuration Document Synchronization & Hyperlink Resolution (v1.4.2)**:
     - `CompactRunProfileState`: Synchronously flushes dirty in-memory editor documents to disk (`FileDocumentManager.getInstance().saveAllDocuments()`) before spawning `compactc`, eliminating coordinate drift and stale compilation. Passes target contract file path to `CompactConsoleFilter`.
     - `CompactConsoleFilter`: Added multi-tier file resolution: target-file matching, project-relative lookup, and fallback iterative breadth-first search (`findFileInTree`) to resolve bare filenames emitted for contracts in nested subdirectories. Added range coordinate parsing (`:line:col-endcol` and `:line:col:endline:endcol`).
