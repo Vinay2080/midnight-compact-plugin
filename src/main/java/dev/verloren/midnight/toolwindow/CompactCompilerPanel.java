@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import dev.verloren.midnight.run.CompactToolchainUtil;
@@ -16,6 +17,7 @@ import dev.verloren.midnight.version.CompactVersionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.BoxLayout;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
@@ -32,9 +34,11 @@ import java.util.Set;
 /**
  * Modern, responsive Compact Compiler management tool window panel.
  *
- * <p>Serves as the dedicated toolchain selection panel in the IDE sidebar, providing
- * version discovery, installation status visualization, and fallback handling. Contract
- * compilation is delegated to standard IntelliJ Run Configurations.
+ * <p>Serves as the dedicated toolchain hub in the IDE sidebar:
+ * <ul>
+ *   <li>Dropdown to switch active compiler version or initiate download for missing releases.</li>
+ *   <li>Minimalist cards representing installed compilers with single-click uninstallation.</li>
+ * </ul>
  *
  * <h3>Threading Contract</h3>
  * <ul>
@@ -46,6 +50,8 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
   private final Project project;
   private final ComboBox<ToolchainItem> versionComboBox = new ComboBox<>();
   private final CompactToolchainSelectionHandler selectionHandler;
+  private final JBPanel<?> cardsContainer = new JBPanel<>();
+  private final JBLabel installedHeader = new JBLabel("Installed compilers:");
   private boolean isUpdatingComboBox = false;
 
   /**
@@ -85,6 +91,7 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     gbc.fill = GridBagConstraints.HORIZONTAL;
 
     addVersionHeaderSection(gbc);
+    addInstalledCardsSection(gbc);
 
     gbc.gridy++;
     gbc.weighty = 1.0;
@@ -120,6 +127,19 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     add(versionComboBox, gbc);
   }
 
+  private void addInstalledCardsSection(@NotNull GridBagConstraints gbc) {
+    gbc.gridy++;
+    gbc.insets = JBUI.insetsTop(16);
+    installedHeader.setFont(JBFont.label().asBold());
+    add(installedHeader, gbc);
+
+    gbc.gridy++;
+    gbc.insets = JBUI.insetsTop(8);
+    cardsContainer.setLayout(new BoxLayout(cardsContainer, BoxLayout.Y_AXIS));
+    cardsContainer.setOpaque(false);
+    add(cardsContainer, gbc);
+  }
+
   private void initListeners() {
     versionComboBox.addActionListener(_ -> {
       if (isUpdatingComboBox) {
@@ -133,17 +153,19 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
   }
 
   /**
-   * Refreshes the version list asynchronously and updates dropdown items on EDT.
+   * Refreshes the version list asynchronously and updates dropdown items and installed cards on EDT.
    */
   public void refreshVersions() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (project.isDisposed()) return;
       List<ToolchainItem> items = collectSortedToolchainItems();
+      Map<String, String> installedMap = CompactVersionManager.getInstalledVersions();
       String effective = resolveEffectiveVersion();
 
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) return;
         updateComboBoxItems(items, effective);
+        updateInstalledCards(installedMap, effective);
       });
     });
   }
@@ -198,6 +220,36 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
     }
   }
 
+  private void updateInstalledCards(@NotNull Map<String, String> installedMap, @NotNull String effective) {
+    cardsContainer.removeAll();
+    List<String> sorted = new ArrayList<>(installedMap.keySet());
+    sorted.sort(CompactSemVerUtil.DESCENDING_COMPARATOR);
+
+    if (sorted.isEmpty()) {
+      JBLabel emptyLabel = new JBLabel("No compilers installed locally.");
+      emptyLabel.setFont(JBFont.small());
+      emptyLabel.setForeground(JBUI.CurrentTheme.Label.disabledForeground());
+      cardsContainer.add(emptyLabel);
+    } else {
+      for (String v : sorted) {
+        boolean isActive = v.equals(effective);
+        CompactInstalledVersionCard card = new CompactInstalledVersionCard(
+                project,
+                v,
+                isActive,
+                this::refreshVersions
+        );
+        cardsContainer.add(card);
+        cardsContainer.add(new JPanel() {{
+          setOpaque(false);
+          setPreferredSize(new Dimension(0, JBUI.scale(6)));
+        }});
+      }
+    }
+    cardsContainer.revalidate();
+    cardsContainer.repaint();
+  }
+
   private void runWithoutComboEvents(@NotNull Runnable action) {
     isUpdatingComboBox = true;
     try {
@@ -209,6 +261,10 @@ public class CompactCompilerPanel extends JPanel implements Disposable, Scrollab
 
   public @NotNull ComboBox<ToolchainItem> getVersionComboBox() {
     return versionComboBox;
+  }
+
+  public @NotNull JBPanel<?> getCardsContainer() {
+    return cardsContainer;
   }
 
   @Override

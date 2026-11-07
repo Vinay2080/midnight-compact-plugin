@@ -10,8 +10,7 @@ import com.intellij.util.messages.Topic;
  * <p>Serves as the central publish-subscribe communication bus within the Midnight plugin for
  * synchronizing UI elements when the compiler state transitions. Subscribers include:</p>
  * <ul>
- *   <li>{@link CompactCompilerPanel}: Updates the Remix-style tool window version cards and pragma compatibility status.</li>
- *   <li>{@link dev.verloren.midnight.statusbar.CompactStatusBarWidget}: Refreshes the active compiler version label in the bottom IDE status bar.</li>
+ *   <li>{@link CompactCompilerPanel}: Updates the tool window version dropdown and installed compiler cards.</li>
  *   <li>Code annotators &amp; problem handlers: Re-trigger file analysis when toolchain capabilities or target language versions shift.</li>
  * </ul>
  *
@@ -24,12 +23,10 @@ import com.intellij.util.messages.Topic;
  *                         │
  *                         ├─► onCompilerStateChanged()
  *                         │
- *            ┌────────────┴────────────┐
- *            │                         │
- *            ▼                         ▼
- *   [CompactCompilerPanel]   [CompactStatusBarWidget]
- *   - Refresh version cards  - Refresh widget text &amp; icon
- *   - Update pragma badges   - Re-render status bar
+ *                         ▼
+ *               [CompactCompilerPanel]
+ *               - Refresh dropdown selection
+ *               - Re-render installed compiler cards
  * </pre>
  *
  * <h3>Threading Contract</h3>
@@ -40,7 +37,6 @@ import com.intellij.util.messages.Topic;
  * </ul>
  *
  * @see CompactCompilerPanel
- * @see dev.verloren.midnight.statusbar.CompactStatusBarWidget
  */
 @FunctionalInterface
 public interface CompactCompilerEventListener {

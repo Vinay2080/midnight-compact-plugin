@@ -4,6 +4,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.util.TimeoutUtil;
 import dev.verloren.midnight.settings.MidnightProjectSettings;
 
@@ -11,6 +12,8 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import java.awt.Component;
 import java.awt.Container;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
@@ -68,7 +71,7 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
   public void testDropdownItemTracksInstallationStatus() {
     dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
-            new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
+            new LinkedHashMap<>(Map.of("0.35.0", "/dummy/path/compactc"))
     );
 
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
@@ -99,7 +102,7 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
 
   public void testRevertToInstalledVersionFallback() {
     dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
-            new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
+            new LinkedHashMap<>(Map.of("0.35.0", "/dummy/path/compactc"))
     );
 
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
@@ -123,6 +126,44 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     assertEquals("0.35.0", MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion);
   }
 
+  public void testInstalledCardsRenderActiveAndInactiveWithDeleteButton() {
+    dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
+            new LinkedHashMap<>(Map.of(
+                    "0.35.0", "/dummy/bin/compactc-0.35.0",
+                    "0.34.0", "/dummy/bin/compactc-0.34.0"
+            ))
+    );
+    MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion = "0.35.0";
+
+    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
+    Disposer.register(getTestRootDisposable(), panel);
+
+    panel.refreshVersions();
+    waitForVersions(panel, "0.35.0");
+    waitForCards(panel, 2);
+
+    JBPanel<?> container = panel.getCardsContainer();
+    CompactInstalledVersionCard card35 = null;
+    CompactInstalledVersionCard card34 = null;
+    for (Component c : container.getComponents()) {
+      if (c instanceof CompactInstalledVersionCard card) {
+        if ("0.35.0".equals(card.getVersion())) card35 = card;
+        if ("0.34.0".equals(card.getVersion())) card34 = card;
+      }
+    }
+
+    assertNotNull("0.35.0 card must be rendered", card35);
+    assertTrue("0.35.0 card must be active", card35.isActive());
+
+    assertNotNull("0.34.0 card must be rendered", card34);
+    assertFalse("0.34.0 card must not be active", card34.isActive());
+
+    // Verify card35 has no delete button (active protection)
+    assertFalse("Active card35 must not contain delete JButton", hasDeleteButton(card35));
+    // Verify card34 has a delete button
+    assertTrue("Inactive card34 must contain delete JButton", hasDeleteButton(card34));
+  }
+
   public void testPanelContainsNoRunButtonOrAdvancedOptions() {
     CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
     Disposer.register(getTestRootDisposable(), panel);
@@ -130,9 +171,19 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     assertNoButtonOrAdvancedControls(panel);
   }
 
+  private boolean hasDeleteButton(Container container) {
+    for (Component comp : container.getComponents()) {
+      if (comp instanceof JButton) return true;
+      if (comp instanceof Container c && hasDeleteButton(c)) return true;
+    }
+    return false;
+  }
+
   private void assertNoButtonOrAdvancedControls(Container container) {
     for (Component comp : container.getComponents()) {
-      // JComboBox contains an internal arrow button (BasicArrowButton extends JButton)
+      if (comp instanceof CompactInstalledVersionCard) {
+        continue;
+      }
       if (comp instanceof JButton btn && !(container instanceof ComboBox<?>)) {
         String text = btn.getText();
         assertFalse("Tool window must not contain Run Contract button: " + text,
@@ -164,6 +215,22 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
         if (item != null && expectedVersion.equals(item.version())) {
           return;
         }
+      }
+      TimeoutUtil.sleep(50);
+    }
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private void waitForCards(CompactCompilerPanel panel, int expectedCount) {
+    long deadline = System.currentTimeMillis() + 5000;
+    while (System.currentTimeMillis() < deadline) {
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      int count = 0;
+      for (Component c : panel.getCardsContainer().getComponents()) {
+        if (c instanceof CompactInstalledVersionCard) count++;
+      }
+      if (count >= expectedCount) {
+        return;
       }
       TimeoutUtil.sleep(50);
     }

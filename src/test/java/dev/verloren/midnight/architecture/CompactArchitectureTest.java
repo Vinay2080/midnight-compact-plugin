@@ -44,7 +44,7 @@ public class CompactArchitectureTest {
             "dev.verloren.midnight.editor..",
             "dev.verloren.midnight.intention..",
             "dev.verloren.midnight.toolwindow..",
-            "dev.verloren.midnight.statusbar.."
+            "dev.verloren.midnight.ui.."
         )
         .because("Core semantic layers must remain independent of UI and editor layers");
 
