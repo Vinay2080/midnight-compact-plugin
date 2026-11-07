@@ -15,6 +15,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import dev.verloren.midnight.annotator.CompactProblemUtil;
@@ -22,6 +23,7 @@ import dev.verloren.midnight.run.CompactConfigurationType;
 import dev.verloren.midnight.run.CompactRunConfiguration;
 import dev.verloren.midnight.run.CompactToolchainUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,24 @@ public final class CompactCompilerRunner {
   private static final Logger LOG = Logger.getInstance(CompactCompilerRunner.class);
 
   private CompactCompilerRunner() {}
+
+  /**
+   * Resolves the active .compact contract file from currently open editor tabs.
+   */
+  public static @Nullable VirtualFile findTargetCompactFile(@NotNull Project project) {
+    FileEditorManager manager = FileEditorManager.getInstance(project);
+    for (VirtualFile f : manager.getSelectedFiles()) {
+      if (f != null && f.isValid() && "compact".equalsIgnoreCase(f.getExtension())) {
+        return f;
+      }
+    }
+    for (VirtualFile f : manager.getOpenFiles()) {
+      if (f != null && f.isValid() && "compact".equalsIgnoreCase(f.getExtension())) {
+        return f;
+      }
+    }
+    return null;
+  }
 
   /**
    * Compiles the target Compact contract file with given flags.

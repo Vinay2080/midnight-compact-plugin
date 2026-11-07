@@ -6,9 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.ScrollPaneConstants;
 
 /**
  * Factory for creating and registering the Remix IDE-style "Compact Compiler" tool window on the IDE sidebar.
@@ -33,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
  *   createToolWindowContent(Project, ToolWindow)
  *              │
  *              ├─► Instantiate CompactCompilerPanel(project)
+ *              ├─► Wrap in borderless JBScrollPane (2-axis fluidity)
  *              ├─► Create Content wrapper via ContentFactory.getInstance()
  *              ├─► Register Disposable hierarchy: Disposer.register(content, panel)
  *              └─► Register Content with ToolWindow ContentManager
@@ -45,16 +50,16 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see CompactCompilerPanel
  * @see CompactCompilerEventListener
- * @see CompactVersionCard
  */
 public class CompactCompilerToolWindowFactory implements ToolWindowFactory, DumbAware {
 
   /**
    * Initializes and populates the contents of the "Compact Compiler" tool window.
    *
-   * <p>Instantiates a new {@link CompactCompilerPanel}, wraps it in an IntelliJ {@link Content} instance,
-   * ties the panel's lifecycle to the content via {@link Disposer#register(Disposable, Disposable)},
-   * and registers the content with the tool window's {@link com.intellij.ui.content.ContentManager}.
+   * <p>Instantiates a new {@link CompactCompilerPanel}, wraps it in a borderless {@link JBScrollPane}
+   * for fluid two-axis responsiveness, ties the panel's lifecycle to the content via
+   * {@link Disposer#register(Disposable, Disposable)}, and registers the content with the
+   * tool window's {@link com.intellij.ui.content.ContentManager}.
    *
    * @param project an active IntelliJ project
    * @param toolWindow the tool window instance managed by the IDE platform
@@ -62,7 +67,14 @@ public class CompactCompilerToolWindowFactory implements ToolWindowFactory, Dumb
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     CompactCompilerPanel panel = new CompactCompilerPanel(project);
-    Content content = ContentFactory.getInstance().createContent(panel, "", false);
+    JBScrollPane scrollPane = new JBScrollPane(
+        panel,
+        ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+        ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+    );
+    scrollPane.setBorder(JBUI.Borders.empty());
+
+    Content content = ContentFactory.getInstance().createContent(scrollPane, "", false);
     Disposer.register(content, panel);
     toolWindow.getContentManager().addContent(content);
   }

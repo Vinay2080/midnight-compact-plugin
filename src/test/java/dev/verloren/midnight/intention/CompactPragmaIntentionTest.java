@@ -16,6 +16,12 @@ import java.util.TreeMap;
 public class CompactPragmaIntentionTest extends BasePlatformTestCase {
 
   @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CompactVersionManager.setInstalledVersionsForTesting(new TreeMap<>(Comparator.reverseOrder()));
+  }
+
+  @Override
   protected void tearDown() throws Exception {
     CompactVersionManager.setInstalledVersionsForTesting(null);
     super.tearDown();
@@ -33,6 +39,9 @@ public class CompactPragmaIntentionTest extends BasePlatformTestCase {
   public void testAvailableIntentionsOnPragma() {
     // When active compiler (0.26.0) does not satisfy pragma >= 0.26.0 (because toolchain 0.26.0 is language 0.18.0)
     MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion = "0.26.0";
+    SequencedMap<String, String> installed = new TreeMap<>(Comparator.reverseOrder());
+    installed.put("0.26.0", "/mock/bin/0.26.0");
+    CompactVersionManager.setInstalledVersionsForTesting(installed);
 
     myFixture.configureByText("test.compact", "pragma <caret>language_version >= 0.26.0;\n");
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();

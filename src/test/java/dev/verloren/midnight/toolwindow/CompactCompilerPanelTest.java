@@ -93,6 +93,63 @@ public class CompactCompilerPanelTest extends BasePlatformTestCase {
     assertTrue("ComboBox should contain 0.34.0", combo.getItemCount() > 1);
   }
 
+  public void testDropdownItemTracksInstallationStatus() {
+    dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
+        new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
+    );
+
+    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
+    Disposer.register(getTestRootDisposable(), panel);
+
+    panel.refreshVersions();
+    waitForVersions(panel, "0.35.0");
+
+    ComboBox<CompactCompilerPanel.ToolchainItem> combo = panel.getVersionComboBox();
+    CompactCompilerPanel.ToolchainItem item35 = null;
+    CompactCompilerPanel.ToolchainItem item34 = null;
+    for (int i = 0; i < combo.getItemCount(); i++) {
+      CompactCompilerPanel.ToolchainItem it = combo.getItemAt(i);
+      if (it != null && "0.35.0".equals(it.version())) {
+        item35 = it;
+      }
+      if (it != null && "0.34.0".equals(it.version())) {
+        item34 = it;
+      }
+    }
+
+    assertNotNull("0.35.0 must be in dropdown", item35);
+    assertTrue("0.35.0 should be marked as installed", item35.isInstalled());
+
+    assertNotNull("0.34.0 must be in dropdown", item34);
+    assertFalse("0.34.0 should not be marked as installed", item34.isInstalled());
+  }
+
+  public void testRevertToInstalledVersionFallback() {
+    dev.verloren.midnight.version.CompactVersionManager.setInstalledVersionsForTesting(
+        new java.util.LinkedHashMap<>(java.util.Map.of("0.35.0", "/dummy/path/compactc"))
+    );
+
+    CompactCompilerPanel panel = new CompactCompilerPanel(getProject());
+    Disposer.register(getTestRootDisposable(), panel);
+
+    panel.refreshVersions();
+    waitForVersions(panel, "0.35.0");
+
+    CompactToolchainSelectionHandler handler = new CompactToolchainSelectionHandler(
+        getProject(),
+        panel.getVersionComboBox(),
+        panel::refreshVersions
+    );
+
+    handler.revertToInstalledVersion("0.34.0", Runnable::run);
+
+    CompactCompilerPanel.ToolchainItem selected =
+        (CompactCompilerPanel.ToolchainItem) panel.getVersionComboBox().getSelectedItem();
+    assertNotNull(selected);
+    assertEquals("0.35.0", selected.version());
+    assertEquals("0.35.0", MidnightProjectSettings.getInstance(getProject()).selectedCompilerVersion);
+  }
+
   private void waitForVersions(CompactCompilerPanel panel, String expectedVersion) {
     long deadline = System.currentTimeMillis() + 5000;
     while (System.currentTimeMillis() < deadline) {

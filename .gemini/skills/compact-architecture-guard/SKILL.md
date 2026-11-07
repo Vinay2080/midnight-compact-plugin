@@ -51,3 +51,10 @@ Language features (struct literals, constructor inference, generic arguments, me
 ### 6. Strict Tooling Precedence: JetBrains MCP Over CLI
 - AI agents must strictly prioritize JetBrains MCP tools first (`get_file_problems`, `lint_files`, `reformat_file`, `rename_refactoring`, `search_symbol`, `get_symbol_info`, `execute_run_configuration`).
 - Terminal CLI commands are secondary verification or fallback tools. CLI commands must NEVER take priority over JetBrains MCP tools.
+
+### 7. UI, Theme & Tool Window Invariants
+- **Two-Axis Viewport Fluidity**: Any tool window or resizable panel must be wrapped in a borderless `JBScrollPane` (`VERTICAL_SCROLLBAR_AS_NEEDED`, `HORIZONTAL_SCROLLBAR_NEVER`) and implement `javax.swing.Scrollable` with `getScrollableTracksViewportWidth() == true` to prevent horizontal clipping while enabling vertical scrolling when shrunk or docked at the bottom.
+- **Platform Theme Agnosticism**: Prohibited: `new Color(...)` or raw hex codes in UI components. All colors must derive from platform semantic tokens (`JBColor.namedColor(...)`, `JBUI.CurrentTheme.*`, or platform look-and-feel keys).
+- **High-DPI Metric Invariant**: Prohibited: raw pixel sizes for margins, paddings, borders, or preferred dimensions. Always wrap with `JBUI.scale(...)`, `JBUI.Borders.*`, or `JBUI.insets(...)`.
+- **Native Component Styling**: Prefer platform standard components with client properties (e.g. `putClientProperty("gotItButton", true)`) over custom `paintComponent` overrides that wash out across different IDE themes.
+- **Deterministic Fallbacks & Active Protection**: User cancellation of any dependency download must return the UI to an executable, deterministic fallback state. Currently active project toolchains are strictly protected from deletion.
